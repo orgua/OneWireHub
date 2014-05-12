@@ -4,7 +4,7 @@
 //#define DEBUG_DS2413
 
 DS2413::DS2413(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7): OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7){
-  this->AState = false;  
+  this->AState = true; //false;  
   this->ALatch = false;  
   this->BState = false;  
   this->BLatch = false;  
@@ -31,11 +31,15 @@ bool DS2413::duty(OneWireHub * hub)
         Serial.print("DS2413 : PIO WRITE  : 5A = ");
         Serial.println(data, HEX);
       #endif  
+	  
+	  this->ChangePIO();
    
       break;
     
     // PIO ACCESS READ
     case 0xF5:
+	  this->ReadState();
+	
       data = 0;
       if (this->AState)  data = data | 0x01;
       if (!this->ALatch) data = data | 0x02;
@@ -61,4 +65,10 @@ bool DS2413::duty(OneWireHub * hub)
   }
   
   return TRUE;
+}
+
+void DS2413::ReadState(){
+}
+
+void DS2413::ChangePIO(){
 }

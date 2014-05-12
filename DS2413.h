@@ -6,6 +6,9 @@ class DS2413 : public OneWireItem{
   public:
     DS2413(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7);
     
+    virtual void ReadState();
+	virtual void ChangePIO();
+	    
     bool AState;  // sensed.A
     bool ALatch;  // PIO.A
     bool BState;  // sensed.B

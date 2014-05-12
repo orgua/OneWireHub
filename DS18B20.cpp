@@ -95,3 +95,21 @@ bool DS18B20::duty(OneWireHub * hub)
   
   return TRUE;
 }
+
+void DS18B20::settemp(float temp)
+{  
+  word ret = 0;
+  bool Neg = temp < 0;
+  temp = abs(temp);	
+  ret = round(floor(temp)) << 4;
+
+  if (Neg){
+    ret = ret | 0x8000;
+  }
+ 
+  ret = ret | byte(16*((temp - (int)temp) * 100)/100);
+  
+  this->scratchpad[0] = byte(ret);
+  this->scratchpad[1] = byte(ret >> 8);
+  updateCRC();
+}

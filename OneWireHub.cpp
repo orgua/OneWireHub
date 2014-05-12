@@ -9,7 +9,7 @@ extern "C" {
 }
 
 //#define DEBUG_CALCK
-#define DEBUG_search
+//#define DEBUG_search
 //#define DEBUG_matchrom
 
 #define DIRECT_READ(base, mask)        (((*(base)) & (mask)) ? 1 : 0)

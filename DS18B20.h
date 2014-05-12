@@ -8,4 +8,6 @@ class DS18B20 : public OneWireItem{
     
     byte scratchpad[9]; 
     bool updateCRC();
+	
+	void settemp(float temp);
 };
