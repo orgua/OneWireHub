@@ -1,4 +1,5 @@
 #include "OneWireHub.h"
+
 //#include "DS2401.h"  // Serial Number
 #include "DS18B20.h" // Digital Thermometer
 //#include "DS2405.h"  // Single adress switch
@@ -6,13 +7,15 @@
 //#include "DS2413.h"  // Dual channel addressable switch
 //#include "DS2423.h"  // 4kb 1-Wire RAM with Counter
 //#include "DS2433.h"  // 4Kb 1-Wire EEPROM
-#include "DS2438.h"  // Smart Battery Monitor
+//#include "DS2438.h"  // Smart Battery Monitor
 #include "DS2450.h"  // 4 channel A/D
 //#include "DS2890.h"  // Single channel digital potentiometer
 
 const uint8_t ledPin = 13;         // the number of the LED pin
 
-OneWireHub *hub = 0;
+OneWireHub hub = OneWireHub(8); // pin D8
+DS18B20 ds18B20 = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);    // Work - Digital Thermometer
+DS2450  ds2450  = DS2450(0x20, 0x0D, 0x0A, 0x02, 0x04, 0x05, 0x00);    //      - 4 channel A/D
 
 bool blinking()
 {
@@ -38,9 +41,9 @@ void setup()
     // Debug
     Serial.begin(115200);
 
-    hub = new OneWireHub(8);
-
+    // TODO: change to #if (.....)
     // put your setup code here, to run once:
+    hub.elms[0] = &ds18B20;
 //  hub->elms[0] = new DS18B20( 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Digital Thermometer  
 //  hub->elms[1] = new DS2401 ( 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Serial Number
 //  hub->elms[2] = new DS2405(  0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - Single adress switch
@@ -48,17 +51,17 @@ void setup()
 //  hub->elms[4] = new DS2413(  0x3A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Dual channel addressable switch
 //  hub->elms[5] = new DS2423(  0x1D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
 //  hub->elms[6] = new DS2433(  0x23, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
-    hub->elms[7] = new DS2438(0x26, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);    //      - Smart Battery Monitor
+    hub.elms[1] = &ds2450;
 //  hub->elms[0] = new DS2450(  0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4 channel A/D
 //  hub->elms[1] = new DS2890(  0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Single channel digital panemtiometer
 
-    Serial.println(hub->calck_mask());
+    Serial.println(hub.calck_mask());
 }
 
 void loop()
 {
     // put your main code here, to run repeatedly:
-    hub->waitForRequest(false);
+    hub.waitForRequest(false);
 
     // Blink
     blinking();
