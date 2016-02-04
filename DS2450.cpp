@@ -3,7 +3,8 @@
 
 #define DEBUG_DS2450
 
-DS2450::DS2450(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7): OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7){
+DS2450::DS2450(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
+{
 /*  ((sDS2450*)(this->Data))->cmd = 0;
   ((sDS2450*)(this->Data))->adr1 = 0;
   ((sDS2450*)(this->Data))->adr2 = 0;
@@ -24,64 +25,66 @@ DS2450::DS2450(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte 
   *p++ = 0xFF00;
   *p++ = 0xFF00;
   this->memory.calibration[4] = 0x40;
-*/  
+*/
 
-  memset(&this->memory, 0, sizeof(this->memory));
+    memset(&this->memory, 0, sizeof(this->memory));
 }
 
-bool DS2450::duty(OneWireHub * hub)
+bool DS2450::duty(OneWireHub *hub)
 {
-  uint16_t memory_address;
-  uint16_t memory_address_start;
-  uint8_t b;
-  uint16_t crc;
-  
-  ow_crc16_reset();
+    uint16_t memory_address;
+    uint16_t memory_address_start;
+    uint8_t b;
+    uint16_t crc;
 
-  uint8_t done = hub->recv();    
-  switch (done) {
-    // READ MEMORY
-    case 0xAA:     
-      // Cmd
-      ow_crc16_update(0xAA);
-      
-      // Adr1
-      b = hub->recv();
-      ((uint8_t*)&memory_address)[0] = b;
-      ow_crc16_update(b);
+    ow_crc16_reset();
 
-      // Adr2
-      b = hub->recv();
-      ((uint8_t*)&memory_address)[1] = b;
-      ow_crc16_update(b);
-      
-      memory_address_start = memory_address;
+    uint8_t done = hub->recv();
+    switch (done)
+    {
+        // READ MEMORY
+        case 0xAA:
+            // Cmd
+            ow_crc16_update(0xAA);
 
-      for (int i=0;i<8;i++){
-        uint8_t b = this->memory[memory_address+i];
-        hub->send(b);
-      }
+            // Adr1
+            b = hub->recv();
+            ((uint8_t *) &memory_address)[0] = b;
+            ow_crc16_update(b);
 
-      crc = ow_crc16_get();
-      hub->send(((uint8_t*)&crc)[0]);
-      hub->send(((uint8_t*)&crc)[1]);
+            // Adr2
+            b = hub->recv();
+            ((uint8_t *) &memory_address)[1] = b;
+            ow_crc16_update(b);
 
-      #ifdef DEBUG_DS2450
-        Serial.print("DS2450 : READ MEMORY : ");
-        Serial.println(memory_address_start, HEX);
-      #endif
+            memory_address_start = memory_address;
 
-      break;
+            for (int i = 0; i < 8; i++)
+            {
+                uint8_t b = this->memory[memory_address + i];
+                hub->send(b);
+            }
 
-    default:    
-      #ifdef DEBUG_hint
-        Serial.print("DS2450=");
-        Serial.println(done, HEX);
-      #endif  
-      break;    
-  }
-  
-  return TRUE;
+            crc = ow_crc16_get();
+            hub->send(((uint8_t *) &crc)[0]);
+            hub->send(((uint8_t *) &crc)[1]);
+
+#ifdef DEBUG_DS2450
+            Serial.print("DS2450 : READ MEMORY : ");
+            Serial.println(memory_address_start, HEX);
+#endif
+
+            break;
+
+        default:
+#ifdef DEBUG_hint
+            Serial.print("DS2450=");
+            Serial.println(done, HEX);
+#endif
+            break;
+    }
+
+    return TRUE;
 }
 
 /*
