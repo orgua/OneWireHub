@@ -43,7 +43,6 @@ void setup()
     // Debug
     Serial.begin(115200);
 
-    // TODO: change to #if (.....)
     // put your setup code here, to run once:
     hub.elms[0] = &ds18B20;
 //  hub->elms[0] = new DS18B20( 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Digital Thermometer  
