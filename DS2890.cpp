@@ -56,7 +56,7 @@ bool DS2890::duty(OneWireHub *hub)
 
 #ifdef DEBUG_DS2890
         Serial.print("DS2890 : READ CONTROL REGISTER: ");
-        Serial.print(this->regs, HEX); 
+        Serial.print(this->regs, HEX);
         Serial.print("-");
         Serial.println(this->potion, HEX);
 #endif
@@ -73,7 +73,7 @@ bool DS2890::duty(OneWireHub *hub)
 
 #ifdef DEBUG_DS2890
         Serial.print("DS2890 : READ POSITION: ");
-        Serial.print(this->regs, HEX); 
+        Serial.print(this->regs, HEX);
         Serial.print("-");
         Serial.println(this->potion, HEX);
 #endif
