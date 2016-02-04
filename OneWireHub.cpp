@@ -1,5 +1,6 @@
 #include "OneWireHub.h"
 #include "pins_arduino.h"
+#include <Arduino.h>
 
 extern "C" {
 //#include "WConstants.h"
@@ -106,7 +107,7 @@ int OneWireHub::calck_mask()
     Serial.println(time);
 #endif
 
-    uint8_t Pos = 0;
+    byte Pos = 0;
 
     // Zerro
     for (int i = 0; i < ONEWIREIDMAP_COUNT; i++)
@@ -117,7 +118,7 @@ int OneWireHub::calck_mask()
     }
 
     // Get elms mask
-    uint8_t mask = 0x00;
+    byte mask = 0x00;
     for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
     {
         if (this->elms[i] == NULL) continue;
@@ -130,7 +131,7 @@ int OneWireHub::calck_mask()
 #endif
 
     // First data
-    uint8_t stack[8][5]; // operate bit, set pos, Byte pos, byte mask, elms mask
+    byte stack[8][5]; // operate bit, set pos, Byte pos, byte mask, elms mask
 
     // 0
     stack[0][0] = 0;    // bit
@@ -138,7 +139,7 @@ int OneWireHub::calck_mask()
     stack[0][2] = 0x00; // Pos
     stack[0][3] = 0x01; // Mask
     stack[0][4] = mask; // Elms mask
-    uint8_t stackpos = 1;
+    byte stackpos = 1;
 
     while (stackpos)
     {
@@ -157,10 +158,10 @@ int OneWireHub::calck_mask()
         stackpos--;
 
         // Set last step jamp
-        uint8_t spos = stack[stackpos][1];
-        uint8_t BN = stack[stackpos][2];
-        uint8_t BM = stack[stackpos][3];
-        uint8_t mask = stack[stackpos][4];
+        byte spos = stack[stackpos][1];
+        byte BN = stack[stackpos][2];
+        byte BM = stack[stackpos][3];
+        byte mask = stack[stackpos][4];
 
         if (spos != 0xFF)
         {
@@ -206,9 +207,9 @@ int OneWireHub::calck_mask()
         // Div tree
         bool fl0 = FALSE;
         bool fl1 = FALSE;
-        uint8_t mask1 = 0x00;
-        uint8_t mask0 = 0x00;
-        uint8_t elmmask = 0x01;
+        byte mask1 = 0x00;
+        byte mask0 = 0x00;
+        byte elmmask = 0x01;
 
         for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
         {
@@ -257,8 +258,8 @@ int OneWireHub::calck_mask()
         Serial.print("\t");
 #endif
 
-        uint8_t NBN = BN;
-        uint8_t NBM = BM << 1;
+        byte NBN = BN;
+        byte NBM = BM << 1;
         if (!NBM)
         {
             NBN++;
@@ -322,7 +323,7 @@ int OneWireHub::calck_mask()
     time = micros();
     Serial.print("Time: ");
     Serial.println(time);
-    
+
     for (int i = 0; i<ONEWIREIDMAP_COUNT; i++){
       Serial.print(i);
       Serial.print("\t");
@@ -395,7 +396,7 @@ bool OneWireHub::waitReset(uint16_t timeout_ms)
 
     //Master will now delay for 65 to 70 recommended or max of 75 before it's "presence" check
     // and then read the pin value (checking for a presence on the line)
-    // then wait another 490 (so, 500 + 64 + 490 = 1054 total without consideration of actual op time) on Arduino, 
+    // then wait another 490 (so, 500 + 64 + 490 = 1054 total without consideration of actual op time) on Arduino,
     // but recommended is 410 with total reset length of 480 + 70 + 410 (or 480x2=960)
     delayMicroseconds(30);
     //Master wait is 65, so we have 35 more to send our presence now that reset is done
@@ -499,7 +500,7 @@ bool OneWireHub::search()
 /*
       bit_n = this->bits[n];
       sendBit( bit_n && 0x01 );
-      sendBit( bit_n && 0x02 ); 
+      sendBit( bit_n && 0x02 );
 */
 
             bit_recv = recvBit();
@@ -544,7 +545,7 @@ bool OneWireHub::search()
 
 bool OneWireHub::recvAndProcessCmd()
 {
-    uint8_t addr[8];
+    byte addr[8];
     bool flag;
 
     for (; ;)
@@ -618,7 +619,7 @@ bool OneWireHub::recvAndProcessCmd()
     }
 }
 
-uint8_t OneWireHub::sendData(uint8_t buf[], uint8_t len)
+uint8_t OneWireHub::sendData(byte buf[], uint8_t len)
 {
     uint8_t bytes_sended = 0;
 
@@ -632,7 +633,7 @@ uint8_t OneWireHub::sendData(uint8_t buf[], uint8_t len)
     return bytes_sended;
 }
 
-uint8_t OneWireHub::recvData(uint8_t buf[], uint8_t len)
+uint8_t OneWireHub::recvData(byte buf[], uint8_t len)
 {
     uint8_t bytes_received = 0;
 
@@ -889,35 +890,6 @@ uint16_t OneWireItem::crc16(uint8_t addr[], uint8_t len)
     return crc;
 }
 
-/*
-uint16_t OneWireItem::crc16(byte addr[], uint8_t len)
-{
-  int i;
-  
-  uint16_t crc = 0xFFFF;
-  
-  for (int j=0; j<len; j++){
-    crc ^= addr[j];
-    
-    for (i = 0; i < 8; ++i){
-      if (crc & 1)
-        crc = (crc >> 1) ^ 0xA001;
-      else
-        crc = (crc >> 1);
-    }
-  }
-
-  return crc;
-}
-*/
-bool OneWireItem::duty(OneWireHub *hub)
-{
-#ifdef DEBUG_hint
-    Serial.println("OneWireItem : duty");
-#endif
-
-    return TRUE;
-}
 
 #endif
 #endif
