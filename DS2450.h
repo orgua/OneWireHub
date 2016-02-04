@@ -8,7 +8,7 @@ private:
 public:
     DS2450(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    uint8_t memory[0x1F];
+    uint8_t memory[0x1F]; // TODO: make readable 3*8 or similar
 
 
     bool setPotentiometer(const uint16_t p1, const uint16_t p2, const uint16_t p3, const uint16_t p4);

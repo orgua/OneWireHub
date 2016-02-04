@@ -1,4 +1,4 @@
-#define DEBUG_hint
+//#define DEBUG_hint
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
@@ -8,7 +8,7 @@
 
 #endif
 
-#include <inttypes.h> 
+#include <inttypes.h>
 
 // You can exclude CRC checks altogether by defining this to 0
 #ifndef ONEWIRESLAVE_CRC
@@ -98,7 +98,7 @@ public:
 
     uint8_t ID[8];
 
-    virtual bool duty(OneWireHub *hub);
+    virtual bool duty(OneWireHub *hub) = 0;
 
 #if ONEWIRESLAVE_CRC
 
