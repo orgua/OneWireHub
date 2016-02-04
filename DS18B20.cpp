@@ -29,53 +29,42 @@ bool DS18B20::duty(OneWireHub *hub)
 
     switch (done)
     {
-
-        // CONVERT T
-        case 0x44:
+        case 0x44: // CONVERT T
             hub->sendBit(1);
-
 #ifdef DEBUG_DS18B20
             Serial.println("DS18B20 : CONVERT T");
 #endif
             break;
 
-            // WRITE SCRATCHPAD
-        case 0x4E:
+        case 0x4E: // WRITE SCRATCHPAD
 #ifdef DEBUG_DS18B20
             Serial.println("DS18B20 : WRITE SCRATCHPAD");
 #endif
             break;
 
-            // READ SCRATCHPAD
-        case 0xBE:
+        case 0xBE: // READ SCRATCHPAD
             hub->sendData(this->scratchpad, 9);
             if (hub->errno != ONEWIRE_NO_ERROR) return FALSE;
-
 #ifdef DEBUG_DS18B20
             Serial.println("DS18B20 : READ SCRATCHPAD");
 #endif
             break;
 
-            // COPY SCRATCHPAD
-        case 0x48:
+        case 0x48: // COPY SCRATCHPAD
 #ifdef DEBUG_DS18B20
-            Serial.println("DS18B20 : READ SCRATCHPAD");
+            Serial.println("DS18B20 : COPY SCRATCHPAD");
 #endif
             break;
 
-            // RECALL E2
-        case 0xB8:
+        case 0xB8: // RECALL E2
             hub->sendBit(1);
-
 #ifdef DEBUG_DS18B20
             Serial.println("DS18B20 : RECALL E2");
 #endif
             break;
 
-            // READ POWERSUPPLY
-        case 0xB4:
+        case 0xB4: // READ POWERSUPPLY
             hub->sendBit(1);
-
 #ifdef DEBUG_DS18B20
             Serial.println("DS18B20 : READ POWERSUPPLY");
 #endif
@@ -99,21 +88,27 @@ bool DS18B20::duty(OneWireHub *hub)
     return TRUE;
 }
 
-void DS18B20::settemp(float temp)
+
+void DS18B20::settemp(float temperature_decC)
 {
     word ret = 0;
-    bool Neg = temp < 0;
-    temp = abs(temp);
-    ret = round(floor(temp)) << 4;
+    bool Neg = temperature_decC < 0;
+    temperature_decC = abs(temperature_decC);
+    ret = round(floor(temperature_decC)) << 4;
 
     if (Neg)
     {
         ret = ret | 0x8000;
     }
 
-    ret = ret | uint8_t(16 * ((temp - (int) temp) * 100) / 100);
+    ret = ret | uint8_t(16 * ((temperature_decC - (int) temperature_decC) * 100) / 100);
 
     this->scratchpad[0] = uint8_t(ret);
     this->scratchpad[1] = uint8_t(ret >> 8);
     updateCRC();
+}
+
+void settemp(int16_t temperature_degC)
+{
+    // TODO: implement
 }
