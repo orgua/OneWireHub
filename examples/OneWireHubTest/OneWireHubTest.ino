@@ -1,43 +1,42 @@
 #include "OneWireHub.h"
 //#include "DS2401.h"  // Serial Number
-//#include "DS18B20.h" // Digital Thermometer
+#include "DS18B20.h" // Digital Thermometer
 //#include "DS2405.h"  // Single adress switch
 //#include "DS2408.h"  // 8-Channel Addressable Switch
 //#include "DS2413.h"  // Dual channel addressable switch
 //#include "DS2423.h"  // 4kb 1-Wire RAM with Counter
 //#include "DS2433.h"  // 4Kb 1-Wire EEPROM
 #include "DS2438.h"  // Smart Battery Monitor
-//#include "DS2450.h"  // 4 channel A/D
-//#include "DS2890.h"  // Single channel digital panemtiometer
+#include "DS2450.h"  // 4 channel A/D
+//#include "DS2890.h"  // Single channel digital potentiometer
 
-const int ledPin = 13;         // the number of the LED pin
-// Variables will change:
-int ledState = LOW;             // ledState used to set the LED
-long previousMillis = 0;        // will store last time LED was updated
-long interval = 250;           // interval at which to blink (milliseconds) 
+const uint8_t ledPin = 13;         // the number of the LED pin
 
 OneWireHub *hub = 0;
 
-void blinking()
+bool blinking()
 {
+    const unsigned long interval = 250;           // interval at which to blink (milliseconds)
+    static unsigned long nextMillis = millis(); // will store next time LED will updated
+    static uint8_t ledState = LOW; // ledState used to set the LED
+
     unsigned long currentMillis = millis();
 
-    if (currentMillis - previousMillis > interval)
+    if (currentMillis > nextMillis)
     {
-        // save the last time you blinked the LED
-        previousMillis = currentMillis;
-        if (ledState == LOW)
-            ledState = HIGH;
-        else
-            ledState = LOW;
+        nextMillis = currentMillis + interval; // save the last time you blinked the LED
+        if (ledState == LOW)    ledState = HIGH;
+        else                    ledState = LOW;
         digitalWrite(ledPin, ledState);
+        return 1;
     }
+    return 0;
 }
 
 void setup()
 {
     // Debug
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     hub = new OneWireHub(8);
 
