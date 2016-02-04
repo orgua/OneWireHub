@@ -16,282 +16,309 @@ extern "C" {
 #define DIRECT_MODE_INPUT(base, mask)  ((*(base+1)) &= ~(mask))
 #define DIRECT_MODE_OUTPUT(base, mask) ((*(base+1)) |= (mask))
 #define DIRECT_WRITE_LOW(base, mask)   ((*(base+2)) &= ~(mask))
-#define DIRECT_WRITE_HIGH(base, mask)  ((*(base+2)) |= (mask)) 
+#define DIRECT_WRITE_HIGH(base, mask)  ((*(base+2)) |= (mask))
 
 #define TIMESLOT_WAIT_RETRY_COUNT microsecondsToClockCycles(120) / 10L
-#define TIMESLOT_WAIT_READ_RETRY_COUNT microsecondsToClockCycles(135) 
+#define TIMESLOT_WAIT_READ_RETRY_COUNT microsecondsToClockCycles(135)
 
 //--- CRC 16 ---
 static uint16_t crc16;
 
 void ow_crc16_reset()
 {
-        crc16 = 0;
+    crc16 = 0;
 }
 
 void ow_crc16_update(uint8_t b)
 {
-        for (uint8_t j=0;j<8;j++)
-        {
-                uint8_t mix = ((uint8_t)crc16 ^ b) & 0x01;
-                crc16 = crc16 >> 1;
-                if (mix)
-                        crc16 = crc16 ^ 0xA001;
+    for (uint8_t j = 0; j < 8; j++)
+    {
+        uint8_t mix = ((uint8_t) crc16 ^ b) & 0x01;
+        crc16 = crc16 >> 1;
+        if (mix)
+            crc16 = crc16 ^ 0xA001;
 
-                b = b >> 1;
-        }
+        b = b >> 1;
+    }
 }
 
 uint16_t ow_crc16_get()
 {
-        return crc16;
+    return crc16;
 }
 
 //=================== Hub ==========================================
-OneWireHub::OneWireHub(uint8_t pin) {
-  pin_bitmask = digitalPinToBitMask(pin);
-  baseReg = portInputRegister(digitalPinToPort(pin));
-  
-  for (int i=0; i<ONEWIRESLAVE_COUNT; i++)
-    this->elms[i] = NULL;
+OneWireHub::OneWireHub(uint8_t pin)
+{
+    pin_bitmask = digitalPinToBitMask(pin);
+    baseReg = portInputRegister(digitalPinToPort(pin));
+
+    for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
+        this->elms[i] = NULL;
 }
 
-bool OneWireHub::waitForRequest(bool ignore_errors) {
-  errno = ONEWIRE_NO_ERROR;
+bool OneWireHub::waitForRequest(bool ignore_errors)
+{
+    errno = ONEWIRE_NO_ERROR;
 
-  for (;;) {
-    //delayMicroseconds(40);
-    //Once reset is done, it waits another 30 micros
-    //Master wait is 65, so we have 35 more to send our presence now that reset is done
-    if (!waitReset(0) ) {
-      continue;
-    }
-    
-    //Reset is complete, tell the master we are prsent
-    // This will pull the line low for 125 micros (155 micros since the reset) and 
-    //  then wait another 275 plus whatever wait for the line to go high to a max of 480
-    // This has been modified from original to wait for the line to go high to a max of 480.
-    if (!presence() ) {
-      continue;
-    }
-    
-    //Now that the master should know we are here, we will get a command from the line
-    //Because of our changes to the presence code, the line should be guranteed to be high
-    if (recvAndProcessCmd() ) {
-      return TRUE;
-    }
-    else if ((errno == ONEWIRE_NO_ERROR) || ignore_errors) {
-      continue;
-    }
-    else {
-      return FALSE;
-    }
-  }
-} 
+    for (; ;)
+    {
+        //delayMicroseconds(40);
+        //Once reset is done, it waits another 30 micros
+        //Master wait is 65, so we have 35 more to send our presence now that reset is done
+        if (!waitReset(0))
+        {
+            continue;
+        }
 
-int OneWireHub::calck_mask() {
+        //Reset is complete, tell the master we are prsent
+        // This will pull the line low for 125 micros (155 micros since the reset) and
+        //  then wait another 275 plus whatever wait for the line to go high to a max of 480
+        // This has been modified from original to wait for the line to go high to a max of 480.
+        if (!presence())
+        {
+            continue;
+        }
 
-  #ifdef DEBUG_CALCK
+        //Now that the master should know we are here, we will get a command from the line
+        //Because of our changes to the presence code, the line should be guranteed to be high
+        if (recvAndProcessCmd())
+        {
+            return TRUE;
+        }
+        else if ((errno == ONEWIRE_NO_ERROR) || ignore_errors)
+        {
+            continue;
+        }
+        else
+        {
+            return FALSE;
+        }
+    }
+}
+
+int OneWireHub::calck_mask()
+{
+
+#ifdef DEBUG_CALCK
     unsigned long time = micros();
     Serial.print("Time: ");
     Serial.println(time);
-  #endif
+#endif
 
-  byte Pos = 0;
-  
-  // Zerro
-  for (int i=0;i<ONEWIREIDMAP_COUNT;i++){
-    this->bits[i] = 3;
-    this->idmap0[i] = 0;
-    this->idmap1[i] = 0;    
-  }
+    byte Pos = 0;
 
-  // Get elms mask
-  byte mask = 0x00;
-  for (int i=0;i<ONEWIRESLAVE_COUNT;i++){  
-    if (this->elms[i] == NULL) continue;
-    mask = mask | (1 << i);
-  }
-  
-  #ifdef DEBUG_CALCK  
+    // Zerro
+    for (int i = 0; i < ONEWIREIDMAP_COUNT; i++)
+    {
+        this->bits[i] = 3;
+        this->idmap0[i] = 0;
+        this->idmap1[i] = 0;
+    }
+
+    // Get elms mask
+    byte mask = 0x00;
+    for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
+    {
+        if (this->elms[i] == NULL) continue;
+        mask = mask | (1 << i);
+    }
+
+#ifdef DEBUG_CALCK
     Serial.print("Mask:");
     Serial.println(mask, HEX);
-  #endif  
+#endif
 
-  // First data
-  byte stack[8][5]; // operate bit, set pos, Byte pos, byte mask, elms mask
+    // First data
+    byte stack[8][5]; // operate bit, set pos, Byte pos, byte mask, elms mask
 
-  // 0
-  stack[0][0] = 0;    // bit
-  stack[0][1] = 0xFF; // None
-  stack[0][2] = 0x00; // Pos
-  stack[0][3] = 0x01; // Mask
-  stack[0][4] = mask; // Elms mask
-  byte stackpos = 1;
+    // 0
+    stack[0][0] = 0;    // bit
+    stack[0][1] = 0xFF; // None
+    stack[0][2] = 0x00; // Pos
+    stack[0][3] = 0x01; // Mask
+    stack[0][4] = mask; // Elms mask
+    byte stackpos = 1;
 
-  while (stackpos) {
-    if (Pos >= ONEWIREIDMAP_COUNT) return 0;
-    
-    #ifdef DEBUG_CALCK
-      Serial.print("Pos=");
-      Serial.print(Pos);
-      Serial.print("\t");
-    
-      Serial.print("SLevel=");
-      Serial.print(stackpos);
-      Serial.print("\t");
-    #endif  
-    
-    stackpos--;
+    while (stackpos)
+    {
+        if (Pos >= ONEWIREIDMAP_COUNT) return 0;
 
-    // Set last step jamp
-    byte spos = stack[stackpos][1];
-    byte BN   = stack[stackpos][2];
-    byte BM   = stack[stackpos][3];
-    byte mask = stack[stackpos][4];        
+#ifdef DEBUG_CALCK
+        Serial.print("Pos=");
+        Serial.print(Pos);
+        Serial.print("\t");
 
-    if (spos != 0xFF){
-           
-      if(stack[stackpos][0]){
-        #ifdef DEBUG_CALCK
-          Serial.print("OPos:1=");
-          Serial.print(spos);
-          Serial.print("->");
-          Serial.print(Pos);
-        #endif  
-        
-        this->idmap1[spos] = Pos;
-      } else {
-        #ifdef DEBUG_CALCK
-          Serial.print("OPos:0=");
-          Serial.print(spos);
-          Serial.print("->");
-          Serial.print(Pos);
-        #endif
-        
-        this->idmap0[spos] = Pos;
-      }
-    } 
+        Serial.print("SLevel=");
+        Serial.print(stackpos);
+        Serial.print("\t");
+#endif
 
-    #ifdef DEBUG_CALCK
-      else {
-        Serial.print("OPos:None");
-      }
-    
-      Serial.print("\t");
-      Serial.print("BN=");
-      Serial.print(BN);
-      Serial.print("\t");
-    
-      Serial.print("BM=");
-      Serial.print(BM, HEX);
-      Serial.print("\t");
-    #endif  
+        stackpos--;
 
-    // Div tree
-    bool fl0=FALSE;
-    bool fl1=FALSE;
-    byte mask1 = 0x00;
-    byte mask0 = 0x00;  
-    byte elmmask = 0x01;
-    
-    for (int i=0;i<ONEWIRESLAVE_COUNT;i++){  
-      if (elmmask & mask){ 
-        if (BM & this->elms[i]->ID[BN]) {
-          mask1 = mask1 | elmmask;
-          fl1 = TRUE;
-        } else {
-          mask0 = mask0 | elmmask;
-          fl0 = TRUE;
+        // Set last step jamp
+        byte spos = stack[stackpos][1];
+        byte BN = stack[stackpos][2];
+        byte BM = stack[stackpos][3];
+        byte mask = stack[stackpos][4];
+
+        if (spos != 0xFF)
+        {
+
+            if (stack[stackpos][0])
+            {
+#ifdef DEBUG_CALCK
+                Serial.print("OPos:1=");
+                Serial.print(spos);
+                Serial.print("->");
+                Serial.print(Pos);
+#endif
+
+                this->idmap1[spos] = Pos;
+            } else
+            {
+#ifdef DEBUG_CALCK
+                Serial.print("OPos:0=");
+                Serial.print(spos);
+                Serial.print("->");
+                Serial.print(Pos);
+#endif
+
+                this->idmap0[spos] = Pos;
+            }
         }
-      }
-    
-      elmmask = elmmask << 1;
-    }
-    
-    if ((fl0 == FALSE) && (fl1 == TRUE)){
-      this->bits[Pos] = 1;
-    } else {
-      if ((fl0 == TRUE) && (fl1 == FALSE)){
-        this->bits[Pos] = 2;
-      } else {
-        this->bits[Pos] = 0;
-      }
-    }
 
-    #ifdef DEBUG_CALCK
-      Serial.print("\t");
-      Serial.print("Bit=");
-      Serial.print(this->bits[Pos]);
-      Serial.print("\t");
-    
-      Serial.print("mask0=");
-      Serial.print(mask0, HEX);
-      Serial.print("\t");
-    
-      Serial.print("mask1=");
-      Serial.print(mask1, HEX);
-      Serial.print("\t");
-    #endif  
+#ifdef DEBUG_CALCK
+        else {
+          Serial.print("OPos:None");
+        }
 
-    byte NBN  = BN;
-    byte NBM  = BM << 1;
-    if (!NBM) {
-      NBN++;
-      NBM = 0x01;
-      
-      // END
-      if (NBN >= 8) {
-        this->idmap0[Pos] = mask0;
-        this->idmap1[Pos] = mask1;
-        
+        Serial.print("\t");
+        Serial.print("BN=");
+        Serial.print(BN);
+        Serial.print("\t");
+
+        Serial.print("BM=");
+        Serial.print(BM, HEX);
+        Serial.print("\t");
+#endif
+
+        // Div tree
+        bool fl0 = FALSE;
+        bool fl1 = FALSE;
+        byte mask1 = 0x00;
+        byte mask0 = 0x00;
+        byte elmmask = 0x01;
+
+        for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
+        {
+            if (elmmask & mask)
+            {
+                if (BM & this->elms[i]->ID[BN])
+                {
+                    mask1 = mask1 | elmmask;
+                    fl1 = TRUE;
+                } else
+                {
+                    mask0 = mask0 | elmmask;
+                    fl0 = TRUE;
+                }
+            }
+
+            elmmask = elmmask << 1;
+        }
+
+        if ((fl0 == FALSE) && (fl1 == TRUE))
+        {
+            this->bits[Pos] = 1;
+        } else
+        {
+            if ((fl0 == TRUE) && (fl1 == FALSE))
+            {
+                this->bits[Pos] = 2;
+            } else
+            {
+                this->bits[Pos] = 0;
+            }
+        }
+
+#ifdef DEBUG_CALCK
+        Serial.print("\t");
+        Serial.print("Bit=");
+        Serial.print(this->bits[Pos]);
+        Serial.print("\t");
+
+        Serial.print("mask0=");
+        Serial.print(mask0, HEX);
+        Serial.print("\t");
+
+        Serial.print("mask1=");
+        Serial.print(mask1, HEX);
+        Serial.print("\t");
+#endif
+
+        byte NBN = BN;
+        byte NBM = BM << 1;
+        if (!NBM)
+        {
+            NBN++;
+            NBM = 0x01;
+
+            // END
+            if (NBN >= 8)
+            {
+                this->idmap0[Pos] = mask0;
+                this->idmap1[Pos] = mask1;
+
+                Pos++;
+#ifdef DEBUG_CALCK
+                Serial.println();
+#endif
+
+                continue;
+            }
+        }
+
+        // Tree 0
+        if (mask0 != 0)
+        {
+            stack[stackpos][0] = 0;
+            stack[stackpos][1] = Pos;
+            stack[stackpos][2] = NBN;
+            stack[stackpos][3] = NBM;
+            stack[stackpos][4] = mask0;
+            stackpos++;
+
+#ifdef DEBUG_CALCK
+            Serial.print("ADD=0");
+            Serial.print("\t");
+#endif
+        }
+
+        // Tree 1
+        if (mask1 != 0)
+        {
+            stack[stackpos][0] = 1;
+            stack[stackpos][1] = Pos;
+            stack[stackpos][2] = NBN;
+            stack[stackpos][3] = NBM;
+            stack[stackpos][4] = mask1;
+            stackpos++;
+
+#ifdef DEBUG_CALCK
+            Serial.print("ADD=1");
+            Serial.print("\t");
+#endif
+        }
+
+#ifdef DEBUG_CALCK
+        Serial.println();
+#endif
+
         Pos++;
-        #ifdef DEBUG_CALCK
-          Serial.println();
-        #endif  
-
-        continue;
-      }
-    }    
-    
-    // Tree 0
-    if (mask0 != 0){
-      stack[stackpos][0] = 0;
-      stack[stackpos][1] = Pos;
-      stack[stackpos][2] = NBN;
-      stack[stackpos][3] = NBM;
-      stack[stackpos][4] = mask0;
-      stackpos++;
-      
-      #ifdef DEBUG_CALCK
-        Serial.print("ADD=0");
-        Serial.print("\t");
-      #endif  
     }
 
-    // Tree 1
-    if (mask1 != 0){
-      stack[stackpos][0] = 1;
-      stack[stackpos][1] = Pos;
-      stack[stackpos][2] = NBN;
-      stack[stackpos][3] = NBM;
-      stack[stackpos][4] = mask1;
-      stackpos++;
-      
-      #ifdef DEBUG_CALCK
-        Serial.print("ADD=1");
-        Serial.print("\t");
-      #endif  
-    }
-
-    #ifdef DEBUG_CALCK
-      Serial.println();
-    #endif  
-  
-    Pos++;
-  }
-
-  #ifdef DEBUG_CALCK
+#ifdef DEBUG_CALCK
     time = micros();
     Serial.print("Time: ");
     Serial.println(time);
@@ -306,12 +333,13 @@ int OneWireHub::calck_mask() {
       Serial.print(this->idmap1[i]);
       Serial.println();
     }
-  #endif
-  
-  return Pos;
+#endif
+
+    return Pos;
 }
 
-bool OneWireHub::waitReset(uint16_t timeout_ms) {
+bool OneWireHub::waitReset(uint16_t timeout_ms)
+{
     uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
     unsigned long time_stamp;
@@ -322,41 +350,49 @@ bool OneWireHub::waitReset(uint16_t timeout_ms) {
     sei();
 
     //Wait for the line to fall
-    if (timeout_ms != 0) {
-        time_stamp = micros() + timeout_ms*1000;
-        while (DIRECT_READ(reg, mask)) {
-            if (micros() > time_stamp) {
+    if (timeout_ms != 0)
+    {
+        time_stamp = micros() + timeout_ms * 1000;
+        while (DIRECT_READ(reg, mask))
+        {
+            if (micros() > time_stamp)
+            {
                 errno = ONEWIRE_WAIT_RESET_TIMEOUT;
                 return FALSE;
             }
         }
-    } else {
-      //Will wait forever for the line to fall
-      while (DIRECT_READ(reg, mask)) {};
+    } else
+    {
+        //Will wait forever for the line to fall
+        while (DIRECT_READ(reg, mask))
+        { };
     }
-    
+
     //Set to wait for rise up to 540 micros
     //Master code sets the line low for 500 micros
     //TODO The actual documented max is 640, not 540
     time_stamp = micros() + 540;
-    
+
     //Wait for the rise on the line up to 540 micros
-    while (DIRECT_READ(reg, mask) == 0) {
-        if (micros() > time_stamp) {
+    while (DIRECT_READ(reg, mask) == 0)
+    {
+        if (micros() > time_stamp)
+        {
             errno = ONEWIRE_VERY_LONG_RESET;
             return FALSE;
         }
     }
-    
+
     //If the master pulled low for exactly 500, then this will be 40 wait time
     // Recommended for master is 480, which would be 60 here then
     // Max is 640, which makes this negative, but it returns above as a "ONEWIRE_VERY_LONG_RESET"
     // this gives an extra 10 to 30 micros befor calling the reset invalid
-    if ((time_stamp - micros()) > 70) {
+    if ((time_stamp - micros()) > 70)
+    {
         errno = ONEWIRE_VERY_SHORT_RESET;
         return FALSE;
     }
-    
+
     //Master will now delay for 65 to 70 recommended or max of 75 before it's "presence" check
     // and then read the pin value (checking for a presence on the line)
     // then wait another 490 (so, 500 + 64 + 490 = 1054 total without consideration of actual op time) on Arduino, 
@@ -366,11 +402,13 @@ bool OneWireHub::waitReset(uint16_t timeout_ms) {
     return TRUE;
 }
 
-bool OneWireHub::waitReset() {
-  return waitReset(1000);
-} 
+bool OneWireHub::waitReset()
+{
+    return waitReset(1000);
+}
 
-bool OneWireHub::presence(uint8_t delta) {
+bool OneWireHub::presence(uint8_t delta)
+{
     uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
 
@@ -395,18 +433,19 @@ bool OneWireHub::presence(uint8_t delta) {
     //This gives us 50 micros to play with, but being early is probably best for timing on read later
     //delayMicroseconds(300 - delta);
     delayMicroseconds(250 - delta);
-    
+
     //Modified to wait a while (roughly 50 micros) for the line to go high
     // since the above wait is about 430 micros, this makes this 480 closer
     // to the 480 standard spec and the 490 used on the Arduino master code
     // anything longer then is most likely something going wrong.
     uint8_t retries = 25;
     while (!DIRECT_READ(reg, mask));
-    do {
-      if ( retries-- == 0)
-	return FALSE;
-	delayMicroseconds(2); 
-    } while(!DIRECT_READ(reg, mask));
+    do
+    {
+        if (retries-- == 0)
+            return FALSE;
+        delayMicroseconds(2);
+    } while (!DIRECT_READ(reg, mask));
 
 //    if ( !DIRECT_READ(reg, mask)) {
 //        errno = ONEWIRE_PRESENCE_LOW_ON_LINE;
@@ -415,159 +454,176 @@ bool OneWireHub::presence(uint8_t delta) {
 //        return TRUE;
 }
 
-bool OneWireHub::presence() {
-  return presence(25);
+bool OneWireHub::presence()
+{
+    return presence(25);
 }
 
-bool OneWireHub::search() {
-  uint8_t bitmask;
-  uint8_t bit_recv;
+bool OneWireHub::search()
+{
+    uint8_t bitmask;
+    uint8_t bit_recv;
 //  bool bit_n;
-  
-  int j;
-  int flag;
 
-  //Serial.println("--");
-  //this->SelectElm = 0;
-  
-  int n = 0;
-  for (int i=0; i<8; i++) {
-    for (bitmask = 0x01; bitmask; bitmask <<= 1) {
+    int j;
+    int flag;
 
-      // Get from elements
-      switch (this->bits[n]){
-        case 0:
-          sendBit( FALSE );
-          sendBit( FALSE );
-          break;
-        case 1:
-          sendBit( TRUE );
-          sendBit( FALSE );
-          break;
-        case 2:
-          sendBit( FALSE );
-          sendBit( TRUE );
-          break;
-        default:                
-          return FALSE;
-      }
+    //Serial.println("--");
+    //this->SelectElm = 0;
+
+    int n = 0;
+    for (int i = 0; i < 8; i++)
+    {
+        for (bitmask = 0x01; bitmask; bitmask <<= 1)
+        {
+
+            // Get from elements
+            switch (this->bits[n])
+            {
+                case 0:
+                    sendBit(FALSE);
+                    sendBit(FALSE);
+                    break;
+                case 1:
+                    sendBit(TRUE);
+                    sendBit(FALSE);
+                    break;
+                case 2:
+                    sendBit(FALSE);
+                    sendBit(TRUE);
+                    break;
+                default:
+                    return FALSE;
+            }
 
 /*
       bit_n = this->bits[n];
       sendBit( bit_n && 0x01 );
       sendBit( bit_n && 0x02 ); 
-*/      
-      
-      bit_recv = recvBit();
-     
-      if (errno != ONEWIRE_NO_ERROR) return FALSE;
-      
-      // Get next elm
-      if (bit_recv){
-        //Serial.print("1:");
-        n = this->idmap1[n];
-      } else {
-        //Serial.print("0:");
-        n = this->idmap0[n];
-      }
+*/
 
-      // Test not found
-      if (n == 0) {
-        #ifdef DEBUG_search
-          Serial.print("Not found-");
-          Serial.print(i);
-          Serial.print(",");
-          Serial.println(bitmask, HEX);
-        #endif        
-        return FALSE;
-      }
+            bit_recv = recvBit();
+
+            if (errno != ONEWIRE_NO_ERROR) return FALSE;
+
+            // Get next elm
+            if (bit_recv)
+            {
+                //Serial.print("1:");
+                n = this->idmap1[n];
+            } else
+            {
+                //Serial.print("0:");
+                n = this->idmap0[n];
+            }
+
+            // Test not found
+            if (n == 0)
+            {
+#ifdef DEBUG_search
+                Serial.print("Not found-");
+                Serial.print(i);
+                Serial.print(",");
+                Serial.println(bitmask, HEX);
+#endif
+                return FALSE;
+            }
+        }
     }
-  }      
-  
-  for (int i=0; i<ONEWIRESLAVE_COUNT; i++)
-    if (i == (1 << i)) this->SelectElm = elms[i];
-  
-  #ifdef DEBUG_search
+
+    for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
+        if (i == (1 << i)) this->SelectElm = elms[i];
+
+#ifdef DEBUG_search
     Serial.print("Found-");
     Serial.println(n);
-  #endif  
+#endif
 
-  return TRUE;
-} 
+    return TRUE;
+}
 
-bool OneWireHub::recvAndProcessCmd() { 
-  byte addr[8]; 
-  bool flag;
-  
-  for (;;) {
-    uint8_t cmd = recv();
-    
-    switch (cmd) {
-      // Search rom
-      case 0xF0:
-        search();
-        delayMicroseconds(6900);
-        return FALSE;
-        
-      // MATCH ROM - Choose/Select ROM   
-      case 0x55:
-        recvData(addr, 8);
-        if (errno != ONEWIRE_NO_ERROR)
-          return FALSE; 
-        
-        flag=FALSE; 
-        this->SelectElm = 0;
+bool OneWireHub::recvAndProcessCmd()
+{
+    byte addr[8];
+    bool flag;
 
-        for (int i=0;i<ONEWIRESLAVE_COUNT; i++){
-          if (this->elms[i] == NULL) continue;
-          
-          flag=TRUE;
-          for (int j=0;j<8;j++){
-            if (this->elms[i]->ID[j] != addr[j]){
-              flag = FALSE;
-              break;
-            }
-          }  
-          
-          if (flag) {
-            this->SelectElm = elms[i];
-            
-            #ifdef DEBUG_matchrom
-              Serial.print("MATCH ROM=");
-              Serial.println(i);
-            #endif  
-            
-            break;
-          }
+    for (; ;)
+    {
+        uint8_t cmd = recv();
+
+        switch (cmd)
+        {
+            // Search rom
+            case 0xF0:
+                search();
+                delayMicroseconds(6900);
+                return FALSE;
+
+                // MATCH ROM - Choose/Select ROM
+            case 0x55:
+                recvData(addr, 8);
+                if (errno != ONEWIRE_NO_ERROR)
+                    return FALSE;
+
+                flag = FALSE;
+                this->SelectElm = 0;
+
+                for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
+                {
+                    if (this->elms[i] == NULL) continue;
+
+                    flag = TRUE;
+                    for (int j = 0; j < 8; j++)
+                    {
+                        if (this->elms[i]->ID[j] != addr[j])
+                        {
+                            flag = FALSE;
+                            break;
+                        }
+                    }
+
+                    if (flag)
+                    {
+                        this->SelectElm = elms[i];
+
+#ifdef DEBUG_matchrom
+                        Serial.print("MATCH ROM=");
+                        Serial.println(i);
+#endif
+
+                        break;
+                    }
+                }
+
+                if (flag == FALSE) return FALSE;
+
+                if (this->SelectElm != 0)
+                    this->SelectElm->duty(this);
+
+                return TRUE;
+                break;
+
+                // SKIP ROM
+            case 0xCC:
+                this->SelectElm = 0x00;
+                return TRUE;
+
+            default: // Unknow command
+                Serial.print("U:");
+                Serial.println(cmd, HEX);
+
+                return FALSE;
+                break;
         }
-
-        if (flag == FALSE) return FALSE;
-
-        if (this->SelectElm != 0)
-          this->SelectElm->duty( this );
-         
-        return TRUE; 
-        break;
-        
-      // SKIP ROM
-      case 0xCC:
-        this->SelectElm = 0x00;
-        return TRUE; 
-        
-      default: // Unknow command
-        Serial.print("U:");
-        Serial.println(cmd, HEX);
-        
-        return FALSE; 
-        break;
     }
-  }
-} 
+}
 
-uint8_t OneWireHub::sendData(byte buf[], uint8_t len) {
+uint8_t OneWireHub::sendData(byte buf[], uint8_t len)
+{
     uint8_t bytes_sended = 0;
 
-    for (int i=0; i<len; i++) {
+    for (int i = 0; i < len; i++)
+    {
         send(buf[i]);
         if (errno != ONEWIRE_NO_ERROR)
             break;
@@ -576,10 +632,12 @@ uint8_t OneWireHub::sendData(byte buf[], uint8_t len) {
     return bytes_sended;
 }
 
-uint8_t OneWireHub::recvData(byte buf[], uint8_t len) {
+uint8_t OneWireHub::recvData(byte buf[], uint8_t len)
+{
     uint8_t bytes_received = 0;
-    
-    for (int i=0; i<len; i++) {
+
+    for (int i = 0; i < len; i++)
+    {
         buf[i] = recv();
         if (errno != ONEWIRE_NO_ERROR)
             break;
@@ -588,13 +646,15 @@ uint8_t OneWireHub::recvData(byte buf[], uint8_t len) {
     return bytes_received;
 }
 
-void OneWireHub::send(uint8_t v) {
+void OneWireHub::send(uint8_t v)
+{
     errno = ONEWIRE_NO_ERROR;
     for (uint8_t bitmask = 0x01; bitmask && (errno == ONEWIRE_NO_ERROR); bitmask <<= 1)
-        sendBit((bitmask & v)?1:0);
+        sendBit((bitmask & v) ? 1 : 0);
 }
 
-uint8_t OneWireHub::recv() {
+uint8_t OneWireHub::recv()
+{
     uint8_t r = 0;
 
     errno = ONEWIRE_NO_ERROR;
@@ -604,7 +664,8 @@ uint8_t OneWireHub::recv() {
     return r;
 }
 
-void OneWireHub::sendBit(uint8_t v) {
+void OneWireHub::sendBit(uint8_t v)
+{
     uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
 
@@ -612,18 +673,22 @@ void OneWireHub::sendBit(uint8_t v) {
     DIRECT_MODE_INPUT(reg, mask);
     //waitTimeSlot waits for a low to high transition followed by a high to low within the time-out
     uint8_t wt = waitTimeSlot();
-    if (wt != 1 ) { //1 is success, others are failure
-      if (wt == 10) {
-        errno = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
-      } else {
-        errno = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
-      }
-      sei();
-      return;
+    if (wt != 1)
+    { //1 is success, others are failure
+        if (wt == 10)
+        {
+            errno = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
+        } else
+        {
+            errno = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
+        }
+        sei();
+        return;
     }
     if (v & 1)
         delayMicroseconds(30);
-    else {
+    else
+    {
         cli();
         DIRECT_WRITE_LOW(reg, mask);
         DIRECT_MODE_OUTPUT(reg, mask);
@@ -635,7 +700,8 @@ void OneWireHub::sendBit(uint8_t v) {
     return;
 }
 
-uint8_t OneWireHub::recvBit(void) {
+uint8_t OneWireHub::recvBit(void)
+{
     uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
     uint8_t r;
@@ -645,23 +711,27 @@ uint8_t OneWireHub::recvBit(void) {
     //waitTimeSlotRead is a customized version of the original which was also
     // used by the "write" side of things.
     uint8_t wt = waitTimeSlotRead();
-    if (wt != 1 ) { //1 is success, others are failure
-      if (wt == 10) {
-        errno = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
-      } else {
-        errno = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
-      }
-      sei();
-      return 0;
+    if (wt != 1)
+    { //1 is success, others are failure
+        if (wt == 10)
+        {
+            errno = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
+        } else
+        {
+            errno = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
+        }
+        sei();
+        return 0;
     }
     delayMicroseconds(30);
     //TODO Consider reading earlier: delayMicroseconds(15);
     r = DIRECT_READ(reg, mask);
     sei();
     return r;
-} 
+}
 
-uint8_t OneWireHub::waitTimeSlot() {
+uint8_t OneWireHub::waitTimeSlot()
+{
     uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
     uint16_t retries;
@@ -670,22 +740,23 @@ uint8_t OneWireHub::waitTimeSlot() {
     //If the line is already high, this is basically skipped
     retries = TIMESLOT_WAIT_RETRY_COUNT;
     //While line is low, retry
-    while ( !DIRECT_READ(reg, mask))
+    while (!DIRECT_READ(reg, mask))
         if (--retries == 0)
             return 10;
-            
+
     //Wait for a fall form 1 to 0 on the line for timeout duration
     retries = TIMESLOT_WAIT_RETRY_COUNT;
-    while ( DIRECT_READ(reg, mask));
-        if (--retries == 0)
-            return 20;
+    while (DIRECT_READ(reg, mask));
+    if (--retries == 0)
+        return 20;
 
     return 1;
 }
 
 //This is a copy of what was orig just "waitTimeSlot"
 // it is customized for the reading side of things
-uint8_t OneWireHub::waitTimeSlotRead() {
+uint8_t OneWireHub::waitTimeSlotRead()
+{
     uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
     uint16_t retries;
@@ -694,35 +765,36 @@ uint8_t OneWireHub::waitTimeSlotRead() {
     //If the line is already high, this is basically skipped
     retries = TIMESLOT_WAIT_RETRY_COUNT;
     //While line is low, retry
-    while ( !DIRECT_READ(reg, mask))
+    while (!DIRECT_READ(reg, mask))
         if (--retries == 0)
             return 10;
-            
+
     //TODO Seems to me that the above loop should drop out immediately because
     // The line is already high as our wait after presence is relatively short
     // So now it just waits a short period for the write of a bit to start
     // Unfortunately per "recommended" this is 55 micros to 130 micros more
     // more than what we may have already waited.
-            
+
     //Wait for a fall form 1 to 0 on the line for timeout duration
     retries = TIMESLOT_WAIT_READ_RETRY_COUNT;
-    while ( DIRECT_READ(reg, mask));
-        if (--retries == 0)
-            return 20;
+    while (DIRECT_READ(reg, mask));
+    if (--retries == 0)
+        return 20;
 
     return 1;
 }
- 
+
 //==================== Item =========================================
-OneWireItem::OneWireItem(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7){
-  this->ID[0] = ID1;
-  this->ID[1] = ID2;
-  this->ID[2] = ID3;
-  this->ID[3] = ID4;
-  this->ID[4] = ID5;
-  this->ID[5] = ID6;
-  this->ID[6] = ID7;
-  this->ID[7] = crc8(this->ID, 7);   
+OneWireItem::OneWireItem(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7)
+{
+    this->ID[0] = ID1;
+    this->ID[1] = ID2;
+    this->ID[2] = ID3;
+    this->ID[3] = ID4;
+    this->ID[4] = ID5;
+    this->ID[5] = ID6;
+    this->ID[6] = ID7;
+    this->ID[7] = crc8(this->ID, 7);
 }
 
 #if ONEWIRESLAVE_CRC
@@ -768,16 +840,19 @@ uint8_t OneWireItem::crc8(char addr[], uint8_t len)
     return crc;
 }
 #else
+
 //
 // Compute a Dallas Semiconductor 8 bit CRC directly.
 //
 uint8_t OneWireItem::crc8(byte addr[], uint8_t len)
 {
     uint8_t crc = 0;
-    
-    while (len--) {
+
+    while (len--)
+    {
         uint8_t inbyte = *addr++;
-        for (uint8_t i = 8; i; i--) {
+        for (uint8_t i = 8; i; i--)
+        {
             uint8_t mix = (crc ^ inbyte) & 0x01;
             crc >>= 1;
             if (mix) crc ^= 0x8C;
@@ -789,29 +864,31 @@ uint8_t OneWireItem::crc8(byte addr[], uint8_t len)
 
 uint16_t OneWireItem::crc16(byte addr[], uint8_t len)
 {
-  static const uint8_t oddparity[16] =
-    { 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0 };
-    
-  uint16_t crc = 0xFFFF;
+    static const uint8_t oddparity[16] =
+            {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
 
-  for (uint16_t i = 0 ; i < len ; i++) {
-    // Even though we're just copying a byte from the input,
-    // we'll be doing 16-bit computation with it.
-    uint16_t cdata = addr[i];
-    cdata = (cdata ^ crc) & 0xff;
-    crc >>= 8;
+    uint16_t crc = 0xFFFF;
 
-    if (oddparity[cdata & 0x0F] ^ oddparity[cdata >> 4])
-      crc ^= 0xC001;
+    for (uint16_t i = 0; i < len; i++)
+    {
+        // Even though we're just copying a byte from the input,
+        // we'll be doing 16-bit computation with it.
+        uint16_t cdata = addr[i];
+        cdata = (cdata ^ crc) & 0xff;
+        crc >>= 8;
 
-    cdata <<= 6;
-    crc ^= cdata;
-    cdata <<= 1;
-    crc ^= cdata;
-  }
-  
-  return crc; 
+        if (oddparity[cdata & 0x0F] ^ oddparity[cdata >> 4])
+            crc ^= 0xC001;
+
+        cdata <<= 6;
+        crc ^= cdata;
+        cdata <<= 1;
+        crc ^= cdata;
+    }
+
+    return crc;
 }
+
 /*
 uint16_t OneWireItem::crc16(byte addr[], uint8_t len)
 {
@@ -833,14 +910,15 @@ uint16_t OneWireItem::crc16(byte addr[], uint8_t len)
   return crc;
 }
 */
-bool OneWireItem::duty(OneWireHub * hub)
+bool OneWireItem::duty(OneWireHub *hub)
 {
-  #ifdef DEBUG_hint
+#ifdef DEBUG_hint
     Serial.println("OneWireItem : duty");
-  #endif  
-  
-  return TRUE; 
+#endif
+
+    return TRUE;
 }
+
 #endif
 #endif
 

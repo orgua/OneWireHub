@@ -38,14 +38,16 @@ struct DS2450_memory {
 };
 */
 
-class DS2450 : public OneWireItem{
-  private:
-    bool duty( OneWireHub * hub );
-  public:
+class DS2450 : public OneWireItem
+{
+private:
+    bool duty(OneWireHub *hub);
+
+public:
     DS2450(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7);
-    
+
     byte memory[0x1F];
-    
+
     //byte Data[13];
     //bool updateCRC();
     //DS2450_memory memory;
