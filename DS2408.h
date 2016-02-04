@@ -3,17 +3,17 @@
 #pragma pack(push, 1)
 struct sDS2408
 {
-    byte cmd;
-    byte adrL;
-    byte adrH;
-    byte D0;
-    byte D1;
-    byte D2;
-    byte D3;
-    byte D4;
-    byte D5;
-    byte D6;
-    byte D7;
+    uint8_t cmd;
+    uint8_t adrL;
+    uint8_t adrH;
+    uint8_t D0;
+    uint8_t D1;
+    uint8_t D2;
+    uint8_t D3;
+    uint8_t D4;
+    uint8_t D5;
+    uint8_t D6;
+    uint8_t D7;
     uint16_t CRC;
 };
 #pragma pack(pop)
@@ -32,9 +32,9 @@ private:
     bool duty(OneWireHub *hub);
 
 public:
-    DS2408(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7);
+    DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    byte memory[13];
+    uint8_t memory[13];
 
     bool updateCRC();
 };

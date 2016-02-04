@@ -3,7 +3,7 @@
 
 #define DEBUG_DS2438
 
-static byte MemDS2438[64] =
+static uint8_t MemDS2438[64] =
         {
                 0x09, 0x20, 0x14, 0xAC, 0x00, 0x40, 0x01, 0x00,
                 0x5A, 0xC8, 0x05, 0x02, 0xFF, 0x08, 0x00, 0xFC,
@@ -21,7 +21,7 @@ static byte MemDS2438[64] =
 // 09D813D301020080FDE80702FF1000FC000000001BDAFF01F20000000000000000000000000000001207DA0D000000002828520E020000000000000000000000
 // 080014C501000000BC850702000800FC0000000000000000000000000000000026BCBF30010000002C07DB1500000000284C9E1B030000000000000073010000
 
-DS2438::DS2438(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
+DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
 
     for (int i = 0; i < sizeof(this->memory); i++)
@@ -128,7 +128,7 @@ bool DS2438::duty(OneWireHub *hub)
 
 void DS2438::SetTemp(float temp)
 {
-    memory[1] = byte(256 * ((temp - (int) temp) * 100) / 100);
+    memory[1] = uint8_t(256 * ((temp - (int) temp) * 100) / 100);
     memory[2] = round(abs(floor(temp)));
 
     if (temp < 0)
@@ -137,12 +137,12 @@ void DS2438::SetTemp(float temp)
 
 void DS2438::SetVolt(word val)
 {
-    memory[3] = byte(val);
-    memory[4] = byte(val >> 8);
+    memory[3] = uint8_t(val);
+    memory[4] = uint8_t(val >> 8);
 }
 
 void DS2438::SetCurr(word val)
 {
-    memory[5] = byte(val);
-    memory[6] = byte(val >> 8);
+    memory[5] = uint8_t(val);
+    memory[6] = uint8_t(val >> 8);
 }

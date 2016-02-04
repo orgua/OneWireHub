@@ -3,7 +3,7 @@
 
 #define DEBUG_DS2433
 
-DS2433::DS2433(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
+DS2433::DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
     for (int i = 0; i < sizeof(this->memory); i++)
         this->memory[i] = 0xFF;

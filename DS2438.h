@@ -12,11 +12,11 @@
 #pragma pack(push, 1)
 struct DS2438_page0
 {
-    byte flags;
+    uint8_t flags;
     int16_t temp;
     int16_t volt;
     int16_t curr;
-    byte threshold;
+    uint8_t threshold;
 };
 #pragma pack(pop)
 
@@ -26,7 +26,7 @@ private:
     bool duty(OneWireHub *hub);
 
 public:
-    DS2438(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7);
+    DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
     void SetTemp(float temp);
 
@@ -34,5 +34,5 @@ public:
 
     void SetCurr(word val);
 
-    byte memory[64];
+    uint8_t memory[64];
 };
