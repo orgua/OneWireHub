@@ -64,5 +64,19 @@ void loop()
     hub.waitForRequest(false);
 
     // Blink
-    blinking();
+    if (blinking())
+    {
+        // DS18B20
+        static float temperature = 20;
+        temperature += 0.1;
+        if (temperature > 40) temperature = 10;
+        ds18B20.settemp(temperature);
+        // DS2450
+        static uint16_t p1, p2, p3, p4;
+        p1 +=1;
+        p2 +=2;
+        p3 +=4;
+        p4 +=8;
+        ds2450.setPotentiometer(p1,p2,p3,p4);
+    }
 }
