@@ -106,7 +106,7 @@ int OneWireHub::calck_mask()
     Serial.println(time);
 #endif
 
-    byte Pos = 0;
+    uint8_t Pos = 0;
 
     // Zerro
     for (int i = 0; i < ONEWIREIDMAP_COUNT; i++)
@@ -117,7 +117,7 @@ int OneWireHub::calck_mask()
     }
 
     // Get elms mask
-    byte mask = 0x00;
+    uint8_t mask = 0x00;
     for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
     {
         if (this->elms[i] == NULL) continue;
@@ -130,7 +130,7 @@ int OneWireHub::calck_mask()
 #endif
 
     // First data
-    byte stack[8][5]; // operate bit, set pos, Byte pos, byte mask, elms mask
+    uint8_t stack[8][5]; // operate bit, set pos, Byte pos, byte mask, elms mask
 
     // 0
     stack[0][0] = 0;    // bit
@@ -138,7 +138,7 @@ int OneWireHub::calck_mask()
     stack[0][2] = 0x00; // Pos
     stack[0][3] = 0x01; // Mask
     stack[0][4] = mask; // Elms mask
-    byte stackpos = 1;
+    uint8_t stackpos = 1;
 
     while (stackpos)
     {
@@ -157,10 +157,10 @@ int OneWireHub::calck_mask()
         stackpos--;
 
         // Set last step jamp
-        byte spos = stack[stackpos][1];
-        byte BN = stack[stackpos][2];
-        byte BM = stack[stackpos][3];
-        byte mask = stack[stackpos][4];
+        uint8_t spos = stack[stackpos][1];
+        uint8_t BN = stack[stackpos][2];
+        uint8_t BM = stack[stackpos][3];
+        uint8_t mask = stack[stackpos][4];
 
         if (spos != 0xFF)
         {
@@ -206,9 +206,9 @@ int OneWireHub::calck_mask()
         // Div tree
         bool fl0 = FALSE;
         bool fl1 = FALSE;
-        byte mask1 = 0x00;
-        byte mask0 = 0x00;
-        byte elmmask = 0x01;
+        uint8_t mask1 = 0x00;
+        uint8_t mask0 = 0x00;
+        uint8_t elmmask = 0x01;
 
         for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
         {
@@ -257,8 +257,8 @@ int OneWireHub::calck_mask()
         Serial.print("\t");
 #endif
 
-        byte NBN = BN;
-        byte NBM = BM << 1;
+        uint8_t NBN = BN;
+        uint8_t NBM = BM << 1;
         if (!NBM)
         {
             NBN++;
@@ -544,7 +544,7 @@ bool OneWireHub::search()
 
 bool OneWireHub::recvAndProcessCmd()
 {
-    byte addr[8];
+    uint8_t addr[8];
     bool flag;
 
     for (; ;)
@@ -618,7 +618,7 @@ bool OneWireHub::recvAndProcessCmd()
     }
 }
 
-uint8_t OneWireHub::sendData(byte buf[], uint8_t len)
+uint8_t OneWireHub::sendData(uint8_t buf[], uint8_t len)
 {
     uint8_t bytes_sended = 0;
 
@@ -632,7 +632,7 @@ uint8_t OneWireHub::sendData(byte buf[], uint8_t len)
     return bytes_sended;
 }
 
-uint8_t OneWireHub::recvData(byte buf[], uint8_t len)
+uint8_t OneWireHub::recvData(uint8_t buf[], uint8_t len)
 {
     uint8_t bytes_received = 0;
 
@@ -785,7 +785,7 @@ uint8_t OneWireHub::waitTimeSlotRead()
 }
 
 //==================== Item =========================================
-OneWireItem::OneWireItem(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7)
+OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7)
 {
     this->ID[0] = ID1;
     this->ID[1] = ID2;
@@ -844,7 +844,7 @@ uint8_t OneWireItem::crc8(char addr[], uint8_t len)
 //
 // Compute a Dallas Semiconductor 8 bit CRC directly.
 //
-uint8_t OneWireItem::crc8(byte addr[], uint8_t len)
+uint8_t OneWireItem::crc8(uint8_t addr[], uint8_t len)
 {
     uint8_t crc = 0;
 
@@ -862,7 +862,7 @@ uint8_t OneWireItem::crc8(byte addr[], uint8_t len)
     return crc;
 }
 
-uint16_t OneWireItem::crc16(byte addr[], uint8_t len)
+uint16_t OneWireItem::crc16(uint8_t addr[], uint8_t len)
 {
     static const uint8_t oddparity[16] =
             {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};

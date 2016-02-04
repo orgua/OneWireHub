@@ -14,12 +14,12 @@ int RelayCnt = 0;
 class MovmentSensor : public DS2413
 {
 public:
-    MovmentSensor(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7);
+    MovmentSensor(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
     void ReadState();
 };
 
-MovmentSensor::MovmentSensor(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7) : DS2413(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
+MovmentSensor::MovmentSensor(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : DS2413(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
 }
 

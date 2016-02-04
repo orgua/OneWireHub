@@ -5,7 +5,7 @@ private:
     bool duty(OneWireHub *hub);
 
 public:
-    DS2433(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7);
+    DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    byte memory[512];
+    uint8_t memory[512];
 };

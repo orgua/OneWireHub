@@ -43,9 +43,9 @@ private:
     uint8_t pin_bitmask;
     volatile uint8_t *baseReg;
 
-    byte bits[ONEWIREIDMAP_COUNT];
-    byte idmap0[ONEWIREIDMAP_COUNT];
-    byte idmap1[ONEWIREIDMAP_COUNT];
+    uint8_t bits[ONEWIREIDMAP_COUNT];
+    uint8_t idmap0[ONEWIREIDMAP_COUNT];
+    uint8_t idmap1[ONEWIREIDMAP_COUNT];
 
     OneWireItem *SelectElm;
 
@@ -55,7 +55,7 @@ private:
 
     uint8_t waitTimeSlotRead();
 
-    int AnalizIds(byte Pos, byte BN, byte BM, byte mask);
+    int AnalizIds(uint8_t Pos, uint8_t BN, uint8_t BM, uint8_t mask);
 
 public:
     OneWireHub(uint8_t pin);
@@ -76,9 +76,9 @@ public:
 
     bool search();
 
-    uint8_t sendData(byte buf[], uint8_t data_len);
+    uint8_t sendData(uint8_t buf[], uint8_t data_len);
 
-    uint8_t recvData(byte buf[], uint8_t data_len);
+    uint8_t recvData(uint8_t buf[], uint8_t data_len);
 
     void send(uint8_t v);
 
@@ -94,17 +94,17 @@ public:
 class OneWireItem
 {
 public:
-    OneWireItem(byte ID1, byte ID2, byte ID3, byte ID4, byte ID5, byte ID6, byte ID7);
+    OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    byte ID[8];
+    uint8_t ID[8];
 
     virtual bool duty(OneWireHub *hub);
 
 #if ONEWIRESLAVE_CRC
 
-    static uint8_t crc8(byte addr[], uint8_t len);
+    static uint8_t crc8(uint8_t addr[], uint8_t len);
 
-    static uint16_t crc16(byte addr[], uint8_t len);
+    static uint16_t crc16(uint8_t addr[], uint8_t len);
 
 #endif
 };
