@@ -12,5 +12,6 @@ public:
 
     bool updateCRC();
 
-    void settemp(float temp);
+    void settemp(float temperature_decC);
+    void settemp(int16_t temperature_degC);
 };
