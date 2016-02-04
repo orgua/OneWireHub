@@ -2,14 +2,11 @@
 #include "DS2413.h"  // Dual channel addressable switch
 #include "TimerOne.h"
 
-#define BUTTON_PIN 2
-#define OneWire_PIN 8
-
-#define RelayTime 5
-
-OneWireHub *hub = 0;
+const uint8_t BUTTON_PIN    = 2;
+const uint8_t OneWire_PIN   = 8;
 
 int RelayCnt = 0;
+#define RelayTime 5
 
 class MovmentSensor : public DS2413
 {
@@ -29,12 +26,13 @@ void MovmentSensor::ReadState()
     // Serial.println( this->AState );
 }
 
-MovmentSensor *fMS;
+OneWireHub  hub = OneWireHub(OneWire_PIN); // pin D8
+DS2413      fMS = MovmentSensor(0x3A, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00);
 
 void setup()
 {
     // Debug
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     // Setup the button
     pinMode(BUTTON_PIN, INPUT);
@@ -44,12 +42,11 @@ void setup()
     attachInterrupt(0, DoRelay, FALLING);
 
     // Work - Dual channel addressable switch
-    fMS = new MovmentSensor(0x3A, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00);
+
 
     // Setup OneWire
-    hub = new OneWireHub(OneWire_PIN);
-    hub->elms[0] = fMS;
-    hub->calck_mask();
+    hub.elms[0] = &fMS;
+    hub.calck_mask();
 
     Timer1.initialize(1000000);
     Timer1.attachInterrupt(DoTimer);
@@ -58,7 +55,7 @@ void setup()
 void loop()
 {
     // put your main code here, to run repeatedly:
-    hub->waitForRequest(false);
+    hub.waitForRequest(false);
 }
 
 void DoRelay()

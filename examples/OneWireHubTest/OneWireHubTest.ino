@@ -1,19 +1,21 @@
 #include "OneWireHub.h"
 
-//#include "DS2401.h"  // Serial Number
+// include all libs to find errors
+#include "DS2401.h"  // Serial Number
 #include "DS18B20.h" // Digital Thermometer
-//#include "DS2405.h"  // Single adress switch
-//#include "DS2408.h"  // 8-Channel Addressable Switch
-//#include "DS2413.h"  // Dual channel addressable switch
-//#include "DS2423.h"  // 4kb 1-Wire RAM with Counter
-//#include "DS2433.h"  // 4Kb 1-Wire EEPROM
-//#include "DS2438.h"  // Smart Battery Monitor
+#include "DS2405.h"  // Single adress switch
+#include "DS2408.h"  // 8-Channel Addressable Switch
+#include "DS2413.h"  // Dual channel addressable switch
+#include "DS2423.h"  // 4kb 1-Wire RAM with Counter
+#include "DS2433.h"  // 4Kb 1-Wire EEPROM
+#include "DS2438.h"  // Smart Battery Monitor
 #include "DS2450.h"  // 4 channel A/D
-//#include "DS2890.h"  // Single channel digital potentiometer
+#include "DS2890.h"  // Single channel digital potentiometer
 
-const uint8_t ledPin = 13;         // the number of the LED pin
+const uint8_t led_PIN       = 13;         // the number of the LED pin
+const uint8_t OneWire_PIN   = 8;
 
-OneWireHub hub = OneWireHub(8); // pin D8
+OneWireHub  hub = OneWireHub(OneWire_PIN);
 DS18B20 ds18B20 = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);    // Work - Digital Thermometer
 DS2450  ds2450  = DS2450(0x20, 0x0D, 0x0A, 0x02, 0x04, 0x05, 0x00);    //      - 4 channel A/D
 
@@ -30,7 +32,7 @@ bool blinking()
         nextMillis = currentMillis + interval; // save the last time you blinked the LED
         if (ledState == LOW)    ledState = HIGH;
         else                    ledState = LOW;
-        digitalWrite(ledPin, ledState);
+        digitalWrite(led_PIN, ledState);
         return 1;
     }
     return 0;
