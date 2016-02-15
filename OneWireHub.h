@@ -1,5 +1,3 @@
-//#define DEBUG_hint
-
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #else
@@ -9,6 +7,12 @@
 #endif
 
 #include <inttypes.h>
+
+const bool dbg_CALCK    = 0; // give debug messages
+const bool dbg_SEARCH   = 0; // give debug messages
+const bool dbg_MATCHROM = 0; // give debug messages
+const bool dbg_HINT     = 0; // give debug messages for called unimplemented functions of sensors
+
 
 // You can exclude CRC checks altogether by defining this to 0
 #ifndef ONEWIRESLAVE_CRC

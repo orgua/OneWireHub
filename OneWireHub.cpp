@@ -3,15 +3,10 @@
 #include <Arduino.h>
 
 extern "C" {
-//#include "WConstants.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 }
-
-//#define DEBUG_CALCK
-//#define DEBUG_search
-//#define DEBUG_matchrom
 
 #define DIRECT_READ(base, mask)        (((*(base)) & (mask)) ? 1 : 0)
 #define DIRECT_MODE_INPUT(base, mask)  ((*(base+1)) &= ~(mask))
@@ -98,16 +93,16 @@ bool OneWireHub::waitForRequest(bool ignore_errors)
     }
 }
 
-int OneWireHub::calck_mask()
+int OneWireHub::calck_mask() // TODO: is CALCK is typo?
 {
 
-#ifdef DEBUG_CALCK
-    unsigned long time = micros();
-    Serial.print("Time: ");
-    Serial.println(time);
-#endif
+    if (dbg_CALCK)
+    {
+        Serial.print("Time: ");
+        Serial.println(micros());
+    }
 
-    byte Pos = 0;
+    uint8_t Pos = 0;
 
     // Zerro
     for (int i = 0; i < ONEWIREIDMAP_COUNT; i++)
@@ -118,20 +113,21 @@ int OneWireHub::calck_mask()
     }
 
     // Get elms mask
-    byte mask = 0x00;
+    uint8_t mask = 0x00;
     for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
     {
         if (this->elms[i] == NULL) continue;
         mask = mask | (1 << i);
     }
 
-#ifdef DEBUG_CALCK
-    Serial.print("Mask:");
-    Serial.println(mask, HEX);
-#endif
+    if (dbg_CALCK)
+    {
+        Serial.print("Mask:");
+        Serial.println(mask, HEX);
+    }
 
     // First data
-    byte stack[8][5]; // operate bit, set pos, Byte pos, byte mask, elms mask
+    uint8_t stack[8][5]; // operate bit, set pos, Byte pos, byte mask, elms mask
 
     // 0
     stack[0][0] = 0;    // bit
@@ -139,77 +135,79 @@ int OneWireHub::calck_mask()
     stack[0][2] = 0x00; // Pos
     stack[0][3] = 0x01; // Mask
     stack[0][4] = mask; // Elms mask
-    byte stackpos = 1;
+    uint8_t stackpos = 1;
 
     while (stackpos)
     {
         if (Pos >= ONEWIREIDMAP_COUNT) return 0;
 
-#ifdef DEBUG_CALCK
-        Serial.print("Pos=");
-        Serial.print(Pos);
-        Serial.print("\t");
+        if (dbg_CALCK)
+        {
+            Serial.print("Pos=");
+            Serial.print(Pos);
+            Serial.print("\t");
 
-        Serial.print("SLevel=");
-        Serial.print(stackpos);
-        Serial.print("\t");
-#endif
+            Serial.print("SLevel=");
+            Serial.print(stackpos);
+            Serial.print("\t");
+        }
 
         stackpos--;
 
         // Set last step jamp
-        byte spos = stack[stackpos][1];
-        byte BN = stack[stackpos][2];
-        byte BM = stack[stackpos][3];
-        byte mask = stack[stackpos][4];
+        uint8_t spos = stack[stackpos][1];
+        uint8_t BN = stack[stackpos][2];
+        uint8_t BM = stack[stackpos][3];
+        uint8_t mask = stack[stackpos][4];
 
         if (spos != 0xFF)
         {
 
             if (stack[stackpos][0])
             {
-#ifdef DEBUG_CALCK
-                Serial.print("OPos:1=");
-                Serial.print(spos);
-                Serial.print("->");
-                Serial.print(Pos);
-#endif
+                if (dbg_CALCK)
+                {
+                    Serial.print("OPos:1=");
+                    Serial.print(spos);
+                    Serial.print("->");
+                    Serial.print(Pos);
+                }
 
                 this->idmap1[spos] = Pos;
-            } else
+            }
+            else
             {
-#ifdef DEBUG_CALCK
-                Serial.print("OPos:0=");
-                Serial.print(spos);
-                Serial.print("->");
-                Serial.print(Pos);
-#endif
+                if (dbg_CALCK)
+                {
+                    Serial.print("OPos:0=");
+                    Serial.print(spos);
+                    Serial.print("->");
+                    Serial.print(Pos);
+                }
 
                 this->idmap0[spos] = Pos;
             }
         }
+        else if (dbg_CALCK) Serial.print("OPos:None");
 
-#ifdef DEBUG_CALCK
-        else {
-          Serial.print("OPos:None");
+        if (dbg_CALCK)
+        {
+            Serial.print("\t");
+            Serial.print("BN=");
+            Serial.print(BN);
+            Serial.print("\t");
+
+            Serial.print("BM=");
+            Serial.print(BM, HEX);
+            Serial.print("\t");
         }
-
-        Serial.print("\t");
-        Serial.print("BN=");
-        Serial.print(BN);
-        Serial.print("\t");
-
-        Serial.print("BM=");
-        Serial.print(BM, HEX);
-        Serial.print("\t");
-#endif
 
         // Div tree
         bool fl0 = FALSE;
         bool fl1 = FALSE;
-        byte mask1 = 0x00;
-        byte mask0 = 0x00;
-        byte elmmask = 0x01;
+        uint8_t mask1 = 0x00;
+        uint8_t mask0 = 0x00;
+        uint8_t elmmask = 0x01;
 
         for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
         {
@@ -243,23 +241,24 @@ int OneWireHub::calck_mask()
             }
         }
 
-#ifdef DEBUG_CALCK
-        Serial.print("\t");
-        Serial.print("Bit=");
-        Serial.print(this->bits[Pos]);
-        Serial.print("\t");
+        if (dbg_CALCK)
+        {
+            Serial.print("\t");
+            Serial.print("Bit=");
+            Serial.print(this->bits[Pos]);
+            Serial.print("\t");
 
-        Serial.print("mask0=");
-        Serial.print(mask0, HEX);
-        Serial.print("\t");
+            Serial.print("mask0=");
+            Serial.print(mask0, HEX);
+            Serial.print("\t");
 
-        Serial.print("mask1=");
-        Serial.print(mask1, HEX);
-        Serial.print("\t");
-#endif
+            Serial.print("mask1=");
+            Serial.print(mask1, HEX);
+            Serial.print("\t");
+        }
 
-        byte NBN = BN;
-        byte NBM = BM << 1;
+        uint8_t NBN = BN;
+        uint8_t NBM = BM << 1;
         if (!NBM)
         {
             NBN++;
@@ -272,10 +271,7 @@ int OneWireHub::calck_mask()
                 this->idmap1[Pos] = mask1;
 
                 Pos++;
-#ifdef DEBUG_CALCK
-                Serial.println();
-#endif
-
+                if (dbg_CALCK) Serial.println();
                 continue;
             }
         }
@@ -290,10 +286,7 @@ int OneWireHub::calck_mask()
             stack[stackpos][4] = mask0;
             stackpos++;
 
-#ifdef DEBUG_CALCK
-            Serial.print("ADD=0");
-            Serial.print("\t");
-#endif
+            if (dbg_CALCK) Serial.print("ADD=0\t");
         }
 
         // Tree 1
@@ -306,35 +299,30 @@ int OneWireHub::calck_mask()
             stack[stackpos][4] = mask1;
             stackpos++;
 
-#ifdef DEBUG_CALCK
-            Serial.print("ADD=1");
-            Serial.print("\t");
-#endif
+            if (dbg_CALCK) Serial.print("ADD=1\t");
         }
 
-#ifdef DEBUG_CALCK
-        Serial.println();
-#endif
-
+        if (dbg_CALCK) Serial.println();
         Pos++;
     }
 
-#ifdef DEBUG_CALCK
-    time = micros();
-    Serial.print("Time: ");
-    Serial.println(time);
+    if (dbg_CALCK)
+    {
+        Serial.print("Time: ");
+        Serial.println(micros());
 
-    for (int i = 0; i<ONEWIREIDMAP_COUNT; i++){
-      Serial.print(i);
-      Serial.print("\t");
-      Serial.print(this->bits[i]);
-      Serial.print("\t");
-      Serial.print(this->idmap0[i]);
-      Serial.print("\t");
-      Serial.print(this->idmap1[i]);
-      Serial.println();
+        for (int i = 0; i < ONEWIREIDMAP_COUNT; i++)
+        {
+            Serial.print(i);
+            Serial.print("\t");
+            Serial.print(this->bits[i]);
+            Serial.print("\t");
+            Serial.print(this->idmap0[i]);
+            Serial.print("\t");
+            Serial.print(this->idmap1[i]);
+            Serial.println();
+        }
     }
-#endif
 
     return Pos;
 }
@@ -508,25 +496,19 @@ bool OneWireHub::search()
             if (errno != ONEWIRE_NO_ERROR) return FALSE;
 
             // Get next elm
-            if (bit_recv)
-            {
-                //Serial.print("1:");
-                n = this->idmap1[n];
-            } else
-            {
-                //Serial.print("0:");
-                n = this->idmap0[n];
-            }
+            if (bit_recv)  n = this->idmap1[n]; // got a 1
+            else           n = this->idmap0[n]; // got a 0
 
             // Test not found
             if (n == 0)
             {
-#ifdef DEBUG_search
-                Serial.print("Not found-");
-                Serial.print(i);
-                Serial.print(",");
-                Serial.println(bitmask, HEX);
-#endif
+                if (dbg_SEARCH)
+                {
+                    Serial.print("Not found-");
+                    Serial.print(i);
+                    Serial.print(",");
+                    Serial.println(bitmask, HEX);
+                }
                 return FALSE;
             }
         }
@@ -535,17 +517,18 @@ bool OneWireHub::search()
     for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
         if (i == (1 << i)) this->SelectElm = elms[i];
 
-#ifdef DEBUG_search
-    Serial.print("Found-");
-    Serial.println(n);
-#endif
+    if (dbg_SEARCH)
+    {
+        Serial.print("Found-");
+        Serial.println(n);
+    }
 
     return TRUE;
 }
 
 bool OneWireHub::recvAndProcessCmd()
 {
-    byte addr[8];
+    uint8_t addr[8];
     bool flag;
 
     for (; ;)
@@ -587,10 +570,11 @@ bool OneWireHub::recvAndProcessCmd()
                     {
                         this->SelectElm = elms[i];
 
-#ifdef DEBUG_matchrom
-                        Serial.print("MATCH ROM=");
-                        Serial.println(i);
-#endif
+                        if (dbg_MATCHROM)
+                        {
+                            Serial.print("MATCH ROM=");
+                            Serial.println(i);
+                        }
 
                         break;
                     }
@@ -619,7 +603,7 @@ bool OneWireHub::recvAndProcessCmd()
     }
 }
 
-uint8_t OneWireHub::sendData(byte buf[], uint8_t len)
+uint8_t OneWireHub::sendData(uint8_t buf[], uint8_t len)
 {
     uint8_t bytes_sended = 0;
 
@@ -633,7 +617,7 @@ uint8_t OneWireHub::sendData(byte buf[], uint8_t len)
     return bytes_sended;
 }
 
-uint8_t OneWireHub::recvData(byte buf[], uint8_t len)
+uint8_t OneWireHub::recvData(uint8_t buf[], uint8_t len)
 {
     uint8_t bytes_received = 0;
 

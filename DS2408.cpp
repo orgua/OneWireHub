@@ -67,10 +67,11 @@ bool DS2408::duty(OneWireHub *hub)
             break;
 
         default:
-#ifdef DEBUG_hint
-            Serial.print("DS2408=");
-            Serial.println(done, HEX);
-#endif
+            if (dbg_HINT)
+            {
+                Serial.print("DS2408=");
+                Serial.println(done, HEX);
+            }
             return FALSE;
     }
 

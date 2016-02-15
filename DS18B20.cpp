@@ -66,10 +66,11 @@ bool DS18B20::duty(OneWireHub *hub)
             //  write trim1               0x95
 
         default:
-#ifdef DEBUG_hint
-            Serial.print("DS18B20=");
-            Serial.println(done, HEX);
-#endif
+            if (dbg_HINT)
+            {
+                Serial.print("DS18B20=");
+                Serial.println(done, HEX);
+            }
             break;
     }
 

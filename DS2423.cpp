@@ -1,7 +1,7 @@
 #include "OneWireHub.h"
 #include "DS2423.h"
 
-#define DEBUG_DS2423
+const bool dbg_DS2423 = 0; // give debug messages for this sensor
 
 DS2423::DS2423(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
@@ -74,18 +74,20 @@ bool DS2423::duty(OneWireHub *hub)
             hub->send(((uint8_t *) &crc)[1]);
             ow_crc16_reset();
 
-#ifdef DEBUG_DS2423
-            Serial.print("DS2423 : Read Memory + Counter : ");
-            Serial.println(memory_address_start, HEX);
-#endif
+            if (dbg_DS2423)
+            {
+                Serial.print("DS2423 : Read Memory + Counter : ");
+                Serial.println(memory_address_start, HEX);
+            }
 
             break;
 
         default:
-#ifdef DEBUG_hint
-            Serial.print("DS2423=");
-            Serial.println(done, HEX);
-#endif
+            if (dbg_HINT)
+            {
+                Serial.print("DS2423=");
+                Serial.println(done, HEX);
+            }
             break;
     }
 

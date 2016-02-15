@@ -1,7 +1,7 @@
 #include "OneWireHub.h"
 #include "DS2438.h"
 
-#define DEBUG_DS2438
+const bool dbg_DS2438 = 0; // give debug messages for this sensor
 
 static uint8_t MemDS2438[64] =
         {
@@ -59,10 +59,7 @@ bool DS2438::duty(OneWireHub *hub)
         // Convert T
         case 0x44:
             //hub->sendBit(1);
-
-#ifdef DEBUG_DS2438
-            Serial.println("DS2438 : Convert T");
-#endif
+            if (dbg_DS2438) Serial.println("DS2438 : Convert T");
             break;
 
             // Write Scratchpad
@@ -72,19 +69,17 @@ bool DS2438::duty(OneWireHub *hub)
 
             hub->recvData(&this->memory[page * 8], 8);
 
-#ifdef DEBUG_DS2438
-            Serial.print("DS2438 : Write Scratchpad - Page:");
-            Serial.println(page, HEX);
-#endif
+            if (dbg_DS2438)
+            {
+                Serial.print("DS2438 : Write Scratchpad - Page:");
+                Serial.println(page, HEX);
+            }
             break;
 
             // Convert V
         case 0xB4:
             //hub->sendBit(1);
-
-#ifdef DEBUG_DS2438
-            Serial.println("DS2438 : Convert V");
-#endif
+            if (dbg_DS2438) Serial.println("DS2438 : Convert V");
             break;
 
             // Recall Memory
@@ -92,10 +87,11 @@ bool DS2438::duty(OneWireHub *hub)
             // page
             page = hub->recv();
 
-#ifdef DEBUG_DS2438
-            Serial.print("DS2438 : Recall Memory - Page:");
-            Serial.println(page, HEX);
-#endif
+            if (dbg_DS2438)
+            {
+                Serial.print("DS2438 : Recall Memory - Page:");
+                Serial.println(page, HEX);
+            }
             break;
 
             // Read Scratchpad
@@ -111,17 +107,19 @@ bool DS2438::duty(OneWireHub *hub)
             hub->sendData(&this->memory[page * 8], 8);
             hub->send(crc);
 
-#ifdef DEBUG_DS2438
-            Serial.print("DS2438 : Read Scratchpad - Page:");
-            Serial.println(page, HEX);
-#endif
+            if (dbg_DS2438)
+            {
+                Serial.print("DS2438 : Read Scratchpad - Page:");
+                Serial.println(page, HEX);
+            }
             break;
 
         default:
-#ifdef DEBUG_hint
-            Serial.print("DS2438=");
-            Serial.println(done, HEX);
-#endif
+            if (dbg_HINT)
+            {
+                Serial.print("DS2438=");
+                Serial.println(done, HEX);
+            }
             break;
     }
 }
