@@ -26,8 +26,8 @@ void MovmentSensor::ReadState()
     // Serial.println( this->AState );
 }
 
-OneWireHub  hub = OneWireHub(OneWire_PIN); // pin D8
-DS2413      fMS = MovmentSensor(0x3A, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00);
+OneWireHub  hub     = OneWireHub(OneWire_PIN); // pin D8
+auto        sensor  = MovmentSensor(0x3A, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00);
 
 void setup()
 {
@@ -44,8 +44,7 @@ void setup()
     // Work - Dual channel addressable switch
 
     // Setup OneWire
-    hub.elms[0] = &fMS;
-    hub.calck_mask();
+    hub.attach(sensor);
 
     Timer1.initialize(1000000);
     Timer1.attachInterrupt(DoTimer);
