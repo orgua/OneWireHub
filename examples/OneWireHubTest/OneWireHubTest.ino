@@ -16,7 +16,8 @@ const uint8_t led_PIN       = 13;         // the number of the LED pin
 const uint8_t OneWire_PIN   = 8;
 
 OneWireHub  hub = OneWireHub(OneWire_PIN);
-DS18B20 ds18B20 = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);    // Work - Digital Thermometer
+DS18B20 ds18B20 = DS18B20(0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);    // Work - Digital Thermometer
+DS18B20 ds18B21 = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);
 DS2450  ds2450  = DS2450(0x20, 0x0D, 0x0A, 0x02, 0x04, 0x05, 0x00);    //      - 4 channel A/D
 
 bool blinking()
@@ -42,9 +43,10 @@ void setup()
 {
     // Debug
     Serial.begin(115200);
-
+    Serial.println("OneWire-Hub-Test");
     // put your setup code here, to run once:
     hub.elms[0] = &ds18B20;
+    hub.elms[1] = &ds18B21;
 //  hub->elms[0] = new DS18B20( 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Digital Thermometer  
 //  hub->elms[1] = new DS2401 ( 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Serial Number
 //  hub->elms[2] = new DS2405(  0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - Single adress switch
@@ -52,7 +54,7 @@ void setup()
 //  hub->elms[4] = new DS2413(  0x3A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Dual channel addressable switch
 //  hub->elms[5] = new DS2423(  0x1D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
 //  hub->elms[6] = new DS2433(  0x23, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
-    hub.elms[1] = &ds2450;
+    hub.elms[2] = &ds2450;
 //  hub->elms[0] = new DS2450(  0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4 channel A/D
 //  hub->elms[1] = new DS2890(  0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Single channel digital panemtiometer
 
@@ -68,10 +70,12 @@ void loop()
     if (blinking())
     {
         // DS18B20
-        static float temperature = 20;
+        static float temperature = 20.0;
         temperature += 0.1;
-        if (temperature > 40) temperature = 10;
-        ds18B20.settemp(temperature);
+        if (temperature > 40.0) temperature = 10.0;
+        ds18B20.settemp(10.0);
+        ds18B21.settemp(temperature);
+        Serial.println(temperature);
         // DS2450
         static uint16_t p1, p2, p3, p4;
         p1 +=1;
