@@ -13,39 +13,33 @@ const bool dbg_SEARCH   = 0; // give debug messages
 const bool dbg_MATCHROM = 0; // give debug messages
 const bool dbg_HINT     = 0; // give debug messages for called unimplemented functions of sensors
 
-// You can exclude CRC checks altogether by defining this to 0
-#ifndef ONEWIRESLAVE_CRC
-#define ONEWIRESLAVE_CRC 1
-#endif
-
-#ifndef ONEWIRESLAVE_CRC8_TABLE
-#define ONEWIRESLAVE_CRC8_TABLE 0
-#endif
-
 static const uint8_t ONEWIRESLAVE_COUNT = 8;
 static const int ONEWIREIDMAP_COUNT = 256;
 
 #define FALSE 0
 #define TRUE  1
 
-#define ONEWIRE_NO_ERROR 0
-#define ONEWIRE_READ_TIMESLOT_TIMEOUT 1
-#define ONEWIRE_WRITE_TIMESLOT_TIMEOUT 2
-#define ONEWIRE_WAIT_RESET_TIMEOUT 3
-#define ONEWIRE_VERY_LONG_RESET 4
-#define ONEWIRE_VERY_SHORT_RESET 5
-#define ONEWIRE_PRESENCE_LOW_ON_LINE 6
-#define ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW 7
-#define ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH 8
+
 
 class OneWireItem;
 
 class OneWireHub
 {
 private:
+
+    static const uint8_t ONEWIRE_NO_ERROR                   = 0;
+    static const uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT      = 1;
+    static const uint8_t ONEWIRE_WRITE_TIMESLOT_TIMEOUT     = 2;
+    static const uint8_t ONEWIRE_WAIT_RESET_TIMEOUT         = 3;
+    static const uint8_t ONEWIRE_VERY_LONG_RESET            = 4;
+    static const uint8_t ONEWIRE_VERY_SHORT_RESET           = 5;
+    static const uint8_t ONEWIRE_PRESENCE_LOW_ON_LINE       = 6;
+    static const uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW  = 7;
+    static const uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH = 8;
+
     uint8_t pin_bitmask;
     uint8_t slave_count;
-
+    uint8_t errno;
     volatile uint8_t *baseReg;
 
     uint8_t bits[ONEWIREIDMAP_COUNT];
@@ -97,7 +91,12 @@ public:
 
     uint8_t recvBit(void);
 
-    uint8_t errno;
+    bool error(void)
+    {
+        if (errno == ONEWIRE_NO_ERROR) return 0;
+        return 1;
+    };
+
 };
 
 class OneWireItem
@@ -109,13 +108,9 @@ public:
 
     virtual bool duty(OneWireHub *hub) = 0;
 
-#if ONEWIRESLAVE_CRC
-
     static uint8_t crc8(uint8_t addr[], uint8_t len);
 
     static uint16_t crc16(uint8_t addr[], uint8_t len);
-
-#endif
 };
 
 void ow_crc16_reset(void);
