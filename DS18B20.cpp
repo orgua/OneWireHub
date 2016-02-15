@@ -1,7 +1,7 @@
 #include "OneWireHub.h"
 #include "DS18B20.h"
 
-//#define DEBUG_DS18B20
+const bool dbg_DS18B20 = 0; // give debug messages for this sensor
 
 //=================== DS18S20 ==========================================
 DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
@@ -31,43 +31,31 @@ bool DS18B20::duty(OneWireHub *hub)
     {
         case 0x44: // CONVERT T
             hub->sendBit(1);
-#ifdef DEBUG_DS18B20
-            Serial.println("DS18B20 : CONVERT T");
-#endif
+            if (dbg_DS18B20) Serial.println("DS18B20 : CONVERT T");
             break;
 
         case 0x4E: // WRITE SCRATCHPAD
-#ifdef DEBUG_DS18B20
-            Serial.println("DS18B20 : WRITE SCRATCHPAD");
-#endif
+            if (dbg_DS18B20) Serial.println("DS18B20 : WRITE SCRATCHPAD");
             break;
 
         case 0xBE: // READ SCRATCHPAD
             hub->sendData(this->scratchpad, 9);
             if (hub->errno != ONEWIRE_NO_ERROR) return FALSE;
-#ifdef DEBUG_DS18B20
-            Serial.println("DS18B20 : READ SCRATCHPAD");
-#endif
+            if (dbg_DS18B20) Serial.println("DS18B20 : READ SCRATCHPAD");
             break;
 
         case 0x48: // COPY SCRATCHPAD
-#ifdef DEBUG_DS18B20
-            Serial.println("DS18B20 : COPY SCRATCHPAD");
-#endif
+            if (dbg_DS18B20) Serial.println("DS18B20 : COPY SCRATCHPAD");
             break;
 
         case 0xB8: // RECALL E2
             hub->sendBit(1);
-#ifdef DEBUG_DS18B20
-            Serial.println("DS18B20 : RECALL E2");
-#endif
+            if (dbg_DS18B20) Serial.println("DS18B20 : RECALL E2");
             break;
 
         case 0xB4: // READ POWERSUPPLY
             hub->sendBit(1);
-#ifdef DEBUG_DS18B20
-            Serial.println("DS18B20 : READ POWERSUPPLY");
-#endif
+            if (dbg_DS18B20) Serial.println("DS18B20 : READ POWERSUPPLY");
             break;
 
             //  write trim2               0x63
