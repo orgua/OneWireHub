@@ -14,10 +14,11 @@ bool DS2401::duty(OneWireHub *hub)
     switch (done)
     {
         default:
-#ifdef DEBUG_hint
-            Serial.print("DS2401=");
-            Serial.println(done, HEX);
-#endif
+            if (dbg_HINT)
+            {
+                Serial.print("DS2401=");
+                Serial.println(done, HEX);
+            }
             break;
     }
 }

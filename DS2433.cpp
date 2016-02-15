@@ -1,7 +1,7 @@
 #include "OneWireHub.h"
 #include "DS2433.h"
 
-#define DEBUG_DS2433
+const bool dbg_DS2433 = 0; // give debug messages for this sensor
 
 DS2433::DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
@@ -36,10 +36,11 @@ bool DS2433::duty(OneWireHub *hub)
                 if (hub->errno) break;
             }
 
-#ifdef DEBUG_DS2433
-            Serial.print("DS2433 : WRITE SCRATCHPAD COMMAND : ");
-            Serial.println(memory_address, HEX);
-#endif
+            if (dbg_DS2433)
+            {
+                Serial.print("DS2433 : WRITE SCRATCHPAD COMMAND : ");
+                Serial.println(memory_address, HEX);
+            }
 
             break;
 
@@ -56,12 +57,13 @@ bool DS2433::duty(OneWireHub *hub)
             // Offset
             mem_offset = hub->recv();
 
-#ifdef DEBUG_DS2433
-            Serial.print("DS2433 : READ SCRATCHPAD COMMAND : ");
-            Serial.print(memory_address, HEX);
-            Serial.print(",");
-            Serial.println(mem_offset, HEX);
-#endif
+            if (dbg_DS2433)
+            {
+                Serial.print("DS2433 : READ SCRATCHPAD COMMAND : ");
+                Serial.print(memory_address, HEX);
+                Serial.print(",");
+                Serial.println(mem_offset, HEX);
+            }
 
             break;
 
@@ -79,18 +81,20 @@ bool DS2433::duty(OneWireHub *hub)
             for (int i = 0; i < 32; i++)
                 hub->send(this->memory[memory_address + i]);
 
-#ifdef DEBUG_DS2433
-            Serial.print("DS2433 : READ MEMORY : ");
-            Serial.println(memory_address, HEX);
-#endif
+            if (dbg_DS2433)
+            {
+                Serial.print("DS2433 : READ MEMORY : ");
+                Serial.println(memory_address, HEX);
+            }
 
             break;
 
         default:
-#ifdef DEBUG_hint
-            Serial.print("DS2433=");
-            Serial.println(done, HEX);
-#endif
+            if (dbg_HINT)
+            {
+                Serial.print("DS2433=");
+                Serial.println(done, HEX);
+            }
             break;
     }
 }

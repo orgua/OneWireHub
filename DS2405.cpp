@@ -17,10 +17,11 @@ bool DS2405::duty(OneWireHub *hub)
         // Active-Only Search ROM
         // EC - @@@
         default:
-#ifdef DEBUG_hint
-            Serial.print("DS2405=");
-            Serial.println(done, HEX); // 00 - Set ON
-#endif
+            if (dbg_HINT)
+            {
+                Serial.print("DS2405=");
+                Serial.println(done, HEX); // 00 - Set ON
+            }
             break;
     }
 }

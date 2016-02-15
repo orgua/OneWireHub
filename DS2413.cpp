@@ -1,7 +1,7 @@
 #include "OneWireHub.h"
 #include "DS2413.h"
 
-//#define DEBUG_DS2413
+const bool dbg_DS2413 = 0; // give debug messages for this sensor
 
 DS2413::DS2413(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
@@ -29,10 +29,11 @@ bool DS2413::duty(OneWireHub *hub)
             this->ALatch = data & 0x01;
             this->BLatch = data & 0x02;
 
-#ifdef DEBUG_DS2413
-        Serial.print("DS2413 : PIO WRITE  : 5A = ");
-        Serial.println(data, HEX);
-#endif
+            if (dbg_DS2413)
+            {
+                Serial.print("DS2413 : PIO WRITE  : 5A = ");
+                Serial.println(data, HEX);
+            }
 
             this->ChangePIO();
 
@@ -51,18 +52,20 @@ bool DS2413::duty(OneWireHub *hub)
             data = data | (~data << 4);
             hub->send(data);
 
-#ifdef DEBUG_DS2413
-        Serial.print("DS2413 : PIO ACCESS READ : F5 = ");
-        Serial.println(data, HEX);
-#endif
+            if (dbg_DS2413)
+            {
+                Serial.print("DS2413 : PIO ACCESS READ : F5 = ");
+                Serial.println(data, HEX);
+            }
 
             break;
 
         default:
-#ifdef DEBUG_hint
-            Serial.print("DS2413=");
-            Serial.println(done, HEX);
-#endif
+            if (dbg_HINT)
+            {
+                Serial.print("DS2413=");
+                Serial.println(done, HEX);
+            }
             break;
     }
 
