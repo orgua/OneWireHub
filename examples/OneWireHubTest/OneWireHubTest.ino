@@ -16,9 +16,17 @@ const uint8_t led_PIN       = 13;         // the number of the LED pin
 const uint8_t OneWire_PIN   = 8;
 
 OneWireHub  hub = OneWireHub(OneWire_PIN);
-DS18B20 ds18B20 = DS18B20(0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);    // Work - Digital Thermometer
-DS18B20 ds18B21 = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);
-DS2450  ds2450  = DS2450 (0x20, 0x0D, 0x0A, 0x02, 0x04, 0x05, 0x00);    //      - 4 channel A/D
+auto ds18B20a = DS18B20(0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);      // Work - Digital Thermometer
+auto ds18B20b = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);
+// auto ds2401 = DS2401 ( 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Serial Number
+// auto ds2405 = DS2405(  0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - Single adress switch
+// auto ds2408 = DS2408(  0x29, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 8-Channel Addressable Switch
+// auto ds2413 = DS2413(  0x3A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Dual channel addressable switch
+// auto ds2423 = DS2423(  0x1D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
+// auto ds2433 = DS2433(  0x23, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
+auto ds2450   = DS2450 (0x20, 0x0D, 0x0A, 0x02, 0x04, 0x05, 0x00);      //      - 4 channel A/D
+// auto ds2890 = DS2890(  0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Single channel digital panemtiometer
+
 
 bool blinking()
 {
@@ -44,19 +52,11 @@ void setup()
     // Debug
     Serial.begin(115200);
     Serial.println("OneWire-Hub Test with various Sensors");
+
     // put your setup code here, to run once:
-    hub.elms[0] = &ds18B20;
-    hub.elms[1] = &ds18B21;
-//  hub->elms[0] = new DS18B20( 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Digital Thermometer  
-//  hub->elms[1] = new DS2401 ( 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Serial Number
-//  hub->elms[2] = new DS2405(  0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - Single adress switch
-//  hub->elms[3] = new DS2408(  0x29, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 8-Channel Addressable Switch
-//  hub->elms[4] = new DS2413(  0x3A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Dual channel addressable switch
-//  hub->elms[5] = new DS2423(  0x1D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
-//  hub->elms[6] = new DS2433(  0x23, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
+    hub.elms[0] = &ds18B20a;
+    hub.elms[1] = &ds18B20b;
     hub.elms[2] = &ds2450;
-//  hub->elms[0] = new DS2450(  0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4 channel A/D
-//  hub->elms[1] = new DS2890(  0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Single channel digital panemtiometer
 
     Serial.println(hub.calck_mask());
     Serial.println("config done");
@@ -74,9 +74,10 @@ void loop()
         static float temperature = 20.0;
         temperature += 0.1;
         if (temperature > 40.0) temperature = 10.0;
-        ds18B20.setTemp(static_cast<float>(10.0));
-        ds18B21.setTemp(temperature);
+        ds18B20a.setTemp(21);
+        ds18B20b.setTemp(temperature);
         Serial.println(temperature);
+
         // DS2450
         static uint16_t p1, p2, p3, p4;
         p1 +=1;
