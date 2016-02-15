@@ -143,7 +143,7 @@ bool    OneWireHub::detach(const uint8_t slave_number)
     if (!slave_count)
         return 0;
 
-    elms[slave_number] == nullptr;
+    elms[slave_number] = nullptr;
     slave_count--;
     calck_mask();
     return 1;
@@ -174,7 +174,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
     for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
     {
         if (this->elms[i] == nullptr) continue;
-        mask = mask | (1 << i);
+        mask = mask | static_cast<uint8_t>(1 << i);
     }
 
     if (dbg_CALCK)

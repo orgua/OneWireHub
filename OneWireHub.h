@@ -1,9 +1,7 @@
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #else
-
 #include "WProgram.h"
-
 #endif
 
 #include <inttypes.h>
@@ -13,19 +11,17 @@ const bool dbg_SEARCH   = 0; // give debug messages
 const bool dbg_MATCHROM = 0; // give debug messages
 const bool dbg_HINT     = 0; // give debug messages for called unimplemented functions of sensors
 
-static const uint8_t ONEWIRESLAVE_COUNT = 8;
-static const int ONEWIREIDMAP_COUNT = 256;
-
 #define FALSE 0
 #define TRUE  1
-
-
 
 class OneWireItem;
 
 class OneWireHub
 {
 private:
+
+    static const uint8_t  ONEWIRESLAVE_COUNT                = 8;
+    static const uint16_t ONEWIREIDMAP_COUNT                = 256;
 
     static const uint8_t ONEWIRE_NO_ERROR                   = 0;
     static const uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT      = 1;
@@ -46,6 +42,8 @@ private:
     uint8_t idmap0[ONEWIREIDMAP_COUNT];
     uint8_t idmap1[ONEWIREIDMAP_COUNT];
 
+    OneWireItem *elms[ONEWIRESLAVE_COUNT];  // TODO: make it private (use attach/detach)
+
     OneWireItem *SelectElm;
 
     bool recvAndProcessCmd();
@@ -54,12 +52,11 @@ private:
 
     uint8_t waitTimeSlotRead();
 
-    int AnalizIds(uint8_t Pos, uint8_t BN, uint8_t BM, uint8_t mask);
+    //int AnalizIds(uint8_t Pos, uint8_t BN, uint8_t BM, uint8_t mask);
 
 public:
-    OneWireHub(uint8_t pin);
 
-    OneWireItem *elms[ONEWIRESLAVE_COUNT];  // TODO: make it private (use attach/detach)
+    OneWireHub(uint8_t pin);
 
     uint8_t attach(OneWireItem &sensor);
     bool    detach(const OneWireItem &sensor);
