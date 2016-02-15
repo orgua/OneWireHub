@@ -33,7 +33,7 @@ bool DS2433::duty(OneWireHub *hub)
             for (int i = 0; i < 32; i++)
             {
                 hub->send(this->memory[memory_address + i]);
-                if (hub->errno) break;
+                if (hub->error()) break;
             }
 
             if (dbg_DS2433)
