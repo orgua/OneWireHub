@@ -53,11 +53,11 @@ void setup()
     Serial.println("OneWire-Hub Test with various Sensors");
 
     // put your setup code here, to run once:
-    hub.attach(ds18B20a);
+    //hub.attach(ds18B20a); // TODO: you can only instatiate one of each sensors??
     hub.attach(ds18B20b);
     hub.attach(ds2401);
     hub.attach(ds2413);
-    hub.attach(ds2450);
+    //hub.attach(ds2450); // TODO: still breaks the communication
     hub.attach(ds2890);
     Serial.println(hub.calck_mask());
     Serial.println("config done");
@@ -75,7 +75,7 @@ void loop()
         static float temperature = 20.0;
         temperature += 0.1;
         if (temperature > 40.0) temperature = 10.0;
-        ds18B20a.setTemp(21);
+        //ds18B20a.setTemp(21);
         ds18B20b.setTemp(temperature);
         Serial.println(temperature);
 
