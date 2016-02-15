@@ -18,7 +18,7 @@ const uint8_t OneWire_PIN   = 8;
 OneWireHub  hub = OneWireHub(OneWire_PIN);
 DS18B20 ds18B20 = DS18B20(0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);    // Work - Digital Thermometer
 DS18B20 ds18B21 = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);
-DS2450  ds2450  = DS2450(0x20, 0x0D, 0x0A, 0x02, 0x04, 0x05, 0x00);    //      - 4 channel A/D
+DS2450  ds2450  = DS2450 (0x20, 0x0D, 0x0A, 0x02, 0x04, 0x05, 0x00);    //      - 4 channel A/D
 
 bool blinking()
 {
@@ -43,7 +43,7 @@ void setup()
 {
     // Debug
     Serial.begin(115200);
-    Serial.println("OneWire-Hub-Test");
+    Serial.println("OneWire-Hub Test with various Sensors");
     // put your setup code here, to run once:
     hub.elms[0] = &ds18B20;
     hub.elms[1] = &ds18B21;
@@ -59,6 +59,7 @@ void setup()
 //  hub->elms[1] = new DS2890(  0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Single channel digital panemtiometer
 
     Serial.println(hub.calck_mask());
+    Serial.println("config done");
 }
 
 void loop()

@@ -33,7 +33,7 @@ void setup()
 {
     // Debug
     Serial.begin(115200);
-
+    Serial.println("OneWire-Hub Movement-Sensor DS2413");
     // Setup the button
     pinMode(BUTTON_PIN, INPUT);
     // Activate internal pull-up
@@ -43,13 +43,14 @@ void setup()
 
     // Work - Dual channel addressable switch
 
-
     // Setup OneWire
     hub.elms[0] = &fMS;
     hub.calck_mask();
 
     Timer1.initialize(1000000);
     Timer1.attachInterrupt(DoTimer);
+
+    Serial.println("config done");
 }
 
 void loop()
