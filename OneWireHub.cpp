@@ -20,7 +20,7 @@ extern "C" {
 //--- CRC 16 ---
 static uint16_t crc16;
 
-void ow_crc16_reset()
+void ow_crc16_reset(void)
 {
     crc16 = 0;
 }
@@ -38,7 +38,7 @@ void ow_crc16_update(uint8_t b)
     }
 }
 
-uint16_t ow_crc16_get()
+uint16_t ow_crc16_get(void)
 {
     return crc16;
 }
@@ -93,7 +93,7 @@ bool OneWireHub::waitForRequest(bool ignore_errors)
     }
 }
 
-int OneWireHub::calck_mask() // TODO: is CALCK is typo?
+int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
 {
 
     if (dbg_CALCK)
@@ -391,7 +391,7 @@ bool OneWireHub::waitReset(uint16_t timeout_ms)
     return TRUE;
 }
 
-bool OneWireHub::waitReset()
+bool OneWireHub::waitReset(void)
 {
     return waitReset(1000);
 }
@@ -443,12 +443,12 @@ bool OneWireHub::presence(uint8_t delta)
 //        return TRUE;
 }
 
-bool OneWireHub::presence()
+bool OneWireHub::presence(void)
 {
     return presence(25);
 }
 
-bool OneWireHub::search()
+bool OneWireHub::search(void)
 {
     uint8_t bitmask;
     uint8_t bit_recv;
@@ -526,7 +526,7 @@ bool OneWireHub::search()
     return TRUE;
 }
 
-bool OneWireHub::recvAndProcessCmd()
+bool OneWireHub::recvAndProcessCmd(void)
 {
     uint8_t addr[8];
     bool flag;
@@ -638,7 +638,7 @@ void OneWireHub::send(uint8_t v)
         sendBit((bitmask & v) ? 1 : 0);
 }
 
-uint8_t OneWireHub::recv()
+uint8_t OneWireHub::recv(void)
 {
     uint8_t r = 0;
 
@@ -715,7 +715,7 @@ uint8_t OneWireHub::recvBit(void)
     return r;
 }
 
-uint8_t OneWireHub::waitTimeSlot()
+uint8_t OneWireHub::waitTimeSlot(void)
 {
     uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;

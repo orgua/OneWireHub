@@ -27,7 +27,7 @@ DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     for (int i = 0; i < sizeof(this->memory); i++)
         this->memory[i] = MemDS2438[i]; // 0x00;
 
-    SetTemp(80);
+    setTemp(80);
 /*
   // Flags  
   this->memory[0] = DS2438_IAD | DS2438_CA | DS2438_EE | DS2438_AD;
@@ -124,7 +124,7 @@ bool DS2438::duty(OneWireHub *hub)
     }
 }
 
-void DS2438::SetTemp(float temp)
+void DS2438::setTemp(float temp)
 {
     memory[1] = uint8_t(256 * ((temp - (int) temp) * 100) / 100);
     memory[2] = round(abs(floor(temp)));
@@ -133,13 +133,13 @@ void DS2438::SetTemp(float temp)
     { memory[2] = memory[2] | 0x80; }
 }
 
-void DS2438::SetVolt(word val)
+void DS2438::setVolt(word val)
 {
     memory[3] = uint8_t(val);
     memory[4] = uint8_t(val >> 8);
 }
 
-void DS2438::SetCurr(word val)
+void DS2438::setCurr(word val)
 {
     memory[5] = uint8_t(val);
     memory[6] = uint8_t(val >> 8);

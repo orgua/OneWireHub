@@ -74,8 +74,8 @@ void loop()
         static float temperature = 20.0;
         temperature += 0.1;
         if (temperature > 40.0) temperature = 10.0;
-        ds18B20.settemp(static_cast<float>(10.0));
-        ds18B21.settemp(temperature);
+        ds18B20.setTemp(static_cast<float>(10.0));
+        ds18B21.setTemp(temperature);
         Serial.println(temperature);
         // DS2450
         static uint16_t p1, p2, p3, p4;
