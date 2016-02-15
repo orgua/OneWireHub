@@ -1,0 +1,60 @@
+#######################################
+# Syntax Coloring Map For OneWire
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+OneWireHub	KEYWORD1
+DS2401	KEYWORD1
+DS18B20	KEYWORD1
+DS2405	KEYWORD1
+DS2408	KEYWORD1
+DS2413	KEYWORD1
+DS2423	KEYWORD1
+DS2433	KEYWORD1
+DS2438	KEYWORD1
+DS2450	KEYWORD1
+DS2890	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+calck_mask	KEYWORD2
+waitForRequest	KEYWORD2
+waitReset	KEYWORD2
+presence	KEYWORD2
+search	KEYWORD2
+sendData	KEYWORD2
+recvData	KEYWORD2
+send	KEYWORD2
+recv	KEYWORD2
+sendBit	KEYWORD2
+recvBit	KEYWORD2
+
+duty	KEYWORD2
+crc8	KEYWORD2
+crc16	KEYWORD2
+
+updateCRC	KEYWORD2
+setTemp	KEYWORD2
+
+ReadState	KEYWORD2
+ChangePIO	KEYWORD2
+
+setTemp	KEYWORD2
+setVolt	KEYWORD2
+setCurr	KEYWORD2
+
+setPotentiometer	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
