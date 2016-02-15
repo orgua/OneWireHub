@@ -89,19 +89,19 @@ bool DS18B20::duty(OneWireHub *hub)
 }
 
 
-void DS18B20::settemp(float temperature_decC)
+void DS18B20::settemp(float temperature_degC)
 {
     word ret = 0;
-    bool Neg = temperature_decC < 0;
-    temperature_decC = abs(temperature_decC);
-    ret = round(floor(temperature_decC)) << 4;
+    bool Neg = temperature_degC < 0;
+    temperature_degC = abs(temperature_degC);
+    ret = round(floor(temperature_degC)) << 4;
 
     if (Neg)
     {
         ret = ret | 0x8000;
     }
 
-    ret = ret | uint8_t(16 * ((temperature_decC - (int) temperature_decC) * 100) / 100);
+    ret = ret | uint8_t(16 * ((temperature_degC - (int) temperature_degC) * 100) / 100);
 
     this->scratchpad[0] = uint8_t(ret);
     this->scratchpad[1] = uint8_t(ret >> 8);
