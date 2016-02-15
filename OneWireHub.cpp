@@ -47,10 +47,11 @@ uint16_t ow_crc16_get(void)
 OneWireHub::OneWireHub(uint8_t pin)
 {
     pin_bitmask = digitalPinToBitMask(pin);
+    slave_count = 0;
     baseReg = portInputRegister(digitalPinToPort(pin));
 
-    for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
-        this->elms[i] = NULL;
+    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; i++)
+        this->elms[i] = nullptr;
 }
 
 bool OneWireHub::waitForRequest(bool ignore_errors)
@@ -93,6 +94,62 @@ bool OneWireHub::waitForRequest(bool ignore_errors)
     }
 }
 
+// attach a sensor to the hub
+uint8_t OneWireHub::attach(OneWireItem &sensor)
+{
+    if (slave_count >= ONEWIRESLAVE_COUNT) return 0; // hub is full
+
+    // find position of next free storage-position
+    uint8_t position = 0;
+    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; i++)
+    {
+        if (this->elms[i] == nullptr)
+        {
+            position = i;
+            break;
+        }
+    }
+    // TODO: should we also look for already attached sensors?
+
+    elms[position] = &sensor;
+    slave_count++;
+    calck_mask();
+    return position;
+};
+
+bool    OneWireHub::detach(const OneWireItem &sensor)
+{
+    // find position of sensor
+    uint8_t position = 255;
+    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; i++)
+    {
+        if (this->elms[i] == &sensor)
+        {
+            position = i;
+            break;
+        }
+    }
+
+    if (position != 255)
+        return detach(position);
+    else
+        return 0;
+};
+
+bool    OneWireHub::detach(const uint8_t slave_number)
+{
+    if (elms[slave_number] == nullptr)
+        return 0;
+    if (!slave_count)
+        return 0;
+
+    elms[slave_number] == nullptr;
+    slave_count--;
+    calck_mask();
+    return 1;
+};
+
+
 int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
 {
 
@@ -116,7 +173,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
     uint8_t mask = 0x00;
     for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
     {
-        if (this->elms[i] == NULL) continue;
+        if (this->elms[i] == nullptr) continue;
         mask = mask | (1 << i);
     }
 
@@ -554,7 +611,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 
                 for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
                 {
-                    if (this->elms[i] == NULL) continue;
+                    if (this->elms[i] == nullptr) continue;
 
                     flag = TRUE;
                     for (int j = 0; j < 8; j++)

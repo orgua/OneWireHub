@@ -22,6 +22,8 @@ DS2890	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 
+attach	KEYWORD2
+detach	KEYWORD2
 calck_mask	KEYWORD2
 waitForRequest	KEYWORD2
 waitReset	KEYWORD2

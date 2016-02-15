@@ -44,6 +44,8 @@ class OneWireHub
 {
 private:
     uint8_t pin_bitmask;
+    uint8_t slave_count;
+
     volatile uint8_t *baseReg;
 
     uint8_t bits[ONEWIREIDMAP_COUNT];
@@ -63,7 +65,11 @@ private:
 public:
     OneWireHub(uint8_t pin);
 
-    OneWireItem *elms[ONEWIRESLAVE_COUNT];
+    OneWireItem *elms[ONEWIRESLAVE_COUNT];  // TODO: make it private (use attach/detach)
+
+    uint8_t attach(OneWireItem &sensor);
+    bool    detach(const OneWireItem &sensor);
+    bool    detach(const uint8_t slave_number);
 
     int calck_mask(void);
 
