@@ -23,14 +23,9 @@ DS2408::DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 bool DS2408::updateCRC()
 {
-//  ((sDS2408*)(this->memory))->CRC = crc16( this->memory, 11 );
-
     ow_crc16_reset();
     for (int i = 0; i < 11; i++) ow_crc16_update(this->memory[i]);
     ((sDS2408 *) (this->memory))->CRC = ow_crc16_get();
-
-    //Serial.print("CRC=");
-    //Serial.println( ((sDS2408*)(this->memory))->CRC, HEX);
 }
 
 bool DS2408::duty(OneWireHub *hub)
