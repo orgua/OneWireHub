@@ -10,6 +10,7 @@ void setup()
 {
     // Debug
     Serial.begin(115200);
+    Serial.println("OneWire-TempSensor DS18B20");
 
     // Setup OneWire
     hub.elms[0] = &fMS;
