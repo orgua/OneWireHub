@@ -28,11 +28,11 @@ private:
 public:
     DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    void SetTemp(float temp);
+    void setTemp(float temp);
 
-    void SetVolt(word val);
+    void setVolt(word val);
 
-    void SetCurr(word val);
+    void setCurr(word val);
 
     uint8_t memory[64];
 };

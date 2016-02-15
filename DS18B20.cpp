@@ -78,7 +78,7 @@ bool DS18B20::duty(OneWireHub *hub)
 }
 
 
-void DS18B20::settemp(const float temperature_degC)
+void DS18B20::setTemp(const float temperature_degC)
 {
     bool neg = 0;
     int16_t value = static_cast<int16_t>(temperature_degC * 16.0);
@@ -98,7 +98,7 @@ void DS18B20::settemp(const float temperature_degC)
     updateCRC();
 }
 
-void DS18B20::settemp(const int16_t temperature_degC)
+void DS18B20::setTemp(const int16_t temperature_degC)
 {
     bool neg = 0;
     int16_t value = temperature_degC * 16;

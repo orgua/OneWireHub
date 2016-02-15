@@ -13,7 +13,6 @@ const bool dbg_SEARCH   = 0; // give debug messages
 const bool dbg_MATCHROM = 0; // give debug messages
 const bool dbg_HINT     = 0; // give debug messages for called unimplemented functions of sensors
 
-
 // You can exclude CRC checks altogether by defining this to 0
 #ifndef ONEWIRESLAVE_CRC
 #define ONEWIRESLAVE_CRC 1
@@ -66,19 +65,19 @@ public:
 
     OneWireItem *elms[ONEWIRESLAVE_COUNT];
 
-    int calck_mask();
+    int calck_mask(void);
 
     bool waitForRequest(bool ignore_errors);
 
     bool waitReset(uint16_t timeout_ms);
 
-    bool waitReset();
+    bool waitReset(void);
 
     bool presence(uint8_t delta);
 
-    bool presence();
+    bool presence(void);
 
-    bool search();
+    bool search(void);
 
     uint8_t sendData(uint8_t buf[], uint8_t data_len);
 
@@ -113,8 +112,8 @@ public:
 #endif
 };
 
-void ow_crc16_reset();
+void ow_crc16_reset(void);
 
 void ow_crc16_update(uint8_t b);
 
-uint16_t ow_crc16_get();
+uint16_t ow_crc16_get(void);

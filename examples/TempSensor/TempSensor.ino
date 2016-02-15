@@ -22,7 +22,7 @@ void setup()
 void loop()
 {
     // Set temp
-    fMS.settemp(static_cast<float>(20.1));
+    fMS.setTemp(static_cast<float>(20.1));
 
     // put your main code here, to run repeatedly:
     hub.waitForRequest(false);
