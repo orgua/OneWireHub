@@ -3,6 +3,11 @@
 class DS2413 : public OneWireItem
 {
 private:
+    bool AState;  // sensed.A
+    bool ALatch;  // PIO.A
+    bool BState;  // sensed.B
+    bool BLatch;  // PIO.B
+
     bool duty(OneWireHub *hub);
 
 public:
@@ -11,9 +16,4 @@ public:
     virtual void ReadState();
 
     virtual void ChangePIO();
-
-    bool AState;  // sensed.A
-    bool ALatch;  // PIO.A
-    bool BState;  // sensed.B
-    bool BLatch;  // PIO.B
 };

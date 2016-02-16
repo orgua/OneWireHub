@@ -64,7 +64,7 @@ public:
 
     int calck_mask(void);
 
-    bool waitForRequest(bool ignore_errors = false); // TODO: should be named pollForRequest
+    bool waitForRequest(bool ignore_errors = false);
 
     bool waitReset(uint16_t timeout_ms);
 
