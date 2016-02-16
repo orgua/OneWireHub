@@ -806,7 +806,7 @@ uint8_t OneWireHub::waitTimeSlotRead()
 }
 
 //==================== Item =========================================
-OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7)
+OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) // TODO: could give all sensors a const on every input
 {
     ID[0] = ID1;
     ID[1] = ID2;
@@ -821,10 +821,11 @@ OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uin
 
 // The 1-Wire CRC scheme is described in Maxim Application Note 27:
 // "Understanding and Using Cyclic Redundancy Checks with Maxim iButton Products"
-//
+// fast but needs more storage:
+//  https://github.com/PaulStoffregen/OneWire/blob/master/OneWire.cpp --> calc with table (EOF)
 
 // Compute a Dallas Semiconductor 8 bit CRC directly.
-//
+// slow, but small
 uint8_t OneWireItem::crc8(const uint8_t addr[], const uint8_t len)
 {
     uint8_t crc = 0;

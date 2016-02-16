@@ -1,3 +1,9 @@
+/*
+ *    Example-Code that emulates a DS2413-Sensor --> not tested
+ *    --> attach sensors as needed
+ *    Tested with https://github.com/PaulStoffregen/OneWire on the other side as Master
+ */
+
 #include "OneWireHub.h"
 #include "DS2413.h"  // Dual channel addressable switch
 #include "TimerOne.h"
