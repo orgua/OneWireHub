@@ -5,10 +5,10 @@ const bool dbg_DS2413 = 0; // give debug messages for this sensor
 
 DS2413::DS2413(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    this->AState = true; //false;
-    this->ALatch = false;
-    this->BState = false;
-    this->BLatch = false;
+    AState = true; //false;
+    ALatch = false;
+    BState = false;
+    BLatch = false;
 }
 
 bool DS2413::duty(OneWireHub *hub)
@@ -26,8 +26,8 @@ bool DS2413::duty(OneWireHub *hub)
             hub->send(data);
 
             //@@@ - ToDo event
-            this->ALatch = data & 0x01;
-            this->BLatch = data & 0x02;
+            ALatch = data & 0x01;
+            BLatch = data & 0x02;
 
             if (dbg_DS2413)
             {
@@ -35,19 +35,19 @@ bool DS2413::duty(OneWireHub *hub)
                 Serial.println(data, HEX);
             }
 
-            this->ChangePIO();
+            ChangePIO();
 
             break;
 
             // PIO ACCESS READ
         case 0xF5:
-            this->ReadState();
+            ReadState();
 
             data = 0;
-            if (this->AState) data = data | 0x01;
-            if (!this->ALatch) data = data | 0x02;
-            if (this->BState) data = data | 0x04;
-            if (!this->BLatch) data = data | 0x08;
+            if (AState)  data = data | 0x01;
+            if (!ALatch) data = data | 0x02;
+            if (BState)  data = data | 0x04;
+            if (!BLatch) data = data | 0x08;
 
             data = data | (~data << 4);
             hub->send(data);

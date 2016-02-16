@@ -14,13 +14,13 @@ DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5
     scratchpad[5] = 0xFF; // 0xFF
     scratchpad[6] = 0x00; // Rese
     scratchpad[7] = 0x10; // 0x10
-    //this->scratchpad[8] = 0x00; // CRC, can be omitted here
+    //scratchpad[8] = 0x00; // CRC, can be omitted here
     updateCRC();
 }
 
 bool DS18B20::updateCRC()
 {
-    this->scratchpad[8] = crc8(scratchpad, 8);
+    scratchpad[8] = crc8(scratchpad, 8);
 }
 
 bool DS18B20::duty(OneWireHub *hub)
