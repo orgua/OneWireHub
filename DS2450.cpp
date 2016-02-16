@@ -38,7 +38,7 @@ bool DS2450::duty(OneWireHub *hub)
 
             memory_address_start = memory_address;
 
-            for (int i = 0; i < 8; ++i) // TODO: should be ++i
+            for (int i = 0; i < 8; ++i)
             {
                 uint8_t b = memory[memory_address + i];
                 hub->send(b);

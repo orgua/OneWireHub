@@ -17,7 +17,7 @@ extern "C" {
 #define TIMESLOT_WAIT_RETRY_COUNT microsecondsToClockCycles(120) / 10L
 #define TIMESLOT_WAIT_READ_RETRY_COUNT microsecondsToClockCycles(135)
 
-//--- CRC 16 --- // TODO: only used in ds2450
+//--- CRC 16 --- // TODO: only used in ds2450 and ds2408 and ds2423
 static uint16_t crc16;
 
 void ow_crc16_reset(void)
@@ -27,7 +27,7 @@ void ow_crc16_reset(void)
 
 void ow_crc16_update(uint8_t b)
 {
-    for (uint8_t j = 0; j < 8; j++) // TODO: should be ++j, or not?
+    for (uint8_t j = 0; j < 8; ++j)
     {
         uint8_t mix = ((uint8_t) crc16 ^ b) & 0x01;
         crc16 = crc16 >> 1;
@@ -116,7 +116,7 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
             break;
         }
     }
-    // TODO: should we also look for already attached sensors?
+    // TODO: should we also check for already attached sensors?
 
     elms[position] = &sensor;
     slave_count++;
@@ -639,7 +639,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             default: // Unknow command
                 if (dbg_HINT)
                 {
-                    Serial.print("U:"); // TODO: include in dbg_scope
+                    Serial.print("U:");
                     Serial.println(cmd, HEX);
                 }
                 return FALSE;
@@ -841,7 +841,7 @@ uint8_t OneWireItem::crc8(uint8_t addr[], uint8_t len)
     while (len--)
     {
         uint8_t inbyte = *addr++;
-        for (uint8_t i = 8; i; i--) // TODO: is i-- ok?
+        for (uint8_t i = 8; i; --i)
         {
             uint8_t mix = (crc ^ inbyte) & static_cast<uint8_t>(0x01);
             crc >>= 1;
