@@ -28,7 +28,7 @@ static const uint8_t MemDS2438[64] =
 // 080014C501000000BC850702000800FC0000000000000000000000000000000026BCBF30010000002C07DB1500000000284C9E1B030000000000000073010000
 
 #pragma pack(push, 1)
-struct DS2438_page0
+struct DS2438_page0 // TODO: overlay with memory if possible
 {
     uint8_t flags;
     int16_t temp;
