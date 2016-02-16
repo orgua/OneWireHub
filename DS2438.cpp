@@ -10,7 +10,7 @@ DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     for (int i = 0; i < sizeof(memory); ++i)
         memory[i] = MemDS2438[i]; // 0x00;
 
-    setTemp(80);
+    setTemp(static_cast<uint8_t>(80));
 /*
   // Flags
   memory[0] = DS2438_IAD | DS2438_CA | DS2438_EE | DS2438_AD;
@@ -106,18 +106,39 @@ bool DS2438::duty(OneWireHub *hub)
     }
 }
 
-void DS2438::setTemp(const float temp) // TODO: rework with proper math (see ds18b20 tempcalc)
+void DS2438::setTemp(const float temp_degC)
+{
+    int16_t value = static_cast<int16_t>(temp_degC * 256.0);
+
+    if (temp_degC < 0)
+        value = -value;
+
+    memory[1] = uint8_t(value);
+    memory[2] = uint8_t(value >> 8);
+
+    if (temp_degC < 0)
+        memory[2] = memory[2] | static_cast<uint8_t>(0x80);
+
+}
+/*
+void DS2438::setTemp(const float temp_degC) // TODO: test in comparison with new fn
 {
     memory[1] = uint8_t(256 * ((temp - (int) temp) * 100) / 100);
     memory[2] = round(abs(floor(temp)));
 
     if (temp < 0)
-    {
         memory[2] = memory[2] | 0x80;
-    }
+
+}
+*/
+void DS2438::setTemp(const uint8_t temp_degC)
+{
+    memory[1] = 0;
+    memory[2] = temp_degC;
+    if (temp_degC < 0)
+        memory[2] = memory[2] | static_cast<uint8_t>(0x80);
 }
 
-// TODO: add a int8-fn overload
 
 void DS2438::setVolt(const uint16_t val) // TODO: is this more than 10 bit? maybe use a mask
 {

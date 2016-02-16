@@ -49,9 +49,10 @@ private:
 public:
     DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    void setTemp(float temp);
+    void setTemp(const float   temp_degC);
+    void setTemp(const uint8_t temp_degC);
 
-    void setVolt(uint16_t val);
+    void setVolt(const uint16_t val);
 
-    void setCurr(uint16_t val);
+    void setCurr(const uint16_t val);
 };
