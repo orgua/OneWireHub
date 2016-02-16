@@ -48,11 +48,18 @@ OneWireHub::OneWireHub(uint8_t pin)
 {
     pin_bitmask = digitalPinToBitMask(pin);
     slave_count = 0;
+    errno = ONEWIRE_NO_ERROR;
     baseReg = portInputRegister(digitalPinToPort(pin));
 
+    //bits[ONEWIREIDMAP_COUNT]; // TODO: init
+    //idmap0[ONEWIREIDMAP_COUNT];
+    //idmap1[ONEWIREIDMAP_COUNT];
+
     for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; i++)
-        this->elms[i] = nullptr;
-}
+        elms[i] = nullptr;
+
+    SelectElm = nullptr;
+};
 
 bool OneWireHub::waitForRequest(bool ignore_errors)
 {
@@ -103,7 +110,7 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
     uint8_t position = 0;
     for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; i++)
     {
-        if (this->elms[i] == nullptr)
+        if (elms[i] == nullptr)
         {
             position = i;
             break;
@@ -123,7 +130,7 @@ bool    OneWireHub::detach(const OneWireItem &sensor)
     uint8_t position = 255;
     for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; i++)
     {
-        if (this->elms[i] == &sensor)
+        if (elms[i] == &sensor)
         {
             position = i;
             break;
@@ -164,16 +171,16 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
     // Zerro
     for (int i = 0; i < ONEWIREIDMAP_COUNT; i++)
     {
-        this->bits[i] = 3;
-        this->idmap0[i] = 0;
-        this->idmap1[i] = 0;
+        bits[i] = 3;
+        idmap0[i] = 0;
+        idmap1[i] = 0;
     }
 
     // Get elms mask
     uint8_t mask = 0x00;
     for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
     {
-        if (this->elms[i] == nullptr) continue;
+        if (elms[i] == nullptr) continue;
         mask = mask | static_cast<uint8_t>(1 << i);
     }
 
@@ -230,7 +237,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
                     Serial.print(Pos);
                 }
 
-                this->idmap1[spos] = Pos;
+                idmap1[spos] = Pos;
             }
             else
             {
@@ -242,19 +249,17 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
                     Serial.print(Pos);
                 }
 
-                this->idmap0[spos] = Pos;
+                idmap0[spos] = Pos;
             }
         }
         else if (dbg_CALCK) Serial.print("OPos:None");
 
         if (dbg_CALCK)
         {
-            Serial.print("\t");
-            Serial.print("BN=");
+            Serial.print("\t BN=");
             Serial.print(BN);
-            Serial.print("\t");
 
-            Serial.print("BM=");
+            Serial.print("\t BM=");
             Serial.print(BM, HEX);
             Serial.print("\t");
         }
@@ -270,7 +275,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
         {
             if (elmmask & mask)
             {
-                if (BM & this->elms[i]->ID[BN])
+                if (BM & elms[i]->ID[BN])
                 {
                     mask1 = mask1 | elmmask;
                     fl1 = TRUE;
@@ -286,30 +291,22 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
 
         if ((fl0 == FALSE) && (fl1 == TRUE))
         {
-            this->bits[Pos] = 1;
+            bits[Pos] = 1;
         } else
         {
-            if ((fl0 == TRUE) && (fl1 == FALSE))
-            {
-                this->bits[Pos] = 2;
-            } else
-            {
-                this->bits[Pos] = 0;
-            }
+            if ((fl0 == TRUE) && (fl1 == FALSE))    bits[Pos] = 2;
+            else                                    bits[Pos] = 0;
         }
 
         if (dbg_CALCK)
         {
-            Serial.print("\t");
-            Serial.print("Bit=");
-            Serial.print(this->bits[Pos]);
-            Serial.print("\t");
+            Serial.print("\t Bit=");
+            Serial.print(bits[Pos]);
 
-            Serial.print("mask0=");
+            Serial.print("\t mask0=");
             Serial.print(mask0, HEX);
-            Serial.print("\t");
 
-            Serial.print("mask1=");
+            Serial.print("\t mask1=");
             Serial.print(mask1, HEX);
             Serial.print("\t");
         }
@@ -324,8 +321,8 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
             // END
             if (NBN >= 8)
             {
-                this->idmap0[Pos] = mask0;
-                this->idmap1[Pos] = mask1;
+                idmap0[Pos] = mask0;
+                idmap1[Pos] = mask1;
 
                 Pos++;
                 if (dbg_CALCK) Serial.println();
@@ -372,12 +369,11 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
         {
             Serial.print(i);
             Serial.print("\t");
-            Serial.print(this->bits[i]);
+            Serial.print(bits[i]);
             Serial.print("\t");
-            Serial.print(this->idmap0[i]);
+            Serial.print(idmap0[i]);
             Serial.print("\t");
-            Serial.print(this->idmap1[i]);
-            Serial.println();
+            Serial.println(idmap1[i]);
         }
     }
 
@@ -509,13 +505,9 @@ bool OneWireHub::search(void)
 {
     uint8_t bitmask;
     uint8_t bit_recv;
-//  bool bit_n;
 
     int j;
     int flag;
-
-    //Serial.println("--");
-    //this->SelectElm = 0;
 
     int n = 0;
     for (int i = 0; i < 8; i++)
@@ -524,7 +516,7 @@ bool OneWireHub::search(void)
         {
 
             // Get from elements
-            switch (this->bits[n])
+            switch (bits[n])
             {
                 case 0:
                     sendBit(FALSE);
@@ -542,19 +534,13 @@ bool OneWireHub::search(void)
                     return FALSE;
             }
 
-/*
-      bit_n = this->bits[n];
-      sendBit( bit_n && 0x01 );
-      sendBit( bit_n && 0x02 );
-*/
-
             bit_recv = recvBit();
 
             if (errno != ONEWIRE_NO_ERROR) return FALSE;
 
             // Get next elm
-            if (bit_recv)  n = this->idmap1[n]; // got a 1
-            else           n = this->idmap0[n]; // got a 0
+            if (bit_recv)  n = idmap1[n]; // got a 1
+            else           n = idmap0[n]; // got a 0
 
             // Test not found
             if (n == 0)
@@ -572,7 +558,7 @@ bool OneWireHub::search(void)
     }
 
     for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
-        if (i == (1 << i)) this->SelectElm = elms[i];
+        if (i == (1 << i))  SelectElm = elms[i];
 
     if (dbg_SEARCH)
     {
@@ -607,16 +593,16 @@ bool OneWireHub::recvAndProcessCmd(void)
                     return FALSE;
 
                 flag = FALSE;
-                this->SelectElm = 0;
+                SelectElm = 0;
 
                 for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
                 {
-                    if (this->elms[i] == nullptr) continue;
+                    if (elms[i] == nullptr) continue;
 
                     flag = TRUE;
                     for (int j = 0; j < 8; j++)
                     {
-                        if (this->elms[i]->ID[j] != addr[j])
+                        if (elms[i]->ID[j] != addr[j])
                         {
                             flag = FALSE;
                             break;
@@ -625,7 +611,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 
                     if (flag)
                     {
-                        this->SelectElm = elms[i];
+                        SelectElm = elms[i];
 
                         if (dbg_MATCHROM)
                         {
@@ -639,21 +625,23 @@ bool OneWireHub::recvAndProcessCmd(void)
 
                 if (flag == FALSE) return FALSE;
 
-                if (this->SelectElm != 0)
-                    this->SelectElm->duty(this);
+                if (SelectElm != 0)
+                    SelectElm->duty(this);
 
                 return TRUE;
                 break;
 
                 // SKIP ROM
             case 0xCC:
-                this->SelectElm = 0x00;
+                SelectElm = 0x00;
                 return TRUE;
 
             default: // Unknow command
-                Serial.print("U:");
-                Serial.println(cmd, HEX);
-
+                if (dbg_HINT)
+                {
+                    Serial.print("U:"); // TODO: include in dbg_scope
+                    Serial.println(cmd, HEX);
+                }
                 return FALSE;
                 break;
         }

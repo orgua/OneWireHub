@@ -24,5 +24,5 @@ void loop()
     sensor.setTemp(21);
 
     // put your main code here, to run repeatedly:
-    hub.waitForRequest(false);
+    hub.waitForRequest();
 }
