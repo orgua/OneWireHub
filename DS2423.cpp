@@ -36,7 +36,7 @@ bool DS2423::duty(OneWireHub *hub)
             memory_address_start = memory_address;
 
             // data
-            for (int i = 0; i < 32; i++)
+            for (int i = 0; i < 32; ++i) // TODO: check for memory_address + 32 < sizeof()
             {
                 hub->send(0xff);
                 ow_crc16_update(0xff);
