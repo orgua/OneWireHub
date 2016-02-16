@@ -14,7 +14,7 @@ bool DS2433::duty(OneWireHub *hub)
     uint16_t memory_address;
     uint8_t mem_offset;
     uint8_t b;
-    uint16_t crc;
+    uint16_t crc; // TODO: unused till now
 
     uint8_t done = hub->recv();
 

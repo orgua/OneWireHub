@@ -90,7 +90,6 @@ void DS18B20::setTemp(const int16_t temperature_degC)
 
 void DS18B20::setTempRaw(const int16_t value_raw)
 {
-    bool neg = 0;
     int16_t value = value_raw;
 
     if (value > 0)

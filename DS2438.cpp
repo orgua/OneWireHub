@@ -12,20 +12,20 @@ DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
     setTemp(80);
 /*
-  // Flags  
+  // Flags
   memory[0] = DS2438_IAD | DS2438_CA | DS2438_EE | DS2438_AD;
-  
+
   // Temp
   memory[1] = 0x10;
   memory[2] = 0x19;
 
   // Volt
   memory[3] = 0xF4;
-  memory[4] = 0x01; 
+  memory[4] = 0x01;
 
   // Cur
   memory[5] = 0x40;
-  memory[6] = 0x00; 
+  memory[6] = 0x00;
 */
 }
 
@@ -33,9 +33,8 @@ bool DS2438::duty(OneWireHub *hub)
 {
     uint8_t done = hub->recv();
     uint8_t page;
-    uint8_t b;
+    uint8_t b; // TODO: unused
     uint8_t crc;
-
 
     switch (done)
     {
@@ -107,7 +106,7 @@ bool DS2438::duty(OneWireHub *hub)
     }
 }
 
-void DS2438::setTemp(float temp)
+void DS2438::setTemp(float temp) // TODO: rework with proper math
 {
     memory[1] = uint8_t(256 * ((temp - (int) temp) * 100) / 100);
     memory[2] = round(abs(floor(temp)));
@@ -116,13 +115,15 @@ void DS2438::setTemp(float temp)
     { memory[2] = memory[2] | 0x80; }
 }
 
-void DS2438::setVolt(word val)
+// TODO: add a int8-fn overload
+
+void DS2438::setVolt(uint16_t val) // TODO: is this more than 10 bit? maybe use a mask
 {
     memory[3] = uint8_t(val);
     memory[4] = uint8_t(val >> 8);
 }
 
-void DS2438::setCurr(word val)
+void DS2438::setCurr(uint16_t val)
 {
     memory[5] = uint8_t(val);
     memory[6] = uint8_t(val >> 8);

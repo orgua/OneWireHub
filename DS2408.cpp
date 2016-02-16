@@ -25,14 +25,14 @@ bool DS2408::updateCRC()
 {
     ow_crc16_reset();
     for (int i = 0; i < 11; ++i) ow_crc16_update(memory[i]);
-    ((sDS2408 *) (memory))->CRC = ow_crc16_get();
+    (reinterpret_cast<sDS2408 *>(memory))->CRC = ow_crc16_get();
 }
 
 bool DS2408::duty(OneWireHub *hub)
 {
-    uint8_t addrL;
-    uint8_t addrH;
-    uint8_t data;
+    uint8_t addrL; // TODO: unused for now
+    uint8_t addrH; // TODO: unused for now
+    uint8_t data;  // TODO: unused for now
 
     uint8_t done = hub->recv();
 

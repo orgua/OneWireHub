@@ -11,7 +11,7 @@ DS2890::DS2890(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 bool DS2890::duty(OneWireHub *hub)
 {
-    uint16_t data;
+    uint16_t data; // TODO: unused for now
 
     uint8_t done = hub->recv();
     switch (done)
