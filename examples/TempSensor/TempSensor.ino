@@ -1,10 +1,16 @@
+/*
+ *    Example-Code that emulates a DS18B20
+ *    Tested with https://github.com/PaulStoffregen/OneWire --> DS18x20-Example
+ */
+
+
 #include "OneWireHub.h"
-#include "DS18B20.h"  // Dual channel addressable switch
+#include "DS18B20.h"  // Digital Thermometer, 12bit
 
 const uint8_t OneWire_PIN = 8;
 
 OneWireHub  hub     = OneWireHub(OneWire_PIN);
-auto        sensor  = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);    // Work - Digital Thermometer
+auto        sensor  = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);    // Digital Thermometer
 
 void setup()
 {

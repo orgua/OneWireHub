@@ -1,3 +1,9 @@
+/*
+ *    Example-Code that emulates various Sensor - mostly for developement
+ *    --> attach sensors as needed
+ *    Tested with https://github.com/PaulStoffregen/OneWire on the other side as Master
+ */
+
 #include "OneWireHub.h"
 
 // include all libs to find errors
