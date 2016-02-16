@@ -14,8 +14,7 @@ DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5
     scratchpad[5] = 0xFF; // 0xFF
     scratchpad[6] = 0x00; // Rese
     scratchpad[7] = 0x10; // 0x10
-    //scratchpad[8] = 0x00; // CRC, can be omitted here
-    updateCRC();
+    updateCRC(); // update scratchpad[8]
 }
 
 bool DS18B20::updateCRC()
@@ -35,6 +34,7 @@ bool DS18B20::duty(OneWireHub *hub)
             break;
 
         case 0x4E: // WRITE SCRATCHPAD
+            // write 3 byte of data to scratchpad[1:3]
             if (dbg_DS18B20) Serial.println("DS18B20 : WRITE SCRATCHPAD");
             break;
 
@@ -44,17 +44,17 @@ bool DS18B20::duty(OneWireHub *hub)
             if (dbg_DS18B20)  Serial.println("DS18B20 : READ SCRATCHPAD");
             break;
 
-        case 0x48: // COPY SCRATCHPAD
+        case 0x48: // COPY SCRATCHPAD to EPROM
             if (dbg_DS18B20) Serial.println("DS18B20 : COPY SCRATCHPAD");
             break;
 
-        case 0xB8: // RECALL E2
+        case 0xB8: // RECALL E2 (EPROM to 3byte from Scratchpad)
             hub->sendBit(1);
             if (dbg_DS18B20) Serial.println("DS18B20 : RECALL E2");
             break;
 
         case 0xB4: // READ POWERSUPPLY
-            hub->sendBit(1);
+            hub->sendBit(1); // 1: say i am external powered, 0: uses parasite power
             if (dbg_DS18B20) Serial.println("DS18B20 : READ POWERSUPPLY");
             break;
 
@@ -88,6 +88,7 @@ void DS18B20::setTemp(const int16_t temperature_degC)
     setTempRaw(temperature_degC * 16);
 };
 
+// TODO: use allways 12bit mode? also 9,10,11,12 bit possible
 void DS18B20::setTempRaw(const int16_t value_raw)
 {
     int16_t value = value_raw;
