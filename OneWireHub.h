@@ -103,7 +103,7 @@ public:
 
     virtual bool duty(OneWireHub *hub) = 0;
 
-    static uint8_t crc8(uint8_t addr[], uint8_t len);
+    static uint8_t crc8(const uint8_t addr[], const uint8_t len);
 
     static uint16_t crc16(const uint8_t addr[], const uint8_t len);
 };

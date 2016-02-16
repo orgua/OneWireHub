@@ -825,14 +825,14 @@ OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uin
 
 // Compute a Dallas Semiconductor 8 bit CRC directly.
 //
-uint8_t OneWireItem::crc8(uint8_t addr[], uint8_t len)
+uint8_t OneWireItem::crc8(const uint8_t addr[], const uint8_t len)
 {
     uint8_t crc = 0;
 
-    while (len--)
+    for (uint8_t i = 0; i < len; ++i)
     {
-        uint8_t inbyte = *addr++; // TODO: rework to crc16-version,
-        for (uint8_t i = 8; i; --i)
+        uint8_t inbyte = addr[i];
+        for (uint8_t j = 8; j; --j)
         {
             uint8_t mix = (crc ^ inbyte) & static_cast<uint8_t>(0x01);
             crc >>= 1;
