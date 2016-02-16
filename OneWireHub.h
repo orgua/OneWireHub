@@ -56,7 +56,7 @@ private:
 
 public:
 
-    OneWireHub(uint8_t pin);
+    explicit OneWireHub(uint8_t pin);
 
     uint8_t attach(OneWireItem &sensor);
     bool    detach(const OneWireItem &sensor);
@@ -64,7 +64,7 @@ public:
 
     int calck_mask(void);
 
-    bool waitForRequest(bool ignore_errors = false);
+    bool waitForRequest(const bool ignore_errors = false);
 
     bool waitReset(uint16_t timeout_ms);
 

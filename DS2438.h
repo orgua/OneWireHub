@@ -51,7 +51,7 @@ public:
 
     void setTemp(float temp);
 
-    void setVolt(word val);
+    void setVolt(uint16_t val);
 
-    void setCurr(word val);
+    void setCurr(uint16_t val);
 };

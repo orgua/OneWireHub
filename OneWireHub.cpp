@@ -61,7 +61,7 @@ OneWireHub::OneWireHub(uint8_t pin)
     SelectElm = nullptr;
 };
 
-bool OneWireHub::waitForRequest(bool ignore_errors) // TODO: maybe build a non blocking version of this?
+bool OneWireHub::waitForRequest(const bool ignore_errors) // TODO: maybe build a non blocking version of this?
 {
     errno = ONEWIRE_NO_ERROR;
 
@@ -169,7 +169,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
     uint8_t Pos = 0;
 
     // Zerro
-    for (int i = 0; i < ONEWIREIDMAP_COUNT; ++i)
+    for (uint16_t i = 0; i < ONEWIREIDMAP_COUNT; ++i)
     {
         bits[i] = 3;
         idmap0[i] = 0;
@@ -178,7 +178,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
 
     // Get elms mask
     uint8_t mask = 0x00;
-    for (int i = 0; i < ONEWIRESLAVE_COUNT; ++i)
+    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
     {
         if (elms[i] == nullptr) continue;
         mask = mask | static_cast<uint8_t>(1 << i);
@@ -271,7 +271,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
         uint8_t mask0 = 0x00;
         uint8_t elmmask = 0x01;
 
-        for (int i = 0; i < ONEWIRESLAVE_COUNT; ++i)
+        for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
         {
             if (elmmask & mask)
             {
@@ -313,6 +313,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
 
         uint8_t NBN = BN;
         uint8_t NBM = BM << 1;
+        
         if (!NBM)
         {
             NBN++;
@@ -506,11 +507,9 @@ bool OneWireHub::search(void)
     uint8_t bitmask;
     uint8_t bit_recv;
 
-    int j;
-    int flag;
+    uint16_t n = 0;
 
-    int n = 0;
-    for (int i = 0; i < 8; ++i)
+    for (uint8_t i = 0; i < 8; ++i)
     {
         for (bitmask = 0x01; bitmask; bitmask <<= 1)
         {
@@ -557,7 +556,7 @@ bool OneWireHub::search(void)
         }
     }
 
-    for (int i = 0; i < ONEWIRESLAVE_COUNT; ++i)
+    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
         if (i == (1 << i))  SelectElm = elms[i];
 
     if (dbg_SEARCH)
@@ -857,9 +856,9 @@ uint16_t OneWireItem::crc16(uint8_t addr[], uint8_t len)
     static const uint8_t oddparity[16] =
             {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
 
-    uint16_t crc = 0xFFFF;
+    uint16_t crc = 0xFFFF; // initvalue
 
-    for (uint16_t i = 0; i < len; ++i)
+    for (uint8_t i = 0; i < len; ++i)
     {
         // Even though we're just copying a byte from the input,
         // we'll be doing 16-bit computation with it.

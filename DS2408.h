@@ -1,7 +1,7 @@
 // 0x29  8-Channel Addressable Switch @@@
 // Not ready
 #pragma pack(push, 1)
-struct sDS2408
+struct sDS2408 // TODO: could be overlayed with struct
 {
     uint8_t cmd;
     uint8_t adrL;
