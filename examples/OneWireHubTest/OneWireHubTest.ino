@@ -23,7 +23,8 @@ auto ds2401   = DS2401( 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work -
 // auto ds2408   = DS2408( 0x29, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 8-Channel Addressable Switch
 auto ds2413   = DS2413( 0x3A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Dual channel addressable switch
 // auto ds2423   = DS2423( 0x1D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
-// auto ds2433   = DS2433( 0x23, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
+// auto ds2433   = DS2433( 0x23, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4Kb 1-Wire EEPROM
+// auto ds2438   = DS2438( 0x26, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - Smart Battery Monitor
 auto ds2450   = DS2450( 0x20, 0x0D, 0x0A, 0x02, 0x04, 0x05, 0x00);      //      - 4 channel A/D
 auto ds2890   = DS2890( 0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Single channel digital potentiometer
 
@@ -53,12 +54,12 @@ void setup()
     Serial.println("OneWire-Hub Test with various Sensors");
 
     // put your setup code here, to run once:
-    //hub.attach(ds18B20a); // TODO: you can only instatiate one of each sensors??
+    hub.attach(ds18B20a); // TODO: can there only be 4 sensors at once?
     hub.attach(ds18B20b);
     hub.attach(ds2401);
     hub.attach(ds2413);
     //hub.attach(ds2450); // TODO: still breaks the communication
-    hub.attach(ds2890);
+    //hub.attach(ds2890);
     Serial.println(hub.calck_mask());
     Serial.println("config done");
 }
