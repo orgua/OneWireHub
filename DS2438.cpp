@@ -106,24 +106,26 @@ bool DS2438::duty(OneWireHub *hub)
     }
 }
 
-void DS2438::setTemp(float temp) // TODO: rework with proper math
+void DS2438::setTemp(const float temp) // TODO: rework with proper math (see ds18b20 tempcalc)
 {
     memory[1] = uint8_t(256 * ((temp - (int) temp) * 100) / 100);
     memory[2] = round(abs(floor(temp)));
 
     if (temp < 0)
-    { memory[2] = memory[2] | 0x80; }
+    {
+        memory[2] = memory[2] | 0x80;
+    }
 }
 
 // TODO: add a int8-fn overload
 
-void DS2438::setVolt(uint16_t val) // TODO: is this more than 10 bit? maybe use a mask
+void DS2438::setVolt(const uint16_t val) // TODO: is this more than 10 bit? maybe use a mask
 {
     memory[3] = uint8_t(val);
     memory[4] = uint8_t(val >> 8);
 }
 
-void DS2438::setCurr(uint16_t val)
+void DS2438::setCurr(const uint16_t val)
 {
     memory[5] = uint8_t(val);
     memory[6] = uint8_t(val >> 8);
