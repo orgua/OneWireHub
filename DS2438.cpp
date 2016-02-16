@@ -3,46 +3,29 @@
 
 const bool dbg_DS2438 = 0; // give debug messages for this sensor
 
-static uint8_t MemDS2438[64] =
-        {
-                0x09, 0x20, 0x14, 0xAC, 0x00, 0x40, 0x01, 0x00,
-                0x5A, 0xC8, 0x05, 0x02, 0xFF, 0x08, 0x00, 0xFC,
-                0x00, 0x00, 0x00, 0x00, 0x6D, 0x83, 0x03, 0x02,
-                0xF2, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x26, 0xBF, 0x8E, 0x30, 0x01, 0x00, 0x00, 0x00,
-                0x2D, 0x07, 0xDB, 0x15, 0x00, 0x00, 0x00, 0x00,
-                0x28, 0x80, 0xDC, 0x1B, 0x03, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-        };
-
-// 092014AC004001005AC80502FF0800FC000000006D830302F20000000000000026BF8E30010000002D07DB15000000002880DC1B030000000000000000000000 
-// 0AE813EF010000003D980502000800FC0000000000000000F4000000000000003A78E90700000000000000000000000000000000000000000000000000000000
-// 08B013C501000000D6920202000800FC0000000000000000F4000000000000003AFCF4070000000000000000000000000000000000000000F300000000000000
-// 09D813D301020080FDE80702FF1000FC000000001BDAFF01F20000000000000000000000000000001207DA0D000000002828520E020000000000000000000000
-// 080014C501000000BC850702000800FC0000000000000000000000000000000026BCBF30010000002C07DB1500000000284C9E1B030000000000000073010000
 
 DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
 
-    for (int i = 0; i < sizeof(this->memory); i++)
-        this->memory[i] = MemDS2438[i]; // 0x00;
+    for (int i = 0; i < sizeof(memory); ++i)
+        memory[i] = MemDS2438[i]; // 0x00;
 
     setTemp(80);
 /*
   // Flags  
-  this->memory[0] = DS2438_IAD | DS2438_CA | DS2438_EE | DS2438_AD;
+  memory[0] = DS2438_IAD | DS2438_CA | DS2438_EE | DS2438_AD;
   
   // Temp
-  this->memory[1] = 0x10;
-  this->memory[2] = 0x19;
+  memory[1] = 0x10;
+  memory[2] = 0x19;
 
   // Volt
-  this->memory[3] = 0xF4;
-  this->memory[4] = 0x01; 
+  memory[3] = 0xF4;
+  memory[4] = 0x01; 
 
   // Cur
-  this->memory[5] = 0x40;
-  this->memory[6] = 0x00; 
+  memory[5] = 0x40;
+  memory[6] = 0x00; 
 */
 }
 
@@ -67,7 +50,7 @@ bool DS2438::duty(OneWireHub *hub)
             // page
             page = hub->recv();
 
-            hub->recvData(&this->memory[page * 8], 8);
+            hub->recvData(&memory[page * 8], 8);
 
             if (dbg_DS2438)
             {
@@ -102,9 +85,9 @@ bool DS2438::duty(OneWireHub *hub)
             //offset = page*8;
 
             // crc
-            crc = crc8(&this->memory[page * 8], 8);
+            crc = crc8(&memory[page * 8], 8);
 
-            hub->sendData(&this->memory[page * 8], 8);
+            hub->sendData(&memory[page * 8], 8);
             hub->send(crc);
 
             if (dbg_DS2438)

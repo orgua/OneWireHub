@@ -5,8 +5,8 @@ const bool dbg_DS2890 = 0; // give debug messages for this sensor
 
 DS2890::DS2890(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    this->regs = 0;
-    this->potion = 0;
+    regs = 0;
+    potion = 0;
 }
 
 bool DS2890::duty(OneWireHub *hub)
@@ -19,15 +19,15 @@ bool DS2890::duty(OneWireHub *hub)
         // WRITE POSITION
         case 0x0F:
             // get
-            this->potion = hub->recv();
+            potion = hub->recv();
 
             // send
-            hub->send(this->potion);
+            hub->send(potion);
 
         if (dbg_DS2890)
         {
             Serial.print("DS2890 : WRITE POSITION: ");
-            Serial.println(this->potion, HEX);
+            Serial.println(potion, HEX);
         }
 
             break;
@@ -35,15 +35,15 @@ bool DS2890::duty(OneWireHub *hub)
             // WRITE CONTROL REGISTER
         case 0x55:
             // data
-            this->regs = hub->recv();
+            regs = hub->recv();
 
             // send dara
-            hub->send(this->regs);
+            hub->send(regs);
 
             if (dbg_DS2890)
             {
                 Serial.print("DS2890 : WRITE CONTROL REGISTER: ");
-                Serial.println(this->regs, HEX);
+                Serial.println(regs, HEX);
             }
 
             break;
@@ -51,17 +51,17 @@ bool DS2890::duty(OneWireHub *hub)
             // READ CONTROL REGISTER
         case 0xAA:
             // regs
-            hub->send(this->regs);
+            hub->send(regs);
 
             // send
-            hub->send(this->potion);
+            hub->send(potion);
 
             if (dbg_DS2890)
             {
                 Serial.print("DS2890 : READ CONTROL REGISTER: ");
-                Serial.print(this->regs, HEX);
+                Serial.print(regs, HEX);
                 Serial.print("-");
-                Serial.println(this->potion, HEX);
+                Serial.println(potion, HEX);
             }
 
             break;
@@ -69,35 +69,35 @@ bool DS2890::duty(OneWireHub *hub)
             // READ POSITION
         case 0xF0:
             // regs
-            hub->send(this->regs);
+            hub->send(regs);
 
             // send
-            hub->send(this->potion);
+            hub->send(potion);
 
             if (dbg_DS2890)
             {
                 Serial.print("DS2890 : READ POSITION: ");
-                Serial.print(this->regs, HEX);
+                Serial.print(regs, HEX);
                 Serial.print("-");
-                Serial.println(this->potion, HEX);
+                Serial.println(potion, HEX);
             }
             break;
 
             // INCREMENT
         case 0xC3:
-            if (this->potion < 0xFF) this->potion = this->potion + 1;
+            if (potion < 0xFF) potion = potion + 1;
 
             // send
-            hub->send(this->potion);
+            hub->send(potion);
             if (dbg_DS2890) Serial.print("DS2890 : INCREMENT");
             break;
 
             // DECREMENT
         case 0x99:
-            if (this->potion > 0x00) this->potion = this->potion - 1;
+            if (potion > 0x00) potion = potion - 1;
 
             // send
-            hub->send(this->potion);
+            hub->send(potion);
             if (dbg_DS2890) Serial.print("DS2890 : DECREMENT");
             break;
 
