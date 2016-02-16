@@ -70,21 +70,19 @@ public:
 
     bool waitReset(void);
 
-    bool presence(uint8_t delta);
-
-    bool presence(void);
+    bool presence(const uint8_t delta_us = 25);
 
     bool search(void);
 
-    uint8_t sendData(uint8_t buf[], uint8_t data_len);
+    uint8_t sendData(const uint8_t buf[], const uint8_t data_len);
 
-    uint8_t recvData(uint8_t buf[], uint8_t data_len);
+    uint8_t recvData(uint8_t buf[], const uint8_t data_len);
 
-    void send(uint8_t v);
+    void send(const uint8_t v);
 
     uint8_t recv(void);
 
-    void sendBit(uint8_t v);
+    void sendBit(const uint8_t v);
 
     uint8_t recvBit(void);
 
@@ -107,7 +105,7 @@ public:
 
     static uint8_t crc8(uint8_t addr[], uint8_t len);
 
-    static uint16_t crc16(uint8_t addr[], uint8_t len);
+    static uint16_t crc16(const uint8_t addr[], const uint8_t len);
 };
 
 void ow_crc16_reset(void);

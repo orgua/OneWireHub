@@ -313,7 +313,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
 
         uint8_t NBN = BN;
         uint8_t NBM = BM << 1;
-        
+
         if (!NBM)
         {
             NBN++;
@@ -366,7 +366,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
         Serial.print("Time: ");
         Serial.println(micros());
 
-        for (int i = 0; i < ONEWIREIDMAP_COUNT; ++i)
+        for (uint8_t i = 0; i < ONEWIREIDMAP_COUNT; ++i)
         {
             Serial.print(i);
             Serial.print("\t");
@@ -385,7 +385,7 @@ bool OneWireHub::waitReset(uint16_t timeout_ms)
 {
     uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
-    unsigned long time_stamp;
+    uint32_t time_stamp;
 
     errno = ONEWIRE_NO_ERROR;
     cli();
@@ -404,7 +404,8 @@ bool OneWireHub::waitReset(uint16_t timeout_ms)
                 return FALSE;
             }
         }
-    } else
+    }
+    else
     {
         //Will wait forever for the line to fall
         while (DIRECT_READ(reg, mask))
@@ -450,7 +451,7 @@ bool OneWireHub::waitReset(void)
     return waitReset(1000);
 }
 
-bool OneWireHub::presence(uint8_t delta)
+bool OneWireHub::presence(const uint8_t delta_us)
 {
     uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
@@ -475,7 +476,7 @@ bool OneWireHub::presence(uint8_t delta)
     // docs call for a total of 480 possible from start of rise before reset timing is completed
     //This gives us 50 micros to play with, but being early is probably best for timing on read later
     //delayMicroseconds(300 - delta);
-    delayMicroseconds(250 - delta);
+    delayMicroseconds(250 - delta_us);
 
     //Modified to wait a while (roughly 50 micros) for the line to go high
     // since the above wait is about 430 micros, this makes this 480 closer
@@ -490,16 +491,7 @@ bool OneWireHub::presence(uint8_t delta)
         delayMicroseconds(2);
     } while (!DIRECT_READ(reg, mask));
 
-//    if ( !DIRECT_READ(reg, mask)) {
-//        errno = ONEWIRE_PRESENCE_LOW_ON_LINE;
-//        return FALSE;
-//    } else
-//        return TRUE;
-}
-
-bool OneWireHub::presence(void)
-{
-    return presence(25);
+    // TODO: add return value
 }
 
 bool OneWireHub::search(void)
@@ -594,12 +586,12 @@ bool OneWireHub::recvAndProcessCmd(void)
                 flag = FALSE;
                 SelectElm = 0;
 
-                for (int i = 0; i < ONEWIRESLAVE_COUNT; ++i)
+                for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
                 {
                     if (elms[i] == nullptr) continue;
 
                     flag = TRUE;
-                    for (int j = 0; j < 8; ++j)
+                    for (uint8_t j = 0; j < 8; ++j)
                     {
                         if (elms[i]->ID[j] != addr[j])
                         {
@@ -647,11 +639,11 @@ bool OneWireHub::recvAndProcessCmd(void)
     }
 }
 
-uint8_t OneWireHub::sendData(uint8_t buf[], uint8_t len)
+uint8_t OneWireHub::sendData(const uint8_t buf[], const uint8_t len)
 {
     uint8_t bytes_sended = 0;
 
-    for (int i = 0; i < len; ++i)
+    for (uint8_t i = 0; i < len; ++i)
     {
         send(buf[i]);
         if (errno != ONEWIRE_NO_ERROR)
@@ -661,7 +653,7 @@ uint8_t OneWireHub::sendData(uint8_t buf[], uint8_t len)
     return bytes_sended;
 }
 
-uint8_t OneWireHub::recvData(uint8_t buf[], uint8_t len)
+uint8_t OneWireHub::recvData(uint8_t buf[], const uint8_t len)
 {
     uint8_t bytes_received = 0;
 
@@ -675,7 +667,7 @@ uint8_t OneWireHub::recvData(uint8_t buf[], uint8_t len)
     return bytes_received;
 }
 
-void OneWireHub::send(uint8_t v)
+void OneWireHub::send(const uint8_t v)
 {
     errno = ONEWIRE_NO_ERROR;
     for (uint8_t bitmask = 0x01; bitmask && (errno == ONEWIRE_NO_ERROR); bitmask <<= 1)
@@ -693,7 +685,7 @@ uint8_t OneWireHub::recv(void)
     return r;
 }
 
-void OneWireHub::sendBit(uint8_t v)
+void OneWireHub::sendBit(const uint8_t v)
 {
     uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
@@ -839,7 +831,7 @@ uint8_t OneWireItem::crc8(uint8_t addr[], uint8_t len)
 
     while (len--)
     {
-        uint8_t inbyte = *addr++;
+        uint8_t inbyte = *addr++; // TODO: rework to crc16-version,
         for (uint8_t i = 8; i; --i)
         {
             uint8_t mix = (crc ^ inbyte) & static_cast<uint8_t>(0x01);
@@ -851,7 +843,7 @@ uint8_t OneWireItem::crc8(uint8_t addr[], uint8_t len)
     return crc;
 }
 
-uint16_t OneWireItem::crc16(uint8_t addr[], uint8_t len)
+uint16_t OneWireItem::crc16(const uint8_t addr[], const uint8_t len)
 {
     static const uint8_t oddparity[16] =
             {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
