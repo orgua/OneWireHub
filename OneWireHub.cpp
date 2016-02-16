@@ -17,7 +17,7 @@ extern "C" {
 #define TIMESLOT_WAIT_RETRY_COUNT microsecondsToClockCycles(120) / 10L
 #define TIMESLOT_WAIT_READ_RETRY_COUNT microsecondsToClockCycles(135)
 
-//--- CRC 16 --- // only used in ds2450
+//--- CRC 16 --- // TODO: only used in ds2450
 static uint16_t crc16;
 
 void ow_crc16_reset(void)
@@ -27,7 +27,7 @@ void ow_crc16_reset(void)
 
 void ow_crc16_update(uint8_t b)
 {
-    for (uint8_t j = 0; j < 8; j++)
+    for (uint8_t j = 0; j < 8; j++) // TODO: should be ++j, or not?
     {
         uint8_t mix = ((uint8_t) crc16 ^ b) & 0x01;
         crc16 = crc16 >> 1;
@@ -55,17 +55,17 @@ OneWireHub::OneWireHub(uint8_t pin)
     //idmap0[ONEWIREIDMAP_COUNT];
     //idmap1[ONEWIREIDMAP_COUNT];
 
-    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; i++)
+    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
         elms[i] = nullptr;
 
     SelectElm = nullptr;
 };
 
-bool OneWireHub::waitForRequest(bool ignore_errors)
+bool OneWireHub::waitForRequest(bool ignore_errors) // TODO: maybe build a non blocking version of this?
 {
     errno = ONEWIRE_NO_ERROR;
 
-    for (; ;)
+    while (1)
     {
         //delayMicroseconds(40);
         //Once reset is done, it waits another 30 micros
@@ -108,7 +108,7 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
 
     // find position of next free storage-position
     uint8_t position = 0;
-    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; i++)
+    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
     {
         if (elms[i] == nullptr)
         {
@@ -128,7 +128,7 @@ bool    OneWireHub::detach(const OneWireItem &sensor)
 {
     // find position of sensor
     uint8_t position = 255;
-    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; i++)
+    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
     {
         if (elms[i] == &sensor)
         {
@@ -169,7 +169,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
     uint8_t Pos = 0;
 
     // Zerro
-    for (int i = 0; i < ONEWIREIDMAP_COUNT; i++)
+    for (int i = 0; i < ONEWIREIDMAP_COUNT; ++i)
     {
         bits[i] = 3;
         idmap0[i] = 0;
@@ -178,7 +178,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
 
     // Get elms mask
     uint8_t mask = 0x00;
-    for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
+    for (int i = 0; i < ONEWIRESLAVE_COUNT; ++i)
     {
         if (elms[i] == nullptr) continue;
         mask = mask | static_cast<uint8_t>(1 << i);
@@ -271,7 +271,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
         uint8_t mask0 = 0x00;
         uint8_t elmmask = 0x01;
 
-        for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
+        for (int i = 0; i < ONEWIRESLAVE_COUNT; ++i)
         {
             if (elmmask & mask)
             {
@@ -365,7 +365,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
         Serial.print("Time: ");
         Serial.println(micros());
 
-        for (int i = 0; i < ONEWIREIDMAP_COUNT; i++)
+        for (int i = 0; i < ONEWIREIDMAP_COUNT; ++i)
         {
             Serial.print(i);
             Serial.print("\t");
@@ -510,7 +510,7 @@ bool OneWireHub::search(void)
     int flag;
 
     int n = 0;
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 8; ++i)
     {
         for (bitmask = 0x01; bitmask; bitmask <<= 1)
         {
@@ -557,7 +557,7 @@ bool OneWireHub::search(void)
         }
     }
 
-    for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
+    for (int i = 0; i < ONEWIRESLAVE_COUNT; ++i)
         if (i == (1 << i))  SelectElm = elms[i];
 
     if (dbg_SEARCH)
@@ -574,7 +574,7 @@ bool OneWireHub::recvAndProcessCmd(void)
     uint8_t addr[8];
     bool flag;
 
-    for (; ;)
+    while (1)
     {
         uint8_t cmd = recv();
 
@@ -595,12 +595,12 @@ bool OneWireHub::recvAndProcessCmd(void)
                 flag = FALSE;
                 SelectElm = 0;
 
-                for (int i = 0; i < ONEWIRESLAVE_COUNT; i++)
+                for (int i = 0; i < ONEWIRESLAVE_COUNT; ++i)
                 {
                     if (elms[i] == nullptr) continue;
 
                     flag = TRUE;
-                    for (int j = 0; j < 8; j++)
+                    for (int j = 0; j < 8; ++j)
                     {
                         if (elms[i]->ID[j] != addr[j])
                         {
@@ -652,7 +652,7 @@ uint8_t OneWireHub::sendData(uint8_t buf[], uint8_t len)
 {
     uint8_t bytes_sended = 0;
 
-    for (int i = 0; i < len; i++)
+    for (int i = 0; i < len; ++i)
     {
         send(buf[i]);
         if (errno != ONEWIRE_NO_ERROR)
@@ -666,7 +666,7 @@ uint8_t OneWireHub::recvData(uint8_t buf[], uint8_t len)
 {
     uint8_t bytes_received = 0;
 
-    for (int i = 0; i < len; i++)
+    for (int i = 0; i < len; ++i)
     {
         buf[i] = recv();
         if (errno != ONEWIRE_NO_ERROR)
@@ -841,7 +841,7 @@ uint8_t OneWireItem::crc8(uint8_t addr[], uint8_t len)
     while (len--)
     {
         uint8_t inbyte = *addr++;
-        for (uint8_t i = 8; i; i--)
+        for (uint8_t i = 8; i; i--) // TODO: is i-- ok?
         {
             uint8_t mix = (crc ^ inbyte) & static_cast<uint8_t>(0x01);
             crc >>= 1;
@@ -859,7 +859,7 @@ uint16_t OneWireItem::crc16(uint8_t addr[], uint8_t len)
 
     uint16_t crc = 0xFFFF;
 
-    for (uint16_t i = 0; i < len; i++)
+    for (uint16_t i = 0; i < len; ++i)
     {
         // Even though we're just copying a byte from the input,
         // we'll be doing 16-bit computation with it.

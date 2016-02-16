@@ -7,7 +7,7 @@ DS2450::DS2450(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
         OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
 
-    memset(&this->memory, 0, sizeof(this->memory));
+    memset(&memory, 0, sizeof(memory));
 }
 
 bool DS2450::duty(OneWireHub *hub)
@@ -38,9 +38,9 @@ bool DS2450::duty(OneWireHub *hub)
 
             memory_address_start = memory_address;
 
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < 8; ++i) // TODO: should be ++i
             {
-                uint8_t b = this->memory[memory_address + i];
+                uint8_t b = memory[memory_address + i];
                 hub->send(b);
             }
 
