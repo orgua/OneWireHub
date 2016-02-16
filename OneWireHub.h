@@ -42,7 +42,7 @@ private:
     uint8_t idmap0[ONEWIREIDMAP_COUNT];
     uint8_t idmap1[ONEWIREIDMAP_COUNT];
 
-    OneWireItem *elms[ONEWIRESLAVE_COUNT];  // TODO: make it private (use attach/detach)
+    OneWireItem *elms[ONEWIRESLAVE_COUNT];  // make it private (use attach/detach)
 
     OneWireItem *SelectElm;
 
@@ -64,7 +64,7 @@ public:
 
     int calck_mask(void);
 
-    bool waitForRequest(bool ignore_errors);
+    bool waitForRequest(bool ignore_errors = false); // TODO: should be named pollForRequest
 
     bool waitReset(uint16_t timeout_ms);
 
