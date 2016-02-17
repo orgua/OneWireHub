@@ -9,7 +9,7 @@ DS2401::DS2401(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 bool DS2401::duty(OneWireHub *hub)
 {
-    uint8_t done = hub->recv();
+    const uint8_t done = hub->recv();
 
     switch (done)
     {

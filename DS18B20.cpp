@@ -24,7 +24,7 @@ bool DS18B20::updateCRC()
 
 bool DS18B20::duty(OneWireHub *hub)
 {
-    uint8_t done = hub->recv();
+    const uint8_t done = hub->recv();
 
     switch (done)
     {

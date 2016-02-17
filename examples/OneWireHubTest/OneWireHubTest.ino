@@ -36,15 +36,15 @@ auto ds2890   = DS2890( 0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work -
 
 bool blinking()
 {
-    const unsigned long interval = 250;           // interval at which to blink (milliseconds)
-    static unsigned long nextMillis = millis(); // will store next time LED will updated
-    static uint8_t ledState = LOW; // ledState used to set the LED
+    const uint32_t  interval    = 500;          // interval at which to blink (milliseconds)
+    static uint32_t nextMillis  = millis();     // will store next time LED will updated
 
-    unsigned long currentMillis = millis();
+    uint32_t currentMillis = millis();
 
     if (currentMillis > nextMillis)
     {
-        nextMillis = currentMillis + interval; // save the last time you blinked the LED
+        static uint8_t ledState = LOW;          // ledState used to set the LED
+        nextMillis = currentMillis + interval;  // save the last time you blinked the LED
         if (ledState == LOW)    ledState = HIGH;
         else                    ledState = LOW;
         digitalWrite(led_PIN, ledState);
