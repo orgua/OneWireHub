@@ -61,7 +61,7 @@ OneWireHub::OneWireHub(uint8_t pin)
     SelectElm = nullptr;
 };
 
-bool OneWireHub::waitForRequest(const bool ignore_errors) // TODO: maybe build a non blocking version of this?
+bool OneWireHub::waitForRequest(const bool ignore_errors) // TODO: maybe build a non blocking version of this? and more common would be inverse of ignore_errors (=blocking)
 {
     errno = ONEWIRE_NO_ERROR;
 
@@ -82,6 +82,12 @@ bool OneWireHub::waitForRequest(const bool ignore_errors) // TODO: maybe build a
         if (!presence())
         {
             continue;
+        }
+
+        // this additional check prevents an infinite loop when calling this FN without sensors attached
+        if (!slave_count)
+        {
+            return TRUE;
         }
 
         //Now that the master should know we are here, we will get a command from the line
@@ -107,16 +113,21 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
     if (slave_count >= ONEWIRESLAVE_COUNT) return 0; // hub is full
 
     // find position of next free storage-position
-    uint8_t position = 0;
+    uint8_t position = 255;
     for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
     {
-        if (elms[i] == nullptr)
+        // check for already attached sensors
+        if (elms[i] == &sensor)
+            return i;
+
+        // store position of first empty space
+        if ((position>ONEWIRESLAVE_COUNT) && (elms[i] == nullptr))
         {
             position = i;
             break;
         }
     }
-    // TODO: should we also check for already attached sensors?
+
 
     elms[position] = &sensor;
     slave_count++;
@@ -148,6 +159,8 @@ bool    OneWireHub::detach(const uint8_t slave_number)
     if (elms[slave_number] == nullptr)
         return 0;
     if (!slave_count)
+        return 0;
+    if (slave_number >= ONEWIRESLAVE_COUNT)
         return 0;
 
     elms[slave_number] = nullptr;
@@ -573,7 +586,7 @@ bool OneWireHub::recvAndProcessCmd(void)
         {
             // Search rom
             case 0xF0:
-                search();
+                if (search()) return TRUE; // TODO: hotfix for DS2401
                 delayMicroseconds(6900);
                 return FALSE;
 
