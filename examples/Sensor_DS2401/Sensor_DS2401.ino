@@ -10,9 +10,9 @@ const uint8_t led_PIN       = 13;         // the number of the LED pin
 const uint8_t OneWire_PIN   = 8;
 
 OneWireHub  hub = OneWireHub(OneWire_PIN);
-auto ds2401A = DS2401( 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A );    // Work - Serial Number
+auto ds2401A = DS2401( 0x01, 0x0D, 0x02, 0x04, 0x00, 0x01, 0x0A );    // Work - Serial Number
 auto ds2401B = DS2401( 0x01, 0x0D, 0x02, 0x04, 0x00, 0x01, 0x0B );    // Work - Serial Number
-
+auto ds2401C = DS2401( 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0C );
 
 bool blinking()
 {
@@ -38,6 +38,7 @@ void setup()
 {
     Serial.begin(115200);
     Serial.println("OneWire-Hub DS2401 Serial Number used as iButton");
+    hub.attach(ds2401C); // always there
 }
 
 void loop()
