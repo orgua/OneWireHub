@@ -24,7 +24,7 @@ DS2890	KEYWORD1
 
 attach	KEYWORD2
 detach	KEYWORD2
-calck_mask	KEYWORD2
+calc_mask	KEYWORD2
 waitForRequest	KEYWORD2
 waitReset	KEYWORD2
 presence	KEYWORD2
