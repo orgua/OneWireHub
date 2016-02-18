@@ -1,9 +1,5 @@
-#if defined(ARDUINO) && ARDUINO >= 100
-#include "Arduino.h"
-#else
-#include "WProgram.h"
-#endif
 
+#include "Arduino.h"
 #include <inttypes.h>
 
 const bool dbg_CALCK    = 0; // give debug messages
