@@ -1,16 +1,16 @@
 /*
- *    Example-Code that emulates a DS2438 Smart Battery Monitor
+ *    Example-Code that emulates a DS2413 Dual channel addressable switch
  *    Tested with https://github.com/PaulStoffregen/OneWire --> still untested
  */
 
 #include "OneWireHub.h"
-#include "DS2438.h"  // Smart Battery Monitor
+#include "DS2413.h"  // Dual channel addressable switch
 
 const uint8_t led_PIN       = 13;         // the number of the LED pin
 const uint8_t OneWire_PIN   = 8;
 
 auto hub    = OneWireHub(OneWire_PIN);
-auto ds2438 = DS2438( 0x26, 0x0D, 0x02, 0x04, 0x03, 0x08, 0x0A );    //      - Smart Battery Monitor
+auto ds2413 = DS2413( 0x3A, 0x00, 0x0D, 0x02, 0x04, 0x01, 0x03 );    // Work - Dual channel addressable switch
 
 bool blinking()
 {
@@ -32,10 +32,10 @@ bool blinking()
 void setup()
 {
     Serial.begin(115200);
-    Serial.println("OneWire-Hub DS2438 Smart Battery Monitor");
+    Serial.println("OneWire-Hub DS2413 Dual channel addressable switch");
 
     // Setup OneWire
-    hub.attach(ds2438);
+    hub.attach(ds2413);
 
     Serial.println("config done");
 }
