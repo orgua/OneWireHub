@@ -17,7 +17,7 @@ DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5
     updateCRC(); // update scratchpad[8]
 }
 
-bool DS18B20::updateCRC()
+void DS18B20::updateCRC()
 {
     scratchpad[8] = crc8(scratchpad, 8);
 }
@@ -85,7 +85,7 @@ void DS18B20::setTemp(const float temperature_degC)
 
 void DS18B20::setTemp(const int16_t temperature_degC) // TODO: could be int8_t
 {
-    setTempRaw(temperature_degC * 16);
+    setTempRaw(temperature_degC * static_cast<int8_t>(16));
 };
 
 // TODO: use allways 12bit mode? also 9,10,11,12 bit possible

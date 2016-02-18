@@ -28,10 +28,10 @@ void ow_crc16_update(uint8_t b)
 {
     for (uint8_t j = 0; j < 8; ++j)
     {
-        uint8_t mix = ((uint8_t) crc16 ^ b) & 0x01;
+        uint8_t mix = ((uint8_t) crc16 ^ b) & static_cast<uint8_t>(0x01);
         crc16 = crc16 >> 1;
         if (mix)
-            crc16 = crc16 ^ 0xA001;
+            crc16 = crc16 ^ static_cast<uint16_t>(0xA001);
 
         b = b >> 1;
     }
@@ -234,7 +234,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
         uint8_t spos = stack[stackpos][1];
         uint8_t BN = stack[stackpos][2];
         uint8_t BM = stack[stackpos][3];
-        uint8_t mask = stack[stackpos][4];
+        mask = stack[stackpos][4];
 
         if (spos != 0xFF)
         {
@@ -488,7 +488,7 @@ bool OneWireHub::presence(const uint8_t delta_us)
     // docs call for a total of 480 possible from start of rise before reset timing is completed
     //This gives us 50 micros to play with, but being early is probably best for timing on read later
     //delayMicroseconds(300 - delta);
-    delayMicroseconds(250 - delta_us);
+    delayMicroseconds(static_cast<uint8_t>(250) - delta_us);
 
     //Modified to wait a while (roughly 50 micros) for the line to go high
     // since the above wait is about 430 micros, this makes this 480 closer
@@ -503,7 +503,7 @@ bool OneWireHub::presence(const uint8_t delta_us)
         delayMicroseconds(2);
     } while (!DIRECT_READ(reg, mask));
 
-    // TODO: add return value
+    //return FALSE; // TODO: resolve this problem and add standard return
 }
 
 bool OneWireHub::search(void)
@@ -585,9 +585,9 @@ bool OneWireHub::recvAndProcessCmd(void)
         {
             // Search rom
             case 0xF0:
-                cmd = search(); // missuse cmd here, but
+                cmd = static_cast<uint8_t>(search()); // missuse cmd here, but
                 delayMicroseconds(6900);
-                if (cmd)  return TRUE; // TODO: hotfix for DS2401
+                if (cmd)  return TRUE; // TODO: hotfix for DS2401, but with the delay active there can only be one 2401
                 else      return FALSE;
 
                 // MATCH ROM - Choose/Select ROM

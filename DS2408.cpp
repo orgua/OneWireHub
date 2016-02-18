@@ -21,7 +21,7 @@ DS2408::DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     memory[12] = 0;  // CRCH
 }
 
-bool DS2408::updateCRC()
+void DS2408::updateCRC()
 {
     ow_crc16_reset();
     for (int i = 0; i < 11; ++i) ow_crc16_update(memory[i]);
