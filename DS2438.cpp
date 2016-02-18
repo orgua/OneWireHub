@@ -48,7 +48,6 @@ bool DS2438::duty(OneWireHub *hub)
         case 0x4E:
             // page
             page = hub->recv();
-
             hub->recvData(&memory[page * 8], 8);
 
             if (dbg_DS2438)
@@ -104,6 +103,7 @@ bool DS2438::duty(OneWireHub *hub)
             }
             break;
     }
+    return TRUE;
 }
 
 void DS2438::setTemp(const float temp_degC)

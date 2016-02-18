@@ -26,8 +26,8 @@ bool DS2413::duty(OneWireHub *hub)
             hub->send(data);
 
             //@@@ - ToDo event
-            ALatch = data & 0x01;
-            BLatch = data & 0x02;
+            ALatch = data & static_cast<uint8_t>(0x01);
+            BLatch = data & static_cast<uint8_t>(0x02);
 
             if (dbg_DS2413)
             {
@@ -44,10 +44,10 @@ bool DS2413::duty(OneWireHub *hub)
             ReadState();
 
             data = 0;
-            if (AState)  data = data | 0x01;
-            if (!ALatch) data = data | 0x02;
-            if (BState)  data = data | 0x04;
-            if (!BLatch) data = data | 0x08;
+            if (AState)  data = data | static_cast<uint8_t>(0x01);
+            if (!ALatch) data = data | static_cast<uint8_t>(0x02);
+            if (BState)  data = data | static_cast<uint8_t>(0x04);
+            if (!BLatch) data = data | static_cast<uint8_t>(0x08);
 
             data = data | (~data << 4);
             hub->send(data);

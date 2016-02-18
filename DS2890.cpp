@@ -85,7 +85,7 @@ bool DS2890::duty(OneWireHub *hub)
 
             // INCREMENT
         case 0xC3:
-            if (potion < 0xFF) potion = potion + 1;
+            if (potion < 0xFF) potion++;
 
             // send
             hub->send(potion);
@@ -94,7 +94,7 @@ bool DS2890::duty(OneWireHub *hub)
 
             // DECREMENT
         case 0x99:
-            if (potion > 0x00) potion = potion - 1;
+            if (potion > 0x00) potion--;
 
             // send
             hub->send(potion);

@@ -21,4 +21,5 @@ bool DS2401::duty(OneWireHub *hub)
             }
             break;
     }
+    return TRUE;
 }
