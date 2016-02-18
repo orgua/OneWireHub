@@ -1,6 +1,5 @@
 #include "OneWireHub.h"
 #include "pins_arduino.h"
-#include <Arduino.h>
 
 extern "C" {
 #include <avr/io.h>
