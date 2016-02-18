@@ -106,6 +106,7 @@ bool OneWireHub::waitForRequest(const bool ignore_errors) // TODO: maybe build a
     }
 }
 
+
 // attach a sensor to the hub
 uint8_t OneWireHub::attach(OneWireItem &sensor)
 {
@@ -130,7 +131,7 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
 
     elms[position] = &sensor;
     slave_count++;
-    calck_mask();
+    calc_mask();
     return position;
 };
 
@@ -164,23 +165,16 @@ bool    OneWireHub::detach(const uint8_t slave_number)
 
     elms[slave_number] = nullptr;
     slave_count--;
-    calck_mask();
+    calc_mask();
     return 1;
 };
 
 
-int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
+int OneWireHub::calc_mask(void)
 {
-
-    if (dbg_CALCK)
-    {
-        Serial.print("Time: ");
-        Serial.println(micros());
-    }
-
     uint8_t Pos = 0;
 
-    // Zerro
+    // reset data (mostly zero)
     for (uint16_t i = 0; i < ONEWIREIDMAP_COUNT; ++i)
     {
         bits[i] = 3;
@@ -196,7 +190,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
         mask = mask | static_cast<uint8_t>(1 << i);
     }
 
-    if (dbg_CALCK)
+    if (dbg_CALC)
     {
         Serial.print("Mask:");
         Serial.println(mask, HEX);
@@ -215,9 +209,9 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
 
     while (stackpos)
     {
-        if (Pos >= ONEWIREIDMAP_COUNT) return 0;
+        if (Pos >= ONEWIREIDMAP_COUNT) return 0; // TODO: senseless int8 >= 256
 
-        if (dbg_CALCK)
+        if (dbg_CALC)
         {
             Serial.print("Pos=");
             Serial.print(Pos);
@@ -241,7 +235,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
 
             if (stack[stackpos][0])
             {
-                if (dbg_CALCK)
+                if (dbg_CALC)
                 {
                     Serial.print("OPos:1=");
                     Serial.print(spos);
@@ -253,7 +247,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
             }
             else
             {
-                if (dbg_CALCK)
+                if (dbg_CALC)
                 {
                     Serial.print("OPos:0=");
                     Serial.print(spos);
@@ -264,9 +258,9 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
                 idmap0[spos] = Pos;
             }
         }
-        else if (dbg_CALCK) Serial.print("OPos:None");
+        else if (dbg_CALC) Serial.print("OPos:None");
 
-        if (dbg_CALCK)
+        if (dbg_CALC)
         {
             Serial.print("\t BN=");
             Serial.print(BN);
@@ -291,7 +285,8 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
                 {
                     mask1 = mask1 | elmmask;
                     fl1 = TRUE;
-                } else
+                }
+                else
                 {
                     mask0 = mask0 | elmmask;
                     fl0 = TRUE;
@@ -301,16 +296,11 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
             elmmask = elmmask << 1;
         }
 
-        if ((fl0 == FALSE) && (fl1 == TRUE))
-        {
-            bits[Pos] = 1;
-        } else
-        {
-            if ((fl0 == TRUE) && (fl1 == FALSE))    bits[Pos] = 2;
-            else                                    bits[Pos] = 0;
-        }
+        if      ((fl0 == FALSE) && (fl1 == TRUE))   bits[Pos] = 1;
+        else if ((fl0 == TRUE)  && (fl1 == FALSE))  bits[Pos] = 2;
+        else                                        bits[Pos] = 0;
 
-        if (dbg_CALCK)
+        if (dbg_CALC)
         {
             Serial.print("\t Bit=");
             Serial.print(bits[Pos]);
@@ -338,7 +328,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
                 idmap1[Pos] = mask1;
 
                 Pos++;
-                if (dbg_CALCK) Serial.println();
+                if (dbg_CALC) Serial.println();
                 continue;
             }
         }
@@ -353,7 +343,7 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
             stack[stackpos][4] = mask0;
             stackpos++;
 
-            if (dbg_CALCK) Serial.print("ADD=0\t");
+            if (dbg_CALC) Serial.print("ADD=0\t");
         }
 
         // Tree 1
@@ -366,19 +356,16 @@ int OneWireHub::calck_mask(void) // TODO: is CALCK is typo?
             stack[stackpos][4] = mask1;
             stackpos++;
 
-            if (dbg_CALCK) Serial.print("ADD=1\t");
+            if (dbg_CALC) Serial.print("ADD=1\t");
         }
 
-        if (dbg_CALCK) Serial.println();
+        if (dbg_CALC) Serial.println();
         Pos++;
     }
 
-    if (dbg_CALCK)
+    if (dbg_CALC)
     {
-        Serial.print("Time: ");
-        Serial.println(micros());
-
-        for (uint8_t i = 0; i < ONEWIREIDMAP_COUNT; ++i)
+        for (uint16_t i = 0; i < ONEWIREIDMAP_COUNT; ++i)
         {
             Serial.print(i);
             Serial.print("\t");
@@ -559,9 +546,9 @@ bool OneWireHub::search(void)
             }
         }
     }
-
+    //Serial.print(n);Serial.print("-");
     for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
-        if (i == (1 << i))  SelectElm = elms[i];
+        if (n == (1 << i))  SelectElm = elms[i];
 
     if (dbg_SEARCH)
     {
@@ -587,7 +574,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             case 0xF0:
                 cmd = static_cast<uint8_t>(search()); // missuse cmd here, but
                 delayMicroseconds(6900);
-                if (cmd)  return TRUE; // TODO: hotfix for DS2401, but with the delay active there can only be one 2401
+                if (cmd)  return TRUE; // TODO: hotfix for DS2401 / infinite loop, but with the delay active there can only be one 2401
                 else      return FALSE;
 
                 // MATCH ROM - Choose/Select ROM
