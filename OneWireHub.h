@@ -2,7 +2,7 @@
 #include "Arduino.h"
 #include <inttypes.h>
 
-const bool dbg_CALCK    = 0; // give debug messages
+const bool dbg_CALC     = 0; // give debug messages
 const bool dbg_SEARCH   = 0; // give debug messages
 const bool dbg_MATCHROM = 0; // give debug messages
 const bool dbg_HINT     = 0; // give debug messages for called unimplemented functions of sensors
@@ -18,6 +18,14 @@ private:
 
     static const uint8_t  ONEWIRESLAVE_COUNT                = 8;
     static const uint16_t ONEWIREIDMAP_COUNT                = 256;
+    // TODO: these two values correlate
+    // 1 sensor needs 63+1
+    // 2 sensors need 118+1 fields
+    // 3 sensors need 181+1 fields
+    // 4 sensors need 236+1 fields
+    // bits stores numbers from 0-3 but use while uint8 (0 only on one (or two?) position, 3 only on empty fields (no pointer to it))
+    // idmap0&1 overflow when more than 4 sensors are used (contain jumpmarks)
+    // except for this one or two fields (bits=0) only idmap0 or idmap1 carry a value, the other is 0
 
     static const uint8_t ONEWIRE_NO_ERROR                   = 0;
     static const uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT      = 1;
@@ -58,7 +66,7 @@ public:
     bool    detach(const OneWireItem &sensor);
     bool    detach(const uint8_t slave_number);
 
-    int calck_mask(void);
+    int calc_mask(void);
 
     bool waitForRequest(const bool ignore_errors = false);
 
