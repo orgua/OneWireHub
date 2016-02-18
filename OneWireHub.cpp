@@ -586,9 +586,10 @@ bool OneWireHub::recvAndProcessCmd(void)
         {
             // Search rom
             case 0xF0:
-                if (search()) return TRUE; // TODO: hotfix for DS2401
+                cmd = search(); // missuse cmd here, but
                 delayMicroseconds(6900);
-                return FALSE;
+                if (cmd)  return TRUE; // TODO: hotfix for DS2401
+                else      return FALSE;
 
                 // MATCH ROM - Choose/Select ROM
             case 0x55:
