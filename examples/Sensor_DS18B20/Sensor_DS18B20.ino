@@ -16,15 +16,13 @@ auto        sensorB  = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);    // 
 
 bool blinking()
 {
-    const  uint32_t interval    = 500;        // interval at which to blink (milliseconds)
+    const  uint32_t interval    = 500;          // interval at which to blink (milliseconds)
     static uint32_t nextMillis  = millis();     // will store next time LED will updated
 
-    uint32_t currentMillis = millis();
-
-    if (currentMillis > nextMillis)
+    if (millis() > nextMillis)
     {
-        static uint8_t ledState = LOW;          // ledState used to set the LED
-        nextMillis = currentMillis + interval;  // save the last time you blinked the LED
+        nextMillis += interval;             // save the next time you blinked the LED
+        static uint8_t ledState = LOW;      // ledState used to set the LED
         if (ledState == LOW)    ledState = HIGH;
         else                    ledState = LOW;
         digitalWrite(led_PIN, ledState);
@@ -43,7 +41,7 @@ void setup()
     hub.attach(sensorA);
     hub.attach(sensorB);
 
-    // Set temp
+    // Set const temperature
     sensorA.setTemp(21);
 
     Serial.println("config done");
@@ -51,15 +49,16 @@ void setup()
 
 void loop()
 {
-    // put your main code here, to run repeatedly:
+    // following function must be called periodically
     hub.waitForRequest();
 
+    // Blink triggers the state-change
     if (blinking())
     {
         // Set temp
-        static float temperature = 10.0;
+        static float temperature = 20.0;
         temperature += 0.1;
-        if (temperature > 20.0) temperature = 10.0;
+        if (temperature > 30.0) temperature = 20.0;
         sensorB.setTemp(temperature);
     }
 }

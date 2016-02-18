@@ -16,15 +16,13 @@ auto ds2401C = DS2401( 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0C );
 
 bool blinking()
 {
-    const  uint32_t interval    = 50000;        // interval at which to blink (milliseconds)
+    const  uint32_t interval    = 50000;          // interval at which to blink (milliseconds)
     static uint32_t nextMillis  = millis();     // will store next time LED will updated
 
-    uint32_t currentMillis = millis();
-
-    if (currentMillis > nextMillis)
+    if (millis() > nextMillis)
     {
-        static uint8_t ledState = LOW;          // ledState used to set the LED
-        nextMillis = currentMillis + interval;  // save the last time you blinked the LED
+        nextMillis += interval;             // save the next time you blinked the LED
+        static uint8_t ledState = LOW;      // ledState used to set the LED
         if (ledState == LOW)    ledState = HIGH;
         else                    ledState = LOW;
         digitalWrite(led_PIN, ledState);
@@ -38,18 +36,20 @@ void setup()
 {
     Serial.begin(115200);
     Serial.println("OneWire-Hub DS2401 Serial Number used as iButton");
-    hub.attach(ds2401C); // always there
+
+    hub.attach(ds2401C); // always online
 }
 
 void loop()
 {
+    // following function must be called periodically
     hub.waitForRequest();
 
     // Blink triggers the state-change
     if (blinking())
     {
         static bool flipflop = 0;
-
+        // Change between Sensor A and B every 50 seconds
         if (flipflop)
         {
             flipflop = 0;
