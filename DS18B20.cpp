@@ -6,8 +6,8 @@ const bool dbg_DS18B20 = 0; // give debug messages for this sensor
 //=================== DS18S20 ==========================================
 DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    scratchpad[0] = 0xB4; // TLSB
-    scratchpad[1] = 0x09; // TMSB
+    scratchpad[0] = 0xA0; // TLSB --> 10 degC as std
+    scratchpad[1] = 0x00; // TMSB
     scratchpad[2] = 0x4B; // THRE
     scratchpad[3] = 0x46; // TLRE
     scratchpad[4] = 0x1F; // Conf
@@ -83,7 +83,7 @@ void DS18B20::setTemp(const float temperature_degC)
     setTempRaw(static_cast<int16_t>(temperature_degC * 16.0));
 };
 
-void DS18B20::setTemp(const int16_t temperature_degC)
+void DS18B20::setTemp(const int16_t temperature_degC) // TODO: could be int8_t
 {
     setTempRaw(temperature_degC * 16);
 };
