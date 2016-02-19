@@ -1,7 +1,7 @@
 OneWireHub
 ==========
 
-### Arduino OneWire slave device emulator with support for various simultaneously devices:
+### An Arduino compatible Tool to emulate OneWire-Slaves with support for various simultaneously devices:
 - **DS2401 Serial Number** (working)
 - **DS18B20 Digital Thermometer, 12bit** (working)
 - DS2405 Single adress switch
@@ -14,12 +14,13 @@ OneWireHub
 - **DS2890 Single channel digital potentiometer** (working)
 
 ### Possible extensions in the future:
-- [List of all Family-Codes](http://owfs.sourceforge.net/family.html)
+- working DS2438
 - DS1822 0x22 Thermometer, 12bit
-- ~~DS18S20 0x10 Thermometer 9bit~~
 - DS1963S 0x18 iButton
 - DS1990 0x01 iButton
 - MAX31850 0x3B thermocouple-to-digital converter 14bit
+- ~~DS18S20 0x10 Thermometer 9bit~~
+- [List of all Family-Codes](http://owfs.sourceforge.net/family.html)
 
 ### Connecting the HUB with the Network: 
 
