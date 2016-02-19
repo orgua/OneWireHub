@@ -1,8 +1,6 @@
 #include "OneWireHub.h"
 #include "DS2433.h"
 
-const bool dbg_DS2433 = 0; // give debug messages for this sensor
-
 DS2433::DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
     for (int i = 0; i < sizeof(memory); ++i)
@@ -36,7 +34,7 @@ bool DS2433::duty(OneWireHub *hub)
                 if (hub->error()) break;
             }
 
-            if (dbg_DS2433)
+            if (dbg_sensor)
             {
                 Serial.print("DS2433 : WRITE SCRATCHPAD COMMAND : ");
                 Serial.println(memory_address, HEX);
@@ -57,7 +55,7 @@ bool DS2433::duty(OneWireHub *hub)
             // Offset
             mem_offset = hub->recv();
 
-            if (dbg_DS2433)
+            if (dbg_sensor)
             {
                 Serial.print("DS2433 : READ SCRATCHPAD COMMAND : ");
                 Serial.print(memory_address, HEX);
@@ -81,7 +79,7 @@ bool DS2433::duty(OneWireHub *hub)
             for (int i = 0; i < 32; ++i) // TODO: check for memory_address + 32 < sizeof()
                 hub->send(memory[memory_address + i]);
 
-            if (dbg_DS2433)
+            if (dbg_sensor)
             {
                 Serial.print("DS2433 : READ MEMORY : ");
                 Serial.println(memory_address, HEX);

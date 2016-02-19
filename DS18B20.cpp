@@ -83,7 +83,7 @@ void DS18B20::setTemp(const float temperature_degC)
     setTempRaw(static_cast<int16_t>(temperature_degC * 16.0));
 };
 
-void DS18B20::setTemp(const int16_t temperature_degC) // TODO: could be int8_t
+void DS18B20::setTemp(const int16_t temperature_degC) // TODO: could be int8_t, [-55;+85] degC
 {
     setTempRaw(temperature_degC * static_cast<int8_t>(16));
 };

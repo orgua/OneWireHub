@@ -1,14 +1,9 @@
 // 0x26  Smart Battery Monitor
 
-// Register Addresses
-#define DS2438_IAD  0x01
-#define DS2438_CA   0x02
-#define DS2438_EE   0x04
-#define DS2438_AD   0x08
-#define DS2438_TB   0x10
-#define DS2438_NVB  0x20
-#define DS2438_ADB  0x40
+#ifndef ONEWIRE_DS2438_H
+#define ONEWIRE_DS2438_H
 
+// TODO: reduce footprint - 40 Bytes user-space
 static const uint8_t MemDS2438[64] =
         {
                 0x09, 0x20, 0x14, 0xAC, 0x00, 0x40, 0x01, 0x00,
@@ -42,6 +37,18 @@ class DS2438 : public OneWireItem
 {
 private:
 
+    static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
+    static constexpr uint8_t family_code = 0x26;
+
+    // Register Addresses
+    static constexpr uint8_t DS2438_IAD  = 0x01;
+    static constexpr uint8_t DS2438_CA   = 0x02;
+    static constexpr uint8_t DS2438_EE   = 0x04;
+    static constexpr uint8_t DS2438_AD   = 0x08;
+    static constexpr uint8_t DS2438_TB   = 0x10;
+    static constexpr uint8_t DS2438_NVB  = 0x20;
+    static constexpr uint8_t DS2438_ADB  = 0x40;
+
     uint8_t memory[64];
 
     bool duty(OneWireHub *hub);
@@ -52,7 +59,9 @@ public:
     void setTemp(const float   temp_degC);
     void setTemp(const uint8_t temp_degC);
 
-    void setVolt(const uint16_t val);
+    void setVolt(const uint16_t voltage_10mV);
 
-    void setCurr(const uint16_t val);
+    void setCurr(const uint16_t value);
 };
+
+#endif

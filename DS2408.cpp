@@ -1,9 +1,6 @@
 #include "OneWireHub.h"
 #include "DS2408.h"
 
-const bool dbg_DS2408 = 0; // give debug messages for this sensor
-
-//=================== DS2408 ==========================================
 DS2408::DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
     memory[0] = 0xF0;  // Cmd
@@ -55,7 +52,7 @@ bool DS2408::duty(OneWireHub *hub)
             // Data
             data = hub->sendData(memory + 3, 10);
 
-            if (dbg_DS2408)
+            if (dbg_sensor)
             {
                 Serial.print("DS2408 : PIO Registers : ");
                 Serial.print(memory[2], HEX);

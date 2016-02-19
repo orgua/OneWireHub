@@ -1,7 +1,15 @@
+// 0x20 4 channel A/D
+//
+
+#ifndef ONEWIRE_DS2450_H
+#define ONEWIRE_DS2450_H
 
 class DS2450 : public OneWireItem
 {
 private:
+    static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
+    static constexpr uint8_t family_code = 0x20;
+
     uint8_t memory[0x1F]; // TODO: make readable 3*8 or similar
 
     bool duty(OneWireHub *hub);
@@ -17,3 +25,5 @@ public:
     //bool updateCRC();
     //DS2450_memory memory;
 };
+
+#endif
