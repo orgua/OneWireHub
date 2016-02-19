@@ -1,7 +1,6 @@
 #include "OneWireHub.h"
 #include "DS2413.h"
 
-const bool dbg_DS2413 = 0; // give debug messages for this sensor
 
 DS2413::DS2413(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
@@ -29,7 +28,7 @@ bool DS2413::duty(OneWireHub *hub)
             ALatch = data & static_cast<uint8_t>(0x01);
             BLatch = data & static_cast<uint8_t>(0x02);
 
-            if (dbg_DS2413)
+            if (dbg_sensor)
             {
                 Serial.print("DS2413 : PIO WRITE  : 5A = ");
                 Serial.println(data, HEX);
@@ -52,7 +51,7 @@ bool DS2413::duty(OneWireHub *hub)
             data = data | (~data << 4);
             hub->send(data);
 
-            if (dbg_DS2413)
+            if (dbg_sensor)
             {
                 Serial.print("DS2413 : PIO ACCESS READ : F5 = ");
                 Serial.println(data, HEX);

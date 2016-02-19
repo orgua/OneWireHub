@@ -1,5 +1,9 @@
 // 0x29  8-Channel Addressable Switch @@@
 // Not ready
+
+#ifndef ONEWIRE_DS2408_H
+#define ONEWIRE_DS2408_H
+
 #pragma pack(push, 1)
 struct sDS2408 // TODO: could be overlayed with struct
 {
@@ -29,6 +33,8 @@ struct sDS2408 // TODO: could be overlayed with struct
 class DS2408 : public OneWireItem
 {
 private:
+    static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
+    static constexpr uint8_t family_code = 0x29;
 
     uint8_t memory[13];
 
@@ -39,3 +45,5 @@ public:
 
     void updateCRC();
 };
+
+#endif

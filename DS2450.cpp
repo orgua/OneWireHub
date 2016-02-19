@@ -1,8 +1,6 @@
 #include "OneWireHub.h"
 #include "DS2450.h"
 
-const bool dbg_DS2450 = 0; // give debug messages for this sensor
-
 DS2450::DS2450(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) :
         OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
@@ -48,7 +46,7 @@ bool DS2450::duty(OneWireHub *hub)
             hub->send(((uint8_t *) &crc)[0]);
             hub->send(((uint8_t *) &crc)[1]);
 
-            if (dbg_DS2450)
+            if (dbg_sensor)
             {
                 Serial.print("DS2450 : READ MEMORY : ");
                 Serial.println(memory_address_start, HEX);

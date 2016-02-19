@@ -1,9 +1,6 @@
 #include "OneWireHub.h"
 #include "DS2438.h"
 
-const bool dbg_DS2438 = 0; // give debug messages for this sensor
-
-
 DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
 
@@ -41,7 +38,7 @@ bool DS2438::duty(OneWireHub *hub)
         // Convert T
         case 0x44:
             //hub->sendBit(1);
-            if (dbg_DS2438) Serial.println("DS2438 : Convert T");
+            if (dbg_sensor) Serial.println("DS2438 : Convert T");
             break;
 
             // Write Scratchpad
@@ -50,7 +47,7 @@ bool DS2438::duty(OneWireHub *hub)
             page = hub->recv();
             hub->recvData(&memory[page * 8], 8);
 
-            if (dbg_DS2438)
+            if (dbg_sensor)
             {
                 Serial.print("DS2438 : Write Scratchpad - Page:");
                 Serial.println(page, HEX);
@@ -60,7 +57,7 @@ bool DS2438::duty(OneWireHub *hub)
             // Convert V
         case 0xB4:
             //hub->sendBit(1);
-            if (dbg_DS2438) Serial.println("DS2438 : Convert V");
+            if (dbg_sensor) Serial.println("DS2438 : Convert V");
             break;
 
             // Recall Memory
@@ -68,7 +65,7 @@ bool DS2438::duty(OneWireHub *hub)
             // page
             page = hub->recv();
 
-            if (dbg_DS2438)
+            if (dbg_sensor)
             {
                 Serial.print("DS2438 : Recall Memory - Page:");
                 Serial.println(page, HEX);
@@ -88,7 +85,7 @@ bool DS2438::duty(OneWireHub *hub)
             hub->sendData(&memory[page * 8], 8);
             hub->send(crc);
 
-            if (dbg_DS2438)
+            if (dbg_sensor)
             {
                 Serial.print("DS2438 : Read Scratchpad - Page:");
                 Serial.println(page, HEX);
@@ -120,17 +117,7 @@ void DS2438::setTemp(const float temp_degC)
         memory[2] = memory[2] | static_cast<uint8_t>(0x80);
 
 }
-/*
-void DS2438::setTemp(const float temp_degC) // TODO: test in comparison with new fn
-{
-    memory[1] = uint8_t(256 * ((temp - (int) temp) * 100) / 100);
-    memory[2] = round(abs(floor(temp)));
 
-    if (temp < 0)
-        memory[2] = memory[2] | 0x80;
-
-}
-*/
 void DS2438::setTemp(const uint8_t temp_degC)
 {
     memory[1] = 0;
@@ -140,14 +127,14 @@ void DS2438::setTemp(const uint8_t temp_degC)
 }
 
 
-void DS2438::setVolt(const uint16_t val) // TODO: is this more than 10 bit? maybe use a mask
+void DS2438::setVolt(const uint16_t voltage_10mV) // TODO: is this more than 10 bit? maybe use a mask
 {
-    memory[3] = uint8_t(val);
-    memory[4] = uint8_t(val >> 8);
+    memory[3] = uint8_t(voltage_10mV);
+    memory[4] = uint8_t((voltage_10mV >> 8) & static_cast<uint8_t>(0x03));
 }
 
-void DS2438::setCurr(const uint16_t val)
+void DS2438::setCurr(const uint16_t value) // TODO: signed 9 bit
 {
-    memory[5] = uint8_t(val);
-    memory[6] = uint8_t(val >> 8);
+    memory[5] = uint8_t(value);
+    memory[6] = uint8_t((value >> 8) & static_cast<uint8_t>(0x03));
 }

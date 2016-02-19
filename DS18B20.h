@@ -1,5 +1,9 @@
 // 0x28  Digital Thermometer
 // Work - 100%
+
+#ifndef ONEWIRE_DS18B20_H
+#define ONEWIRE_DS18B20_H
+
 class DS18B20 : public OneWireItem
 {
 private:
@@ -15,3 +19,5 @@ public:
     void setTemp(const float   temperature_degC);
     void setTemp(const int16_t temperature_degC);
 };
+
+#endif
