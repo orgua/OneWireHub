@@ -7,6 +7,10 @@
 class DS18B20 : public OneWireItem
 {
 private:
+
+    static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
+    static constexpr uint8_t family_code = 0x28; // is compatible to ds1822 (0x22) and ds18S29 (0x10)
+
     uint8_t scratchpad[9];
 
     bool duty(OneWireHub *hub);
