@@ -5,6 +5,9 @@
 #include <Arduino.h>
 #else
 
+// this part is loaded if no proper arduino-environment is found (good for external testing)
+// these functions are mockups and used by the Hub
+
 #define HEX 1
 	
 class serial
