@@ -95,5 +95,5 @@ bool DS2433::duty(OneWireHub *hub)
             }
             break;
     }
-    return TRUE;
+    return true;
 }

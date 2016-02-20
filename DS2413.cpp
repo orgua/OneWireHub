@@ -68,7 +68,7 @@ bool DS2413::duty(OneWireHub *hub)
             break;
     }
 
-    return TRUE;
+    return true;
 }
 
 void DS2413::ReadState()

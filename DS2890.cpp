@@ -108,5 +108,5 @@ bool DS2890::duty(OneWireHub *hub)
             break;
     }
 
-    return TRUE;
+    return true;
 }
