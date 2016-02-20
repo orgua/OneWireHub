@@ -100,7 +100,7 @@ bool DS2438::duty(OneWireHub *hub)
             }
             break;
     }
-    return TRUE;
+    return true;
 }
 
 void DS2438::setTemp(const float temp_degC)

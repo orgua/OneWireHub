@@ -21,6 +21,6 @@ bool DS2405::duty(OneWireHub *hub)
             }
             break;
     }
-    return TRUE;
+    return true;
 }
 

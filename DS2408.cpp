@@ -69,8 +69,8 @@ bool DS2408::duty(OneWireHub *hub)
                 Serial.print("DS2408=");
                 Serial.println(done, HEX);
             }
-            return FALSE;
+            return false;
     }
 
-    return TRUE;
+    return true;
 }
