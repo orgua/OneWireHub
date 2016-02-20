@@ -22,6 +22,10 @@ OneWireHub
 - ~~DS18S20 0x10 Thermometer 9bit~~
 - [List of all Family-Codes](http://owfs.sourceforge.net/family.html)
 
+### History of this Lib:
+- original pieces seem to be adopted from [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from @MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire) 
+- first implementation of the [OneWireHub](https://github.com/Shagrat2/OneWireHub) by @Shagrat2
+
 ### Connecting the HUB with the Network: 
 
 ![Onewire-Schematic](http://wiki.lvl1.org/images/1/15/Onewire.gif)
