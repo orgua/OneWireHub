@@ -166,10 +166,9 @@ bool    OneWireHub::detach(const uint8_t slave_number)
     return 1;
 };
 
-// TODO: this memory-monster can be reduced.
+
 // just look through each bit of each ID and build a tree, so there are n=slavecount decision-points
 // tradeoff: more online calculation, but @4Slave 16byte storage instead of 3*256 byte
-
 uint8_t OneWireHub::get_first_element(const uint8_t mask)
 {
     for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
@@ -486,10 +485,9 @@ bool OneWireHub::recvAndProcessCmd(void)
         {
             // Search rom
             case 0xF0:
-                cmd = static_cast<uint8_t>(search()); // missuse cmd here, but
+                search();
                 delayMicroseconds(1100); // TODO: sweetspot (to low - no data/PL; to high - no ds2401 without data) --> <1200, >1000, was 6900
-                if (cmd)  return true; // TODO: hotfix for DS2401 / infinite loop, but with the delay active there can only be one 2401
-                else      return false;
+                return false; // always trigger a reinit after search
 
                 // MATCH ROM - Choose/Select ROM
             case 0x55:
@@ -610,13 +608,13 @@ void OneWireHub::sendBit(const uint8_t v)
         sei();
         return;
     }
-    if (v & 1)  delayMicroseconds(32);
+    if (v & 1)  delayMicroseconds(32); // TODO: was 30 before
     else
     {
         cli();
         DIRECT_WRITE_LOW(reg, mask);
         DIRECT_MODE_OUTPUT(reg, mask);
-        delayMicroseconds(32);
+        delayMicroseconds(32); // TODO: was 30 before
         DIRECT_WRITE_HIGH(reg, mask);
     }
     sei();
