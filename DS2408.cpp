@@ -20,9 +20,7 @@ DS2408::DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 void DS2408::updateCRC()
 {
-    ow_crc16_reset();
-    for (int i = 0; i < 11; ++i) ow_crc16_update(memory[i]);
-    (reinterpret_cast<sDS2408 *>(memory))->CRC = ow_crc16_get();
+    (reinterpret_cast<sDS2408 *>(memory))->CRC = ~crc16(memory, 11);
 }
 
 bool DS2408::duty(OneWireHub *hub)
@@ -37,20 +35,13 @@ bool DS2408::duty(OneWireHub *hub)
     {
         // Read PIO Registers
         case 0xF0:
-            // Cmd
-            memory[0] = done;
+            memory[0] = done;        // Cmd
+            memory[1] = hub->recv(); // AdrL
+            memory[2] = hub->recv(); // AdrH
 
-            // AdrL
-            memory[1] = hub->recv();
-
-            // AdrH
-            memory[2] = hub->recv();
-
-            // UpdateCrc
             updateCRC();
 
-            // Data
-            data = hub->sendData(memory + 3, 10);
+            data = hub->sendData(&memory[3], 10);
 
             if (dbg_sensor)
             {

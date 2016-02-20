@@ -55,7 +55,7 @@ private:
     uint8_t build_tree(uint8_t bitposition, const uint8_t slave_mask);
     uint8_t get_first_element(const uint8_t mask);
 
-    bool waitReset(uint16_t timeout_ms = 1000);
+    bool waitReset(uint16_t timeout_ms = 1000); // TODO: maybe tune here to make all sensors appear in search
 
     bool presence(const uint8_t delta_us = 25);
 
@@ -97,10 +97,12 @@ public:
 // - var 1: use second init with one byte less (Serial 1-6 instead of ID)
 // - var 2: write ID1 of OneWireItem with the proper value without asking
 // - var 3: rewrite the OneWireItem-Class and implement something like setFamilyCode()
+// - var 4: make public family_code in sensor mandatory and just put it into init() if wanted --> prefer this
 
 class OneWireItem
 {
 public:
+
     OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
     uint8_t ID[8];
