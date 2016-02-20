@@ -10,16 +10,14 @@ const bool dbg_SEARCH   = 0; // give debug messages
 const bool dbg_MATCHROM = 0; // give debug messages
 const bool dbg_HINT     = 0; // give debug messages for called unimplemented functions of sensors
 
-#define FALSE 0
-#define TRUE  1
-
 class OneWireItem;
 
 class OneWireHub
 {
 private:
 
-    static constexpr uint8_t  ONEWIRESLAVE_COUNT                = 8; // 8 is max at the moment, need bigger vars on some loops
+    static constexpr uint8_t ONEWIRESLAVE_COUNT                 = 8; // 8 is max at the moment, need bigger vars on some loops
+    static constexpr uint8_t ONEWIRETREE_SIZE                   = ONEWIRESLAVE_COUNT + 4; // n+log2(n)
 
     static constexpr uint8_t ONEWIRE_NO_ERROR                   = 0;
     static constexpr uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT      = 1;
@@ -41,7 +39,7 @@ private:
         uint8_t bitposition;    // where does the algo has to look out?
         uint8_t gotZero;        // if 0 switch to which slave-ID
         uint8_t gotOne;         // if 1 switch to which slave-ID // TODO: replace with next branch-number --> faster timing, or relax recvBit()
-    } idTree[ONEWIRESLAVE_COUNT];
+    } idTree[ONEWIRETREE_SIZE];
 
     OneWireItem *elms[ONEWIRESLAVE_COUNT];  // make it private (use attach/detach)
 
@@ -53,6 +51,18 @@ private:
 
     uint8_t waitTimeSlotRead();
 
+    int calc_mask(void); // TODO: rename
+    uint8_t build_tree(uint8_t bitposition, const uint8_t slave_mask);
+    uint8_t get_first_element(const uint8_t mask);
+
+    bool waitReset(uint16_t timeout_ms = 1000);
+
+    bool presence(const uint8_t delta_us = 25);
+
+    bool search(void);
+
+    uint8_t recvBit(void);
+
     //int AnalizIds(uint8_t Pos, uint8_t BN, uint8_t BM, uint8_t mask);
 
 public:
@@ -63,30 +73,17 @@ public:
     bool    detach(const OneWireItem &sensor);
     bool    detach(const uint8_t slave_number);
 
-    int calc_mask(void); // TODO: rename
-    void build_tree(uint8_t bitposition, const uint8_t slave_mask);
-    uint8_t get_first_element(const uint8_t mask);
-    uint8_t get_next_treejunction(const uint8_t slave, const uint8_t position_bit_min);
-
     bool waitForRequest(const bool ignore_errors = false);
-
-    bool waitReset(uint16_t timeout_ms = 1000);
-
-    bool presence(const uint8_t delta_us = 25);
-
-    bool search(void);
-
-    uint8_t sendData(const uint8_t buf[], const uint8_t data_len);
-
-    uint8_t recvData(uint8_t buf[], const uint8_t data_len);
 
     void send(const uint8_t v);
 
-    uint8_t recv(void);
+    uint8_t sendData(const uint8_t buf[], const uint8_t data_len);
 
     void sendBit(const uint8_t v);
 
-    uint8_t recvBit(void);
+    uint8_t recv(void);
+
+    uint8_t recvData(uint8_t buf[], const uint8_t data_len);
 
     bool error(void)
     {
