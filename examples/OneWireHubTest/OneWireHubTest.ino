@@ -31,7 +31,7 @@ auto ds2401b  = DS2401( 0x01, 0x0D, 0x02, 0x04, 0x00, 0x01, 0x0B );    // Work -
 auto ds2413   = DS2413( 0x3A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Dual channel addressable switch
 // auto ds2423   = DS2423( 0x1D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
 // auto ds2433   = DS2433( 0x23, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4Kb 1-Wire EEPROM
-// auto ds2438   = DS2438( 0x26, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - Smart Battery Monitor
+auto ds2438   = DS2438( 0x26, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - Smart Battery Monitor
 auto ds2450   = DS2450( 0x20, 0x0D, 0x0A, 0x02, 0x04, 0x05, 0x00);      //      - 4 channel A/D
 auto ds2890   = DS2890( 0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    // Work - Single channel digital potentiometer
 
@@ -72,11 +72,12 @@ void setup()
 
     // Setup OneWire
     ds18B20a.setTemp(10);
-    hub.attach(ds18B20a); // TODO: BUG - can there only be 4 sensors at once?
-    hub.attach(ds18B20b);
+    //hub.attach(ds18B20a); // TODO: BUG - can there only be 4 sensors at once?
+    //hub.attach(ds18B20b);
     hub.attach(ds2401a);
-    //hub.attach(ds2401b);
-    hub.attach(ds2413);
+    hub.attach(ds2401b);
+    //hub.attach(ds2413);
+    hub.attach(ds2438);
     //hub.attach(ds2450); // TODO: still breaks the communication
     //hub.attach(ds2890);
 
@@ -96,7 +97,7 @@ void loop()
         temperature += 0.1;
         if (temperature > 40.0) temperature = 10.0;
         ds18B20b.setTemp(temperature);
-        Serial.println(temperature);
+        //Serial.println(temperature);
 
         // DS2450
         static uint16_t p1, p2, p3, p4;

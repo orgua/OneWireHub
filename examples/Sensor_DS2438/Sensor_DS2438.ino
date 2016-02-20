@@ -50,9 +50,9 @@ void loop()
     // Blink triggers the state-change
     if (blinking())
     {
-        float temp = 10.0;
-        uint16_t volt_10mV = 10;
-        uint16_t current = 10;
+        static float    temp      = 10.0;
+        static uint16_t volt_10mV = 10;
+        static uint16_t current   = 10;
 
         if ((temp += 0.2) > 30.0) temp = 10.0;
         if ((volt_10mV++) > 200 ) volt_10mV = 10;
@@ -65,3 +65,7 @@ void loop()
         Serial.println(temp);
     }
 }
+
+/*
+ *   A1.6.7 compiles to 7592 // 374
+ */
