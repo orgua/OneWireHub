@@ -1,5 +1,5 @@
 /*
- *    Example-Code that emulates a DS2890 Single channel digital potentiometer
+ *    Example-Code that emulates a DS2890 Single channel digital potentiometer (datasheet has it covered for up to 4 CH)
  *    Tested with https://github.com/PaulStoffregen/OneWire --> still untested
  */
 
@@ -48,6 +48,16 @@ void loop()
     // Blink triggers the state-change
     if (blinking())
     {
+        Serial.print("Poti: ");
+        Serial.print(ds2890.readPoti(0));
+        Serial.print(" ");
+        Serial.print(ds2890.readPoti(1));
+        Serial.print(" ");
+        Serial.print(ds2890.readPoti(2));
+        Serial.print(" ");
+        Serial.print(ds2890.readPoti(3));
+        Serial.print(" of 255 with config: ");
+        Serial.println(ds2890.readCtrl());
 
     }
 }

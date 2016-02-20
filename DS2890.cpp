@@ -3,99 +3,97 @@
 
 DS2890::DS2890(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    regs = 0;
-    potion = 0;
+    register_feat = REGISTER_MASK_POTI_CHAR | REGISTER_MASK_WIPER_SET | REGISTER_MASK_WIPER_POS | REGISTER_MASK_POTI_RESI;
+    register_poti[0] = 0;
+    register_poti[1] = 0;
+    register_poti[2] = 0;
+    register_poti[3] = 0;
+    register_ctrl    = 0b00001100;
 }
 
 bool DS2890::duty(OneWireHub *hub)
 {
-    uint16_t data; // TODO: unused for now
-
+    uint8_t temp = 0;
     uint8_t done = hub->recv();
+
     switch (done)
     {
-        // WRITE POSITION
-        case 0x0F:
-            // get
-            potion = hub->recv();
 
-            // send
-            hub->send(potion);
+        case 0x0F: // WRITE POSITION
+            temp = hub->recv();
+            hub->send(temp);
+            done = hub->recv();
+            if (done == 0x96) // release code received
+                register_poti[register_ctrl&0x03] = temp;
 
-        if (dbg_sensor)
-        {
-            Serial.print("DS2890 : WRITE POSITION: ");
-            Serial.println(potion, HEX);
-        }
-
+            if (dbg_sensor)
+            {
+                Serial.print("DS2890 : WRITE POSITION: ");
+                Serial.println(register_poti[register_ctrl&0x03], HEX);
+            }
             break;
 
-            // WRITE CONTROL REGISTER
-        case 0x55:
-            // data
-            regs = hub->recv();
 
-            // send dara
-            hub->send(regs);
+        case 0x55: // WRITE CONTROL REGISTER
+            temp = hub->recv();
+
+            if (temp&0x01) temp |= 0x04;
+            else temp &= ~0x04;
+            if (temp&0x02) temp |= 0x08;
+            else temp &= ~0x08;
+
+            hub->send(temp);
+
+            done = hub->recv();
+            if (done == 0x96) // release code received
+                register_ctrl = temp;
 
             if (dbg_sensor)
             {
                 Serial.print("DS2890 : WRITE CONTROL REGISTER: ");
-                Serial.println(regs, HEX);
+                Serial.println(temp, HEX);
             }
-
             break;
 
-            // READ CONTROL REGISTER
-        case 0xAA:
-            // regs
-            hub->send(regs);
 
-            // send
-            hub->send(potion);
+        case 0xAA: // READ CONTROL REGISTER
+            hub->send(register_ctrl);
+            hub->send(register_feat);
 
             if (dbg_sensor)
             {
                 Serial.print("DS2890 : READ CONTROL REGISTER: ");
-                Serial.print(regs, HEX);
+                Serial.print(register_ctrl, HEX);
                 Serial.print("-");
-                Serial.println(potion, HEX);
+                Serial.println(register_feat, HEX);
             }
-
             break;
 
-            // READ POSITION
-        case 0xF0:
-            // regs
-            hub->send(regs);
 
-            // send
-            hub->send(potion);
+        case 0xF0: // READ POSITION
+            hub->send(register_ctrl);
+            hub->send(register_poti[register_ctrl&0x03]);
 
             if (dbg_sensor)
             {
                 Serial.print("DS2890 : READ POSITION: ");
-                Serial.print(regs, HEX);
+                Serial.print(register_ctrl, HEX);
                 Serial.print("-");
-                Serial.println(potion, HEX);
+                Serial.println(register_poti[register_ctrl&0x03], HEX);
             }
             break;
 
-            // INCREMENT
-        case 0xC3:
-            if (potion < 0xFF) potion++;
 
-            // send
-            hub->send(potion);
+        case 0xC3: // INCREMENT
+            if (register_poti[register_ctrl&0x03] < 0xFF) register_poti[register_ctrl&0x03]++;
+            hub->send(register_poti[register_ctrl&0x03]);
             if (dbg_sensor) Serial.print("DS2890 : INCREMENT");
             break;
 
-            // DECREMENT
-        case 0x99:
-            if (potion > 0x00) potion--;
 
-            // send
-            hub->send(potion);
+        case 0x99: // DECREMENT
+            if (register_poti[register_ctrl&0x03]) register_poti[register_ctrl&0x03]--;
+            hub->send(register_poti[register_ctrl&0x03]);
             if (dbg_sensor) Serial.print("DS2890 : DECREMENT");
             break;
 
