@@ -1,3 +1,6 @@
+// large parts are derived from https://github.com/MarkusLange/OneWireSlave/blob/master/OneWireSlave.cpp
+
+
 #include "OneWireHub.h"
 #include "pins_arduino.h"
 
@@ -13,8 +16,8 @@ extern "C" {
 #define DIRECT_WRITE_LOW(base, mask)   ((*(base+2)) &= ~(mask))
 #define DIRECT_WRITE_HIGH(base, mask)  ((*(base+2)) |= (mask))
 
-#define TIMESLOT_WAIT_RETRY_COUNT microsecondsToClockCycles(120) / 10L
-#define TIMESLOT_WAIT_READ_RETRY_COUNT microsecondsToClockCycles(135)
+#define TIMESLOT_WAIT_RETRY_COUNT       (microsecondsToClockCycles(120) / 10L)
+#define TIMESLOT_WAIT_READ_RETRY_COUNT  (microsecondsToClockCycles(135))
 
 //--- CRC 16 --- // TODO: only used in ds2450 and ds2408 and ds2423
 static uint16_t crc16;
@@ -66,7 +69,6 @@ bool OneWireHub::waitForRequest(const bool ignore_errors) // TODO: maybe build a
 
     while (1)
     {
-        //delayMicroseconds(40);
         //Once reset is done, it waits another 30 micros
         //Master wait is 65, so we have 35 more to send our presence now that reset is done
         if (!waitReset(0))
@@ -148,20 +150,15 @@ bool    OneWireHub::detach(const OneWireItem &sensor)
         }
     }
 
-    if (position != 255)
-        return detach(position);
-    else
-        return 0;
+    if (position != 255)    return detach(position);
+    else                    return 0;
 };
 
 bool    OneWireHub::detach(const uint8_t slave_number)
 {
-    if (elms[slave_number] == nullptr)
-        return 0;
-    if (!slave_count)
-        return 0;
-    if (slave_number >= ONEWIRESLAVE_COUNT)
-        return 0;
+    if (elms[slave_number] == nullptr)          return 0;
+    if (!slave_count)                           return 0;
+    if (slave_number >= ONEWIRESLAVE_COUNT)     return 0;
 
     elms[slave_number] = nullptr;
     slave_count--;
@@ -169,215 +166,110 @@ bool    OneWireHub::detach(const uint8_t slave_number)
     return 1;
 };
 
+// TODO: this memory-monster can be reduced.
+// just look through each bit of each ID and build a tree, so there are n=slavecount decision-points
+// tradeoff: more online calculation, but @4Slave 16byte storage instead of 3*256 byte
+
+uint8_t OneWireHub::get_first_element(const uint8_t mask)
+{
+    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
+    {
+        if (mask & (1 << i))
+        {
+            return i;
+        }
+    }
+}
+
+
+void OneWireHub::build_tree(uint8_t position_IDBit, const uint8_t mask_slaves)
+{
+    if (!mask_slaves) return;
+
+    while (position_IDBit < 64)
+    {
+        uint8_t mask_pos = 0;
+        uint8_t mask_neg = 0;
+        const uint8_t pos_byte = (position_IDBit >> 3);
+        const uint8_t mask_bit = (static_cast<uint8_t>(1) << (position_IDBit & (7)));
+
+        // search through all active slaves
+        for (uint8_t id = 0; id < ONEWIRESLAVE_COUNT; ++id)
+        {
+            const uint8_t mask_id = (static_cast<uint8_t>(1) << id);
+
+            if (mask_slaves & mask_id)
+            {
+                // if slave is in mask differentiate the bitvalue
+                if (elms[id]->ID[pos_byte] & mask_bit)
+                    mask_pos |= mask_id;
+                else
+                    mask_neg |= mask_id;
+            }
+        }
+
+        if (mask_neg && mask_pos)
+        {
+            // there was found a junction
+            uint8_t active_element = 0;
+            for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
+            {
+                if (idTree[i].bitposition == 255)
+                {
+                    active_element = i;
+                    break;
+                }
+            };
+
+            idTree[active_element].bitposition = position_IDBit;
+            idTree[active_element].gotOne      = get_first_element(mask_pos);
+            idTree[active_element].gotZero     = get_first_element(mask_neg);
+            idTree[active_element].slave_selected = get_first_element(mask_slaves);
+            position_IDBit++;
+            build_tree(position_IDBit, mask_pos);
+            build_tree(position_IDBit, mask_neg);
+            return;
+        };
+
+        position_IDBit++;
+    }
+}
 
 int OneWireHub::calc_mask(void)
 {
-    uint8_t Pos = 0;
+    uint8_t mask_slaves = 0;
 
-    // reset data (mostly zero)
-    for (uint16_t i = 0; i < ONEWIREIDMAP_COUNT; ++i)
+    for (uint8_t i = 0; i< ONEWIRESLAVE_COUNT; ++i)
     {
-        bits[i] = 3;
-        idmap0[i] = 0;
-        idmap1[i] = 0;
+        if (elms[i] != nullptr) mask_slaves |= (1 << i);
+        idTree[i].bitposition    = 255;
+        idTree[i].slave_selected = 255;
     }
 
-    // Get elms mask
-    uint8_t mask = 0x00;
-    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
-    {
-        if (elms[i] == nullptr) continue;
-        mask = mask | static_cast<uint8_t>(1 << i);
-    }
+    build_tree(0, mask_slaves);
+
+    // store root-element
+    idTree[ONEWIRESLAVE_COUNT-1].slave_selected = get_first_element(mask_slaves);
 
     if (dbg_CALC)
     {
-        Serial.print("Mask:");
-        Serial.println(mask, HEX);
-    }
-
-    // First data
-    uint8_t stack[8][5]; // operate bit, set pos, Byte pos, byte mask, elms mask
-
-    // 0
-    stack[0][0] = 0;    // bit
-    stack[0][1] = 0xFF; // None
-    stack[0][2] = 0x00; // Pos
-    stack[0][3] = 0x01; // Mask
-    stack[0][4] = mask; // Elms mask
-    uint8_t stackpos = 1;
-
-    while (stackpos)
-    {
-        if (Pos >= ONEWIREIDMAP_COUNT) return 0; // TODO: senseless int8 >= 256
-
-        if (dbg_CALC)
-        {
-            Serial.print("Pos=");
-            Serial.print(Pos);
-            Serial.print("\t");
-
-            Serial.print("SLevel=");
-            Serial.print(stackpos);
-            Serial.print("\t");
-        }
-
-        stackpos--;
-
-        // Set last step jamp
-        uint8_t spos = stack[stackpos][1];
-        uint8_t BN = stack[stackpos][2];
-        uint8_t BM = stack[stackpos][3];
-        mask = stack[stackpos][4];
-
-        if (spos != 0xFF)
-        {
-
-            if (stack[stackpos][0])
-            {
-                if (dbg_CALC)
-                {
-                    Serial.print("OPos:1=");
-                    Serial.print(spos);
-                    Serial.print("->");
-                    Serial.print(Pos);
-                }
-
-                idmap1[spos] = Pos;
-            }
-            else
-            {
-                if (dbg_CALC)
-                {
-                    Serial.print("OPos:0=");
-                    Serial.print(spos);
-                    Serial.print("->");
-                    Serial.print(Pos);
-                }
-
-                idmap0[spos] = Pos;
-            }
-        }
-        else if (dbg_CALC) Serial.print("OPos:None");
-
-        if (dbg_CALC)
-        {
-            Serial.print("\t BN=");
-            Serial.print(BN);
-
-            Serial.print("\t BM=");
-            Serial.print(BM, HEX);
-            Serial.print("\t");
-        }
-
-        // Div tree
-        bool fl0 = FALSE;
-        bool fl1 = FALSE;
-        uint8_t mask1 = 0x00;
-        uint8_t mask0 = 0x00;
-        uint8_t elmmask = 0x01;
-
+        Serial.println("Calculate idTree: ");
         for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
         {
-            if (elmmask & mask)
-            {
-                if (BM & elms[i]->ID[BN])
-                {
-                    mask1 = mask1 | elmmask;
-                    fl1 = TRUE;
-                }
-                else
-                {
-                    mask0 = mask0 | elmmask;
-                    fl0 = TRUE;
-                }
-            }
 
-            elmmask = elmmask << 1;
-        }
-
-        if      ((fl0 == FALSE) && (fl1 == TRUE))   bits[Pos] = 1;
-        else if ((fl0 == TRUE)  && (fl1 == FALSE))  bits[Pos] = 2;
-        else                                        bits[Pos] = 0;
-
-        if (dbg_CALC)
-        {
-            Serial.print("\t Bit=");
-            Serial.print(bits[Pos]);
-
-            Serial.print("\t mask0=");
-            Serial.print(mask0, HEX);
-
-            Serial.print("\t mask1=");
-            Serial.print(mask1, HEX);
-            Serial.print("\t");
-        }
-
-        uint8_t NBN = BN;
-        uint8_t NBM = BM << 1;
-
-        if (!NBM)
-        {
-            NBN++;
-            NBM = 0x01;
-
-            // END
-            if (NBN >= 8)
-            {
-                idmap0[Pos] = mask0;
-                idmap1[Pos] = mask1;
-
-                Pos++;
-                if (dbg_CALC) Serial.println();
-                continue;
-            }
-        }
-
-        // Tree 0
-        if (mask0 != 0)
-        {
-            stack[stackpos][0] = 0;
-            stack[stackpos][1] = Pos;
-            stack[stackpos][2] = NBN;
-            stack[stackpos][3] = NBM;
-            stack[stackpos][4] = mask0;
-            stackpos++;
-
-            if (dbg_CALC) Serial.print("ADD=0\t");
-        }
-
-        // Tree 1
-        if (mask1 != 0)
-        {
-            stack[stackpos][0] = 1;
-            stack[stackpos][1] = Pos;
-            stack[stackpos][2] = NBN;
-            stack[stackpos][3] = NBM;
-            stack[stackpos][4] = mask1;
-            stackpos++;
-
-            if (dbg_CALC) Serial.print("ADD=1\t");
-        }
-
-        if (dbg_CALC) Serial.println();
-        Pos++;
-    }
-
-    if (dbg_CALC)
-    {
-        for (uint16_t i = 0; i < ONEWIREIDMAP_COUNT; ++i)
-        {
-            Serial.print(i);
-            Serial.print("\t");
-            Serial.print(bits[i]);
-            Serial.print("\t");
-            Serial.print(idmap0[i]);
-            Serial.print("\t");
-            Serial.println(idmap1[i]);
+            Serial.print("Slave: ");
+            if (idTree[i].slave_selected < 10) Serial.print("  ");
+            Serial.print(idTree[i].slave_selected);
+            Serial.print(" bitPos: ");
+            if (idTree[i].bitposition < 10) Serial.print(" ");
+            if (idTree[i].bitposition < 100) Serial.print(" ");
+            Serial.print(idTree[i].bitposition);
+            Serial.print(" if0gt: ");
+            Serial.print(idTree[i].gotZero);
+            Serial.print(" if1gt: ");
+            Serial.println(idTree[i].gotOne);
         }
     }
-
-    return Pos;
 }
 
 bool OneWireHub::waitReset(uint16_t timeout_ms)
@@ -445,11 +337,6 @@ bool OneWireHub::waitReset(uint16_t timeout_ms)
     return TRUE;
 }
 
-bool OneWireHub::waitReset(void)
-{
-    return waitReset(1000);
-}
-
 bool OneWireHub::presence(const uint8_t delta_us)
 {
     uint8_t mask = pin_bitmask;
@@ -475,88 +362,103 @@ bool OneWireHub::presence(const uint8_t delta_us)
     // docs call for a total of 480 possible from start of rise before reset timing is completed
     //This gives us 50 micros to play with, but being early is probably best for timing on read later
     //delayMicroseconds(300 - delta);
-    delayMicroseconds(static_cast<uint8_t>(250) - delta_us);
+    delayMicroseconds(static_cast<uint16_t>(250) - delta_us);  // TODO: where does 250 come from?
 
     //Modified to wait a while (roughly 50 micros) for the line to go high
     // since the above wait is about 430 micros, this makes this 480 closer
     // to the 480 standard spec and the 490 used on the Arduino master code
     // anything longer then is most likely something going wrong.
     uint8_t retries = 25;
-    while (!DIRECT_READ(reg, mask));
+    //while (!DIRECT_READ(reg, mask));
     do
     {
-        if (retries-- == 0)
-            return FALSE;
+        if (retries-- == 0)  return FALSE;
         delayMicroseconds(2);
     } while (!DIRECT_READ(reg, mask));
 
-    //return FALSE; // TODO: resolve this problem and add standard return
+
+    if ( DIRECT_READ(reg, mask))
+    {
+        return TRUE;
+    }
+    else
+    {
+        errno = ONEWIRE_PRESENCE_LOW_ON_LINE;
+        return FALSE;
+    };
+}
+
+uint8_t OneWireHub::get_next_treejunction(const uint8_t slave, const uint8_t position_bit_min)
+{
+    for (uint8_t branch = 0; branch < (ONEWIRESLAVE_COUNT); ++branch)
+    {
+        if (idTree[branch].slave_selected == slave)
+            if (idTree[branch].bitposition >= position_bit_min)
+                return branch;
+    }
+    return (ONEWIRESLAVE_COUNT-1);
 }
 
 bool OneWireHub::search(void)
 {
-    uint8_t bitmask;
-    uint8_t bit_recv;
+    uint8_t position_IDBit = 0;
+    uint8_t active_slave = idTree[ONEWIRESLAVE_COUNT - 1].slave_selected;
+    uint8_t trigger_pos  = get_next_treejunction(active_slave,position_IDBit);
+    uint8_t trigger_bit  = idTree[trigger_pos].bitposition;
 
-    uint16_t n = 0;
-
-    for (uint8_t i = 0; i < 8; ++i)
+    while (position_IDBit < 64)
     {
-        for (bitmask = 0x01; bitmask; bitmask <<= 1)
+        // if junction is reached, act different
+        if (position_IDBit == trigger_bit)
         {
+            sendBit(FALSE);
+            sendBit(FALSE);
+            uint8_t bit_recv = recvBit();
+            if (errno != ONEWIRE_NO_ERROR)
+                return FALSE;
+            if (bit_recv)   active_slave = idTree[trigger_pos].gotOne;
+            else            active_slave = idTree[trigger_pos].gotZero;
+            // find next junction if needed
+            trigger_pos  = get_next_treejunction(active_slave,position_IDBit+1);
+            trigger_bit  = idTree[trigger_pos].bitposition;
+        }
+        else
+        {
+            const uint8_t pos_byte = (position_IDBit >> 3);
+            const uint8_t mask_bit = (static_cast<uint8_t>(1) << (position_IDBit & (7)));
+            uint8_t bit_send, bit_recv;
 
-            // Get from elements
-            switch (bits[n])
+            if (elms[active_slave]->ID[pos_byte] & mask_bit)
             {
-                case 0:
-                    sendBit(FALSE);
-                    sendBit(FALSE);
-                    break;
-                case 1:
-                    sendBit(TRUE);
-                    sendBit(FALSE);
-                    break;
-                case 2:
-                    sendBit(FALSE);
-                    sendBit(TRUE);
-                    break;
-                default:
-                    return FALSE;
+                bit_send = 1;
+                sendBit(TRUE);
+                sendBit(FALSE);
+            }
+            else
+            {
+                bit_send = 0;
+                sendBit(FALSE);
+                sendBit(TRUE);
             }
 
             bit_recv = recvBit();
-
-            if (errno != ONEWIRE_NO_ERROR) return FALSE;
-
-            // Get next elm
-            if (bit_recv)  n = idmap1[n]; // got a 1
-            else           n = idmap0[n]; // got a 0
-
-            // Test not found
-            if (n == 0)
-            {
-                if (dbg_SEARCH)
-                {
-                    Serial.print("Not found-");
-                    Serial.print(i);
-                    Serial.print(",");
-                    Serial.println(bitmask, HEX);
-                }
+            if (errno != ONEWIRE_NO_ERROR)
                 return FALSE;
-            }
+
+            if (bit_send != bit_recv)
+                return false;
         }
+        position_IDBit++;
     }
-    //Serial.print(n);Serial.print("-");
-    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
-        if (n == (1 << i))  SelectElm = elms[i];
 
     if (dbg_SEARCH)
     {
-        Serial.print("Found-");
-        Serial.println(n);
+        Serial.print("Found:");
+        Serial.println(active_slave);
     }
 
-    return TRUE;
+    SelectElm = elms[active_slave];
+    return true;
 }
 
 bool OneWireHub::recvAndProcessCmd(void)
@@ -573,7 +475,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             // Search rom
             case 0xF0:
                 cmd = static_cast<uint8_t>(search()); // missuse cmd here, but
-                delayMicroseconds(6900);
+                delayMicroseconds(5900); // TODO: was commented out at MLange
                 if (cmd)  return TRUE; // TODO: hotfix for DS2401 / infinite loop, but with the delay active there can only be one 2401
                 else      return FALSE;
 
@@ -614,17 +516,13 @@ bool OneWireHub::recvAndProcessCmd(void)
                     }
                 }
 
-                if (flag == FALSE) return FALSE;
-
-                if (SelectElm != 0)
-                    SelectElm->duty(this);
-
+                if (flag == FALSE)          return FALSE;
+                if (SelectElm != nullptr)   SelectElm->duty(this);
                 return TRUE;
-                break;
 
                 // SKIP ROM
             case 0xCC:
-                SelectElm = 0x00;
+                SelectElm = nullptr;
                 return TRUE;
 
             default: // Unknow command
@@ -634,7 +532,6 @@ bool OneWireHub::recvAndProcessCmd(void)
                     Serial.println(cmd, HEX);
                 }
                 return FALSE;
-                break;
         }
     }
 }
@@ -696,18 +593,12 @@ void OneWireHub::sendBit(const uint8_t v)
     uint8_t wt = waitTimeSlot();
     if (wt != 1)
     { //1 is success, others are failure
-        if (wt == 10)
-        {
-            errno = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
-        } else
-        {
-            errno = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
-        }
+        if (wt == 10)   errno = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
+        else            errno = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
         sei();
         return;
     }
-    if (v & 1)
-        delayMicroseconds(30);
+    if (v & 1)  delayMicroseconds(30);
     else
     {
         cli();
@@ -715,7 +606,6 @@ void OneWireHub::sendBit(const uint8_t v)
         DIRECT_MODE_OUTPUT(reg, mask);
         delayMicroseconds(30);
         DIRECT_WRITE_HIGH(reg, mask);
-        sei();
     }
     sei();
     return;
