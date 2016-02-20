@@ -19,16 +19,7 @@ class OneWireHub
 {
 private:
 
-    static constexpr uint8_t  ONEWIRESLAVE_COUNT                = 8;
-    static constexpr uint16_t ONEWIREIDMAP_COUNT                = 256;
-    // TODO: these two values correlate
-    // 1 sensor needs 63+1
-    // 2 sensors need 118+1 fields
-    // 3 sensors need 181+1 fields
-    // 4 sensors need 236+1 fields
-    // bits stores numbers from 0-3 but use while uint8 (0 only on one (or two?) position, 3 only on empty fields (no pointer to it))
-    // idmap0&1 overflow when more than 4 sensors are used (contain jumpmarks)
-    // except for this one or two fields (bits=0) only idmap0 or idmap1 carry a value, the other is 0
+    static constexpr uint8_t  ONEWIRESLAVE_COUNT                = 8; // 8 is max at the moment, need bigger vars on some loops
 
     static constexpr uint8_t ONEWIRE_NO_ERROR                   = 0;
     static constexpr uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT      = 1;
@@ -45,9 +36,12 @@ private:
     uint8_t errno;
     volatile uint8_t *baseReg;
 
-    uint8_t bits[ONEWIREIDMAP_COUNT];
-    uint8_t idmap0[ONEWIREIDMAP_COUNT];
-    uint8_t idmap1[ONEWIREIDMAP_COUNT];
+    struct IDTree {
+        uint8_t slave_selected; // for which slave is this jump-command relevant
+        uint8_t bitposition;    // where does the algo has to look out?
+        uint8_t gotZero;        // if 0 switch to which slave-ID
+        uint8_t gotOne;         // if 1 switch to which slave-ID // TODO: replace with next branch-number --> faster timing, or relax recvBit()
+    } idTree[ONEWIRESLAVE_COUNT];
 
     OneWireItem *elms[ONEWIRESLAVE_COUNT];  // make it private (use attach/detach)
 
@@ -69,13 +63,14 @@ public:
     bool    detach(const OneWireItem &sensor);
     bool    detach(const uint8_t slave_number);
 
-    int calc_mask(void);
+    int calc_mask(void); // TODO: rename
+    void build_tree(uint8_t bitposition, const uint8_t slave_mask);
+    uint8_t get_first_element(const uint8_t mask);
+    uint8_t get_next_treejunction(const uint8_t slave, const uint8_t position_bit_min);
 
     bool waitForRequest(const bool ignore_errors = false);
 
-    bool waitReset(uint16_t timeout_ms);
-
-    bool waitReset(void);
+    bool waitReset(uint16_t timeout_ms = 1000);
 
     bool presence(const uint8_t delta_us = 25);
 
