@@ -13,6 +13,17 @@ OneWireHub
 - DS2450 4 channel A/D
 - **DS2890 Single channel digital potentiometer** (working)
 
+### Recent development (newest on top): 
+- bug: only one ds2401 possible?
+- fix bug: buffer-overrun when using more than 4 slaves 
+- replace search() algorithm, safes a lot of ram (HubTest-Minimal4 needs 3986 & 155 byte instead of 3928 & 891 byte)
+- fix bug: infinite loop when waitForRequest() is called without attached sensor
+- fix bug: infinite loop when (for example) >=1 ds2401 are attached and waitForRequest() is called
+- fix bug: temp-calculation was wrong (ds18b20, ds2438) and used something like round(abs(floor(float-value)))
+- better documentation, more examples, easier interface for hub
+- cleaner, faster code
+- make OneWireHub compatible to arduino library-manager
+
 ### Possible extensions in the future:
 - working DS2438
 - DS1822 0x22 Thermometer, 12bit
@@ -23,8 +34,8 @@ OneWireHub
 - [List of all Family-Codes](http://owfs.sourceforge.net/family.html)
 
 ### History of this Lib:
-- original pieces seem to be adopted from [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from @MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire) 
-- first implementation of the [OneWireHub](https://github.com/Shagrat2/OneWireHub) by @Shagrat2
+- original pieces seem to be adopted from [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire) 
+- first implementation of the [OneWireHub](https://github.com/Shagrat2/OneWireHub) by Shagrat2
 
 ### Connecting the HUB with the Network: 
 
