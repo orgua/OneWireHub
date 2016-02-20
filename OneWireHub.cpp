@@ -16,8 +16,7 @@ extern "C" {
 #define DIRECT_WRITE_LOW(base, mask)   ((*(base+2)) &= ~(mask))
 #define DIRECT_WRITE_HIGH(base, mask)  ((*(base+2)) |= (mask))
 
-#define TIMESLOT_WAIT_RETRY_COUNT       (microsecondsToClockCycles(120) / 10L)
-#define TIMESLOT_WAIT_READ_RETRY_COUNT  (microsecondsToClockCycles(135))
+#define TIMESLOT_WAIT_RETRY_COUNT  (microsecondsToClockCycles(135))
 
 //--- CRC 16 --- // TODO: only used in ds2450 and ds2408 and ds2423
 static uint16_t crc16;
@@ -302,7 +301,7 @@ bool OneWireHub::waitReset(uint16_t timeout_ms)
     //Wait for the line to fall
     if (timeout_ms != 0)
     {
-        time_stamp = micros() + timeout_ms * 1000;
+        time_stamp = micros() + ( timeout_ms * 1000 );
         while (DIRECT_READ(reg, mask))
         {
             if (micros() > time_stamp)
@@ -385,12 +384,11 @@ bool OneWireHub::presence(const uint8_t delta_us)
     // to the 480 standard spec and the 490 used on the Arduino master code
     // anything longer then is most likely something going wrong.
     uint8_t retries = 25;
-    //while (!DIRECT_READ(reg, mask));
-    do
+    while (!DIRECT_READ(reg, mask))
     {
-        if (retries-- == 0)  return false;
         delayMicroseconds(2);
-    } while (!DIRECT_READ(reg, mask));
+        if (retries-- == 0)  return false;
+    }
 
 
     if ( DIRECT_READ(reg, mask))
@@ -486,7 +484,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             // Search rom
             case 0xF0:
                 search();
-                delayMicroseconds(1100); // TODO: sweetspot (to low - no data/PL; to high - no ds2401 without data) --> <1200, >1000, was 6900
+                //delayMicroseconds(1100); // TODO: sweetspot (to low - no data/PL; to high - no ds2401 without data) --> <1200, >1000, was 6900
                 return false; // always trigger a reinit after search
 
                 // MATCH ROM - Choose/Select ROM
@@ -635,7 +633,7 @@ uint8_t OneWireHub::recvBit(void)
     DIRECT_MODE_INPUT(reg, mask);
     //waitTimeSlotRead is a customized version of the original which was also
     // used by the "write" side of things.
-    uint8_t wt = waitTimeSlotRead();
+    uint8_t wt = waitTimeSlot();
     if (wt != 1)
     { //1 is success, others are failure
         if (wt == 10)
@@ -659,55 +657,27 @@ uint8_t OneWireHub::waitTimeSlot(void)
 {
     uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
-    uint16_t retries;
-
     //Wait for a 0 to rise to 1 on the line for timeout duration
     //If the line is already high, this is basically skipped
-    retries = TIMESLOT_WAIT_RETRY_COUNT;
+
     //While line is low, retry
+    uint16_t retries = TIMESLOT_WAIT_RETRY_COUNT;
     while (!DIRECT_READ(reg, mask))
+    {
         if (--retries == 0)
             return 10;
-
+    }
     //Wait for a fall form 1 to 0 on the line for timeout duration
     retries = TIMESLOT_WAIT_RETRY_COUNT;
-    while (DIRECT_READ(reg, mask));
-    if (--retries == 0)
-        return 20;
-
+    while (DIRECT_READ(reg, mask))
+    {
+        if (--retries == 0)
+            return 20;
+    }
     return 1;
 }
 
-//This is a copy of what was orig just "waitTimeSlot"
-// it is customized for the reading side of things
-uint8_t OneWireHub::waitTimeSlotRead()
-{
-    uint8_t mask = pin_bitmask;
-    volatile uint8_t *reg asm("r30") = baseReg;
-    uint16_t retries;
 
-    //Wait for a 0 to rise to 1 on the line for timeout duration
-    //If the line is already high, this is basically skipped
-    retries = TIMESLOT_WAIT_RETRY_COUNT;
-    //While line is low, retry
-    while (!DIRECT_READ(reg, mask))
-        if (--retries == 0)
-            return 10;
-
-    //TODO Seems to me that the above loop should drop out immediately because
-    // The line is already high as our wait after presence is relatively short
-    // So now it just waits a short period for the write of a bit to start
-    // Unfortunately per "recommended" this is 55 micros to 130 micros more
-    // more than what we may have already waited.
-
-    //Wait for a fall form 1 to 0 on the line for timeout duration
-    retries = TIMESLOT_WAIT_READ_RETRY_COUNT;
-    while (DIRECT_READ(reg, mask));
-    if (--retries == 0)
-        return 20;
-
-    return 1;
-}
 
 //==================== Item =========================================
 OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) // TODO: could give all sensors a const on every input

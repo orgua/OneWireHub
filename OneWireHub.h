@@ -49,8 +49,6 @@ private:
 
     uint8_t waitTimeSlot();
 
-    uint8_t waitTimeSlotRead();
-
     int calc_mask(void); // TODO: rename
     uint8_t build_tree(uint8_t bitposition, const uint8_t slave_mask);
     uint8_t get_first_element(const uint8_t mask);
