@@ -535,6 +535,10 @@ bool OneWireHub::recvAndProcessCmd(void)
                 SelectElm = nullptr;
                 return true;
 
+            case 0x33: // READ ROM
+            case 0x0F: // OLD READ ROM
+                // only usable when there is ONE slave on the bus
+
             default: // Unknow command
                 if (dbg_HINT)
                 {
@@ -749,7 +753,7 @@ uint16_t OneWireItem::crc16(const uint8_t addr[], const uint8_t len)
     static const uint8_t oddparity[16] =
             {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
 
-    uint16_t crc = 0xFFFF; // initvalue
+    uint16_t crc = 0; // initvalue
 
     for (uint8_t i = 0; i < len; ++i)
     {

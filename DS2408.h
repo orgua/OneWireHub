@@ -30,12 +30,14 @@ private:
     static constexpr uint8_t family_code = 0x29;
 
     // Register Addresses
-    static constexpr uint8_t  DS2408_PIO_LOGIC_REG       = 0x0088;   // Current state
-    static constexpr uint8_t  DS2408_PIO_OUTPUT_REG      = 0x0089;   // Last write
-    static constexpr uint8_t  DS2408_PIO_ACTIVITY_REG    = 0x008A;   // State Change Activity
-    static constexpr uint8_t  DS2408_SEARCH_MASK_REG     = 0x008B;
-    static constexpr uint8_t  DS2408_SEARCH_SELECT_REG   = 0x008C;
-    static constexpr uint8_t  DS2408_CONTROL_STATUS_REG  = 0x008D;
+    static constexpr uint8_t  DS2408_RD_BELOW_UNDEFINED  = 0x87;  // undefined data
+    static constexpr uint8_t  DS2408_PIO_LOGIC_REG       = 0x88;  // Current state
+    static constexpr uint8_t  DS2408_PIO_OUTPUT_REG      = 0x89;  // Last write, latch state register
+    static constexpr uint8_t  DS2408_PIO_ACTIVITY_REG    = 0x8A;  // State Change Activity
+    static constexpr uint8_t  DS2408_SEARCH_MASK_REG     = 0x8B;  // RW
+    static constexpr uint8_t  DS2408_SEARCH_SELECT_REG   = 0x8C;  // RW
+    static constexpr uint8_t  DS2408_CONTROL_STATUS_REG  = 0x8D;  // RW Control Register
+    static constexpr uint8_t  DS2408_RD_ABOVE_ALWAYS_FF  = 0x8E;  // these bytes give always 0xFF
 
     uint8_t memory[13];
 
