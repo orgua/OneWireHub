@@ -5,10 +5,10 @@
 #include "Arduino.h"
 #include <inttypes.h>
 
-const bool dbg_CALC     = 0; // give debug messages
-const bool dbg_SEARCH   = 0; // give debug messages
-const bool dbg_MATCHROM = 0; // give debug messages
-const bool dbg_HINT     = 0; // give debug messages for called unimplemented functions of sensors
+constexpr bool dbg_CALC     = 0; // give debug messages
+constexpr bool dbg_SEARCH   = 0; // give debug messages
+constexpr bool dbg_MATCHROM = 0; // give debug messages
+constexpr bool dbg_HINT     = 0; // give debug messages for called unimplemented functions of sensors
 
 class OneWireItem;
 
@@ -28,30 +28,30 @@ private:
     static constexpr uint8_t ONEWIRE_PRESENCE_LOW_ON_LINE       = 6;
     static constexpr uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW  = 7;
     static constexpr uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH = 8;
-
-    uint8_t pin_bitmask;
+    uint8_t errno; // TODO: rename to error_raised
+    uint8_t pin_bitmask; // TODO: is it used? every function seems to define its local version
     uint8_t slave_count;
-    uint8_t errno;
-    volatile uint8_t *baseReg;
+
+    volatile uint8_t *baseReg; // TODO: is it used? every function seems to define its local version
 
     struct IDTree {
         uint8_t slave_selected; // for which slave is this jump-command relevant
-        uint8_t bitposition;    // where does the algo has to look out?
-        uint8_t gotZero;        // if 0 switch to which slave-ID
-        uint8_t gotOne;         // if 1 switch to which slave-ID // TODO: replace with next branch-number --> faster timing, or relax recvBit()
+        uint8_t bitposition;    // where does the algo has to look for a junction
+        uint8_t gotZero;        // if 0 switch to which tree branch
+        uint8_t gotOne;         // if 1 switch to which tree branch
     } idTree[ONEWIRETREE_SIZE];
 
-    OneWireItem *elms[ONEWIRESLAVE_LIMIT];  // make it private (use attach/detach)
+    OneWireItem *elms[ONEWIRESLAVE_LIMIT];  // private slave-list (use attach/detach)
 
-    OneWireItem *SelectElm;
+    OneWireItem *SelectElm; // TODO: rename to slave_list[] and slave_selected
 
     bool recvAndProcessCmd();
 
     uint8_t waitTimeSlot();
 
-    int calc_mask(void); // TODO: rename
+    int calc_mask(void); // TODO: rename to buildIDTree() and same with arguments below
     uint8_t build_tree(uint8_t bitposition, const uint8_t slave_mask);
-    uint8_t get_first_element(const uint8_t mask);
+    uint8_t get_first_element(const uint8_t mask); // TODO: rename to getNrOfFirstBitSet
 
     bool waitReset(uint16_t timeout_ms = 1000); // TODO: maybe tune here to make all sensors appear in search
 
@@ -60,8 +60,6 @@ private:
     bool search(void);
 
     uint8_t recvBit(void);
-
-    //int AnalizIds(uint8_t Pos, uint8_t BN, uint8_t BM, uint8_t mask);
 
 public:
 
@@ -75,13 +73,13 @@ public:
 
     void send(const uint8_t v);
 
-    uint8_t sendData(const uint8_t buf[], const uint8_t data_len);
+    uint8_t sendData(const uint8_t buf[], const uint8_t data_len); // TODO: rename to send()
 
     void sendBit(const uint8_t v);
 
     uint8_t recv(void);
 
-    uint8_t recvData(uint8_t buf[], const uint8_t data_len);
+    uint8_t recvData(uint8_t buf[], const uint8_t data_len); // TODO: recv()
 
     bool error(void)
     {
@@ -105,7 +103,7 @@ public:
 
     uint8_t ID[8];
 
-    virtual bool duty(OneWireHub *hub) = 0;
+    virtual bool duty(OneWireHub *hub) = 0; // TODO: duty in sensors is set private... but it does work anyway
 
     static uint8_t crc8(const uint8_t addr[], const uint8_t len);
 

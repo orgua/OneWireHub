@@ -1,18 +1,20 @@
 {
 "name": "OneWireHub",
 "frameworks": "Arduino",
-"keywords": "onewire, 1-wire, bus, sensor, temperature, voltage, current, DS2401, DS18B20, DS2405, DS2408, DS2413, DS2423, DS2433, DS2438, DS2450, DS2890",
-"description": "OneWire slave device emulator with support for various simultaneously devices",
+"keywords": "onewire, 1-wire, bus, slave, sensor, temperature, voltage, current, DS1822, DS18B20, DS18S20, DS1990, DS2401, DS2405, DS2408, DS2413, DS2423, DS2433, DS2438, DS2450, DS2890",
+"description": "OneWire slave device emulator with support for various simultaneous devices",
 "authors":
 [
     {
-        "name": "Shagrat2",
+        "name": "orgua",
+        "url": "https://github.com/orgua",
         "maintainer": true
     },
     {
-        "name": "orgua",
-        "email": "orgua@gmx.de",
-        "url": "https://github.com/orgua"
+        "name": "Shagrat2"
+    },
+    {
+        "name": "MarkusLange"
     }
 ],
 "repository":
