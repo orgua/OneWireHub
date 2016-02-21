@@ -16,8 +16,8 @@ class OneWireHub
 {
 private:
 
-    static constexpr uint8_t ONEWIRESLAVE_COUNT                 = 8; // 8 is max at the moment, need bigger vars on some loops
-    static constexpr uint8_t ONEWIRETREE_SIZE                   = ONEWIRESLAVE_COUNT + 4; // n+log2(n)
+    static constexpr uint8_t ONEWIRESLAVE_LIMIT                 = 8; // 8 is max at the moment, need bigger vars on some loops
+    static constexpr uint8_t ONEWIRETREE_SIZE                   = 2*ONEWIRESLAVE_LIMIT - 1;
 
     static constexpr uint8_t ONEWIRE_NO_ERROR                   = 0;
     static constexpr uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT      = 1;
@@ -41,7 +41,7 @@ private:
         uint8_t gotOne;         // if 1 switch to which slave-ID // TODO: replace with next branch-number --> faster timing, or relax recvBit()
     } idTree[ONEWIRETREE_SIZE];
 
-    OneWireItem *elms[ONEWIRESLAVE_COUNT];  // make it private (use attach/detach)
+    OneWireItem *elms[ONEWIRESLAVE_LIMIT];  // make it private (use attach/detach)
 
     OneWireItem *SelectElm;
 
