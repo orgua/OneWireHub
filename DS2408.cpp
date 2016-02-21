@@ -25,8 +25,6 @@ void DS2408::updateCRC()
 
 bool DS2408::duty(OneWireHub *hub)
 {
-    uint8_t addrL; // TODO: unused for now
-    uint8_t addrH; // TODO: unused for now
     uint8_t data;  // TODO: unused for now
 
     uint8_t done = hub->recv();

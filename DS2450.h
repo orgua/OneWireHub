@@ -1,5 +1,5 @@
 // 0x20 4 channel A/D
-//
+// not ready, supported overdrive not implemented
 
 #ifndef ONEWIRE_DS2450_H
 #define ONEWIRE_DS2450_H
@@ -9,7 +9,14 @@ class DS2450 : public OneWireItem
 private:
     static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
 
-    uint8_t memory[0x1F]; // TODO: make readable 3*8 or similar
+    static constexpr uint8_t PAGE_COUNT  = 4;
+    static constexpr uint8_t PAGE_SIZE   = 8;
+
+    uint8_t memory[PAGE_COUNT*PAGE_SIZE];
+    // Page1 : conversion results
+    // Page2 : control / status
+    // Page3 : alarm settings
+    // Page3 : factory calibration
 
     bool duty(OneWireHub *hub);
 
@@ -21,9 +28,6 @@ public:
     bool setPotentiometer(const uint16_t p1, const uint16_t p2, const uint16_t p3, const uint16_t p4);
     bool setPotentiometer(const uint8_t number, const uint16_t value);
 
-    //uint8_t Data[13];
-    //bool updateCRC();
-    //DS2450_memory memory;
 };
 
 #endif
