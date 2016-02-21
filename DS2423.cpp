@@ -23,12 +23,12 @@ bool DS2423::duty(OneWireHub *hub)
 
             // Adr1
             b = hub->recv();
-            ((uint8_t *) &memory_address)[0] = b;
+            reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
             ow_crc16_update(b);
 
             // Adr2
             b = hub->recv();
-            ((uint8_t *) &memory_address)[1] = b;
+            reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
             ow_crc16_update(b);
 
             memory_address_start = memory_address;
@@ -68,8 +68,8 @@ bool DS2423::duty(OneWireHub *hub)
 
             // crc
             crc = ow_crc16_get();
-            hub->send(((uint8_t *) &crc)[0]);
-            hub->send(((uint8_t *) &crc)[1]);
+            hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
+            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
             ow_crc16_reset();
 
             if (dbg_sensor)
