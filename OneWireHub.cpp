@@ -56,7 +56,7 @@ OneWireHub::OneWireHub(uint8_t pin)
     //idmap0[ONEWIREIDMAP_COUNT];
     //idmap1[ONEWIREIDMAP_COUNT];
 
-    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
+    for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
         elms[i] = nullptr;
 
     SelectElm = nullptr;
@@ -111,18 +111,18 @@ bool OneWireHub::waitForRequest(const bool ignore_errors) // TODO: maybe build a
 // attach a sensor to the hub
 uint8_t OneWireHub::attach(OneWireItem &sensor)
 {
-    if (slave_count >= ONEWIRESLAVE_COUNT) return 0; // hub is full
+    if (slave_count >= ONEWIRESLAVE_LIMIT) return 0; // hub is full
 
     // find position of next free storage-position
     uint8_t position = 255;
-    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
+    for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
     {
         // check for already attached sensors
         if (elms[i] == &sensor)
             return i;
 
         // store position of first empty space
-        if ((position>ONEWIRESLAVE_COUNT) && (elms[i] == nullptr))
+        if ((position>ONEWIRESLAVE_LIMIT) && (elms[i] == nullptr))
         {
             position = i;
             break;
@@ -140,7 +140,7 @@ bool    OneWireHub::detach(const OneWireItem &sensor)
 {
     // find position of sensor
     uint8_t position = 255;
-    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
+    for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
     {
         if (elms[i] == &sensor)
         {
@@ -157,7 +157,7 @@ bool    OneWireHub::detach(const uint8_t slave_number)
 {
     if (elms[slave_number] == nullptr)          return 0;
     if (!slave_count)                           return 0;
-    if (slave_number >= ONEWIRESLAVE_COUNT)     return 0;
+    if (slave_number >= ONEWIRESLAVE_LIMIT)     return 0;
 
     elms[slave_number] = nullptr;
     slave_count--;
@@ -170,7 +170,7 @@ bool    OneWireHub::detach(const uint8_t slave_number)
 // tradeoff: more online calculation, but @4Slave 16byte storage instead of 3*256 byte
 uint8_t OneWireHub::get_first_element(const uint8_t mask)
 {
-    for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
+    for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
     {
         if (mask & (1 << i))
         {
@@ -192,7 +192,7 @@ uint8_t OneWireHub::build_tree(uint8_t position_IDBit, const uint8_t mask_slaves
         const uint8_t mask_bit = (static_cast<uint8_t>(1) << (position_IDBit & (7)));
 
         // search through all active slaves
-        for (uint8_t id = 0; id < ONEWIRESLAVE_COUNT; ++id)
+        for (uint8_t id = 0; id < ONEWIRESLAVE_LIMIT; ++id)
         {
             const uint8_t mask_id = (static_cast<uint8_t>(1) << id);
 
@@ -253,7 +253,7 @@ int OneWireHub::calc_mask(void)
 {
     uint8_t mask_slaves = 0;
 
-    for (uint8_t i = 0; i< ONEWIRESLAVE_COUNT; ++i)
+    for (uint8_t i = 0; i< ONEWIRESLAVE_LIMIT; ++i)
         if (elms[i] != nullptr) mask_slaves |= (1 << i);
 
     for (uint8_t i = 0; i< ONEWIRETREE_SIZE; ++i)
@@ -496,7 +496,7 @@ bool OneWireHub::recvAndProcessCmd(void)
                 flag = false;
                 SelectElm = 0;
 
-                for (uint8_t i = 0; i < ONEWIRESLAVE_COUNT; ++i)
+                for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
                 {
                     if (elms[i] == nullptr) continue;
 
@@ -548,6 +548,7 @@ bool OneWireHub::recvAndProcessCmd(void)
     }
 }
 
+// TODO: there seems to be something wrong when first receiving and then sending, master has to wait a moment, otherwise it fails
 uint8_t OneWireHub::sendData(const uint8_t buf[], const uint8_t len)
 {
     uint8_t bytes_sended = 0;
