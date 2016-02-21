@@ -9,9 +9,9 @@
 const uint8_t led_PIN       = 13;         // the number of the LED pin
 const uint8_t OneWire_PIN   = 8;
 
-OneWireHub  hub     = OneWireHub(OneWire_PIN);
-auto        sensorA  = DS18B20(0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);    // Digital Thermometer
-auto        sensorB  = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);    // Digital Thermometer
+auto hub     = OneWireHub(OneWire_PIN);
+auto sensorA = DS18B20(0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);    // Digital Thermometer
+auto sensorB = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);    // Digital Thermometer
 
 
 bool blinking()
