@@ -8,7 +8,7 @@ class DS2890 : public OneWireItem
 {
 private:
     static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
-    static constexpr uint8_t family_code = 0x2C;
+
 
     static constexpr uint8_t REGISTER_MASK_POTI_CHAR = 0x01;
     static constexpr uint8_t REGISTER_MASK_WIPER_SET = 0x02;
@@ -23,15 +23,20 @@ private:
     bool duty(OneWireHub *hub);
 
 public:
+    static constexpr uint8_t family_code = 0x2C;
+
     DS2890(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    uint8_t readPoti(uint8_t number) {
+    uint8_t readPoti(uint8_t number)
+    {
         return register_poti[number&0x03];
     }
-    uint8_t readCtrl() {
+    uint8_t readCtrl(void)
+    {
         return register_ctrl;
     }
-    uint8_t readFeat() {
+    uint8_t readFeat(void)
+    {
         return register_feat;
     }
 };
