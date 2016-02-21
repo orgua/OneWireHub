@@ -1,5 +1,5 @@
 // 0x05  Single adress switch @@@
-// Not ready
+// work
 
 #ifndef ONEWIRE_DS2405_H
 #define ONEWIRE_DS2405_H
