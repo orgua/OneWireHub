@@ -10,6 +10,14 @@ constexpr bool dbg_SEARCH   = 0; // give debug messages
 constexpr bool dbg_MATCHROM = 0; // give debug messages
 constexpr bool dbg_HINT     = 0; // give debug messages for called unimplemented functions of sensors
 
+// TODO: rework this whole system
+// - cleaner timing-system throughout the lib (raw tick-counter of micros()?)
+// - rename and adapt all functions
+// - offer strict and relaxed timing option (if master is also emulated)
+// - remodel the bus-specific parts
+// - offer interruptable read / write OPs
+// - safe timestamp of last HIGH, LOW state?
+
 class OneWireItem;
 
 class OneWireHub
