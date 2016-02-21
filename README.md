@@ -1,8 +1,8 @@
 OneWireHub
 ==========
 
-The OneWireHub is an Arduino compatible Library to emulate OneWire-Slaves with support for various simultaneously devices. The motivation is to offer a shared code base for all OneWire-Slaves. Without much overhead one µC can emulate more than one IC simultaneously. 
-The main goal is to use modern sensors (mainly I2C or SPI Interface) and translate their measurements into one or more emulated ds2438 which has 4x16bit registers for values. This feature would remove the limitations of modern house-automation-systems.
+The OneWireHub is an Arduino compatible library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to eight ICs (or more) simultaneously. 
+The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your environment.
 
 ### Supported Slaves (bold ones are feature-complete):
 - **DS1822 Digital Thermometer, 12bit** (use DS18B20 with family code set to 0x22)
@@ -21,8 +21,9 @@ The main goal is to use modern sensors (mainly I2C or SPI Interface) and transla
 
 ### Further features:
 - hot-plug slaves as needed
+- supports up to eight slaves for now, but small changes can easily extend this to 32
 - cleaner, faster code with c++11 features (requires arduino 1.6.6 or higher)
-- arduino-dependencies are found in the mockup "arduino.h" (for portability)
+- arduino-dependencies are found in the mockup "arduino.h" (for portability and tests)
 
 ### Recent development (latest at the top): 
 - extended ds2890 to up to 4CH (datasheet has it covered), ds2413, ds2413 --> feature-complete
@@ -41,6 +42,7 @@ The main goal is to use modern sensors (mainly I2C or SPI Interface) and transla
 - rework the onewire-timings
 - refactoring the interface
 - work on the TODOs in the code
+- test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
 - bug: infinite loop in waitForRequest() if no sensor is read out (scratchpad or sim)
 - add MAX31850 0x3B thermocouple-to-digital converter 14bit
 - ~~DS1963S 0x18 iButton, datasheet under NDA~~
