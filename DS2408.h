@@ -27,7 +27,6 @@ class DS2408 : public OneWireItem
 {
 private:
     static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
-    static constexpr uint8_t family_code = 0x29;
 
     // Register Addresses
     static constexpr uint8_t  DS2408_RD_BELOW_UNDEFINED  = 0x87;  // undefined data
@@ -44,9 +43,11 @@ private:
     bool duty(OneWireHub *hub);
 
 public:
+    static constexpr uint8_t family_code = 0x29;
+
     DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    void updateCRC();
+    void updateCRC(void);
 };
 
 #endif
