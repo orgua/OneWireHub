@@ -10,11 +10,11 @@ const uint8_t led_PIN       = 13;         // the number of the LED pin
 const uint8_t OneWire_PIN   = 8;
 
 auto hub    = OneWireHub(OneWire_PIN);
-auto ds2413 = DS2413( 0x3A, 0x00, 0x0D, 0x02, 0x04, 0x01, 0x03 );    // Work - Dual channel addressable switch
+auto ds2413 = DS2413( DS2413::family_code, 0x00, 0x0D, 0x02, 0x04, 0x01, 0x03 );    // Work - Dual channel addressable switch
 
 bool blinking()
 {
-    const  uint32_t interval    = 500;          // interval at which to blink (milliseconds)
+    const  uint32_t interval    = 1000;          // interval at which to blink (milliseconds)
     static uint32_t nextMillis  = millis();     // will store next time LED will updated
 
     if (millis() > nextMillis)
@@ -36,6 +36,8 @@ void setup()
 
     // Setup OneWire
     hub.attach(ds2413);
+    ds2413.setState(0,1);
+    ds2413.setLatch(1,1);
 
     Serial.println("config done");
 }
@@ -48,6 +50,14 @@ void loop()
     // Blink triggers the state-change
     if (blinking())
     {
-
+        Serial.print(" A: ");
+        Serial.print(ds2413.readState(0));
+        Serial.print(" / ");
+        Serial.print(ds2413.readLatch(0));
+        Serial.print(" B: ");
+        Serial.print(ds2413.readState(1));
+        Serial.print(" / ");
+        Serial.print(ds2413.readLatch(1));
+        Serial.println(" (State / Latch)");
     }
 }
