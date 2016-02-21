@@ -7,8 +7,11 @@
 #######################################
 
 OneWireHub	KEYWORD1
-DS2401	KEYWORD1
+DS1822	KEYWORD1
 DS18B20	KEYWORD1
+DS18S20	KEYWORD1
+DS1990 	KEYWORD1
+DS2401	KEYWORD1
 DS2405	KEYWORD1
 DS2408	KEYWORD1
 DS2413	KEYWORD1
@@ -43,14 +46,20 @@ crc16	KEYWORD2
 updateCRC	KEYWORD2
 setTemp	KEYWORD2
 
-ReadState	KEYWORD2
-ChangePIO	KEYWORD2
+readState	KEYWORD2
+setState	KEYWORD2
+readLatch	KEYWORD2
+setLatch	KEYWORD2
 
 setTemp	KEYWORD2
 setVolt	KEYWORD2
 setCurr	KEYWORD2
 
 setPotentiometer	KEYWORD2
+
+readPoti	KEYWORD2
+readCtrl	KEYWORD2
+readFeat	KEYWORD2
 
 #######################################
 # Instances (KEYWORD2)
@@ -60,3 +69,5 @@ setPotentiometer	KEYWORD2
 #######################################
 # Constants (LITERAL1)
 #######################################
+
+family_code	LITERAL1
