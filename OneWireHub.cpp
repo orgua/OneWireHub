@@ -524,7 +524,7 @@ bool OneWireHub::recvAndProcessCmd(void)
                     }
                 }
 
-                if (flag == false)          return false;
+                if (!flag)                  return false;
                 if (SelectElm != nullptr)   SelectElm->duty(this);
                 return true;
 
