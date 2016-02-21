@@ -1,9 +1,10 @@
 OneWireHub
 ==========
 
-An Arduino compatible Tool to emulate OneWire-Slaves with support for various simultaneously devices.
+The OneWireHub is an Arduino compatible Library to emulate OneWire-Slaves with support for various simultaneously devices. The motivation is to offer a shared code base for all OneWire-Slaves. Without much overhead one µC can emulate more than one IC simultaneously. 
+The main goal is to use modern sensors (mainly I2C or SPI Interface) and translate their measurements into one or more emulated ds2438 which has 4x16bit registers for values. This feature would remove the limitations of modern house-automation-systems.
 
-### Support for (bold ones are feature-complete):
+### Supported Slaves (bold ones are feature-complete):
 - **DS1822 Digital Thermometer, 12bit** (use DS18B20 with family code set to 0x22)
 - **DS18B20 Digital Thermometer, 12bit** 
 - **DS18S20 Digital Thermometer, 12bit** (use DS18B20 with family code set to 0x10)
@@ -18,6 +19,11 @@ An Arduino compatible Tool to emulate OneWire-Slaves with support for various si
 - DS2450 4 channel A/D
 - **DS2890 Single channel digital potentiometer - extended to 1-4 CH**
 
+### Further features:
+- hot-plug slaves as needed
+- cleaner, faster code with c++11 features (requires arduino 1.6.6 or higher)
+- arduino-dependencies are found in the mockup "arduino.h" (for portability)
+
 ### Recent development (latest at the top): 
 - extended ds2890 to up to 4CH (datasheet has it covered), ds2413, ds2413 --> feature-complete
 - implement and test ds2438
@@ -28,20 +34,17 @@ An Arduino compatible Tool to emulate OneWire-Slaves with support for various si
 - fix bug: infinite loop when (for example) >=1 ds2401 are attached and waitForRequest() is called
 - fix bug: temp-calculation was wrong (ds18b20, ds2438) and used something like round(abs(floor(float-value)))
 - better documentation, more examples, easier interface for hub
-- cleaner, faster code with c++11 features (requires arduino 1.6.6 or higher)
 - make OneWireHub compatible to arduino library-manager
 
-### Possible extensions in the future:
+### Plans for the future:
 - implementation of ds2450
-- rework of the onewire-timings
+- rework the onewire-timings
 - refactoring the interface
 - work on the TODOs in the code
 - bug: infinite loop in waitForRequest() if no sensor is read out (scratchpad or sim)
-- MAX31850 0x3B thermocouple-to-digital converter 14bit
+- add MAX31850 0x3B thermocouple-to-digital converter 14bit
 - ~~DS1963S 0x18 iButton, datasheet under NDA~~
 - [List of all Family-Codes](http://owfs.sourceforge.net/family.html)
-
-___
 
 ### Connecting the HUB with the Network: 
 
@@ -54,8 +57,6 @@ ___
 ![Parasite-Power-Schematic](http://i.stack.imgur.com/0MeGL.jpg)
 
 [read more](http://electronics.stackexchange.com/questions/193300/digital-ic-that-draws-power-from-data-pins)
-
-___
 
 ### Ancestors of this Lib:
 - original pieces seem to be adopted from [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire) 
