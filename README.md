@@ -24,8 +24,10 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - supports up to eight slaves for now, but small changes can easily extend this to 32
 - cleaner, faster code with c++11 features (requires arduino 1.6.6 or higher)
 - arduino-dependencies are found in the mockup "arduino.h" (for portability and tests)
+- good documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top): 
+- rework of checkReset() and showPresence() - Hub is much more reliable now and it saves ~120 byte space
 - faster CRC16 (ds2450 and ds2408 and ds2423), still potential left if there are remaining timing-problems
 - refactored the interface: hub.poll() replaces hub.waitForRequest()
 - extended ds2890 to up to 4CH (datasheet has it covered), ds2413, ds2413 --> feature-complete
@@ -36,7 +38,6 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - fix bug: infinite loop when waitForRequest() is called without attached sensor
 - fix bug: infinite loop when (for example) >=1 ds2401 are attached and waitForRequest() is called
 - fix bug: temp-calculation was wrong (ds18b20, ds2438) and used something like round(abs(floor(float-value)))
-- better documentation, more examples, easier interface for hub
 - make OneWireHub compatible to arduino library-manager
 
 ### Plans for the future:
