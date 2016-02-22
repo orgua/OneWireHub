@@ -97,7 +97,7 @@ public:
 
 };
 
-// TODO: get first byte (family code) const for every sensor
+// Feature: get first byte (family code) constant for every sensor --> var4 is implemented
 // - var 1: use second init with one byte less (Serial 1-6 instead of ID)
 // - var 2: write ID1 of OneWireItem with the proper value without asking
 // - var 3: rewrite the OneWireItem-Class and implement something like setFamilyCode()

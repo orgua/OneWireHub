@@ -17,7 +17,7 @@ extern "C" {
 
 #define TIMESLOT_WAIT_RETRY_COUNT  (microsecondsToClockCycles(135))
 
-//--- CRC 16 --- // TODO: only used in ds2450 and ds2408 and ds2423
+//--- CRC 16 --- // TODO: only used in ds2450 and ds2408 and ds2423, but integrate into hub as static
 static uint16_t crc16;
 
 void ow_crc16_reset(void)
