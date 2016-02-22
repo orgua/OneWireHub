@@ -27,9 +27,9 @@ bool DS2438::duty(OneWireHub *hub)
         case 0x4E: // Write Scratchpad
             page = hub->recv();
             if (page >= PAGE_EMU_COUNT)
-                hub->recvData(garbage, 8);
+                hub->recv(garbage, 8);
             else
-                hub->recvData(&memory[page * 8], 8);
+                hub->recv(&memory[page * 8], 8);
             if (dbg_sensor)
             {
                 Serial.print("DS2438 : Write Scratchpad - Page:");
@@ -56,12 +56,12 @@ bool DS2438::duty(OneWireHub *hub)
             if (page >= PAGE_EMU_COUNT)
             {
                 crc = crc8(garbage, 8);
-                hub->sendData(garbage, 8);
+                hub->send(garbage, 8);
             }
             else
             {
                 crc = crc8(&memory[page * 8], 8);
-                hub->sendData(&memory[page * 8], 8);
+                hub->send(&memory[page * 8], 8);
             }
             hub->send(crc);
             if (dbg_sensor)

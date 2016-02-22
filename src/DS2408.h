@@ -40,14 +40,16 @@ private:
 
     uint8_t memory[13];
 
-    bool duty(OneWireHub *hub);
+    void updateCRC(void);
 
 public:
     static constexpr uint8_t family_code = 0x29;
 
     DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    void updateCRC(void);
+    bool duty(OneWireHub *hub);
+
+
 };
 
 #endif

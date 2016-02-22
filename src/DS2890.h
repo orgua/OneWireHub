@@ -20,12 +20,12 @@ private:
     uint8_t register_ctrl;
     uint8_t register_poti[4];
 
-    bool duty(OneWireHub *hub);
-
 public:
     static constexpr uint8_t family_code = 0x2C;
 
     DS2890(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
+
+    bool duty(OneWireHub *hub);
 
     uint8_t readPoti(uint8_t number)
     {

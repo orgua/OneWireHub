@@ -10,9 +10,9 @@ DS2433::DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 bool DS2433::duty(OneWireHub *hub)
 {
     uint16_t memory_address;
-    uint8_t mem_offset;
-    uint8_t b;
-    uint16_t crc; // TODO: unused till now
+    uint8_t  mem_offset;
+    uint8_t  b;
+    uint16_t crc = 0; // TODO: unused till now
 
     uint8_t done = hub->recv();
 

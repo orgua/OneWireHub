@@ -47,12 +47,12 @@ private:
 
     uint8_t memory[PAGE_EMU_COUNT*8];
 
-    bool duty(OneWireHub *hub);
-
 public:
     static constexpr uint8_t family_code = 0x26;
 
     DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
+
+    bool duty(OneWireHub *hub);
 
     void setTemp(const float   temp_degC);
     void setTemp(const uint8_t temp_degC);

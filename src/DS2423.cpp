@@ -10,26 +10,25 @@ bool DS2423::duty(OneWireHub *hub)
     uint16_t memory_address;
     uint16_t memory_address_start;
     uint8_t b;
-    uint16_t crc;
-
-    ow_crc16_reset();
+    uint16_t crc = 0;
 
     uint8_t done = hub->recv();
+
     switch (done)
     {
         // Read Memory + Counter
         case 0xA5:
-            ow_crc16_update(0xA5);
+            crc = crc16(crc, 0xA5);
 
             // Adr1
             b = hub->recv();
             reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
-            ow_crc16_update(b);
+            crc = crc16(crc, b);
 
             // Adr2
             b = hub->recv();
             reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
-            ow_crc16_update(b);
+            crc = crc16(crc, b);
 
             memory_address_start = memory_address;
 
@@ -37,40 +36,38 @@ bool DS2423::duty(OneWireHub *hub)
             for (int i = 0; i < 32; ++i) // TODO: check for memory_address + 32 < sizeof()
             {
                 hub->send(0xff);
-                ow_crc16_update(0xff);
+                crc = crc16(crc, 0xff);
             }
 
             // cnt
             hub->send(0x00);
-            ow_crc16_update(0x00);
+            crc = crc16(crc, 0x00);
 
             hub->send(0x00);
-            ow_crc16_update(0x00);
+            crc = crc16(crc, 0x00);
 
             hub->send(0x00);
-            ow_crc16_update(0x00);
+            crc = crc16(crc, 0x00);
 
             hub->send(0x00);
-            ow_crc16_update(0x00);
+            crc = crc16(crc, 0x00);
 
             // zero
             hub->send(0x00);
-            ow_crc16_update(0x00);
+            crc = crc16(crc, 0x00);
 
             hub->send(0x00);
-            ow_crc16_update(0x00);
+            crc = crc16(crc, 0x00);
 
             hub->send(0x00);
-            ow_crc16_update(0x00);
+            crc = crc16(crc, 0x00);
 
             hub->send(0x00);
-            ow_crc16_update(0x00);
+            crc = crc16(crc, 0x00);
 
             // crc
-            crc = ow_crc16_get();
             hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
             hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-            ow_crc16_reset();
 
             if (dbg_sensor)
             {

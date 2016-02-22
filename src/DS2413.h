@@ -12,13 +12,12 @@ private:
     bool pin_state[2];  // sensed input for A and B
     bool pin_latch[2];  // PIO can be set to input (0) or output-to-zero (1)
 
-    bool duty(OneWireHub *hub);
-
 public:
     static constexpr uint8_t family_code = 0x3A;
 
     DS2413(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
+    bool duty(OneWireHub *hub);
 
     bool readState(const uint8_t a_or_b)
     {

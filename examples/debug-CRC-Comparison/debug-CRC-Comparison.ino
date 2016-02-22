@@ -1,5 +1,5 @@
 /*
- *    Test-Code for faster CRC-Calculations
+ *    Test-Code for faster CRC-Calculations, mode 0xC001 for little endian
  */
 
 void setup()
@@ -75,6 +75,16 @@ void setup()
     Serial.println(crc, HEX);
     Serial.flush();
 
+    /// timer
+    uint16_t counter = 0;
+    time_stop = micros() + 1000;
+    while (micros() < time_stop)
+    {
+        counter++;
+    }
+    Serial.print("Benchmark: 1ms got us ");
+    Serial.print(counter);
+    Serial.print(" * (micros(), 32bit check, 32bit increment)");
 }
 
 void loop()

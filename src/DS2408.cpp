@@ -39,7 +39,7 @@ bool DS2408::duty(OneWireHub *hub)
 
             updateCRC();
 
-            data = hub->sendData(&memory[3], 10);
+            data = hub->send(&memory[3], 10);
 
             if (dbg_sensor)
             {
