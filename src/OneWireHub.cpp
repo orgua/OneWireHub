@@ -21,65 +21,23 @@ extern "C" {
 //=================== Hub ==========================================
 OneWireHub::OneWireHub(uint8_t pin)
 {
-    pin_bitmask = digitalPinToBitMask(pin);
-    slave_count = 0;
     _error = ONEWIRE_NO_ERROR;
+
+    pin_bitmask = digitalPinToBitMask(pin);
+
     baseReg = portInputRegister(digitalPinToPort(pin)); // TODO: remove other instances
 
     //bits[ONEWIREIDMAP_COUNT]; // TODO: init
     //idmap0[ONEWIREIDMAP_COUNT];
     //idmap1[ONEWIREIDMAP_COUNT];
 
+    slave_count = 0;
+    slave_selected = nullptr;
+
     for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
         slave_list[i] = nullptr;
 
-    slave_selected = nullptr;
 };
-
-bool OneWireHub::waitForRequest(const bool ignore_errors) // TODO: maybe build a non blocking version of this? and more common would be inverse of ignore_errors (=blocking)
-{
-    _error = ONEWIRE_NO_ERROR;
-
-    while (1)
-    {
-        //Once reset is done, it waits another 30 micros
-        //Master wait is 65, so we have 35 more to send our presence now that reset is done
-        if (!waitReset(0))
-        {
-            continue;
-        }
-
-        //Reset is complete, tell the master we are prsent
-        // This will pull the line low for 125 micros (155 micros since the reset) and
-        //  then wait another 275 plus whatever wait for the line to go high to a max of 480
-        // This has been modified from original to wait for the line to go high to a max of 480.
-        if (!presence())
-        {
-            continue;
-        }
-
-        // this additional check prevents an infinite loop when calling this FN without sensors attached
-        if (!slave_count)
-        {
-            return true;
-        }
-
-        //Now that the master should know we are here, we will get a command from the line
-        //Because of our changes to the presence code, the line should be guranteed to be high
-        if (recvAndProcessCmd())
-        {
-            return true;
-        }
-        else if ((_error == ONEWIRE_NO_ERROR) || ignore_errors)
-        {
-            continue;
-        }
-        else
-        {
-            return false;
-        }
-    }
-}
 
 
 // attach a sensor to the hub
@@ -149,6 +107,46 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const uint8_t mask)
         if (_mask & 1)  return i;
         _mask >>= 1;
     }
+}
+
+// initial FN to build the ID-Tree
+uint8_t OneWireHub::buildIDTree(void)
+{
+    uint8_t mask_slaves = 0;
+
+    for (uint8_t i = 0; i< ONEWIRESLAVE_LIMIT; ++i)
+        if (slave_list[i] != nullptr) mask_slaves |= (1 << i);
+
+    for (uint8_t i = 0; i< ONEWIRETREE_SIZE; ++i)
+        idTree[i].idPosition    = 255;
+
+    // begin with root-element
+    buildIDTree(0, mask_slaves); // goto branch
+
+    if (dbg_CALC)
+    {
+        Serial.println("Calculate idTree: ");
+        for (uint8_t i = 0; i < ONEWIRETREE_SIZE; ++i)
+        {
+
+            Serial.print("Slave: ");
+            if (idTree[i].slave_selected < 10) Serial.print("  ");
+            Serial.print(idTree[i].slave_selected);
+            Serial.print(" bitPos: ");
+            if (idTree[i].idPosition < 10) Serial.print(" ");
+            if (idTree[i].idPosition < 100) Serial.print(" ");
+            Serial.print(idTree[i].idPosition);
+            Serial.print(" if0gt: ");
+            if (idTree[i].gotZero < 10) Serial.print(" ");
+            if (idTree[i].gotZero < 100) Serial.print(" ");
+            Serial.print(idTree[i].gotZero);
+            Serial.print(" if1gt: ");
+            if (idTree[i].gotOne < 10) Serial.print(" ");
+            if (idTree[i].gotOne < 100) Serial.print(" ");
+            Serial.println(idTree[i].gotOne);
+        }
+    }
+    return 0;
 }
 
 // returns the branch that this iteration has worked on
@@ -221,61 +219,63 @@ uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const uint8_t mask_slave
     return active_element;
 }
 
-uint8_t OneWireHub::buildIDTree(void)
+
+bool OneWireHub::waitForRequest(const bool ignore_errors) // TODO: maybe build a non blocking version of this? and more common would be inverse of ignore_errors (=blocking)
 {
-    uint8_t mask_slaves = 0;
+    _error = ONEWIRE_NO_ERROR;
 
-    for (uint8_t i = 0; i< ONEWIRESLAVE_LIMIT; ++i)
-        if (slave_list[i] != nullptr) mask_slaves |= (1 << i);
-
-    for (uint8_t i = 0; i< ONEWIRETREE_SIZE; ++i)
-        idTree[i].idPosition    = 255;
-
-    // begin with root-element
-    buildIDTree(0, mask_slaves); // goto branch
-
-    if (dbg_CALC)
+    while (1)
     {
-        Serial.println("Calculate idTree: ");
-        for (uint8_t i = 0; i < ONEWIRETREE_SIZE; ++i)
-        {
+        bool interaction  = poll();
 
-            Serial.print("Slave: ");
-            if (idTree[i].slave_selected < 10) Serial.print("  ");
-            Serial.print(idTree[i].slave_selected);
-            Serial.print(" bitPos: ");
-            if (idTree[i].idPosition < 10) Serial.print(" ");
-            if (idTree[i].idPosition < 100) Serial.print(" ");
-            Serial.print(idTree[i].idPosition);
-            Serial.print(" if0gt: ");
-            if (idTree[i].gotZero < 10) Serial.print(" ");
-            if (idTree[i].gotZero < 100) Serial.print(" ");
-            Serial.print(idTree[i].gotZero);
-            Serial.print(" if1gt: ");
-            if (idTree[i].gotOne < 10) Serial.print(" ");
-            if (idTree[i].gotOne < 100) Serial.print(" ");
-            Serial.println(idTree[i].gotOne);
+        if ((_error == ONEWIRE_NO_ERROR) || ignore_errors)
+        {
+            continue;
+        }
+        else if (interaction)
+        {
+            return true;
         }
     }
-    return 0;
+}
+
+
+bool OneWireHub::poll(void)
+{
+    // this additional check prevents an infinite loop when calling this FN without sensors attached
+    if (!slave_count)           return true;
+
+    //Once reset is done, it waits another 30 micros
+    //Master wait is 65, so we have 35 more to send our presence now that reset is done
+    if (!waitReset(2))          return false;
+
+    //Reset is complete, tell the master we are prsent
+    // This will pull the line low for 125 micros (155 micros since the reset) and
+    //  then wait another 275 plus whatever wait for the line to go high to a max of 480
+    // This has been modified from original to wait for the line to go high to a max of 480.
+    if (!presence())            return false;
+
+    //Now that the master should know we are here, we will get a command from the line
+    //Because of our changes to the presence code, the line should be guranteed to be high
+    if (recvAndProcessCmd())    return true;
+    else                        return false;
 }
 
 bool OneWireHub::waitReset(uint16_t timeout_ms)
 {
-    uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
     uint32_t time_stamp;
 
     _error = ONEWIRE_NO_ERROR;
     cli();
-    DIRECT_MODE_INPUT(reg, mask);
+    DIRECT_MODE_INPUT(reg, pin_bitmask);
     sei();
 
     //Wait for the line to fall
     if (timeout_ms != 0)
     {
         time_stamp = micros() + ( timeout_ms * 1000 );
-        while (DIRECT_READ(reg, mask))
+        while (DIRECT_READ(reg, pin_bitmask))
         {
             if (micros() > time_stamp)
             {
@@ -287,7 +287,7 @@ bool OneWireHub::waitReset(uint16_t timeout_ms)
     else
     {
         //Will wait forever for the line to fall
-        while (DIRECT_READ(reg, mask))
+        while (DIRECT_READ(reg, pin_bitmask))
         { };
     }
 
@@ -297,7 +297,7 @@ bool OneWireHub::waitReset(uint16_t timeout_ms)
     time_stamp = micros() + 540;
 
     //Wait for the rise on the line up to 540 micros
-    while (DIRECT_READ(reg, mask) == 0)
+    while (DIRECT_READ(reg, pin_bitmask) == 0)
     {
         if (micros() > time_stamp)
         {
@@ -327,7 +327,6 @@ bool OneWireHub::waitReset(uint16_t timeout_ms)
 
 bool OneWireHub::presence(const uint8_t delta_us)
 {
-    uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
 
     //Reset code already waited 30 prior to calling this
@@ -335,15 +334,15 @@ bool OneWireHub::presence(const uint8_t delta_us)
     // so we should be well enough ahead of that. Arduino waits 65
     _error = ONEWIRE_NO_ERROR;
     cli();
-    DIRECT_WRITE_LOW(reg, mask);
-    DIRECT_MODE_OUTPUT(reg, mask);    // drive output low
+    DIRECT_WRITE_LOW(reg, pin_bitmask);
+    DIRECT_MODE_OUTPUT(reg, pin_bitmask);    // drive output low
     sei();
 
     //Delaying for another 125 (orignal was 120) with the line set low is a total of at least 155 micros
     // total since reset high depends on commands done prior, is technically a little longer
     delayMicroseconds(125);
     cli();
-    DIRECT_MODE_INPUT(reg, mask);     // allow it to float
+    DIRECT_MODE_INPUT(reg, pin_bitmask);     // allow it to float
     sei();
 
     //Default "delta" is 25, so this is 275 in that condition, totaling to 155+275=430 since the reset rise
@@ -357,14 +356,14 @@ bool OneWireHub::presence(const uint8_t delta_us)
     // to the 480 standard spec and the 490 used on the Arduino master code
     // anything longer then is most likely something going wrong.
     uint8_t retries = 25;
-    while (!DIRECT_READ(reg, mask))
+    while (!DIRECT_READ(reg, pin_bitmask))
     {
         delayMicroseconds(2);
         if (retries-- == 0)  return false;
     }
 
 
-    if ( DIRECT_READ(reg, mask))
+    if ( DIRECT_READ(reg, pin_bitmask))
     {
         return true;
     }
@@ -448,77 +447,72 @@ bool OneWireHub::recvAndProcessCmd(void)
     uint8_t addr[8];
     bool flag;
 
-    while (1)
+    uint8_t cmd = recv();
+    // TODO: removed while(1) loop
+    switch (cmd)
     {
-        uint8_t cmd = recv();
+        case 0xF0: // Search rom
+            search();
+            //delayMicroseconds(1100); // sweetspot (to low - no data/PL; to high - no ds2401 without data) --> <1200, >1000, was 6900
+            return true; // always trigger a re-init after search
 
-        switch (cmd)
-        {
-            // Search rom
-            case 0xF0:
-                search();
-                //delayMicroseconds(1100); // TODO: sweetspot (to low - no data/PL; to high - no ds2401 without data) --> <1200, >1000, was 6900
-                return false; // always trigger a reinit after search
+        case 0x55: // MATCH ROM - Choose/Select ROM
+            recv(addr, 8);
+            if (_error != ONEWIRE_NO_ERROR)
+                return false;
 
-                // MATCH ROM - Choose/Select ROM
-            case 0x55:
-                recv(addr, 8);
-                if (_error != ONEWIRE_NO_ERROR)
-                    return false;
+            flag = false;
+            slave_selected = 0;
 
-                flag = false;
-                slave_selected = 0;
+            for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
+            {
+                if (slave_list[i] == nullptr) continue;
 
-                for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
+                flag = true;
+                for (uint8_t j = 0; j < 8; ++j)
                 {
-                    if (slave_list[i] == nullptr) continue;
-
-                    flag = true;
-                    for (uint8_t j = 0; j < 8; ++j)
+                    if (slave_list[i]->ID[j] != addr[j])
                     {
-                        if (slave_list[i]->ID[j] != addr[j])
-                        {
-                            flag = false;
-                            break;
-                        }
-                    }
-
-                    if (flag)
-                    {
-                        slave_selected = slave_list[i];
-
-                        if (dbg_MATCHROM)
-                        {
-                            Serial.print("MATCH ROM=");
-                            Serial.println(i);
-                        }
-
+                        flag = false;
                         break;
                     }
                 }
 
-                if (!flag)                  return false;
-                if (slave_selected != nullptr)   slave_selected->duty(this);
-                return true;
-
-                // SKIP ROM
-            case 0xCC:
-                slave_selected = nullptr;
-                return true;
-
-            case 0x33: // READ ROM
-            case 0x0F: // OLD READ ROM
-                // only usable when there is ONE slave on the bus
-
-            default: // Unknow command
-                if (dbg_HINT)
+                if (flag)
                 {
-                    Serial.print("U:");
-                    Serial.println(cmd, HEX);
+                    slave_selected = slave_list[i];
+
+                    if (dbg_MATCHROM)
+                    {
+                        Serial.print("MATCH ROM=");
+                        Serial.println(i);
+                    }
+
+                    break;
                 }
-                return false;
-        }
+            }
+
+            if (!flag) return false;
+            if (slave_selected != nullptr) slave_selected->duty(this);
+            return true;
+
+
+        case 0xCC: // SKIP ROM
+            slave_selected = nullptr;
+            return true;
+
+        case 0x33: // READ ROM
+        case 0x0F: // OLD READ ROM
+            // only usable when there is ONE slave on the bus
+
+        default: // Unknow command
+            if (dbg_HINT)
+            {
+                Serial.print("U:");
+                Serial.println(cmd, HEX);
+            }
     }
+    return false;
 }
 
 // TODO: there seems to be something wrong when first receiving and then sending, master has to wait a moment, otherwise it fails
@@ -571,11 +565,10 @@ uint8_t OneWireHub::recv(void)
 
 uint8_t OneWireHub::sendBit(const uint8_t v)
 {
-    const uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
 
     cli();
-    DIRECT_MODE_INPUT(reg, mask);
+    DIRECT_MODE_INPUT(reg, pin_bitmask);
     //waitTimeSlot waits for a low to high transition followed by a high to low within the time-out
     uint8_t wt = waitTimeSlot();
     if (wt != 1)
@@ -589,23 +582,22 @@ uint8_t OneWireHub::sendBit(const uint8_t v)
     else
     {
         cli();
-        DIRECT_WRITE_LOW(reg, mask);
-        DIRECT_MODE_OUTPUT(reg, mask);
+        DIRECT_WRITE_LOW(reg, pin_bitmask);
+        DIRECT_MODE_OUTPUT(reg, pin_bitmask);
         delayMicroseconds(32); // TODO: was 30 before
-        DIRECT_WRITE_HIGH(reg, mask);
+        DIRECT_WRITE_HIGH(reg, pin_bitmask);
     }
     sei();
-    return 0; // TODO detect read?
+    return 0; // TODO detect read? or miss
 }
 
 uint8_t OneWireHub::recvBit(void)
 {
-    uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
     uint8_t r;
 
     cli();
-    DIRECT_MODE_INPUT(reg, mask);
+    DIRECT_MODE_INPUT(reg, pin_bitmask);
     //waitTimeSlotRead is a customized version of the original which was also
     // used by the "write" side of things.
     uint8_t wt = waitTimeSlot();
@@ -622,29 +614,27 @@ uint8_t OneWireHub::recvBit(void)
         return 0;
     }
     delayMicroseconds(30);
-    //TODO Consider reading earlier: delayMicroseconds(15);
-    r = DIRECT_READ(reg, mask);
+    r = DIRECT_READ(reg, pin_bitmask);
     sei();
     return r;
 }
 
 uint8_t OneWireHub::waitTimeSlot(void)
 {
-    uint8_t mask = pin_bitmask;
     volatile uint8_t *reg asm("r30") = baseReg;
     //Wait for a 0 to rise to 1 on the line for timeout duration
     //If the line is already high, this is basically skipped
 
     //While line is low, retry
     uint16_t retries = TIMESLOT_WAIT_RETRY_COUNT;
-    while (!DIRECT_READ(reg, mask))
+    while (!DIRECT_READ(reg, pin_bitmask))
     {
         if (--retries == 0)
             return 10;
     }
     //Wait for a fall form 1 to 0 on the line for timeout duration
     retries = TIMESLOT_WAIT_RETRY_COUNT;
-    while (DIRECT_READ(reg, mask))
+    while (DIRECT_READ(reg, pin_bitmask))
     {
         if (--retries == 0)
             return 20;
@@ -655,7 +645,7 @@ uint8_t OneWireHub::waitTimeSlot(void)
 
 
 //==================== Item =========================================
-OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) // TODO: could give all sensors a const on every input
+OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7)
 {
     ID[0] = ID1;
     ID[1] = ID2;
