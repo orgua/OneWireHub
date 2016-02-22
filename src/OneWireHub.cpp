@@ -245,133 +245,94 @@ bool OneWireHub::poll(void)
     // this additional check prevents an infinite loop when calling this FN without sensors attached
     if (!slave_count)           return true;
 
-    //Once reset is done, it waits another 30 micros
-    //Master wait is 65, so we have 35 more to send our presence now that reset is done
-    if (!waitReset(2))          return false;
+    //Once reset is done, go to next step
+    if (!checkReset(2))          return false;
 
-    //Reset is complete, tell the master we are prsent
-    // This will pull the line low for 125 micros (155 micros since the reset) and
-    //  then wait another 275 plus whatever wait for the line to go high to a max of 480
-    // This has been modified from original to wait for the line to go high to a max of 480.
-    if (!presence())            return false;
+    // Reset is complete, tell the master we are prsent
+    if (!showPresence())            return false;
 
-    //Now that the master should know we are here, we will get a command from the line
-    //Because of our changes to the presence code, the line should be guranteed to be high
+    //Now that the master should know we are here, we will get a command from the bus
     if (recvAndProcessCmd())    return true;
     else                        return false;
 }
 
-bool OneWireHub::waitReset(uint16_t timeout_ms)
+
+bool OneWireHub::checkReset(uint16_t timeout_us)
 {
     volatile uint8_t *reg asm("r30") = baseReg;
-    uint32_t time_stamp;
 
-    _error = ONEWIRE_NO_ERROR;
     cli();
     DIRECT_MODE_INPUT(reg, pin_bitmask);
     sei();
 
-    //Wait for the line to fall
-    if (timeout_ms != 0)
+    // looks if bus is low, since we are polling we don't know for how long it was zero
+    bool      bus_was_high = 0;
+    uint32_t  time_trigger = micros() + timeout_us;
+    _error = ONEWIRE_NO_ERROR;
+    delayMicroseconds(20); // let the input settle
+    while (DIRECT_READ(reg, pin_bitmask)) // TODO: replace this with IRQ?
     {
-        time_stamp = micros() + ( timeout_ms * 1000 );
-        while (DIRECT_READ(reg, pin_bitmask))
-        {
-            if (micros() > time_stamp)
-            {
-                _error = ONEWIRE_WAIT_RESET_TIMEOUT;
-                return false;
-            }
-        }
-    }
-    else
-    {
-        //Will wait forever for the line to fall
-        while (DIRECT_READ(reg, pin_bitmask))
-        { };
+        if (micros() > time_trigger)    return false;
+        // if reached this point (bus was high), this could be an indicator for a sleep after bus goes low
+        bus_was_high = 1;
     }
 
-    //Set to wait for rise up to 540 micros
-    //Master code sets the line low for 500 micros
-    //TODO The actual documented max is 640, not 540
-    time_stamp = micros() + 540;
-
-    //Wait for the rise on the line up to 540 micros
+    // Set to wait for bus=high by master
+    time_trigger = micros() + ONEWIRE_TIME_RESET_MAX;
     while (DIRECT_READ(reg, pin_bitmask) == 0)
     {
-        if (micros() > time_stamp)
+        if (micros() > time_trigger)
         {
             _error = ONEWIRE_VERY_LONG_RESET;
             return false;
         }
     }
 
-    //If the master pulled low for exactly 500, then this will be 40 wait time
-    // Recommended for master is 480, which would be 60 here then
-    // Max is 640, which makes this negative, but it returns above as a "ONEWIRE_VERY_LONG_RESET"
-    // this gives an extra 10 to 30 micros befor calling the reset invalid
-    if ((time_stamp - micros()) > 70)
+    // If the master pulled low for to short this will trigger an error
+    if (bus_was_high && ((time_trigger - ONEWIRE_TIME_RESET_MAX + ONEWIRE_TIME_RESET_MIN) > micros()))
     {
         _error = ONEWIRE_VERY_SHORT_RESET;
         return false;
     }
 
-    //Master will now delay for 65 to 70 recommended or max of 75 before it's "presence" check
-    // and then read the pin value (checking for a presence on the line)
-    // then wait another 490 (so, 500 + 64 + 490 = 1054 total without consideration of actual op time) on Arduino,
-    // but recommended is 410 with total reset length of 480 + 70 + 410 (or 480x2=960)
-    delayMicroseconds(30);
-    //Master wait is 65, so we have 35 more to send our presence now that reset is done
     return true;
 }
 
-bool OneWireHub::presence(const uint8_t delta_us)
+
+bool OneWireHub::showPresence(void)
 {
+    // Master will now delay before it's "Presence" check
+    delayMicroseconds(ONEWIRE_TIME_PRESENCE_HIGH_STD);
+
+    uint32_t    time_trigger = micros() + ONEWIRE_TIME_PRESENCE_HIGH_MAX;
+
     volatile uint8_t *reg asm("r30") = baseReg;
 
-    //Reset code already waited 30 prior to calling this
-    // Master will not read until 70 recommended, but could read as early as 60
-    // so we should be well enough ahead of that. Arduino waits 65
-    _error = ONEWIRE_NO_ERROR;
+    // pull the bus low and hold it some time
     cli();
     DIRECT_WRITE_LOW(reg, pin_bitmask);
     DIRECT_MODE_OUTPUT(reg, pin_bitmask);    // drive output low
     sei();
 
-    //Delaying for another 125 (orignal was 120) with the line set low is a total of at least 155 micros
-    // total since reset high depends on commands done prior, is technically a little longer
-    delayMicroseconds(125);
+    delayMicroseconds(ONEWIRE_TIME_PRESENCE_LOW_STD);
+
     cli();
     DIRECT_MODE_INPUT(reg, pin_bitmask);     // allow it to float
     sei();
 
-    //Default "delta" is 25, so this is 275 in that condition, totaling to 155+275=430 since the reset rise
-    // docs call for a total of 480 possible from start of rise before reset timing is completed
-    //This gives us 50 micros to play with, but being early is probably best for timing on read later
-    //delayMicroseconds(300 - delta);
-    delayMicroseconds(static_cast<uint16_t>(250) - delta_us);  // TODO: where does 250 come from?
-
-    //Modified to wait a while (roughly 50 micros) for the line to go high
-    // since the above wait is about 430 micros, this makes this 480 closer
-    // to the 480 standard spec and the 490 used on the Arduino master code
-    // anything longer then is most likely something going wrong.
-    uint8_t retries = 25;
+    // When the master pulls the bus high within a given time everything is fine
     while (!DIRECT_READ(reg, pin_bitmask))
     {
-        delayMicroseconds(2);
-        if (retries-- == 0)  return false;
+        if (micros() > time_trigger)
+        {
+            _error = ONEWIRE_VERY_LONG_RESET;
+            return false;
+        }
+
     }
 
-
-    if ( DIRECT_READ(reg, pin_bitmask))
-    {
-        return true;
-    }
-    else
-    {
-        _error = ONEWIRE_PRESENCE_LOW_ON_LINE;
-        return false;
-    };
+    _error = ONEWIRE_NO_ERROR;
+    return true;
 }
 
 

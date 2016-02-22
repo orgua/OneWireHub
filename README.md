@@ -26,11 +26,13 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - arduino-dependencies are found in the mockup "arduino.h" (for portability and tests)
 
 ### Recent development (latest at the top): 
+- faster CRC16 (ds2450 and ds2408 and ds2423), still potential left if there are remaining timing-problems
+- refactored the interface: hub.poll() replaces hub.waitForRequest()
 - extended ds2890 to up to 4CH (datasheet has it covered), ds2413, ds2413 --> feature-complete
 - implement and test ds2438
 - fix bug: only one ds2401 possible?
 - fix bug: buffer-overrun when using more than 4 active slaves 
-- replace search() algorithm, safes a lot of ram (HubTest-Minimal4 needs 3986 & 155 byte instead of 3928 & 891 byte)
+- replace search() algorithm, safes a lot of ram (debug-codesize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte)
 - fix bug: infinite loop when waitForRequest() is called without attached sensor
 - fix bug: infinite loop when (for example) >=1 ds2401 are attached and waitForRequest() is called
 - fix bug: temp-calculation was wrong (ds18b20, ds2438) and used something like round(abs(floor(float-value)))
@@ -40,7 +42,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 ### Plans for the future:
 - implementation of ds2450
 - rework the onewire-timings
-- refactoring the interface
+- offer per-bit-CRC16 with sendAndCRC16() and recvAndCRC16()
 - work on the TODOs in the code
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
 - bug: infinite loop in waitForRequest() if no sensor is read out (scratchpad or sim)
