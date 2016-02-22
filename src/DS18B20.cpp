@@ -34,13 +34,13 @@ bool DS18B20::duty(OneWireHub *hub)
 
         case 0x4E: // WRITE SCRATCHPAD
             // write 3 byte of data to scratchpad[1:3]
-            hub->recvData(&scratchpad[2], 3);
+            hub->recv(&scratchpad[2], 3);
             updateCRC();
             if (dbg_sensor) Serial.println("DS18B20 : WRITE SCRATCHPAD");
             break;
 
         case 0xBE: // READ SCRATCHPAD
-            hub->sendData(scratchpad, 9);
+            hub->send(scratchpad, 9);
             if (hub->error()) return false;
             if (dbg_sensor)  Serial.println("DS18B20 : READ SCRATCHPAD");
             break;
