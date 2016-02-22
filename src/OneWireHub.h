@@ -101,6 +101,7 @@ public:
     bool    detach(const OneWireItem &sensor);
     bool    detach(const uint8_t slave_number);
 
+    bool poll(void);
     bool waitForRequest(const bool ignore_errors = false);
 
     uint8_t send(const uint8_t databyte);
