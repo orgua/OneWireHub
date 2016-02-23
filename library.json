@@ -6,15 +6,15 @@
 "authors":
 [
     {
-        "name": "orgua",
+        "name": "Ingmar Splitt",
         "url": "https://github.com/orgua",
         "maintainer": true
     },
     {
-        "name": "Shagrat2"
+        "name": "MarkusLange"
     },
     {
-        "name": "MarkusLange"
+        "name": "Shagrat2"
     }
 ],
 "repository":
