@@ -530,22 +530,25 @@ bool OneWireHub::sendBit(const uint8_t v)
     return true;
 }
 
-bool OneWireHub::sendAndCRC16(const uint8_t databyte, uint16_t &crc16)
+// CRC takes ~7.4µs/byte (Atmega328P@16MHz) but is distributing the load between each bit-send to 0.9 µs/bit (see debug-crc-comparison.ino)
+// important: the final crc is expected to be inverted (crc=~crc) !!!
+uint16_t OneWireHub::sendAndCRC16(uint8_t databyte, uint16_t crc16)
 {
     _error = ONEWIRE_NO_ERROR;
-    uint8_t _databyte = databyte;
-    for (uint8_t bitmask = 0x01; bitmask; bitmask <<= 1)
+    for (uint8_t counter = 0; counter < 8; ++counter)
     {
-        sendBit((bitmask & databyte) ? 1 : 0);
+        sendBit((0x01 & databyte) ? 1 : 0);
 
-        uint8_t mix = ((uint8_t) crc16 ^ _databyte) & static_cast<uint8_t>(0x01);
+        uint8_t mix = ((uint8_t) crc16 ^ databyte) & static_cast<uint8_t>(0x01);
         crc16 >>= 1;
         if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
-        _databyte >>= 1;
+        databyte >>= 1;
+
         if (_error) return false;
     }
-    return true;
+    return crc16;
 }
+
 
 uint8_t OneWireHub::recv(uint8_t buf[], const uint8_t len)
 {
@@ -688,8 +691,8 @@ OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uin
 // fast but needs more storage:
 //  https://github.com/PaulStoffregen/OneWire/blob/master/OneWire.cpp --> calc with table (EOF)
 
-// Compute a Dallas Semiconductor 8 bit CRC directly.
-// slow, but small
+
+// INFO: this is the slow but memory saving version of the CRC() --> the calculation is not timecritical and happens offline
 uint8_t OneWireItem::crc8(const uint8_t addr[], const uint8_t len)
 {
     uint8_t crc = 0;

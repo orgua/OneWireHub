@@ -34,28 +34,23 @@ bool DS2408::duty(OneWireHub *hub)
     {
         // Read PIO Registers
         case 0xF0:
+//            memory[0] = done;        // Cmd
+//            memory[1] = hub->recv(); // AdrL
+//            memory[2] = hub->recv(); // AdrH
+//            updateCRC();
+//            data = hub->send(&memory[3], 10);
 
-#define NEWCRC 0
-#if (NEWCRC > 0)
-            crc = crc16(uint16_t(0), done); // TODO: Test for now
-            crc = crc16(crc, hub->recv());
-            crc = crc16(crc, hub->recv());
+            crc = crc16(done, crc); // Test for now, above is the old code
+            crc = crc16(hub->recv(), crc);
+            crc = crc16(hub->recv(), crc);
 
             for (uint8_t count = 3; count < 11; ++count)
             {
-                hub->sendAndCRC16(memory[count], crc);
+                crc = hub->sendAndCRC16(memory[count], crc);
             }
+            crc = ~crc; // most important step, easy to miss....
             hub->send(memory[11]);
             hub->send(memory[12]);
-#else
-            memory[0] = done;        // Cmd
-            memory[1] = hub->recv(); // AdrL
-            memory[2] = hub->recv(); // AdrH
-            updateCRC();
-            data = hub->send(&memory[3], 10);
-#endif
-
-
 
             if (dbg_sensor)
             {
