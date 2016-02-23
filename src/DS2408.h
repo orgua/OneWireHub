@@ -6,23 +6,26 @@
 
 #include "OneWireItem.h"
 
-#pragma pack(push, 1)
-struct sDS2408 // TODO: could be overlayed with struct
+typedef struct
 {
     uint8_t cmd;
     uint8_t adrL;
     uint8_t adrH;
-    uint8_t D0;
-    uint8_t D1;
-    uint8_t D2;
-    uint8_t D3;
-    uint8_t D4;
-    uint8_t D5;
-    uint8_t D6;
-    uint8_t D7;
-    uint16_t CRC;
-};
-#pragma pack(pop)
+    uint8_t d0;
+    uint8_t d1;
+    uint8_t d2;
+    uint8_t d3;
+    uint8_t d4;
+    uint8_t d5;
+    uint8_t d6;
+    uint8_t d7;
+    uint16_t crc;
+} sDS2408;
+
+typedef union {
+    uint8_t bytes[13];
+    sDS2408 field;
+} mDS2408; // overlayed with memory_array
 
 
 class DS2408 : public OneWireItem
@@ -40,7 +43,7 @@ private:
     static constexpr uint8_t  DS2408_CONTROL_STATUS_REG  = 0x8D;  // RW Control Register
     static constexpr uint8_t  DS2408_RD_ABOVE_ALWAYS_FF  = 0x8E;  // these bytes give always 0xFF
 
-    uint8_t memory[13];
+    mDS2408 memory;
 
     void updateCRC(void);
 

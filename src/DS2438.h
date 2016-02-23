@@ -19,8 +19,7 @@ static constexpr uint8_t MemDS2438[64] =
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
         };
 
-#pragma pack(push, 1)
-struct DS2438_page0 // TODO: overlay with memory if possible
+struct DS2438_page0 // overlay with memory if needed (like done in ds2408)
 {
     uint8_t flags;
     int16_t temp;
@@ -28,7 +27,7 @@ struct DS2438_page0 // TODO: overlay with memory if possible
     int16_t curr;
     uint8_t threshold;
 };
-#pragma pack(pop)
+
 
 
 class DS2438 : public OneWireItem

@@ -17,7 +17,7 @@ public:
 
     uint8_t ID[8];
 
-    virtual bool duty(OneWireHub *hub) = 0; // TODO: duty in sensors is set private... but it does work anyway
+    virtual bool duty(OneWireHub *hub) = 0;
 
     static uint8_t crc8(const uint8_t addr[], const uint8_t len);
 

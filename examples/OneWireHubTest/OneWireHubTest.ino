@@ -69,7 +69,7 @@ void setup()
     hub.attach(ds2401b);
     hub.attach(ds2413);
     hub.attach(ds2438);
-    //hub.attach(ds2450); // TODO: still breaks the communication
+    //hub.attach(ds2450); // still breaks the communication ? find out :-)
     hub.attach(ds2890);
 
     Serial.println("config done");
