@@ -1,7 +1,7 @@
 OneWireHub
 ==========
 
-The OneWireHub is an Arduino compatible library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to eight ICs (or more) simultaneously. 
+The OneWireHub is an Arduino and Raspberry Pi (WiringPI) compatible library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to eight ICs (or more) simultaneously. 
 The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your environment.
 
 ### Supported Slaves (bold ones are feature-complete):
@@ -22,14 +22,15 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 ### Further features:
 - hot-plug slaves as needed
 - supports up to eight slaves for now, but small changes can easily extend this to 32
-- cleaner, faster code with c++11 features (requires arduino 1.6.6 or higher)
+- cleaner, faster code with c++11 features (requires arduino 1.6.x or higher)
 - arduino-dependencies are found in the mockup "arduino.h" (for portability and tests)
 - good documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top): 
-- add examples for onewire-master
-- rework of checkReset() and showPresence() - Hub is much more reliable now and it saves ~120 byte space
-- faster CRC16 (ds2450 and ds2408 and ds2423), still potential left if there are remaining timing-problems
+- per-bit-CRC16 with sendAndCRC16() for loadbalancing, 900ns/bit, could be done for recvAndCRC16() too
+- add examples for onewire-master, for testing the bus
+- rework of checkReset() and showPresence() - Hub is much more reliable now and it saves ~120 byte prog-space
+- faster CRC16 (ds2450 and ds2408 and ds2423), takes 5-7µs/byte instead of 10µs
 - refactored the interface: hub.poll() replaces hub.waitForRequest()
 - extended ds2890 to up to 4CH (datasheet has it covered), ds2413, ds2413 --> feature-complete
 - implement and test ds2438
@@ -44,8 +45,8 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 ### Plans for the future:
 - implementation of ds2450
 - rework the onewire-timings
-- offer per-bit-CRC16 with sendAndCRC16() and recvAndCRC16() for loadbalancing (non working test already included)
-- irq-handled hub on supported ports
+- add table of tested sensors 
+- irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
 - work on the TODOs in the code
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
 - bug: infinite loop in waitForRequest() if no sensor is read out (scratchpad or sim)
@@ -66,5 +67,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 [read more](http://electronics.stackexchange.com/questions/193300/digital-ic-that-draws-power-from-data-pins)
 
 ### Ancestors of this Lib:
-- original pieces seem to be adopted from [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire) 
+- original pieces seem to be adopted from [OneWireSlave](http://robocraft.ru/blog/arduino/302.html)
+- further developement was done in [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire) 
 - first implementation of the [OneWireHub](https://github.com/Shagrat2/OneWireHub) by Shagrat2
+- the current state of code has the concepts in common, but the codebase is a (nearly) total rewrite
