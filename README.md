@@ -27,6 +27,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - good documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top): 
+- add examples for onewire-master
 - rework of checkReset() and showPresence() - Hub is much more reliable now and it saves ~120 byte space
 - faster CRC16 (ds2450 and ds2408 and ds2423), still potential left if there are remaining timing-problems
 - refactored the interface: hub.poll() replaces hub.waitForRequest()
@@ -43,7 +44,8 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 ### Plans for the future:
 - implementation of ds2450
 - rework the onewire-timings
-- offer per-bit-CRC16 with sendAndCRC16() and recvAndCRC16()
+- offer per-bit-CRC16 with sendAndCRC16() and recvAndCRC16() for loadbalancing (non working test already included)
+- irq-handled hub on supported ports
 - work on the TODOs in the code
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
 - bug: infinite loop in waitForRequest() if no sensor is read out (scratchpad or sim)

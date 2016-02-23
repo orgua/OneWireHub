@@ -26,20 +26,36 @@ void DS2408::updateCRC()
 bool DS2408::duty(OneWireHub *hub)
 {
     uint8_t data;  // TODO: unused for now
-
+    uint16_t &crc = (reinterpret_cast<sDS2408 *>(memory))->CRC;
+    crc = 0;
     uint8_t done = hub->recv();
 
     switch (done)
     {
         // Read PIO Registers
         case 0xF0:
+
+#define NEWCRC 0
+#if (NEWCRC > 0)
+            crc = crc16(uint16_t(0), done); // TODO: Test for now
+            crc = crc16(crc, hub->recv());
+            crc = crc16(crc, hub->recv());
+
+            for (uint8_t count = 3; count < 11; ++count)
+            {
+                hub->sendAndCRC16(memory[count], crc);
+            }
+            hub->send(memory[11]);
+            hub->send(memory[12]);
+#else
             memory[0] = done;        // Cmd
             memory[1] = hub->recv(); // AdrL
             memory[2] = hub->recv(); // AdrH
-
             updateCRC();
-
             data = hub->send(&memory[3], 10);
+#endif
+
+
 
             if (dbg_sensor)
             {
