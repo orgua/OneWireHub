@@ -3,6 +3,8 @@
 #ifndef ONEWIRE_DS2423_H
 #define ONEWIRE_DS2423_H
 
+#include "OneWireItem.h"
+
 class DS2423 : public OneWireItem
 {
 private:

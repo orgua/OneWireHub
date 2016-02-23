@@ -4,6 +4,8 @@
 #ifndef ONEWIRE_DS18B20_H
 #define ONEWIRE_DS18B20_H
 
+#include "OneWireItem.h"
+
 class DS18B20 : public OneWireItem
 {
 private:
