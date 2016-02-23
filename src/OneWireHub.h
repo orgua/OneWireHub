@@ -111,7 +111,7 @@ public:
     bool send(const uint8_t databyte);
     bool send(const uint8_t buf[], const uint8_t data_len);
     bool sendBit(const uint8_t v);
-    bool sendAndCRC16(const uint8_t databyte, uint16_t &crc16);
+    uint16_t sendAndCRC16(uint8_t databyte, uint16_t crc16);
 
     uint8_t recv(void);
     uint8_t recv(uint8_t buf[], const uint8_t data_len); // TODO: change send/recv to return bool TRUE on success, recv returns data per reference
@@ -147,10 +147,14 @@ public:
 
     static uint8_t crc8(const uint8_t addr[], const uint8_t len);
 
+    // takes ~(5.1-7.0)µs/byte (Atmega328P@16MHz) depends from addr_size (see debug-crc-comparison.ino)
+    // important: the final crc is expected to be inverted (crc=~crc) !!!
     static uint16_t crc16(const uint8_t addr[], const uint8_t len);
 
     // CRC16 of type 0xC001 for little endian
-    static uint16_t crc16(uint16_t crc, uint8_t value) // TODO: further tuning with asm
+    // takes ~6µs/byte (Atmega328P@16MHz) (see debug-crc-comparison.ino)
+    // important: the final crc is expected to be inverted (crc=~crc) !!!
+    static uint16_t crc16(uint8_t value, uint16_t crc) // TODO: further tuning with asm
     {
         static const uint8_t oddparity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
         value = (value ^ static_cast<uint8_t>(crc));
