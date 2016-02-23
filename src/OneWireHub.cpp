@@ -25,11 +25,7 @@ OneWireHub::OneWireHub(uint8_t pin)
 
     pin_bitmask = digitalPinToBitMask(pin);
 
-    baseReg = portInputRegister(digitalPinToPort(pin)); // TODO: remove other instances
-
-    //bits[ONEWIREIDMAP_COUNT]; // TODO: init
-    //idmap0[ONEWIREIDMAP_COUNT];
-    //idmap1[ONEWIREIDMAP_COUNT];
+    baseReg = portInputRegister(digitalPinToPort(pin));
 
     slave_count = 0;
     slave_selected = nullptr;
@@ -109,6 +105,15 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const uint8_t mask)
     }
 }
 
+// gone through the adress, store this result
+uint8_t OneWireHub::getNrOfFirstFreeIDTreeElement(void)
+{
+    for (uint8_t i = 0; i < ONEWIRETREE_SIZE; ++i)
+        if (idTree[i].idPosition == 255)
+            return i;
+    return 0;
+};
+
 // initial FN to build the ID-Tree
 uint8_t OneWireHub::buildIDTree(void)
 {
@@ -179,17 +184,9 @@ uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const uint8_t mask_slave
         if (mask_neg && mask_pos)
         {
             // there was found a junction
-            uint8_t active_element = 0;
-            for (uint8_t i = 0; i < ONEWIRETREE_SIZE; ++i)
-            {
-                if (idTree[i].idPosition == 255)
-                {
-                    active_element = i;
-                    break;
-                }
-            };
+            const uint8_t active_element = getNrOfFirstFreeIDTreeElement();
 
-            idTree[active_element].idPosition    = position_IDBit;
+            idTree[active_element].idPosition     = position_IDBit;
             idTree[active_element].slave_selected = getNrOfFirstBitSet(mask_slaves);
             position_IDBit++;
             idTree[active_element].gotOne         = buildIDTree(position_IDBit, mask_pos);
@@ -201,16 +198,8 @@ uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const uint8_t mask_slave
     }
 
     // gone through the adress, store this result
-    // TODO: code duplication
-    uint8_t active_element = 0;
-    for (uint8_t i = 0; i < ONEWIRETREE_SIZE; ++i)
-    {
-        if (idTree[i].idPosition == 255)
-        {
-            active_element = i;
-            break;
-        }
-    };
+    uint8_t active_element = getNrOfFirstFreeIDTreeElement();
+
     idTree[active_element].idPosition     = 128;
     idTree[active_element].slave_selected = getNrOfFirstBitSet(mask_slaves);
     idTree[active_element].gotOne         = 255;
@@ -220,7 +209,7 @@ uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const uint8_t mask_slave
 }
 
 
-bool OneWireHub::waitForRequest(const bool ignore_errors) // TODO: maybe build a non blocking version of this? and more common would be inverse of ignore_errors (=blocking)
+bool OneWireHub::waitForRequest(const bool ignore_errors)
 {
     _error = ONEWIRE_NO_ERROR;
 
@@ -410,10 +399,9 @@ bool OneWireHub::search(void)
 bool OneWireHub::recvAndProcessCmd(void)
 {
     uint8_t addr[8];
-    bool flag;
-
+    bool    flag;
     uint8_t cmd = recv();
-    // TODO: removed while(1) loop
+
     switch (cmd)
     {
         case 0xF0: // Search rom
@@ -483,16 +471,16 @@ bool OneWireHub::recvAndProcessCmd(void)
 // TODO: there seems to be something wrong when first receiving and then sending, master has to wait a moment, otherwise it fails
 bool OneWireHub::send(const uint8_t buf[], const uint8_t len)
 {
-    uint8_t bytes_sended = 0;
+    uint8_t bytes_sent = 0;
 
     for (uint8_t i = 0; i < len; ++i)
     {
         send(buf[i]);
         if (_error != ONEWIRE_NO_ERROR)
             break;
-        bytes_sended++;
+        bytes_sent++;
     }
-    return bytes_sended; // TODO: resolve this issue
+    return (bytes_sent == len);
 }
 
 bool OneWireHub::send(const uint8_t databyte)
@@ -519,14 +507,14 @@ bool OneWireHub::sendBit(const uint8_t v)
         sei();
         return false;
     }
-    if (v & 1)  delayMicroseconds(32); // TODO: was 30 before
+    if (v & 1)  delayMicroseconds(32);
     else
     {
         cli();
         DIRECT_WRITE_LOW(reg, pin_bitmask);
         DIRECT_MODE_OUTPUT(reg, pin_bitmask);
-        delayMicroseconds(32); // TODO: was 30 before
-        DIRECT_WRITE_HIGH(reg, pin_bitmask);
+        delayMicroseconds(32);
+        DIRECT_WRITE_HIGH(reg, pin_bitmask);  // TODO: is this realy wanted?, why not set to input with external PU
     }
     sei();
     return true;
@@ -546,13 +534,13 @@ uint16_t OneWireHub::sendAndCRC16(uint8_t databyte, uint16_t crc16)
         if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
         databyte >>= 1;
 
-        if (_error) return false;
+        if (_error) return false; // CRC is not important if sending fails
     }
     return crc16;
 }
 
 
-uint8_t OneWireHub::recv(uint8_t buf[], const uint8_t len)
+bool OneWireHub::recv(uint8_t buf[], const uint8_t len)
 {
     uint8_t bytes_received = 0;
 
@@ -563,24 +551,24 @@ uint8_t OneWireHub::recv(uint8_t buf[], const uint8_t len)
             break;
         bytes_received++;
     }
-    return bytes_received; // TODO: resolve to true on success,
+    return (bytes_received == len);
 }
 
 uint8_t OneWireHub::recv(void)
 {
-    uint8_t r = 0;
+    uint8_t value = 0;
 
     _error = ONEWIRE_NO_ERROR;
     for (uint8_t bitmask = 0x01; bitmask && (_error == ONEWIRE_NO_ERROR); bitmask <<= 1)
         if (recvBit())
-            r |= bitmask;
-    return r;
+            value |= bitmask;
+    return value;
 }
 
 uint8_t OneWireHub::recvBit(void)
 {
     volatile uint8_t *reg asm("r30") = baseReg;
-    uint8_t r;
+    uint8_t value;
 
     cli();
     DIRECT_MODE_INPUT(reg, pin_bitmask);
@@ -592,9 +580,9 @@ uint8_t OneWireHub::recvBit(void)
     }
 
     delayMicroseconds(30);
-    r = DIRECT_READ(reg, pin_bitmask);
+    value = DIRECT_READ(reg, pin_bitmask);
     sei();
-    return r;
+    return value;
 }
 
 #define NEWWAIT 0 // TODO: does not work as expected
@@ -604,7 +592,7 @@ uint8_t OneWireHub::recvBit(void)
 bool OneWireHub::waitTimeSlot(void)
 {
     volatile uint8_t *reg asm("r30") = baseReg;
-
+    sei();
     //While bus is low, retry until HIGH
     uint32_t time_trigger = micros() + ONEWIRE_TIME_SLOT_MAX;
     while (!DIRECT_READ(reg, pin_bitmask))

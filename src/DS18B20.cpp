@@ -68,7 +68,7 @@ bool DS18B20::duty(OneWireHub *hub)
             //  copy trim1                0x94
             //  write trim1               0x95
         case 0xEC:
-            // Alarm search command, respond if flag is set
+            // TODO: Alarm search command, respond if flag is set
             if (dbg_sensor) Serial.println("DS18B20 : ALARM REQUESTED");
             break;
 
@@ -91,12 +91,12 @@ void DS18B20::setTemp(const float temperature_degC)
     setTempRaw(static_cast<int16_t>(temperature_degC * 16.0));
 };
 
-void DS18B20::setTemp(const int16_t temperature_degC) // TODO: could be int8_t, [-55;+85] degC
+void DS18B20::setTemp(const int16_t temperature_degC) // could be int8_t, [-55;+85] degC
 {
     setTempRaw(temperature_degC * static_cast<int8_t>(16));
 };
 
-// TODO: use allways 12bit mode? also 9,10,11,12 bit possible
+// use allways 12bit mode! also 9,10,11,12 bit possible bit bitposition seems to stay the same
 void DS18B20::setTempRaw(const int16_t value_raw)
 {
     int16_t value = value_raw;
@@ -113,7 +113,7 @@ void DS18B20::setTempRaw(const int16_t value_raw)
 
     scratchpad[0] = uint8_t(value);
     scratchpad[1] = uint8_t(value >> 8);
-    // TODO: compare TH,TL with (value>>4 & 0xFF) (bit 11to4)
+    // TODO: if alarms implemented - compare TH,TL with (value>>4 & 0xFF) (bit 11to4)
     // if out of bounds >=TH, <=TL trigger flag
 
     updateCRC();

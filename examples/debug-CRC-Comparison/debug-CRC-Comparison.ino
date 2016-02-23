@@ -116,7 +116,7 @@ void setup()
     Serial.flush();
 
     /// Start Var 2C
-    // uint16_t v2C_crc16(uint16_t crc, uint8_t value) // TODO: further tuning with asm
+    // uint16_t v2C_crc16(uint16_t crc, uint8_t value)
 
     crc = 0;
     time_start = micros();
@@ -131,7 +131,7 @@ void setup()
     Serial.flush();
 
     /// Start Var 2D
-    // void v2D_crc16(uint16_t &crc, uint8_t value) // TODO: further tuning with asm
+    // void v2D_crc16(uint16_t &crc, uint8_t value)
 
     crc = 0;
     time_start = micros();
@@ -290,7 +290,7 @@ uint16_t v2B_crc16(uint16_t crc, const uint8_t addr, const uint8_t len)
 
 /// Variant 2C - transformed for speed
 
-uint16_t v2C_crc16(uint16_t crc, uint8_t value) // TODO: further tuning with asm
+uint16_t v2C_crc16(uint16_t crc, uint8_t value)
 {
     static const uint8_t oddparity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
     value = (value ^ static_cast<uint8_t>(crc));
@@ -304,7 +304,7 @@ uint16_t v2C_crc16(uint16_t crc, uint8_t value) // TODO: further tuning with asm
 
 /// var 2D - call by reference
 
-void v2D_crc16(uint16_t &crc, uint8_t value) // TODO: further tuning with asm
+void v2D_crc16(uint16_t &crc, uint8_t value)
 {
     static const uint8_t oddparity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
     value = (value ^ static_cast<uint8_t>(crc));

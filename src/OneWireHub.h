@@ -12,9 +12,7 @@ constexpr bool dbg_HINT     = 0; // give debug messages for called unimplemented
 
 // TODO: rework this whole system
 // - cleaner timing-system throughout the lib (raw tick-counter of micros()?)
-// - rename and adapt all functions
 // - offer strict and relaxed timing option (if master is also emulated)
-// - remodel the bus-specific parts
 // - offer interruptable read / write OPs
 // - safe timestamp of last HIGH, LOW state?
 
@@ -65,8 +63,8 @@ private:
 
     uint8_t _error;
 
-    uint8_t           pin_bitmask; // TODO: is it used? every function seems to define its local version
-    volatile uint8_t *baseReg; // TODO: is it used? every function seems to define its local version
+    uint8_t           pin_bitmask;
+    volatile uint8_t *baseReg;
 
     uint8_t      slave_count;
     OneWireItem *slave_list[ONEWIRESLAVE_LIMIT];  // private slave-list (use attach/detach)
@@ -84,6 +82,7 @@ private:
 
     uint8_t  getNrOfFirstBitSet(const uint8_t mask);
     uint16_t getNrOfFirstBitSet(const uint16_t mask);
+    uint8_t  getNrOfFirstFreeIDTreeElement(void);
 
     bool recvAndProcessCmd();
 
@@ -114,7 +113,7 @@ public:
     uint16_t sendAndCRC16(uint8_t databyte, uint16_t crc16);
 
     uint8_t recv(void);
-    uint8_t recv(uint8_t buf[], const uint8_t data_len); // TODO: change send/recv to return bool TRUE on success, recv returns data per reference
+    bool    recv(uint8_t buf[], const uint8_t data_len); // TODO: change send/recv to return bool TRUE on success, recv returns data per reference
     uint8_t recvBit(void);
 
     void printError(void);
