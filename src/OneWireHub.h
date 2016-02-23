@@ -5,7 +5,7 @@
 #include "Arduino.h"
 #include <inttypes.h>
 
-constexpr bool dbg_CALC     = 0; // give debug messages
+constexpr bool dbg_IDTREE   = 0; // give debug messages
 constexpr bool dbg_SEARCH   = 0; // give debug messages
 constexpr bool dbg_MATCHROM = 0; // give debug messages
 constexpr bool dbg_HINT     = 0; // give debug messages for called unimplemented functions of sensors
@@ -38,6 +38,8 @@ private:
     static constexpr uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH = 8;
 
     /// the following TIME-values are in us and are taken from the ds2408 datasheet
+    static constexpr uint16_t ONEWIRE_TIME_BUS_CHANGE_MAX       =   5; // used
+
     static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            = 480; // used
     static constexpr uint16_t ONEWIRE_TIME_RESET_MAX            = 720; // used
 
@@ -49,7 +51,7 @@ private:
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     = 280; // used
 
     static constexpr uint16_t ONEWIRE_TIME_SLOT_MIN             =  65;
-    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             = 120;
+    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             = 120; // was 120
 
     static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_MIN   =  60;
     static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_MAX   = 120;
@@ -85,15 +87,13 @@ private:
 
     bool recvAndProcessCmd();
 
-    uint8_t waitTimeSlot();
+    bool waitTimeSlot();
 
     bool checkReset(uint16_t timeout_us = 2000);
 
     bool showPresence(void);
 
     bool search(void);
-
-
 
 public:
 
@@ -108,13 +108,16 @@ public:
     [[deprecated("use the non-blocking poll() instead of waitForRequest()")]]
     bool waitForRequest(const bool ignore_errors = false);
 
-    uint8_t send(const uint8_t databyte);
-    uint8_t send(const uint8_t buf[], const uint8_t data_len);
-    uint8_t sendBit(const uint8_t v);
+    bool send(const uint8_t databyte);
+    bool send(const uint8_t buf[], const uint8_t data_len);
+    bool sendBit(const uint8_t v);
+    bool sendAndCRC16(const uint8_t databyte, uint16_t &crc16);
 
     uint8_t recv(void);
-    uint8_t recv(uint8_t buf[], const uint8_t data_len);
+    uint8_t recv(uint8_t buf[], const uint8_t data_len); // TODO: change send/recv to return bool TRUE on success, recv returns data per reference
     uint8_t recvBit(void);
+
+    void printError(void);
 
     bool error(void)
     {
@@ -125,33 +128,6 @@ public:
 
 
 };
-
-/*
-//--- CRC 16 --- // TODO: only used in ds2450 and ds2408 and ds2423, but integrate into hub as static --> turn to bitwise sendAndCRC()
-static uint16_t crc16;
-
-void ow_crc16_reset(void)
-{
-    crc16 = 0;
-}
-
-void ow_crc16_update(uint8_t b)
-{
-    for (uint8_t j = 0; j < 8; ++j)
-    {
-        uint8_t mix = ((uint8_t) crc16 ^ b) & static_cast<uint8_t>(0x01);
-        crc16 = crc16 >> 1;
-        if (mix)
-            crc16 = crc16 ^ static_cast<uint16_t>(0xA001);
-
-        b = b >> 1;
-    }
-}
-
-uint16_t ow_crc16_get(void)
-{
-    return crc16;
-}*/
 
 // Feature: get first byte (family code) constant for every sensor --> var4 is implemented
 // - var 1: use second init with one byte less (Serial 1-6 instead of ID)
