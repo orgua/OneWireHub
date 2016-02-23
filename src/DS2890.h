@@ -4,6 +4,8 @@
 #ifndef ONEWIRE_DS2890_H
 #define ONEWIRE_DS2890_H
 
+#include "OneWireItem.h"
+
 class DS2890 : public OneWireItem
 {
 private:

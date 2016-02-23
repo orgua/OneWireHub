@@ -4,6 +4,8 @@
 #ifndef ONEWIRE_DS2438_H
 #define ONEWIRE_DS2438_H
 
+#include "OneWireItem.h"
+
 static constexpr uint8_t MemDS2438[64] =
         {
                 //  memory[0] = DS2438_IAD | DS2438_CA | DS2438_EE | DS2438_AD;

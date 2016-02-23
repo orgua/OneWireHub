@@ -4,6 +4,8 @@
 #ifndef ONEWIRE_DS2401_H
 #define ONEWIRE_DS2401_H
 
+#include "OneWireItem.h"
+
 class DS2401 : public OneWireItem
 {
 private:

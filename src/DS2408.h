@@ -4,6 +4,8 @@
 #ifndef ONEWIRE_DS2408_H
 #define ONEWIRE_DS2408_H
 
+#include "OneWireItem.h"
+
 #pragma pack(push, 1)
 struct sDS2408 // TODO: could be overlayed with struct
 {
