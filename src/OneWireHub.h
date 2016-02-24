@@ -33,16 +33,17 @@ private:
     static constexpr uint8_t ONEWIRE_PRESENCE_LOW_ON_LINE       = 6;
     static constexpr uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW  = 7;
     static constexpr uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH = 8;
+    static constexpr uint8_t ONEWIRE_PRESENCE_HIGH_ON_LINE      = 9;
 
     /// the following TIME-values are in us and are taken from the ds2408 datasheet
     static constexpr uint16_t ONEWIRE_TIME_BUS_CHANGE_MAX       =   5; // used
 
-    static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            = 480; // used
+    static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            = 380; // used, was 480
     static constexpr uint16_t ONEWIRE_TIME_RESET_MAX            = 720; // used
 
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MIN    =  15;
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_STD    =  30; // used
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =  60;
+    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_SAMPLE_MIN  =  30; // used
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MIN     =  60;
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     = 140; // used
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     = 280; // used
@@ -87,7 +88,7 @@ private:
 
     bool waitTimeSlot();
 
-    bool checkReset(uint16_t timeout_us = 2000);
+    bool checkReset(uint16_t timeout_us);
 
     bool showPresence(void);
 

@@ -78,7 +78,7 @@ void setup()
 void loop()
 {
     // following function must be called periodically
-    hub.poll();
+    if (!hub.poll()) hub.printError();
 
     // Blink triggers the state-change
     if (blinking())
