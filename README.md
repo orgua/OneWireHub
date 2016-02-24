@@ -21,14 +21,15 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 
 ### Further features:
 - hot-plug slaves as needed
-- supports up to 32 slaves, set ONEWIRESLAVE_LIMIT in OneWireHub.h to safe some RAM (8 is standard)
+- supports up to 32 slaves, adjust ONEWIRESLAVE_LIMIT in OneWireHub.h to safe some RAM (8 is standard)
 - cleaner, faster code with c++11 features (requires arduino 1.6.x or higher)
 - arduino-dependencies are found in the mockup "arduino.h" (for portability and tests)
-- hardware-dependencies are found in "platform.h", synced with onewire-lib
+- hardware-dependencies are found in "platform.h", synced with [onewire-lib](https://github.com/PaulStoffregen/OneWire)
+   - extra supported: arduino zero, teensy, sam3x, pic32, esp8266, nrf51822 (...)
 - good documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top): 
-- raise the maximal slave limit to 32 (set the ONEWIRESLAVE_LIMIT-parameter in OneWireHub.h), takes only ~100b extra program-space
+- raise the maximal slave limit from 8 to 32, takes ~100b extra program-space
 - open up for a lot more platforms with "platform.h" (taken from onewire-lib)
 - fix bug: open-drain violation on slave side
 - per-bit-CRC16 with sendAndCRC16() and sendAndCRC16() for load-balancing, 900ns/bit instead of 7µs/byte on Atmega328@16MHz
@@ -38,17 +39,14 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - refactored the interface: hub.poll() replaces hub.waitForRequest()
 - extended ds2890 to up to 4CH (datasheet has it covered), ds2413, ds2413 --> feature-complete
 - implement and test ds2438
-- replace search() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte)
+- replace search() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
 
 ### Plans for the future:
 - implementation of ds2450
 - rework the onewire-timings
-- add table of tested sensors 
+- add table of tested and working sensors 
 - irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
-- work on the TODOs in the code
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
-- bug: infinite loop in waitForRequest() if no sensor is read out (scratchpad or sim)
-- add MAX31850 0x3B thermocouple-to-digital converter 14bit
 - ~~DS1963S 0x18 iButton, datasheet under NDA~~
 - [List of all Family-Codes](http://owfs.sourceforge.net/family.html)
 
