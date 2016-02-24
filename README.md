@@ -38,13 +38,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - refactored the interface: hub.poll() replaces hub.waitForRequest()
 - extended ds2890 to up to 4CH (datasheet has it covered), ds2413, ds2413 --> feature-complete
 - implement and test ds2438
-- fix bug: only one ds2401 possible?
-- fix bug: buffer-overrun when using more than 4 active slaves 
 - replace search() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte)
-- fix bug: infinite loop when waitForRequest() is called without attached sensor
-- fix bug: infinite loop when (for example) >=1 ds2401 are attached and waitForRequest() is called
-- fix bug: temp-calculation was wrong (ds18b20, ds2438) and used something like round(abs(floor(float-value)))
-- make OneWireHub compatible to arduino library-manager
 
 ### Plans for the future:
 - implementation of ds2450
