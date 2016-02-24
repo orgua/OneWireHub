@@ -3,6 +3,7 @@
 #define ONEWIRE_HUB_H
 
 #include "Arduino.h"
+#include "platform.h" // code for compatibility
 
 constexpr bool dbg_IDTREE   = 0; // give debug messages
 constexpr bool dbg_SEARCH   = 0; // give debug messages

@@ -2,12 +2,7 @@
 
 #include "OneWireHub.h"
 #include "OneWireItem.h"
-#include "pins_arduino.h"
 
-#define DIRECT_READ(base, mask)        (((*(base)) & (mask)) ? 1 : 0)
-#define DIRECT_MODE_INPUT(base, mask)  ((*(base+1)) &= ~(mask))
-#define DIRECT_MODE_OUTPUT(base, mask) ((*(base+1)) |= (mask))
-#define DIRECT_WRITE_LOW(base, mask)   ((*(base+2)) &= ~(mask))
 
 OneWireHub::OneWireHub(uint8_t pin)
 {
