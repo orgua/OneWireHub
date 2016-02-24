@@ -16,7 +16,7 @@ extern "C" {
 #define DIRECT_MODE_INPUT(base, mask)  ((*(base+1)) &= ~(mask))
 #define DIRECT_MODE_OUTPUT(base, mask) ((*(base+1)) |= (mask))
 #define DIRECT_WRITE_LOW(base, mask)   ((*(base+2)) &= ~(mask))
-#define DIRECT_WRITE_HIGH(base, mask)  ((*(base+2)) |= (mask))
+//#define DIRECT_WRITE_HIGH(base, mask)  ((*(base+2)) |= (mask)) // not needed, since this BUS is open-drain controlled
 
 
 OneWireHub::OneWireHub(uint8_t pin)
@@ -514,7 +514,7 @@ bool OneWireHub::sendBit(const uint8_t v)
         DIRECT_WRITE_LOW(reg, pin_bitmask);
         DIRECT_MODE_OUTPUT(reg, pin_bitmask);
         delayMicroseconds(32);
-        DIRECT_WRITE_HIGH(reg, pin_bitmask);  // TODO: is this realy wanted?, why not set to input with external PU
+        DIRECT_MODE_INPUT(reg, pin_bitmask);
     }
     sei();
     return true;
