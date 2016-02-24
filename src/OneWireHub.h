@@ -115,6 +115,7 @@ public:
     uint8_t recv(void);
     bool    recv(uint8_t address[], const uint8_t data_length); // TODO: change send/recv to return bool TRUE on success, recv returns data per reference
     uint8_t recvBit(void);
+    uint8_t recvAndCRC16(uint16_t &crc16);
 
     void printError(void);
 

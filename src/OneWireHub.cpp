@@ -577,6 +577,30 @@ uint8_t OneWireHub::recvBit(void)
     return value;
 }
 
+// TODO: not happy with the interface - call by ref is slow here. maybe use a crc in class and expand with crc-reset and get?
+uint8_t OneWireHub::recvAndCRC16(uint16_t &crc16)
+{
+    uint8_t value = 0;
+    uint8_t mix = 0;
+    _error = ONEWIRE_NO_ERROR;
+    for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
+    {
+        if (recvBit())
+        {
+            value |= bitMask;
+            mix = 1;
+        }
+        else mix = 0;
+
+        mix ^= static_cast<uint8_t>(crc16) & static_cast<uint8_t>(0x01);
+        crc16 >>= 1;
+        if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
+
+        if (_error) return false;
+    }
+    return value;
+}
+
 #define NEW_WAIT 0 // TODO: does not work as expected
 #if (NEW_WAIT > 0)
 

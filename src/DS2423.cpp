@@ -11,60 +11,38 @@ bool DS2423::duty(OneWireHub *hub)
     uint8_t b;
     uint16_t crc = 0;
 
-    uint8_t done = hub->recv();
+    uint8_t done = hub->recvAndCRC16(crc);
 
     switch (done)
     {
         // Read Memory + Counter
         case 0xA5:
-            crc = crc16(0xA5, crc);
 
-            // Adr1
-            b = hub->recv();
-            reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
-            crc = crc16(b, crc);
-
-            // Adr2
-            b = hub->recv();
-            reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
-            crc = crc16(b, crc);
+            reinterpret_cast<uint8_t *>(&memory_address)[0] = hub->recvAndCRC16(crc); // Adr1
+            reinterpret_cast<uint8_t *>(&memory_address)[1] = hub->recvAndCRC16(crc);
 
             memory_address_start = memory_address;
 
             // data
             for (int i = 0; i < 32; ++i) // TODO: check for (memory_address + 32) < sizeof() before running out of allowed range
             {
-                hub->send(0xff);
-                crc = crc16(0xff, crc);
+                crc = hub->sendAndCRC16(0xff,crc);
             }
 
             // cnt
-            hub->send(0x00);
-            crc = crc16(0x00, crc);
-
-            hub->send(0x00);
-            crc = crc16(0x00, crc);
-
-            hub->send(0x00);
-            crc = crc16(0x00, crc);
-
-            hub->send(0x00);
-            crc = crc16(0x00, crc);
+            crc = hub->sendAndCRC16(0x00,crc);
+            crc = hub->sendAndCRC16(0x00,crc);
+            crc = hub->sendAndCRC16(0x00,crc);
+            crc = hub->sendAndCRC16(0x00,crc);
 
             // zero
-            hub->send(0x00);
-            crc = crc16(0x00, crc);
-
-            hub->send(0x00);
-            crc = crc16(0x00, crc);
-
-            hub->send(0x00);
-            crc = crc16(0x00, crc);
-
-            hub->send(0x00);
-            crc = crc16(0x00, crc);
+            crc = hub->sendAndCRC16(0x00,crc);
+            crc = hub->sendAndCRC16(0x00,crc);
+            crc = hub->sendAndCRC16(0x00,crc);
+            crc = hub->sendAndCRC16(0x00,crc);
 
             // crc
+            crc = ~crc;
             hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
             hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
 
