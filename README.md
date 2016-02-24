@@ -21,13 +21,14 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 
 ### Further features:
 - hot-plug slaves as needed
-- supports up to eight slaves for now, but small changes can easily extend this to 32
+- supports up to 32 slaves, set ONEWIRESLAVE_LIMIT in OneWireHub.h to safe some RAM (8 is standard)
 - cleaner, faster code with c++11 features (requires arduino 1.6.x or higher)
 - arduino-dependencies are found in the mockup "arduino.h" (for portability and tests)
 - hardware-dependencies are found in "platform.h", synced with onewire-lib
 - good documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top): 
+- raise the maximal slave limit to 32 (set the ONEWIRESLAVE_LIMIT-parameter in OneWireHub.h), takes only ~100b extra program-space
 - open up for a lot more platforms with "platform.h" (taken from onewire-lib)
 - fix bug: open-drain violation on slave side
 - per-bit-CRC16 with sendAndCRC16() and sendAndCRC16() for load-balancing, 900ns/bit instead of 7µs/byte on Atmega328@16MHz

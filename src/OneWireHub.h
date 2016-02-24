@@ -22,7 +22,7 @@ class OneWireHub
 {
 private:
 
-    static constexpr uint8_t ONEWIRESLAVE_LIMIT                 = 8; // 8 is max at the moment, need bigger vars on some loops
+    static constexpr uint8_t ONEWIRESLAVE_LIMIT                 = 8; // 32 is max at the moment
     static constexpr uint8_t ONEWIRETREE_SIZE                   = 2*ONEWIRESLAVE_LIMIT - 1;
 
     static constexpr uint8_t ONEWIRE_NO_ERROR                   = 0; // TODO: could be a enum
@@ -79,10 +79,9 @@ private:
     } idTree[ONEWIRETREE_SIZE];
 
     uint8_t buildIDTree(void);
-    uint8_t buildIDTree(uint8_t position_IDBit, const uint8_t slave_mask);
+    uint8_t buildIDTree(uint8_t position_IDBit, const uint32_t slave_mask);
 
-    uint8_t  getNrOfFirstBitSet(const uint8_t mask);
-    uint16_t getNrOfFirstBitSet(const uint16_t mask);
+    uint8_t getNrOfFirstBitSet(const uint32_t mask);
     uint8_t  getNrOfFirstFreeIDTreeElement(void);
 
     bool recvAndProcessCmd();
