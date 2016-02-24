@@ -239,31 +239,29 @@ bool OneWireHub::poll(void)
 }
 
 
-bool OneWireHub::checkReset(uint16_t timeout_us)
+bool OneWireHub::checkReset(uint16_t timeout_us) // TODO: is there a specific high-time needed before a reset may occur?
 {
     volatile uint8_t *reg asm("r30") = baseReg;
+    _error = ONEWIRE_NO_ERROR;
 
     cli();
     DIRECT_MODE_INPUT(reg, pin_bitMask);
     sei();
 
-    // TODO: is there a specific high-time needed before a reset may occur?
+    delayMicroseconds(ONEWIRE_TIME_BUS_CHANGE_MAX); // let the input settle
 
     // check if bus is low, since we are polling we don't know for how long it was zero
-    //bool      bus_was_high = 0;
     uint32_t  time_trigger = micros() + timeout_us;
-    _error = ONEWIRE_NO_ERROR;
-    delayMicroseconds(ONEWIRE_TIME_BUS_CHANGE_MAX); // let the input settle
     while (DIRECT_READ(reg, pin_bitMask))
     {
         if (micros() > time_trigger)    return false;
         // if reached this point (bus was high), this could be an indicator for a sleep after bus goes low
-        //bus_was_high = 1;
+        // was in code: https://github.com/orgua/OneWireHub/commit/f8e6bc2981581b333bda87b1034b0e69bf18a3b5
     }
 
     // wait for bus-release by master
-    time_trigger = micros() + ONEWIRE_TIME_RESET_MAX;
-    uint32_t time_min = micros() + ONEWIRE_TIME_RESET_MIN;
+    time_trigger      = micros() + ONEWIRE_TIME_RESET_MAX;
+
     while (!DIRECT_READ(reg, pin_bitMask))
     {
         if (micros() > time_trigger)
@@ -274,8 +272,8 @@ bool OneWireHub::checkReset(uint16_t timeout_us)
     }
 
     // If the master pulled low for to short this will trigger an error
-    //if (bus_was_high && ((time_trigger - ONEWIRE_TIME_RESET_MAX + ONEWIRE_TIME_RESET_MIN) > micros()))
-    if (time_min > micros())
+    time_trigger -= ONEWIRE_TIME_RESET_MAX - ONEWIRE_TIME_RESET_MIN;
+    if (time_trigger > micros())
     {
         _error = ONEWIRE_VERY_SHORT_RESET;
         return false;
@@ -322,11 +320,10 @@ bool OneWireHub::showPresence(void)
 
 bool OneWireHub::search(void)
 {
-    uint8_t position_IDBit = 0;
-
-    uint8_t trigger_pos  = 0;
-    uint8_t active_slave = idTree[trigger_pos].slave_selected;
-    uint8_t trigger_bit  = idTree[trigger_pos].id_position;
+    uint8_t position_IDBit  = 0;
+    uint8_t trigger_pos     = 0;
+    uint8_t active_slave    = idTree[trigger_pos].slave_selected;
+    uint8_t trigger_bit     = idTree[trigger_pos].id_position;
 
     while (position_IDBit < 64)
     {
@@ -338,10 +335,13 @@ bool OneWireHub::search(void)
             uint8_t bit_recv = recvBit();
             if (_error != ONEWIRE_NO_ERROR)
                 return false;
+
             // switch to next junction
             if (bit_recv)   trigger_pos = idTree[trigger_pos].got_one;
             else            trigger_pos = idTree[trigger_pos].got_zero;
+
             active_slave = idTree[trigger_pos].slave_selected;
+
             if (trigger_pos == 255)
                 trigger_bit  = 255;
             else
@@ -458,17 +458,14 @@ bool OneWireHub::recvAndProcessCmd(void)
     return false;
 }
 
-// TODO: there seems to be something wrong when first receiving and then sending, master has to wait a moment, otherwise it fails
 bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
 {
     uint8_t bytes_sent = 0;
 
-    for (uint8_t i = 0; i < data_length; ++i)
+    for (bytes_sent; bytes_sent < data_length; ++bytes_sent)
     {
-        send(address[i]);
-        if (_error != ONEWIRE_NO_ERROR)
-            break;
-        bytes_sent++;
+        send(address[bytes_sent]);
+        if (_error != ONEWIRE_NO_ERROR)  break;
     }
     return (bytes_sent == data_length);
 }
@@ -534,12 +531,10 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
 {
     uint8_t bytes_received = 0;
 
-    for (int i = 0; i < data_length; ++i)
+    for (bytes_received; bytes_received < data_length; ++bytes_received)
     {
-        address[i] = recv();
-        if (_error != ONEWIRE_NO_ERROR)
-            break;
-        bytes_received++;
+        address[bytes_received] = recv();
+        if (_error != ONEWIRE_NO_ERROR)  break;
     }
     return (bytes_received == data_length);
 }
@@ -547,11 +542,13 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
 uint8_t OneWireHub::recv(void)
 {
     uint8_t value = 0;
-
     _error = ONEWIRE_NO_ERROR;
-    for (uint8_t bitMask = 0x01; bitMask && (_error == ONEWIRE_NO_ERROR); bitMask <<= 1)
-        if (recvBit())
-            value |= bitMask;
+
+    for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
+    {
+        if (recvBit())  value |= bitMask;
+        if (_error != ONEWIRE_NO_ERROR)  break;
+    }
     return value;
 }
 
@@ -581,6 +578,7 @@ uint8_t OneWireHub::recvAndCRC16(uint16_t &crc16)
     uint8_t value = 0;
     uint8_t mix = 0;
     _error = ONEWIRE_NO_ERROR;
+
     for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
     {
         if (recvBit())
@@ -608,26 +606,33 @@ bool OneWireHub::waitTimeSlot(void)
     volatile uint8_t *reg asm("r30") = baseReg;
     sei();
     //While bus is low, retry until HIGH
-    uint32_t time_trigger = micros() + ONEWIRE_TIME_SLOT_MAX;
-    while (!DIRECT_READ(reg, pin_bitMask))
+    if (!DIRECT_READ(reg, pin_bitMask))
     {
-        if (micros() > time_trigger)
+        uint32_t time_trigger = micros() + ONEWIRE_TIME_SLOT_MAX;
+        while (!DIRECT_READ(reg, pin_bitMask))
         {
-            _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
-            return false;
+            if (micros() > time_trigger)
+            {
+                _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
+                return false;
+            }
         }
     }
 
-    //Wait for bus to fall form 1 to 0
-    time_trigger = micros() + ONEWIRE_TIME_SLOT_MAX;
-    while (DIRECT_READ(reg, pin_bitMask))
+    if (DIRECT_READ(reg, pin_bitMask))
     {
-        if (micros() > time_trigger)
+        //Wait for bus to fall form 1 to 0
+        uint32_t time_trigger = micros() + ONEWIRE_TIME_SLOT_MAX;
+        while (DIRECT_READ(reg, pin_bitMask))
         {
-            _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
-            return false;
+            if (micros() > time_trigger)
+            {
+                _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
+                return false;
+            }
         }
     }
+    cli();
     return true;
 }
 

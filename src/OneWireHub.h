@@ -37,20 +37,22 @@ private:
     static constexpr uint8_t ONEWIRE_PRESENCE_HIGH_ON_LINE      = 9;
 
     /// the following TIME-values are in us and are taken from the ds2408 datasheet
+    // should be --> datasheet
+    // was       --> in shagrat-legacy
     static constexpr uint16_t ONEWIRE_TIME_BUS_CHANGE_MAX       =   5; // used
 
-    static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            = 380; // used, was 480
+    static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            = 380; // used, should be 480, and was 470
     static constexpr uint16_t ONEWIRE_TIME_RESET_MAX            = 720; // used
 
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MIN    =  15;
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =  60;
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_SAMPLE_MIN  =  30; // used
+    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_SAMPLE_MIN  =  20; // used, probe measures 40us
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MIN     =  60;
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     = 140; // used
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     = 280; // used
+    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     = 140; // used, was 125
+    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     = 480; // used, should be 280, was 480 !!!! why
 
     static constexpr uint16_t ONEWIRE_TIME_SLOT_MIN             =  65;
-    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             = 120; // was 120
+    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =2000; // used, should be 120, was ~1050
 
     static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_MIN   =  60;
     static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_MAX   = 120;
