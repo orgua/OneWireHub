@@ -229,7 +229,7 @@ bool OneWireHub::poll(void)
     if (!slave_count)           return true;
 
     //Once reset is done, go to next step
-    if (!checkReset(2))         return false;
+    if (!checkReset(2000))      return false;
 
     // Reset is complete, tell the master we are present
     if (!showPresence())        return false;
@@ -248,21 +248,24 @@ bool OneWireHub::checkReset(uint16_t timeout_us)
     DIRECT_MODE_INPUT(reg, pin_bitMask);
     sei();
 
-    // looks if bus is low, since we are polling we don't know for how long it was zero
-    bool      bus_was_high = 0;
+    // TODO: is there a specific high-time needed before a reset may occur?
+
+    // check if bus is low, since we are polling we don't know for how long it was zero
+    //bool      bus_was_high = 0;
     uint32_t  time_trigger = micros() + timeout_us;
     _error = ONEWIRE_NO_ERROR;
     delayMicroseconds(ONEWIRE_TIME_BUS_CHANGE_MAX); // let the input settle
-    while (DIRECT_READ(reg, pin_bitMask)) // TODO: replace this with IRQ?
+    while (DIRECT_READ(reg, pin_bitMask))
     {
         if (micros() > time_trigger)    return false;
         // if reached this point (bus was high), this could be an indicator for a sleep after bus goes low
-        bus_was_high = 1;
+        //bus_was_high = 1;
     }
 
-    // Set to wait for bus=high by master
+    // wait for bus-release by master
     time_trigger = micros() + ONEWIRE_TIME_RESET_MAX;
-    while (DIRECT_READ(reg, pin_bitMask) == 0)
+    uint32_t time_min = micros() + ONEWIRE_TIME_RESET_MIN;
+    while (!DIRECT_READ(reg, pin_bitMask))
     {
         if (micros() > time_trigger)
         {
@@ -272,7 +275,8 @@ bool OneWireHub::checkReset(uint16_t timeout_us)
     }
 
     // If the master pulled low for to short this will trigger an error
-    if (bus_was_high && ((time_trigger - ONEWIRE_TIME_RESET_MAX + ONEWIRE_TIME_RESET_MIN) > micros()))
+    //if (bus_was_high && ((time_trigger - ONEWIRE_TIME_RESET_MAX + ONEWIRE_TIME_RESET_MIN) > micros()))
+    if (time_min > micros())
     {
         _error = ONEWIRE_VERY_SHORT_RESET;
         return false;
@@ -284,12 +288,10 @@ bool OneWireHub::checkReset(uint16_t timeout_us)
 
 bool OneWireHub::showPresence(void)
 {
-    // Master will now delay before it's "Presence" check
-    delayMicroseconds(ONEWIRE_TIME_PRESENCE_HIGH_STD);
-
-    uint32_t    time_trigger = micros() + ONEWIRE_TIME_PRESENCE_HIGH_MAX;
-
     volatile uint8_t *reg asm("r30") = baseReg;
+
+    // Master will delay it's "Presence" check (bus-read)  after the reset
+    delayMicroseconds(ONEWIRE_TIME_PRESENCE_SAMPLE_MIN);
 
     // pull the bus low and hold it some time
     cli();
@@ -303,12 +305,13 @@ bool OneWireHub::showPresence(void)
     DIRECT_MODE_INPUT(reg, pin_bitMask);     // allow it to float
     sei();
 
-    // When the master pulls the bus high within a given time everything is fine
+    // When the master or other slaves release the bus within a given time everything is fine
+    uint32_t time_trigger = micros() + (ONEWIRE_TIME_PRESENCE_LOW_MAX - ONEWIRE_TIME_PRESENCE_LOW_STD);
     while (!DIRECT_READ(reg, pin_bitMask))
     {
         if (micros() > time_trigger)
         {
-            _error = ONEWIRE_VERY_LONG_RESET;
+            _error = ONEWIRE_PRESENCE_LOW_ON_LINE;
             return false;
         }
 
@@ -646,6 +649,7 @@ void OneWireHub::printError(void)
      else if (_error == ONEWIRE_PRESENCE_LOW_ON_LINE)       Serial.print("Err6: presence low on line");
      else if (_error == ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW)  Serial.print("Err7: read timeout low");
      else if (_error == ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH) Serial.print("Err8: read timeout high");
+     else if (_error == ONEWIRE_PRESENCE_HIGH_ON_LINE)      Serial.print("Err9: presence high on line");
      Serial.println("");
  }
 }
