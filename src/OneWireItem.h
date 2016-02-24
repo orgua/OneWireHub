@@ -19,21 +19,21 @@ public:
 
     virtual bool duty(OneWireHub *hub) = 0;
 
-    static uint8_t crc8(const uint8_t addr[], const uint8_t len);
+    static uint8_t crc8(const uint8_t address[], const uint8_t len);
 
-    // takes ~(5.1-7.0)µs/byte (Atmega328P@16MHz) depends from addr_size (see debug-crc-comparison.ino)
+    // takes ~(5.1-7.0)µs/byte (Atmega328P@16MHz) depends from address_size (see debug-crc-comparison.ino)
     // important: the final crc is expected to be inverted (crc=~crc) !!!
-    static uint16_t crc16(const uint8_t addr[], const uint8_t len);
+    static uint16_t crc16(const uint8_t address[], const uint8_t len);
 
     // CRC16 of type 0xC001 for little endian
     // takes ~6µs/byte (Atmega328P@16MHz) (see debug-crc-comparison.ino)
     // important: the final crc is expected to be inverted (crc=~crc) !!!
     static uint16_t crc16(uint8_t value, uint16_t crc) // TODO: further tuning with asm
     {
-        static const uint8_t oddparity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
+        static const uint8_t oddParity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
         value = (value ^ static_cast<uint8_t>(crc));
         crc >>= 8;
-        if (oddparity[value & 0x0F] ^ oddparity[value >> 4])   crc ^= 0xC001;
+        if (oddParity[value & 0x0F] ^ oddParity[value >> 4])   crc ^= 0xC001;
         uint16_t cdata = (static_cast<uint16_t>(value) << 6);
         crc ^= cdata;
         crc ^= (static_cast<uint16_t>(cdata) << 1);

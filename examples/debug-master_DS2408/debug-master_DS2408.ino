@@ -17,11 +17,11 @@ void loop(void)
 {
     byte i;
     byte present = 0;
-    byte addr[8];
+    byte address[8];
 
     delay(50);
 
-    if (!ds.search(addr))
+    if (!ds.search(address))
     {
         Serial.println("No more addresses.");
         Serial.println();
@@ -34,10 +34,10 @@ void loop(void)
     for (i = 0; i < 8; i++)
     {
         Serial.write(' ');
-        Serial.print(addr[i], HEX);
+        Serial.print(address[i], HEX);
     }
 
-    if (OneWire::crc8(addr, 7) == addr[7])
+    if (OneWire::crc8(address, 7) == address[7])
     {
         Serial.println(" - CRC OK");
     } else
@@ -46,7 +46,7 @@ void loop(void)
         return;
     }
 
-    if (addr[0] == 0x29)
+    if (address[0] == 0x29)
     {
         Serial.println("  Chip = DS2408 ");
     } else
@@ -61,7 +61,7 @@ void loop(void)
     buf[2] = 0x00;    // MSB address
 
     present = ds.reset();
-    ds.select(addr);
+    ds.select(address);
     ds.write_bytes(buf, 3);
 
     Serial.print("  data = ");

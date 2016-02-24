@@ -25,7 +25,7 @@ typedef struct
 typedef union {
     uint8_t bytes[13];
     sDS2408 field;
-} mDS2408; // overlayed with memory_array
+} mDS2408; // overlay with memory_array
 
 
 class DS2408 : public OneWireItem

@@ -118,9 +118,9 @@ bool DS2450::setPotentiometer(const uint16_t p1, const uint16_t p2, const uint16
 bool DS2450::setPotentiometer(const uint8_t number, const uint16_t value)
 {
     if (number > 3) return 1;
-    uint8_t lbyte = (value>>0) & static_cast<uint8_t>(0xFF);
-    uint8_t hbyte = (value>>8) & static_cast<uint8_t>(0xFF);
-    memory[2*number+0] = lbyte;
-    memory[2*number+1] = hbyte;
+    uint8_t LByte = (value>>0) & static_cast<uint8_t>(0xFF);
+    uint8_t HByte = (value>>8) & static_cast<uint8_t>(0xFF);
+    memory[2*number+0] = LByte;
+    memory[2*number+1] = HByte;
     return true;
 };
