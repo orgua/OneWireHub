@@ -3,7 +3,7 @@
 #######################################
 
 #######################################
-# Datatypes (KEYWORD1)
+# DataTypes (KEYWORD1)
 #######################################
 
 OneWireHub	KEYWORD1
@@ -27,17 +27,19 @@ DS2890	KEYWORD1
 
 attach	KEYWORD2
 detach	KEYWORD2
-calc_mask	KEYWORD2
+buildIDTree	KEYWORD2
 waitForRequest	KEYWORD2
-waitReset	KEYWORD2
-presence	KEYWORD2
+checkReset	KEYWORD2
+showPresence	KEYWORD2
 search	KEYWORD2
-sendData	KEYWORD2
-recvData	KEYWORD2
 send	KEYWORD2
+recv	KEYWORD2
+send	KEYWORD2
+sendAndCRC16	KEYWORD2
 recv	KEYWORD2
 sendBit	KEYWORD2
 recvBit	KEYWORD2
+poll	KEYWORD2
 
 duty	KEYWORD2
 crc8	KEYWORD2

@@ -11,7 +11,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS1990 iButton** (use DS2401 with same family code 0x01)
 - **DS2401 Serial Number**
 - **DS2405 Single address switch**
-- DS2408 8-Channel Addressable Switch, GPIO Portexpander
+- DS2408 8-Channel Addressable Switch, GPIO Port-expander
 - **DS2413 Dual channel addressable switch with input-sensing**
 - DS2423 4kb 1-Wire RAM with Counter
 - DS2433 4Kb 1-Wire EEPROM
@@ -27,16 +27,17 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - good documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top): 
-- per-bit-CRC16 with sendAndCRC16() for loadbalancing, 900ns/bit, could be done for recvAndCRC16() too
+- fix bug: open-drain violation on slave side
+- per-bit-CRC16 with sendAndCRC16() for load-balancing, 900ns/bit, could be done for recvAndCRC16() too
 - add examples for onewire-master, for testing the bus
-- rework of checkReset() and showPresence() - Hub is much more reliable now and it saves ~120 byte prog-space
+- rework of checkReset() and showPresence() - Hub is much more reliable now and it saves ~120 byte program-space
 - faster CRC16 (ds2450 and ds2408 and ds2423), takes 5-7µs/byte instead of 10µs
 - refactored the interface: hub.poll() replaces hub.waitForRequest()
 - extended ds2890 to up to 4CH (datasheet has it covered), ds2413, ds2413 --> feature-complete
 - implement and test ds2438
 - fix bug: only one ds2401 possible?
 - fix bug: buffer-overrun when using more than 4 active slaves 
-- replace search() algorithm, safes a lot of ram (debug-codesize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte)
+- replace search() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte)
 - fix bug: infinite loop when waitForRequest() is called without attached sensor
 - fix bug: infinite loop when (for example) >=1 ds2401 are attached and waitForRequest() is called
 - fix bug: temp-calculation was wrong (ds18b20, ds2438) and used something like round(abs(floor(float-value)))
@@ -68,6 +69,6 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 
 ### Ancestors of this Lib:
 - original pieces seem to be adopted from [OneWireSlave](http://robocraft.ru/blog/arduino/302.html)
-- further developement was done in [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire) 
+- further development was done in [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire) 
 - first implementation of the [OneWireHub](https://github.com/Shagrat2/OneWireHub) by Shagrat2
 - the current state of code has the concepts in common, but the codebase is a (nearly) total rewrite

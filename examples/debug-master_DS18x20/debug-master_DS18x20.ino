@@ -19,10 +19,10 @@ void loop(void)
     byte present = 0;
     byte type_s;
     byte data[12];
-    byte addr[8];
+    byte address[8];
 
 
-    if (!ds.search(addr))
+    if (!ds.search(address))
     {
         Serial.println("No more addresses.");
         Serial.println();
@@ -35,10 +35,10 @@ void loop(void)
     for (i = 0; i < 8; i++)
     {
         Serial.write(' ');
-        Serial.print(addr[i], HEX);
+        Serial.print(address[i], HEX);
     }
 
-    if (OneWire::crc8(addr, 7) != addr[7])
+    if (OneWire::crc8(address, 7) != address[7])
     {
         Serial.println(" CRC is not valid!");
         return;
@@ -46,7 +46,7 @@ void loop(void)
     Serial.println();
 
     // the first ROM byte indicates which chip
-    switch (addr[0])
+    switch (address[0])
     {
         case 0x10:
             Serial.println("  Chip = DS18S20");  // or old DS1820
@@ -66,14 +66,14 @@ void loop(void)
     }
 
     ds.reset();
-    ds.select(addr);
+    ds.select(address);
     ds.write(0x44, 1);        // start conversion, with parasite power on at the end
 
     delay(1000);     // maybe 750ms is enough, maybe not
     // we might do a ds.depower() here, but the reset will take care of it.
 
     present = ds.reset();
-    ds.select(addr);
+    ds.select(address);
     ds.write(0xBE);         // Read Scratchpad
 
     Serial.print("  Data = ");

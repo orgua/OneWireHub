@@ -48,7 +48,7 @@ void loop()
     // Blink triggers the state-change
     if (blinking())
     {
-        Serial.print("Poti: ");
+        Serial.print("Potentiometer: ");
         Serial.print(ds2890.readPoti(0));
         Serial.print(" ");
         Serial.print(ds2890.readPoti(1));

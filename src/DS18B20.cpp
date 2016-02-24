@@ -10,7 +10,7 @@ DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5
     scratchpad[4] = 0x7F; // Conf
     // = 0 R1 R0 1 1 1 1 1 --> R=0 9bit, R=3 12bit
     scratchpad[5] = 0xFF; // 0xFF
-    scratchpad[6] = 0x00; // Rese
+    scratchpad[6] = 0x00; // Reset
     scratchpad[7] = 0x10; // 0x10
     updateCRC(); // update scratchpad[8]
 }
@@ -44,19 +44,19 @@ bool DS18B20::duty(OneWireHub *hub)
             if (dbg_sensor)  Serial.println("DS18B20 : READ SCRATCHPAD");
             break;
 
-        case 0x48: // COPY SCRATCHPAD to EPROM
+        case 0x48: // COPY SCRATCHPAD to EEPROM
             // send1 if parasite power is used
             if (dbg_sensor) Serial.println("DS18B20 : COPY SCRATCHPAD");
             break;
 
-        case 0xB8: // RECALL E2 (EPROM to 3byte from Scratchpad)
+        case 0xB8: // RECALL E2 (EEPROM to 3byte from Scratchpad)
             hub->sendBit(1); // signal that OP is done
             if (dbg_sensor) Serial.println("DS18B20 : RECALL E2");
             break;
 
-        case 0xB4: // READ POWERSUPPLY
+        case 0xB4: // READ POWER SUPPLY
             hub->sendBit(1); // 1: say i am external powered, 0: uses parasite power
-            if (dbg_sensor) Serial.println("DS18B20 : READ POWERSUPPLY");
+            if (dbg_sensor) Serial.println("DS18B20 : READ POWER SUPPLY");
             break;
 
             // READ TIME SLOTS, respond with 1 if conversion is done, not usable with parasite power
@@ -96,7 +96,7 @@ void DS18B20::setTemp(const int16_t temperature_degC) // could be int8_t, [-55;+
     setTempRaw(temperature_degC * static_cast<int8_t>(16));
 };
 
-// use allways 12bit mode! also 9,10,11,12 bit possible bit bitposition seems to stay the same
+// use always 12bit mode! also 9,10,11,12 bit possible bitPosition seems to stay the same
 void DS18B20::setTempRaw(const int16_t value_raw)
 {
     int16_t value = value_raw;

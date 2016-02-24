@@ -3,7 +3,6 @@
 #define ONEWIRE_HUB_H
 
 #include "Arduino.h"
-//#include <inttypes.h>
 
 constexpr bool dbg_IDTREE   = 0; // give debug messages
 constexpr bool dbg_SEARCH   = 0; // give debug messages
@@ -63,7 +62,7 @@ private:
 
     uint8_t _error;
 
-    uint8_t           pin_bitmask;
+    uint8_t           pin_bitMask;
     volatile uint8_t *baseReg;
 
     uint8_t      slave_count;
@@ -72,9 +71,9 @@ private:
 
     struct IDTree {
         uint8_t slave_selected; // for which slave is this jump-command relevant
-        uint8_t idPosition;    // where does the algo has to look for a junction
-        uint8_t gotZero;        // if 0 switch to which tree branch
-        uint8_t gotOne;         // if 1 switch to which tree branch
+        uint8_t id_position;    // where does the algorithm has to look for a junction
+        uint8_t got_zero;        // if 0 switch to which tree branch
+        uint8_t got_one;         // if 1 switch to which tree branch
     } idTree[ONEWIRETREE_SIZE];
 
     uint8_t buildIDTree(void);
@@ -107,13 +106,13 @@ public:
     [[deprecated("use the non-blocking poll() instead of waitForRequest()")]]
     bool waitForRequest(const bool ignore_errors = false);
 
-    bool send(const uint8_t databyte);
-    bool send(const uint8_t buf[], const uint8_t data_len);
-    bool sendBit(const uint8_t v);
-    uint16_t sendAndCRC16(uint8_t databyte, uint16_t crc16);
+    bool send(const uint8_t dataByte);
+    bool send(const uint8_t address[], const uint8_t data_length);
+    bool sendBit(const bool value);
+    uint16_t sendAndCRC16(uint8_t dataByte, uint16_t crc16);
 
     uint8_t recv(void);
-    bool    recv(uint8_t buf[], const uint8_t data_len); // TODO: change send/recv to return bool TRUE on success, recv returns data per reference
+    bool    recv(uint8_t address[], const uint8_t data_length); // TODO: change send/recv to return bool TRUE on success, recv returns data per reference
     uint8_t recvBit(void);
 
     void printError(void);

@@ -19,41 +19,41 @@ OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uin
 //  https://github.com/PaulStoffregen/OneWire/blob/master/OneWire.cpp --> calc with table (EOF)
 
 
-// INFO: this is the slow but memory saving version of the CRC() --> the calculation is not timecritical and happens offline
-uint8_t OneWireItem::crc8(const uint8_t addr[], const uint8_t len)
+// INFO: this is the slow but memory saving version of the CRC() --> the calculation is not time-critical and happens offline
+uint8_t OneWireItem::crc8(const uint8_t address[], const uint8_t length)
 {
     uint8_t crc = 0;
 
-    for (uint8_t i = 0; i < len; ++i)
+    for (uint8_t i = 0; i < length; ++i)
     {
-        uint8_t inbyte = addr[i];
+        uint8_t inByte = address[i];
         for (uint8_t j = 8; j; --j)
         {
-            uint8_t mix = (crc ^ inbyte) & static_cast<uint8_t>(0x01);
+            uint8_t mix = (crc ^ inByte) & static_cast<uint8_t>(0x01);
             crc >>= 1;
             if (mix) crc ^= 0x8C;
-            inbyte >>= 1;
+            inByte >>= 1;
         }
     }
     return crc;
 }
 
-uint16_t OneWireItem::crc16(const uint8_t addr[], const uint8_t len)
+uint16_t OneWireItem::crc16(const uint8_t address[], const uint8_t length)
 {
-    static const uint8_t oddparity[16] =
+    static const uint8_t oddParity[16] =
             {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
 
-    uint16_t crc = 0; // initvalue
+    uint16_t crc = 0; // init value
 
-    for (uint8_t i = 0; i < len; ++i)
+    for (uint8_t i = 0; i < length; ++i)
     {
         // Even though we're just copying a byte from the input,
         // we'll be doing 16-bit computation with it.
-        uint16_t cdata = addr[i];
+        uint16_t cdata = address[i];
         cdata = (cdata ^ crc) & static_cast<uint16_t>(0xff);
         crc >>= 8;
 
-        if (oddparity[cdata & 0x0F] ^ oddparity[cdata >> 4])
+        if (oddParity[cdata & 0x0F] ^ oddParity[cdata >> 4])
             crc ^= 0xC001;
 
         cdata <<= 6;

@@ -48,18 +48,18 @@ void loop()
     // Blink triggers the state-change
     if (blinking())
     {
-        static bool flipflop = 0;
+        static bool flipFlop = 0;
         // Change between Sensor A and B every 50 seconds
-        if (flipflop)
+        if (flipFlop)
         {
-            flipflop = 0;
+            flipFlop = 0;
             hub.detach(ds2401A);
             hub.attach(ds2401B);
             Serial.println("B is active");
         }
         else
         {
-            flipflop = 1;
+            flipFlop = 1;
             hub.detach(ds2401B);
             hub.attach(ds2401A);
             Serial.println("A is active");
