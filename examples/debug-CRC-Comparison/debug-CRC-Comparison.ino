@@ -211,7 +211,7 @@ uint16_t v1C_crc16_update(uint8_t dataByte, uint16_t crc16)
     {
         //sendBit((bitMask & dataByte) ? 1 : 0);
 
-        uint8_t mix = ((uint8_t) crc16 ^ databyte) & static_cast<uint8_t>(0x01);
+        uint8_t mix = ((uint8_t) crc16 ^ dataByte) & static_cast<uint8_t>(0x01);
         crc16 >>= 1;
         if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
         dataByte >>= 1;

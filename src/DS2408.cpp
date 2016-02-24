@@ -25,15 +25,14 @@ void DS2408::updateCRC()
 bool DS2408::duty(OneWireHub *hub)
 {
     memory.field.crc = 0;
-    uint8_t done = hub->recv();
+    uint8_t done = hub->recvAndCRC16(memory.field.crc);
 
     switch (done)
     {
         // Read PIO Registers
         case 0xF0:
-            memory.field.crc = crc16(done, memory.field.crc); // Test for now, above is the old code
-            memory.field.crc = crc16(hub->recv(), memory.field.crc);
-            memory.field.crc = crc16(hub->recv(), memory.field.crc);
+            hub->recvAndCRC16(memory.field.crc);
+            hub->recvAndCRC16(memory.field.crc);
 
             for (uint8_t count = 3; count < 11; ++count)
             {
