@@ -20,16 +20,16 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2890 Single channel digital potentiometer - extended to 1-4 CH**
 
 ### Features:
-- supports up to 32 slaves, adjust ONEWIRESLAVE_LIMIT in OneWireHub.h to safe some RAM (8 is standard)
+- supports up to 32 slaves (8 is standard setting), adjust ONEWIRESLAVE_LIMIT in OneWireHub.h to safe some RAM
 - hot-plug slaves as needed
-- cleaner, faster code with c++11 features (requires arduino 1.6.x or higher)
+- cleaner, faster code with c++11 features (requires arduino sw 1.6.x or higher)
 - arduino-dependencies are found in the mockup "arduino.h" (for portability and tests)
 - hardware-dependencies are found in "platform.h", synced with [onewire-lib](https://github.com/PaulStoffregen/OneWire)
    - extra supported: arduino zero, teensy, sam3x, pic32, esp8266, nrf51822 (...)
 - good documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top): 
-- rework of the whole timings, if needed you can configure overdrive speed (arduino would probably be to slow)
+- rework of the whole timings, if needed you can configure overdrive speed (arduino uno would probably be to slow)
 - bug fix: non conformal behaviour as a onewire-slave (hopefully)
 - raise the maximal slave limit from 8 to 32, takes ~100b extra program-space
 - open up for a lot more platforms with "platform.h" (taken from onewire-lib)
