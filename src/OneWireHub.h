@@ -38,11 +38,11 @@ private:
 
     /// the following TIME-values are in us and are taken from the ds2408 datasheet
     // should be --> datasheet
-    // was       --> in shagrat-legacy
+    // was       --> shagrat-legacy
     static constexpr uint16_t ONEWIRE_TIME_BUS_CHANGE_MAX       =   5; // used
 
     static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            = 380; // used, should be 480, and was 470
-    static constexpr uint16_t ONEWIRE_TIME_RESET_MAX            = 720; // used
+    static constexpr uint16_t ONEWIRE_TIME_RESET_MAX            = 960; // used, from ds2413
 
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MIN    =  15;
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =  60;
@@ -52,22 +52,27 @@ private:
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     = 480; // used, should be 280, was 480 !!!! why
 
     static constexpr uint16_t ONEWIRE_TIME_SLOT_MIN             =  65;
-    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =2000; // used, should be 120, was ~1050
+    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             = 240; // used, should be 120, was ~1050
 
-    static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_MIN   =  60;
-    static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_MAX   = 120;
-    static constexpr uint16_t ONEWIRE_TIME_WRITE_ONE_LOW_MIN    =  15;
-    static constexpr uint16_t ONEWIRE_TIME_WRITE_ONE_LOW_MAX    =  60;
+    // read and write from the viewpoint of the slave!!!!
+    static constexpr uint16_t ONEWIRE_TIME_READ_ZERO_LOW_MIN    =  60;
+    static constexpr uint16_t ONEWIRE_TIME_READ_ZERO_LOW_MAX    = 120;
+    static constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MIN     =  15;
+    static constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MAX     =  60; // used
+    static constexpr uint16_t ONEWIRE_TIME_READ_STD             =  30; // used
 
-    static constexpr uint16_t ONEWIRE_TIME_READ_LOW_MIN         =   5;
-    static constexpr uint16_t ONEWIRE_TIME_READ_LOW_MAX         =  15;
-    static constexpr uint16_t ONEWIRE_TIME_READ_ZERO_LOW_MIN    =  15;
-    static constexpr uint16_t ONEWIRE_TIME_READ_ZERO_LOW_MAX    =  60;
+    static constexpr uint16_t ONEWIRE_TIME_WRITE_LOW_MIN        =   5;
+    static constexpr uint16_t ONEWIRE_TIME_WRITE_LOW_MAX        =  15;
+    static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_MIN   =  15;
+    static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =  35; // used
+    static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_MAX   =  60;
+    // TODO: define to switch to overdrive mode
 
     uint8_t _error;
 
     uint8_t           pin_bitMask;
     volatile uint8_t *baseReg;
+    uint8_t           allow_long_pause;
 
     uint8_t      slave_count;
     OneWireItem *slave_list[ONEWIRESLAVE_LIMIT];  // private slave-list (use attach/detach)
@@ -86,15 +91,17 @@ private:
     uint8_t getNrOfFirstBitSet(const uint32_t mask);
     uint8_t  getNrOfFirstFreeIDTreeElement(void);
 
-    bool recvAndProcessCmd();
-
-    bool waitTimeSlot();
-
     bool checkReset(uint16_t timeout_us);
 
     bool showPresence(void);
 
     bool search(void);
+
+    bool recvAndProcessCmd();
+
+    bool waitTimeSlot();
+
+    bool waitWhilePinIs(const bool value, const uint16_t timeout_us);
 
 public:
 

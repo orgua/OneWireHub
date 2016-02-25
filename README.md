@@ -29,13 +29,14 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - good documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top): 
+- rework of the whole timings, if needed you can configure overdrive speed (arduino would probably be to slow)
 - bug fix: non conformal behaviour as a onewire-slave (hopefully)
 - raise the maximal slave limit from 8 to 32, takes ~100b extra program-space
 - open up for a lot more platforms with "platform.h" (taken from onewire-lib)
 - fix bug: open-drain violation on slave side
 - per-bit-CRC16 with sendAndCRC16() and sendAndCRC16() for load-balancing, 900ns/bit instead of 7µs/byte on Atmega328@16MHz
 - add examples for onewire-master, for testing the bus
-- rework of checkReset(), showPresence(), send(), recv() and the hole timings - Hub is much more reliable now and it saves ~120 byte program-space
+- rework of checkReset(), showPresence(), send(), recv() - Hub is much more reliable now and it saves ~120 byte program-space
 - faster CRC16 (ds2450 and ds2408 and ds2423), takes 5-7µs/byte instead of 10µs
 - refactored the interface: hub.poll() replaces hub.waitForRequest()
 - extended ds2890 to up to 4CH (datasheet has it covered), ds2413, ds2413 --> feature-complete
@@ -49,6 +50,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
 - ~~DS1963S 0x18 iButton, datasheet under NDA~~
 - [List of all Family-Codes](http://owfs.sourceforge.net/family.html)
+- [List of Maxim Sensors](https://www.maximintegrated.com/en/app-notes/index.mvp/id/3989) (at the bottom)
 
 ### Connecting the HUB with the Network: 
 

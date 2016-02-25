@@ -40,7 +40,7 @@ uint8_t digitalPinToBitMask(uint8_t x);
 uint32_t microsecondsToClockCycles(uint32_t x);
 
 uint32_t micros(void); // takes about 3 µs to process @ 16 MHz
-void delayMicroseconds(uint32_t x);
+//void delayMicroseconds(uint32_t x);
 
 void cli(void);
 void sei(void);

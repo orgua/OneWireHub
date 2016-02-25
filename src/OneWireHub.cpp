@@ -11,6 +11,8 @@ OneWireHub::OneWireHub(uint8_t pin)
 
     baseReg = portInputRegister(digitalPinToPort(pin));
 
+    allow_long_pause = 0;
+
     slave_count = 0;
     slave_selected = nullptr;
 
@@ -239,6 +241,7 @@ bool OneWireHub::poll(void)
 }
 
 
+
 bool OneWireHub::checkReset(uint16_t timeout_us) // TODO: is there a specific high-time needed before a reset may occur?
 {
     volatile uint8_t *reg asm("r30") = baseReg;
@@ -248,32 +251,22 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // TODO: is there a specific hi
     DIRECT_MODE_INPUT(reg, pin_bitMask);
     sei();
 
-    delayMicroseconds(ONEWIRE_TIME_BUS_CHANGE_MAX); // let the input settle
+    waitWhilePinIs(false, ONEWIRE_TIME_BUS_CHANGE_MAX); // let the input settle
 
-    // check if bus is low, since we are polling we don't know for how long it was zero
-    uint32_t  time_trigger = micros() + timeout_us;
-    while (DIRECT_READ(reg, pin_bitMask))
-    {
-        if (micros() > time_trigger)    return false;
-        // if reached this point (bus was high), this could be an indicator for a sleep after bus goes low
-        // was in code: https://github.com/orgua/OneWireHub/commit/f8e6bc2981581b333bda87b1034b0e69bf18a3b5
-    }
+    // wait for the bus to become low (master-controlled), since we are polling we don't know for how long it was zero
+    if (!waitWhilePinIs(1, timeout_us)) return false;
+
+    uint32_t time_start = micros();
 
     // wait for bus-release by master
-    time_trigger      = micros() + ONEWIRE_TIME_RESET_MAX;
-
-    while (!DIRECT_READ(reg, pin_bitMask))
+    if (!waitWhilePinIs(0, ONEWIRE_TIME_RESET_MAX))
     {
-        if (micros() > time_trigger)
-        {
-            _error = ONEWIRE_VERY_LONG_RESET;
-            return false;
-        }
+        _error = ONEWIRE_VERY_LONG_RESET;
+        return false;
     }
 
     // If the master pulled low for to short this will trigger an error
-    time_trigger -= ONEWIRE_TIME_RESET_MAX - ONEWIRE_TIME_RESET_MIN;
-    if (time_trigger > micros())
+    if ((time_start + ONEWIRE_TIME_RESET_MIN) > micros())
     {
         _error = ONEWIRE_VERY_SHORT_RESET;
         return false;
@@ -288,7 +281,7 @@ bool OneWireHub::showPresence(void)
     volatile uint8_t *reg asm("r30") = baseReg;
 
     // Master will delay it's "Presence" check (bus-read)  after the reset
-    delayMicroseconds(ONEWIRE_TIME_PRESENCE_SAMPLE_MIN);
+    waitWhilePinIs( 1, ONEWIRE_TIME_PRESENCE_SAMPLE_MIN); // no pincheck needed, but this avoids using "delay"
 
     // pull the bus low and hold it some time
     cli();
@@ -296,24 +289,22 @@ bool OneWireHub::showPresence(void)
     DIRECT_MODE_OUTPUT(reg, pin_bitMask);    // drive output low
     sei();
 
-    delayMicroseconds(ONEWIRE_TIME_PRESENCE_LOW_STD);
+    waitWhilePinIs( 0, ONEWIRE_TIME_PRESENCE_LOW_STD); // no pincheck needed, but this avoids using "delay"
 
     cli();
     DIRECT_MODE_INPUT(reg, pin_bitMask);     // allow it to float
     sei();
 
     // When the master or other slaves release the bus within a given time everything is fine
-    uint32_t time_trigger = micros() + (ONEWIRE_TIME_PRESENCE_LOW_MAX - ONEWIRE_TIME_PRESENCE_LOW_STD);
-    while (!DIRECT_READ(reg, pin_bitMask))
+    if (!waitWhilePinIs( 0, (ONEWIRE_TIME_PRESENCE_LOW_MAX - ONEWIRE_TIME_PRESENCE_LOW_STD)))
     {
-        if (micros() > time_trigger)
-        {
-            _error = ONEWIRE_PRESENCE_LOW_ON_LINE;
-            return false;
-        }
+        _error = ONEWIRE_PRESENCE_LOW_ON_LINE;
+        return false;
     }
 
+    // TODO: legacy code sleeps here a while
     _error = ONEWIRE_NO_ERROR;
+    allow_long_pause = 1;
     return true;
 }
 
@@ -494,13 +485,14 @@ bool OneWireHub::sendBit(const bool value)
         sei();
         return false;
     }
-    if (value)  delayMicroseconds(32);
+    if (value)  waitWhilePinIs( 0, ONEWIRE_TIME_READ_ONE_LOW_MAX); // no pincheck needed, but this avoids using "delay"
     else
     {
         cli();
         DIRECT_WRITE_LOW(reg, pin_bitMask);
         DIRECT_MODE_OUTPUT(reg, pin_bitMask);
-        delayMicroseconds(32);
+        sei();
+        waitWhilePinIs( 0, ONEWIRE_TIME_WRITE_ZERO_LOW_STD); // no pincheck needed, but this avoids using "delay"
         DIRECT_MODE_INPUT(reg, pin_bitMask);
     }
     sei();
@@ -559,16 +551,16 @@ uint8_t OneWireHub::recvBit(void)
 
     cli();
     DIRECT_MODE_INPUT(reg, pin_bitMask);
+
     // wait for a low to high transition followed by a high to low within the time-out
     if (!waitTimeSlot())
     {
         sei();
         return false;
     }
-
-    delayMicroseconds(30);
-    value = DIRECT_READ(reg, pin_bitMask);
     sei();
+    waitWhilePinIs( 0, ONEWIRE_TIME_READ_STD); // no pincheck needed, but this avoids using "delay"
+    value = DIRECT_READ(reg, pin_bitMask);
     return value;
 }
 
@@ -597,42 +589,48 @@ uint8_t OneWireHub::recvAndCRC16(uint16_t &crc16)
     return value;
 }
 
+bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
+{
+    volatile uint8_t *reg asm("r30") = baseReg;
+    if (DIRECT_READ(reg, pin_bitMask) != value) return true; // shortcut
+
+    uint32_t time_trigger = micros() + timeout_us;
+    while (DIRECT_READ(reg, pin_bitMask) == value)
+    {
+        if (micros() > time_trigger) return false;
+    }
+    return true;
+}
+
 #define NEW_WAIT 0 // TODO: does not work as expected
 #if (NEW_WAIT > 0)
 
 // wait for a low to high transition followed by a high to low within the time-out
 bool OneWireHub::waitTimeSlot(void)
 {
-    volatile uint8_t *reg asm("r30") = baseReg;
-    sei();
+    //cli();
+    //volatile uint8_t *reg asm("r30") = baseReg;
+    //DIRECT_MODE_INPUT(reg, pin_bitMask);
+    //sei();
     //While bus is low, retry until HIGH
-    if (!DIRECT_READ(reg, pin_bitMask))
+    if (!waitWhilePinIs( 0, ONEWIRE_TIME_SLOT_MAX))
     {
-        uint32_t time_trigger = micros() + ONEWIRE_TIME_SLOT_MAX;
-        while (!DIRECT_READ(reg, pin_bitMask))
-        {
-            if (micros() > time_trigger)
-            {
-                _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
-                return false;
-            }
-        }
+        _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
+        return false;
     }
 
-    if (DIRECT_READ(reg, pin_bitMask))
+    if (allow_long_pause)
     {
-        //Wait for bus to fall form 1 to 0
-        uint32_t time_trigger = micros() + ONEWIRE_TIME_SLOT_MAX;
-        while (DIRECT_READ(reg, pin_bitMask))
-        {
-            if (micros() > time_trigger)
-            {
-                _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
-                return false;
-            }
-        }
+        waitWhilePinIs( 1, 2000 );
+        allow_long_pause = 0;
     }
-    cli();
+
+    if (!waitWhilePinIs( 1, ONEWIRE_TIME_SLOT_MAX ))
+    {
+        _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
+        return false;
+    }
+
     return true;
 }
 
@@ -648,7 +646,10 @@ bool OneWireHub::waitTimeSlot(void)
     while (!DIRECT_READ(reg, pin_bitMask))
     {
         if (--retries == 0)
+        {
+            _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
             return false;
+        }
     }
 
     //Wait for bus to fall form 1 to 0
@@ -656,7 +657,10 @@ bool OneWireHub::waitTimeSlot(void)
     while (DIRECT_READ(reg, pin_bitMask))
     {
         if (--retries == 0)
+        {
+            _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
             return false;
+        }
     }
     return true;
 }
