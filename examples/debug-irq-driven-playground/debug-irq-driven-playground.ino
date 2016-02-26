@@ -3,8 +3,8 @@
  */
 
 #include <setjmp.h>
-static jmp_buf std_resume;
 static jmp_buf break_here;
+static jmp_buf std_resume;
 
 // setjmp(env) safes the current state in the program and returns 0
 // longjmp(env) goes back to that state saved state --> setjmp will exit with 1
@@ -53,7 +53,7 @@ bool blinking()
 }
 
 
-static uint8_t has_to_resume = 0;
+volatile uint8_t has_to_resume = 0;
 
 void irq_mockup()
 {
@@ -77,20 +77,21 @@ void irq_mockup()
     // waitReset
     // showPresence
 
-    send(dataByte++);
+    if (!send(dataByte++)) return;
+    //Serial.println(" IRQ End");
 }
 
 bool send(const uint8_t dataByte)
 {
-    Serial.print("Sending ");
+    Serial.print(" Sending 0x");
     Serial.print(dataByte,HEX);
     Serial.print(": ");
-    static uint8_t bitMask = 0x01;
 
-    for (bitMask = 0x01; bitMask; bitMask <<= 1)
+    for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
     {
-        sendBit((bitMask & dataByte) ? 1 : 0);
+        if (!sendBit((bitMask & dataByte) ? 1 : 0)) return false;
     }
+    has_to_resume = 0;
 
     Serial.println("done");
     return true;
@@ -103,13 +104,16 @@ bool sendBit(const bool value)
     Serial.print(" ");
     Serial.flush();
     // wait for next Timeslot
-    if (!setjmp(break_here))
+    if (setjmp(break_here))
+    {
+        return false;
+    }
+    else
     {
         has_to_resume = 1;
-        longjmp(std_resume,1);
+        //longjmp(std_resume,1);
+        return true;
     }
-
-    return true;
 }
 
 
@@ -121,10 +125,10 @@ void setup()
 
 void loop()
 {
-
     // Blink triggers the state-change
     if (blinking())
     {
         irq_mockup(); // emulate an interrupt
+        //Serial.println(" jump end ");
     }
 }
