@@ -1,14 +1,16 @@
 /*
- *    Playground for new IRQ - concepts
+ *    Playground for new IRQ - concept
  */
 
 #include <setjmp.h>
-jmp_buf env;
+static jmp_buf std_resume;
+static jmp_buf break_here;
 
 // setjmp(env) safes the current state in the program and returns 0
-// longjmp(env) goes back to that state if called
+// longjmp(env) goes back to that state saved state --> setjmp will exit with 1
 
-/*
+/*   DOES NOT WORK
+ *
  *   Concept for the OneWireHub:
  *   - structure of current Code could be left intact, except FN with DirectPinModifications:
  *      - revcBit(), sendBit, waitWhilePinIs()
@@ -16,7 +18,7 @@ jmp_buf env;
  *      - first action would be:
  *         if(StaticVarIsOne) {
  *            StaticVarIsOne = 0;
- *            if (setjump(fallback)) return; //safe ONE time
+ *            if (setjmp(fallback)) return; //safe ONE time
  *         };
  *      - takes a timestamp if needed (reset detection, wait for next timeslot, detect zero/one)
  *      - waits a specific time to send a zero or show presence
@@ -51,43 +53,78 @@ bool blinking()
 }
 
 
-uint8_t countGe = 0; // will preserve its state
+static uint8_t has_to_resume = 0;
+
+void irq_mockup()
+{
+    static uint8_t dataByte = 0;
+
+    if (has_to_resume)
+    {
+        has_to_resume = 0;
+        longjmp(break_here,1);
+    }
+
+    static uint8_t set_initial_jump = 1;
+    if(set_initial_jump)
+    {
+        set_initial_jump = 0;
+        setjmp(std_resume);
+        return; //safe ONE time
+    };
+
+    //// do your state-machine here
+    // waitReset
+    // showPresence
+
+    send(dataByte++);
+}
+
+bool send(const uint8_t dataByte)
+{
+    Serial.print("Sending ");
+    Serial.print(dataByte,HEX);
+    Serial.print(": ");
+    static uint8_t bitMask = 0x01;
+
+    for (bitMask = 0x01; bitMask; bitMask <<= 1)
+    {
+        sendBit((bitMask & dataByte) ? 1 : 0);
+    }
+
+    Serial.println("done");
+    return true;
+}
+
+
+bool sendBit(const bool value)
+{
+    Serial.print(value);
+    Serial.print(" ");
+    Serial.flush();
+    // wait for next Timeslot
+    if (!setjmp(break_here))
+    {
+        has_to_resume = 1;
+        longjmp(std_resume,1);
+    }
+
+    return true;
+}
+
 
 void setup()
 {
-
-    static uint8_t countSe = 0; // will preserve the state
-    uint8_t countMe = 0; // will be restored to 0 after jump
-
     Serial.begin(115200);
     Serial.println("Start of Setup.");
-
-    if (setjmp (env))
-    {
-        Serial.println("jumped where no man jumped before");
-        delay(1000);
-    }
-
-    Serial.print("End of Setup S");
-    Serial.print(countSe++);
-    Serial.print(" M");
-    Serial.println(countMe++);
 }
 
 void loop()
 {
 
-    static uint8_t countLe = 0; // will be also unaffected by jump
-
     // Blink triggers the state-change
     if (blinking())
     {
-        Serial.print("right before jump G");
-        Serial.print(countGe++);
-        Serial.print(" L");
-        Serial.println(countLe++);
-        Serial.flush();
-        longjmp (env,1);
-        Serial.println("right after jump");
+        irq_mockup(); // emulate an interrupt
     }
 }
