@@ -2,7 +2,7 @@
 #ifndef ONEWIRE_HUB_H
 #define ONEWIRE_HUB_H
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include "platform.h" // code for compatibility
 
 constexpr bool dbg_IDTREE   = 0; // give debug messages
@@ -128,10 +128,9 @@ public:
 
     void printError(void);
 
-    bool error(void)
+    uint8_t getError(void)
     {
-        if (_error == ONEWIRE_NO_ERROR) return 0;
-        return 1;
+        return _error;
     };
 
 };

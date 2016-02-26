@@ -121,6 +121,7 @@ void setup()
 {
     Serial.begin(115200);
     Serial.println("Start of Setup.");
+    pinMode(led_PIN, OUTPUT);
 }
 
 void loop()

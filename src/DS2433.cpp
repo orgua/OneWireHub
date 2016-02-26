@@ -29,7 +29,7 @@ bool DS2433::duty(OneWireHub *hub)
             for (int i = 0; i < 32; ++i) // TODO: check for memory_address + 32 < sizeof()
             {
                 hub->send(memory[memory_address + i]);
-                if (hub->error()) break;
+                if (hub->getError()) break;
             }
 
             if (dbg_sensor)

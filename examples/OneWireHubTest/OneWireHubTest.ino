@@ -60,6 +60,8 @@ void setup()
     Serial.begin(115200);
     Serial.println("OneWire-Hub Test with various Sensors");
 
+    pinMode(led_PIN, OUTPUT);
+
     // Setup OneWire
     ds1822.setTemp(21);
     ds18S20.setTemp(10);
@@ -83,7 +85,7 @@ void loop()
     // following function must be called periodically
     hub.poll();
     // this part is just for debugging (dbg_HINT in OneWire.h must be enables for output)
-    if (hub.error()) hub.printError();
+    if (hub.getError()) hub.printError();
 
     // Blink triggers the state-change
     if (blinking())

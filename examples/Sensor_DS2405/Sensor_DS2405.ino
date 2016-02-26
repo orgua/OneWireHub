@@ -34,6 +34,8 @@ void setup()
     Serial.begin(115200);
     Serial.println("OneWire-Hub DS2413 Dual channel addressable switch");
 
+    pinMode(led_PIN, OUTPUT);
+
     // Setup OneWire
     hub.attach(ds2405);
     ds2405.setState(1);
