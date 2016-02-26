@@ -1,7 +1,7 @@
 OneWireHub
 ==========
 
-The OneWireHub is an Arduino and Raspberry Pi (WiringPI) compatible library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously. 
+The OneWireHub is an Arduino (and many more) compatible library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously. 
 The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your environment.
 
 ### Supported Slaves (bold ones are feature-complete):
@@ -20,14 +20,14 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2890 Single channel digital potentiometer - extended to 1-4 CH**
 
 ### Features:
-- supports up to 32 slaves (8 is standard setting), adjust ONEWIRESLAVE_LIMIT in OneWireHub.h to safe RAM & program space
+- supports up to 32 slaves (8 is standard setting), adjust HUB_SLAVE_LIMIT in OneWireHub.h to safe RAM & program space
 - hot-plug slaves as needed
 - cleaner, faster code with c++11 features (requires arduino sw 1.6.x or higher)
-   - use of constexpr instead of #define for better compiler-messages
-   - Serial debug-output can be enabled in OneWireHub.h: set USE_SERIAL_DEBUG to 1
+   - i.e. use of constexpr instead of #define for better compiler-messages
 - hardware-dependencies are combined in "platform.h", synced with [onewire-lib](https://github.com/PaulStoffregen/OneWire)
    - extra supported: arduino zero, teensy, sam3x, pic32, esp8266, nrf51822 (...)
    - for portability and tests it can even be compiled on a PC with the supplied mock-up functions
+- Serial debug output can be enabled in OneWireHub.h: set USE_SERIAL_DEBUG to 1
 - good documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top): 
