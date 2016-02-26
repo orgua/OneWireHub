@@ -37,7 +37,12 @@ void setup()
     Serial.begin(115200);
     Serial.println("OneWire-Hub DS2401 Serial Number used as iButton");
 
+    pinMode(led_PIN, OUTPUT);
+
+    // Setup OneWire
     hub.attach(ds2401C); // always online
+
+    Serial.println("config done");
 }
 
 void loop()

@@ -36,7 +36,12 @@ void setup()
     Serial.begin(115200);
     Serial.println("OneWire-Hub DS2408 - 8CH GPIO Port Extender");
 
+    pinMode(led_PIN, OUTPUT);
+
+    // Setup OneWire
     hub.attach(ds2408); // always online
+
+    Serial.println("config done");
 }
 
 void loop()
@@ -44,7 +49,7 @@ void loop()
     // following function must be called periodically
     hub.poll();
     // this part is just for debugging (dbg_HINT in OneWire.h must be enables for output)
-    if (hub.error()) hub.printError();
+    if (hub.getError()) hub.printError();
 
     // Blink triggers the state-change
     if (blinking())

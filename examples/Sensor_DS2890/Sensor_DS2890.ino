@@ -34,6 +34,8 @@ void setup()
     Serial.begin(115200);
     Serial.println("OneWire-Hub DS2890 Single channel digital potentiometer");
 
+    pinMode(led_PIN, OUTPUT);
+
     // Setup OneWire
     hub.attach(ds2890);
 

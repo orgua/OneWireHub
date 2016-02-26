@@ -40,7 +40,7 @@ bool DS18B20::duty(OneWireHub *hub)
 
         case 0xBE: // READ SCRATCHPAD
             hub->send(scratchpad, 9);
-            if (hub->error()) return false;
+            if (hub->getError()) return false;
             if (dbg_sensor)  Serial.println("DS18B20 : READ SCRATCHPAD");
             break;
 

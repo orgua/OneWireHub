@@ -39,6 +39,7 @@ bool blinking()
 
 void setup()
 {
+    pinMode(led_PIN, OUTPUT);
     // Setup OneWire
     ds18B20a.setTemp(10);
     hub.attach(ds18B20a);

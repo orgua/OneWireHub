@@ -37,6 +37,8 @@ void setup()
     Serial.begin(115200);
     Serial.println("OneWire-Hub DS18B20 Temperature-Sensor");
 
+    pinMode(led_PIN, OUTPUT);
+
     // Setup OneWire
     hub.attach(sensorA);
     hub.attach(sensorB);
@@ -52,7 +54,7 @@ void loop()
     // following function must be called periodically
     hub.poll();
     // this part is just for debugging (dbg_HINT in OneWire.h must be enables for output)
-    if (hub.error()) hub.printError();
+    if (hub.getError()) hub.printError();
 
     // Blink triggers the state-change
     if (blinking())

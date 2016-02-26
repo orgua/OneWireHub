@@ -36,6 +36,8 @@ void setup()
     Serial.begin(115200);
     Serial.println("OneWire-Hub DS2438 Smart Battery Monitor");
 
+    pinMode(led_PIN, OUTPUT);
+
     // Setup OneWire
     hub.attach(ds2438);
 
