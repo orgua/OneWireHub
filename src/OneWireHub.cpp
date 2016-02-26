@@ -89,6 +89,7 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const uint32_t mask)
         if (_mask & 1)  return i;
         _mask >>= 1;
     }
+    return 0;
 }
 
 // gone through the address, store this result
@@ -237,7 +238,8 @@ bool OneWireHub::poll(void)
 
     //Now that the master should know we are here, we will get a command from the bus
     if (recvAndProcessCmd())    return true;
-    else                        return false;
+
+    return false;
 }
 
 
@@ -281,7 +283,7 @@ bool OneWireHub::showPresence(void)
     volatile uint8_t *reg asm("r30") = baseReg;
 
     // Master will delay it's "Presence" check (bus-read)  after the reset
-    waitWhilePinIs( 1, ONEWIRE_TIME_PRESENCE_SAMPLE_MIN); // no pincheck needed, but this avoids using "delay"
+    waitWhilePinIs( 1, ONEWIRE_TIME_PRESENCE_SAMPLE_MIN); // no pinCheck demanded, but this additional check can cut waitTime
 
     // pull the bus low and hold it some time
     cli();
@@ -289,7 +291,7 @@ bool OneWireHub::showPresence(void)
     DIRECT_MODE_OUTPUT(reg, pin_bitMask);    // drive output low
     sei();
 
-    waitWhilePinIs( 0, ONEWIRE_TIME_PRESENCE_LOW_STD); // no pincheck needed, but this avoids using "delay"
+    waitWhilePinIs( 0, ONEWIRE_TIME_PRESENCE_LOW_STD); // no pinCheck demanded, but this additional check can cut waitTime
 
     cli();
     DIRECT_MODE_INPUT(reg, pin_bitMask);     // allow it to float
@@ -466,7 +468,7 @@ bool OneWireHub::send(const uint8_t dataByte)
     _error = ONEWIRE_NO_ERROR;
     for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
     {
-        sendBit((bitMask & dataByte) ? 1 : 0);
+        sendBit((bitMask & dataByte) ? bool(1) : bool(0));
         if (_error) return false;
     }
     return true;
@@ -485,14 +487,14 @@ bool OneWireHub::sendBit(const bool value)
         sei();
         return false;
     }
-    if (value)  waitWhilePinIs( 0, ONEWIRE_TIME_READ_ONE_LOW_MAX); // no pincheck needed, but this avoids using "delay"
+    if (value)  waitWhilePinIs( 0, ONEWIRE_TIME_READ_ONE_LOW_MAX); // no pinCheck demanded, but this additional check can cut waitTime
     else
     {
         cli();
         DIRECT_WRITE_LOW(reg, pin_bitMask);
         DIRECT_MODE_OUTPUT(reg, pin_bitMask);
         sei();
-        waitWhilePinIs( 0, ONEWIRE_TIME_WRITE_ZERO_LOW_STD); // no pincheck needed, but this avoids using "delay"
+        waitWhilePinIs( 0, ONEWIRE_TIME_WRITE_ZERO_LOW_STD); // no pinCheck demanded, but this additional check can cut waitTime
         DIRECT_MODE_INPUT(reg, pin_bitMask);
     }
     sei();
@@ -506,14 +508,14 @@ uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
     _error = ONEWIRE_NO_ERROR;
     for (uint8_t counter = 0; counter < 8; ++counter)
     {
-        sendBit((0x01 & dataByte) ? 1 : 0);
+        sendBit((0x01 & dataByte) ? bool(1) : bool(0));
 
         uint8_t mix = ((uint8_t) crc16 ^ dataByte) & static_cast<uint8_t>(0x01);
         crc16 >>= 1;
         if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
         dataByte >>= 1;
 
-        if (_error) return false; // CRC is not important if sending fails
+        if (_error) return 0; // CRC is not important if sending fails
     }
     return crc16;
 }
@@ -556,10 +558,10 @@ uint8_t OneWireHub::recvBit(void)
     if (!waitTimeSlot())
     {
         sei();
-        return false;
+        return 0;
     }
     sei();
-    waitWhilePinIs( 0, ONEWIRE_TIME_READ_STD); // no pincheck needed, but this avoids using "delay"
+    waitWhilePinIs( 0, ONEWIRE_TIME_READ_STD); // no pinCheck demanded, but this additional check can cut waitTime
     value = DIRECT_READ(reg, pin_bitMask);
     return value;
 }
@@ -584,7 +586,7 @@ uint8_t OneWireHub::recvAndCRC16(uint16_t &crc16)
         crc16 >>= 1;
         if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
 
-        if (_error) return false;
+        if (_error) return 0;
     }
     return value;
 }
@@ -636,7 +638,7 @@ bool OneWireHub::waitTimeSlot(void)
 
 #else
 
-#define TIMESLOT_WAIT_RETRY_COUNT  (microsecondsToClockCycles(135))
+#define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135))
 bool OneWireHub::waitTimeSlot(void)
 {
     volatile uint8_t *reg asm("r30") = baseReg;
