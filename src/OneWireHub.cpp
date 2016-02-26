@@ -5,7 +5,7 @@
 
 OneWireHub::OneWireHub(uint8_t pin)
 {
-    _error = ONEWIRE_NO_ERROR;
+    _error = Error::NO_ERROR;
 
     pin_bitMask = digitalPinToBitMask(pin);
 
@@ -184,7 +184,7 @@ bool OneWireHub::waitForRequest(const bool ignore_errors)
     {
         bool interaction  = poll();
 
-        if ((_error == ONEWIRE_NO_ERROR) || ignore_errors)
+        if ((_error == Error::NO_ERROR) || ignore_errors)
         {
             continue;
         }
@@ -192,7 +192,7 @@ bool OneWireHub::waitForRequest(const bool ignore_errors)
         {
             return true;
         }
-        if (_error)
+        if (_error != Error::NO_ERROR)
         {
             printError();
         }
@@ -202,7 +202,7 @@ bool OneWireHub::waitForRequest(const bool ignore_errors)
 
 bool OneWireHub::poll(void)
 {
-    _error = ONEWIRE_NO_ERROR;
+    _error = Error::NO_ERROR;
 
     // this additional check prevents an infinite loop when calling this FN without sensors attached
     if (!slave_count)           return true;
@@ -236,7 +236,7 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // TODO: is there a specific hi
     // wait for the bus to become low (master-controlled), since we are polling we don't know for how long it was zero
     if (!waitWhilePinIs(1, timeout_us))
     {
-        _error = ONEWIRE_WAIT_RESET_TIMEOUT;
+        _error = Error::WAIT_RESET_TIMEOUT;
         return false;
     }
 
@@ -245,14 +245,14 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // TODO: is there a specific hi
     // wait for bus-release by master
     if (!waitWhilePinIs(0, ONEWIRE_TIME_RESET_MAX))
     {
-        _error = ONEWIRE_VERY_LONG_RESET;
+        _error = Error::VERY_LONG_RESET;
         return false;
     }
 
     // If the master pulled low for to short this will trigger an error
     if ((time_start + ONEWIRE_TIME_RESET_MIN) > micros())
     {
-        _error = ONEWIRE_VERY_SHORT_RESET;
+        _error = Error::VERY_SHORT_RESET;
         return false;
     }
 
@@ -282,14 +282,14 @@ bool OneWireHub::showPresence(void)
     // When the master or other slaves release the bus within a given time everything is fine
     if (!waitWhilePinIs( 0, (ONEWIRE_TIME_PRESENCE_LOW_MAX - ONEWIRE_TIME_PRESENCE_LOW_STD)))
     {
-        _error = ONEWIRE_PRESENCE_LOW_ON_LINE;
+        _error = Error::PRESENCE_LOW_ON_LINE;
         return false;
     }
 
     // we wait here for the start of the first timeslot (falling Edge)
     if (!waitWhilePinIs( 1, ONEWIRE_TIME_RESET_MAX))
     {
-        _error = ONEWIRE_PRESENCE_HIGH_ON_LINE;
+        _error = Error::PRESENCE_HIGH_ON_LINE;
         return false;
     }
 
@@ -313,7 +313,7 @@ bool OneWireHub::search(void)
             sendBit(false);
             sendBit(false);
             uint8_t bit_recv = recvBit();
-            if (_error) return false;
+            if (_error != Error::NO_ERROR) return false;
 
             // switch to next junction
             if (bit_recv)   trigger_pos = idTree[trigger_pos].got_one;
@@ -347,7 +347,7 @@ bool OneWireHub::search(void)
             }
 
             bit_recv = recvBit();
-            if (_error)  return false;
+            if (_error != Error::NO_ERROR)  return false;
 
             if (bit_send != bit_recv)
                 return false;
@@ -373,7 +373,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         case 0x55: // MATCH ROM - Choose/Select ROM
             recv(address, 8);
-            if (_error)  return false;
+            if (_error != Error::NO_ERROR)  return false;
 
             flag = false;
             slave_selected = 0;
@@ -413,7 +413,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             // only usable when there is ONE slave on the bus
 
         default: // Unknown command
-            _error = ONEWIRE_INCORRECT_ONEWIRE_CMD;
+            _error = Error::INCORRECT_ONEWIRE_CMD;
 
     }
     return false;
@@ -426,7 +426,7 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
     for (bytes_sent; bytes_sent < data_length; ++bytes_sent)
     {
         send(address[bytes_sent]);
-        if (_error)  break;
+        if (_error != Error::NO_ERROR)  break;
     }
     return (bytes_sent == data_length);
 }
@@ -436,7 +436,7 @@ bool OneWireHub::send(const uint8_t dataByte)
     for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
     {
         sendBit((bitMask & dataByte) ? bool(1) : bool(0));
-        if (_error) return false;
+        if (_error != Error::NO_ERROR) return false;
     }
     return true;
 }
@@ -449,17 +449,23 @@ bool OneWireHub::sendBit(const bool value)
     cli();
     DIRECT_MODE_INPUT(reg, pin_bitMask);
     // wait for a low to high transition followed by a high to low within the time-out
-    if (!waitTimeSlot())
+    if (!awaitTimeSlot())
     {
         sei();
-        _error = ONEWIRE_WRITE_TIMESLOT_TIMEOUT;
+        _error = Error::WRITE_TIMESLOT_TIMEOUT;
         return false; // timeslot violation
     }
     if (value)  waitWhilePinIs( 0, ONEWIRE_TIME_READ_ONE_LOW_MAX); // no pinCheck demanded, but this additional check can cut waitTime
     else
     {
+        // if we wait for release we could detect faulty writing slots
+        if (false&&!waitWhilePinIs( 0, ONEWIRE_TIME_WRITE_LOW_MAX))
+        {
+            _error = Error::TRIED_INCORRECT_WRITE;
+            return false;
+        }
         cli();
-        // TODO: could read and detect when there was no writing-slot
+
         DIRECT_WRITE_LOW(reg, pin_bitMask);
         DIRECT_MODE_OUTPUT(reg, pin_bitMask);
         sei();
@@ -482,7 +488,7 @@ uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
         if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
         dataByte >>= 1;
 
-        if (_error) return 0; // CRC is not important if sending fails
+        if (_error != Error::NO_ERROR) return 0; // CRC is not important if sending fails
     }
     return crc16;
 }
@@ -495,7 +501,7 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
     for (bytes_received; bytes_received < data_length; ++bytes_received)
     {
         address[bytes_received] = recv();
-        if (_error != ONEWIRE_NO_ERROR)  break;
+        if (_error != Error::NO_ERROR)  break;
     }
     return (bytes_received == data_length);
 }
@@ -507,7 +513,7 @@ uint8_t OneWireHub::recv(void)
     for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
     {
         if (recvBit())  value |= bitMask;
-        if (_error != ONEWIRE_NO_ERROR)  break;
+        if (_error != Error::NO_ERROR)  break;
     }
     return value;
 }
@@ -520,10 +526,10 @@ bool OneWireHub::recvBit(void)
     DIRECT_MODE_INPUT(reg, pin_bitMask);
 
     // wait for a low to high transition followed by a high to low within the time-out
-    if (!waitTimeSlot())
+    if (!awaitTimeSlot())
     {
         sei();
-        _error = ONEWIRE_READ_TIMESLOT_TIMEOUT;
+        _error = Error::READ_TIMESLOT_TIMEOUT;
         return 0;
     }
     sei();
@@ -551,7 +557,7 @@ uint8_t OneWireHub::recvAndCRC16(uint16_t &crc16)
         crc16 >>= 1;
         if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
 
-        if (_error) return 0;
+        if (_error != Error::NO_ERROR) return 0;
     }
     return value;
 }
@@ -573,26 +579,27 @@ bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
 #if (NEW_WAIT > 0)
 
 // wait for a low to high transition followed by a high to low within the time-out
-bool OneWireHub::waitTimeSlot(void)
+bool OneWireHub::awaitTimeSlot(void)
 {
-    //cli();
-    //volatile uint8_t *reg asm("r30") = baseReg;
-    //DIRECT_MODE_INPUT(reg, pin_bitMask);
-    //sei();
+    if (skip_timeslot_detection)
+    {
+        skip_timeslot_detection = 0;
+        return true;
+    }
+
+    cli();
+    volatile uint8_t *reg asm("r30") = baseReg;
+    DIRECT_MODE_INPUT(reg, pin_bitMask);
+    sei();
+
     //While bus is low, retry until HIGH
-    if (!waitWhilePinIs( 0, ONEWIRE_TIME_SLOT_MAX))
+    if (!waitWhilePinIs( false, ONEWIRE_TIME_SLOT_MAX))
     {
         _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
         return false;
     }
 
-    if (skip_timeslot_detection)
-    {
-        waitWhilePinIs( 1, 2000 );
-        skip_timeslot_detection = 0;
-    }
-
-    if (!waitWhilePinIs( 1, ONEWIRE_TIME_SLOT_MAX ))
+    if (!waitWhilePinIs( true, ONEWIRE_TIME_SLOT_MAX ))
     {
         _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
         return false;
@@ -604,7 +611,7 @@ bool OneWireHub::waitTimeSlot(void)
 #else
 
 #define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135))
-bool OneWireHub::waitTimeSlot(void)
+bool OneWireHub::awaitTimeSlot(void)
 {
     if (skip_timeslot_detection)
     {
@@ -619,7 +626,7 @@ bool OneWireHub::waitTimeSlot(void)
     {
         if (--retries == 0)
         {
-            _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
+            _error = Error::READ_TIMESLOT_TIMEOUT_LOW;
             return false;
         }
     }
@@ -630,7 +637,7 @@ bool OneWireHub::waitTimeSlot(void)
     {
         if (--retries == 0)
         {
-            _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
+            _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
             return false;
         }
     }
@@ -638,23 +645,33 @@ bool OneWireHub::waitTimeSlot(void)
 }
 #endif
 
-/*
+
 void OneWireHub::printError(void)
 {
 #if USE_SERIAL_DEBUG
-     if (_error == ONEWIRE_NO_ERROR)                        return;
-     else if (_error == ONEWIRE_READ_TIMESLOT_TIMEOUT)      Serial.print("Err1: read timeslot timeout");
-     else if (_error == ONEWIRE_WRITE_TIMESLOT_TIMEOUT)     Serial.print("Err2: write timeslot timeout");
-     else if (_error == ONEWIRE_WAIT_RESET_TIMEOUT)         Serial.print("Err3: reset wait timeout");
-     else if (_error == ONEWIRE_VERY_LONG_RESET)            Serial.print("Err4: very long reset");
-     else if (_error == ONEWIRE_VERY_SHORT_RESET)           Serial.print("Err5: very short reset");
-     else if (_error == ONEWIRE_PRESENCE_LOW_ON_LINE)       Serial.print("Err6: presence low on line");
-     else if (_error == ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW)  Serial.print("Err7: read timeout low");
-     else if (_error == ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH) Serial.print("Err8: read timeout high");
-     else if (_error == ONEWIRE_PRESENCE_HIGH_ON_LINE)      Serial.print("Err9: presence high on line");
-     else if (_error == ONEWIRE_INCORRECT_ONEWIRE_CMD)      Serial.print("Err10: incorrect onewire command");
-     else if (_error == ONEWIRE_INCORRECT_SLAVE_USAGE)      Serial.print("Err11: slave was used in incorrect way");
+     if (_error == Error::NO_ERROR)                        return;
+     else if (_error == Error::READ_TIMESLOT_TIMEOUT)      Serial.print("Err: read timeslot timeout");
+     else if (_error == Error::WRITE_TIMESLOT_TIMEOUT)     Serial.print("Err: write timeslot timeout");
+     else if (_error == Error::WAIT_RESET_TIMEOUT)         Serial.print("Err: reset wait timeout");
+     else if (_error == Error::VERY_LONG_RESET)            Serial.print("Err: very long reset");
+     else if (_error == Error::VERY_SHORT_RESET)           Serial.print("Err: very short reset");
+     else if (_error == Error::PRESENCE_LOW_ON_LINE)       Serial.print("Err: presence low on line");
+     else if (_error == Error::READ_TIMESLOT_TIMEOUT_LOW)  Serial.print("Err: read timeout low");
+     else if (_error == Error::READ_TIMESLOT_TIMEOUT_HIGH) Serial.print("Err: read timeout high");
+     else if (_error == Error::PRESENCE_HIGH_ON_LINE)      Serial.print("Err: presence high on line");
+     else if (_error == Error::INCORRECT_ONEWIRE_CMD)      Serial.print("Err: incorrect onewire command");
+     else if (_error == Error::INCORRECT_SLAVE_USAGE)      Serial.print("Err: slave was used in incorrect way");
+     else if (_error == Error::TRIED_INCORRECT_WRITE)      Serial.print("Err: tried to write in read-slot");
      Serial.println("");
 #endif
 }
-*/
+
+bool OneWireHub::getError(void)
+{
+    return (_error != Error::NO_ERROR);
+};
+
+void OneWireHub::raiseSlaveError(const uint8_t cmd)
+{
+    _error = Error::INCORRECT_SLAVE_USAGE;
+};
