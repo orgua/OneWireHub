@@ -11,7 +11,7 @@ OneWireHub::OneWireHub(uint8_t pin)
 
     baseReg = portInputRegister(digitalPinToPort(pin));
 
-    allow_long_pause = 0;
+    skip_timeslot_detection = 0;
 
     slave_count = 0;
     slave_selected = nullptr;
@@ -208,7 +208,7 @@ bool OneWireHub::poll(void)
     if (!slave_count)           return true;
 
     //Once reset is done, go to next step
-    if (!checkReset(2000))      return false;
+    if (!checkReset(8000))      return false;
 
     // Reset is complete, tell the master we are present
     if (!showPresence())        return false;
@@ -231,8 +231,14 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // TODO: is there a specific hi
 
     waitWhilePinIs(false, ONEWIRE_TIME_BUS_CHANGE_MAX); // let the input settle
 
+    if (!DIRECT_READ(reg, pin_bitMask)) return false; // just leave if pin is Low, don't bother to wait
+
     // wait for the bus to become low (master-controlled), since we are polling we don't know for how long it was zero
-    if (!waitWhilePinIs(1, timeout_us)) return false;
+    if (!waitWhilePinIs(1, timeout_us))
+    {
+        _error = ONEWIRE_WAIT_RESET_TIMEOUT;
+        return false;
+    }
 
     uint32_t time_start = micros();
 
@@ -280,8 +286,14 @@ bool OneWireHub::showPresence(void)
         return false;
     }
 
-    // TODO: legacy code sleeps here a while
-    allow_long_pause = 1;
+    // we wait here for the start of the first timeslot (falling Edge)
+    if (!waitWhilePinIs( 1, ONEWIRE_TIME_RESET_MAX))
+    {
+        _error = ONEWIRE_PRESENCE_HIGH_ON_LINE;
+        return false;
+    }
+
+    skip_timeslot_detection = 1;
     return true;
 }
 
@@ -440,12 +452,14 @@ bool OneWireHub::sendBit(const bool value)
     if (!waitTimeSlot())
     {
         sei();
-        return false;
+        _error = ONEWIRE_WRITE_TIMESLOT_TIMEOUT;
+        return false; // timeslot violation
     }
     if (value)  waitWhilePinIs( 0, ONEWIRE_TIME_READ_ONE_LOW_MAX); // no pinCheck demanded, but this additional check can cut waitTime
     else
     {
         cli();
+        // TODO: could read and detect when there was no writing-slot
         DIRECT_WRITE_LOW(reg, pin_bitMask);
         DIRECT_MODE_OUTPUT(reg, pin_bitMask);
         sei();
@@ -456,8 +470,7 @@ bool OneWireHub::sendBit(const bool value)
     return true;
 }
 
-// CRC takes ~7.4µs/byte (Atmega328P@16MHz) but is distributing the load between each bit-send to 0.9 µs/bit (see debug-crc-comparison.ino)
-// important: the final crc is expected to be inverted (crc=~crc) !!!
+
 uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
 {
     for (uint8_t counter = 0; counter < 8; ++counter)
@@ -499,10 +512,9 @@ uint8_t OneWireHub::recv(void)
     return value;
 }
 
-uint8_t OneWireHub::recvBit(void)
+bool OneWireHub::recvBit(void)
 {
     volatile uint8_t *reg asm("r30") = baseReg;
-    uint8_t value;
 
     cli();
     DIRECT_MODE_INPUT(reg, pin_bitMask);
@@ -511,12 +523,13 @@ uint8_t OneWireHub::recvBit(void)
     if (!waitTimeSlot())
     {
         sei();
+        _error = ONEWIRE_READ_TIMESLOT_TIMEOUT;
         return 0;
     }
     sei();
     waitWhilePinIs( 0, ONEWIRE_TIME_READ_STD); // no pinCheck demanded, but this additional check can cut waitTime
-    value = DIRECT_READ(reg, pin_bitMask);
-    return value;
+
+    return DIRECT_READ(reg, pin_bitMask);
 }
 
 // TODO: not happy with the interface - call by ref is slow here. maybe use a crc in class and expand with crc-reset and get?
@@ -573,10 +586,10 @@ bool OneWireHub::waitTimeSlot(void)
         return false;
     }
 
-    if (allow_long_pause)
+    if (skip_timeslot_detection)
     {
         waitWhilePinIs( 1, 2000 );
-        allow_long_pause = 0;
+        skip_timeslot_detection = 0;
     }
 
     if (!waitWhilePinIs( 1, ONEWIRE_TIME_SLOT_MAX ))
@@ -593,6 +606,11 @@ bool OneWireHub::waitTimeSlot(void)
 #define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135))
 bool OneWireHub::waitTimeSlot(void)
 {
+    if (skip_timeslot_detection)
+    {
+        skip_timeslot_detection = 0;
+        return true;
+    }
     volatile uint8_t *reg asm("r30") = baseReg;
 
     //While bus is low, retry until HIGH
@@ -620,7 +638,7 @@ bool OneWireHub::waitTimeSlot(void)
 }
 #endif
 
-
+/*
 void OneWireHub::printError(void)
 {
 #if USE_SERIAL_DEBUG
@@ -639,3 +657,4 @@ void OneWireHub::printError(void)
      Serial.println("");
 #endif
 }
+*/

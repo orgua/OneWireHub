@@ -73,7 +73,7 @@ private:
 
     uint8_t           pin_bitMask;
     volatile uint8_t *baseReg;
-    uint8_t           allow_long_pause;
+    uint8_t           skip_timeslot_detection;
 
     uint8_t      slave_count;
     OneWireItem *slave_list[ONEWIRESLAVE_LIMIT];  // private slave-list (use attach/detach)
@@ -120,11 +120,14 @@ public:
     bool send(const uint8_t dataByte);
     bool send(const uint8_t address[], const uint8_t data_length);
     bool sendBit(const bool value);
+
+    // CRC takes ~7.4µs/byte (Atmega328P@16MHz) but is distributing the load between each bit-send to 0.9 µs/bit (see debug-crc-comparison.ino)
+    // important: the final crc is expected to be inverted (crc=~crc) !!!
     uint16_t sendAndCRC16(uint8_t dataByte, uint16_t crc16);
 
     uint8_t recv(void);
     bool    recv(uint8_t address[], const uint8_t data_length); // TODO: change send/recv to return bool TRUE on success, recv returns data per reference
-    uint8_t recvBit(void);
+    bool    recvBit(void);
     uint8_t recvAndCRC16(uint16_t &crc16);
 
     void printError(void);
