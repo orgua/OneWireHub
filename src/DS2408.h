@@ -31,7 +31,6 @@ typedef union {
 class DS2408 : public OneWireItem
 {
 private:
-    static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
 
     // Register Addresses
     static constexpr uint8_t  DS2408_RD_BELOW_UNDEFINED  = 0x87;  // undefined data

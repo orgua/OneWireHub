@@ -120,29 +120,6 @@ uint8_t OneWireHub::buildIDTree(void)
     // begin with root-element
     buildIDTree(0, mask_slaves); // goto branch
 
-    if (dbg_IDTREE)
-    {
-        Serial.println("Calculate idTree: ");
-        for (uint8_t i = 0; i < ONEWIRETREE_SIZE; ++i)
-        {
-
-            Serial.print("Slave: ");
-            if (idTree[i].slave_selected < 10) Serial.print("  ");
-            Serial.print(idTree[i].slave_selected);
-            Serial.print(" bitPos: ");
-            if (idTree[i].id_position < 10) Serial.print(" ");
-            if (idTree[i].id_position < 100) Serial.print(" ");
-            Serial.print(idTree[i].id_position);
-            Serial.print(" if0gt: ");
-            if (idTree[i].got_zero < 10) Serial.print(" ");
-            if (idTree[i].got_zero < 100) Serial.print(" ");
-            Serial.print(idTree[i].got_zero);
-            Serial.print(" if1gt: ");
-            if (idTree[i].got_one < 10) Serial.print(" ");
-            if (idTree[i].got_one < 100) Serial.print(" ");
-            Serial.println(idTree[i].got_one);
-        }
-    }
     return 0;
 }
 
@@ -200,11 +177,9 @@ uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const uint32_t mask_slav
     return active_element;
 }
 
-
+// legacy code
 bool OneWireHub::waitForRequest(const bool ignore_errors)
 {
-    _error = ONEWIRE_NO_ERROR;
-
     while (1)
     {
         bool interaction  = poll();
@@ -217,7 +192,7 @@ bool OneWireHub::waitForRequest(const bool ignore_errors)
         {
             return true;
         }
-        if (dbg_HINT && _error)
+        if (_error)
         {
             printError();
         }
@@ -227,6 +202,8 @@ bool OneWireHub::waitForRequest(const bool ignore_errors)
 
 bool OneWireHub::poll(void)
 {
+    _error = ONEWIRE_NO_ERROR;
+
     // this additional check prevents an infinite loop when calling this FN without sensors attached
     if (!slave_count)           return true;
 
@@ -247,7 +224,6 @@ bool OneWireHub::poll(void)
 bool OneWireHub::checkReset(uint16_t timeout_us) // TODO: is there a specific high-time needed before a reset may occur?
 {
     volatile uint8_t *reg asm("r30") = baseReg;
-    _error = ONEWIRE_NO_ERROR;
 
     cli();
     DIRECT_MODE_INPUT(reg, pin_bitMask);
@@ -305,7 +281,6 @@ bool OneWireHub::showPresence(void)
     }
 
     // TODO: legacy code sleeps here a while
-    _error = ONEWIRE_NO_ERROR;
     allow_long_pause = 1;
     return true;
 }
@@ -326,8 +301,7 @@ bool OneWireHub::search(void)
             sendBit(false);
             sendBit(false);
             uint8_t bit_recv = recvBit();
-            if (_error != ONEWIRE_NO_ERROR)
-                return false;
+            if (_error) return false;
 
             // switch to next junction
             if (bit_recv)   trigger_pos = idTree[trigger_pos].got_one;
@@ -361,19 +335,12 @@ bool OneWireHub::search(void)
             }
 
             bit_recv = recvBit();
-            if (_error != ONEWIRE_NO_ERROR)
-                return false;
+            if (_error)  return false;
 
             if (bit_send != bit_recv)
                 return false;
         }
         position_IDBit++;
-    }
-
-    if (dbg_SEARCH)
-    {
-        Serial.print("Found:");
-        Serial.println(active_slave);
     }
 
     slave_selected = slave_list[active_slave];
@@ -394,8 +361,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         case 0x55: // MATCH ROM - Choose/Select ROM
             recv(address, 8);
-            if (_error != ONEWIRE_NO_ERROR)
-                return false;
+            if (_error)  return false;
 
             flag = false;
             slave_selected = 0;
@@ -417,13 +383,6 @@ bool OneWireHub::recvAndProcessCmd(void)
                 if (flag)
                 {
                     slave_selected = slave_list[i];
-
-                    if (dbg_MATCHROM)
-                    {
-                        Serial.print("MATCH ROM=");
-                        Serial.println(i);
-                    }
-
                     break;
                 }
             }
@@ -442,11 +401,8 @@ bool OneWireHub::recvAndProcessCmd(void)
             // only usable when there is ONE slave on the bus
 
         default: // Unknown command
-            if (dbg_HINT)
-            {
-                Serial.print("U:");
-                Serial.println(cmd, HEX);
-            }
+            _error = ONEWIRE_INCORRECT_ONEWIRE_CMD;
+
     }
     return false;
 }
@@ -458,14 +414,13 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
     for (bytes_sent; bytes_sent < data_length; ++bytes_sent)
     {
         send(address[bytes_sent]);
-        if (_error != ONEWIRE_NO_ERROR)  break;
+        if (_error)  break;
     }
     return (bytes_sent == data_length);
 }
 
 bool OneWireHub::send(const uint8_t dataByte)
 {
-    _error = ONEWIRE_NO_ERROR;
     for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
     {
         sendBit((bitMask & dataByte) ? bool(1) : bool(0));
@@ -505,7 +460,6 @@ bool OneWireHub::sendBit(const bool value)
 // important: the final crc is expected to be inverted (crc=~crc) !!!
 uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
 {
-    _error = ONEWIRE_NO_ERROR;
     for (uint8_t counter = 0; counter < 8; ++counter)
     {
         sendBit((0x01 & dataByte) ? bool(1) : bool(0));
@@ -536,7 +490,6 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
 uint8_t OneWireHub::recv(void)
 {
     uint8_t value = 0;
-    _error = ONEWIRE_NO_ERROR;
 
     for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
     {
@@ -571,7 +524,6 @@ uint8_t OneWireHub::recvAndCRC16(uint16_t &crc16)
 {
     uint8_t value = 0;
     uint8_t mix = 0;
-    _error = ONEWIRE_NO_ERROR;
 
     for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
     {
@@ -671,8 +623,7 @@ bool OneWireHub::waitTimeSlot(void)
 
 void OneWireHub::printError(void)
 {
- if (dbg_HINT)
- {
+#if USE_SERIAL_DEBUG
      if (_error == ONEWIRE_NO_ERROR)                        return;
      else if (_error == ONEWIRE_READ_TIMESLOT_TIMEOUT)      Serial.print("Err1: read timeslot timeout");
      else if (_error == ONEWIRE_WRITE_TIMESLOT_TIMEOUT)     Serial.print("Err2: write timeslot timeout");
@@ -683,6 +634,8 @@ void OneWireHub::printError(void)
      else if (_error == ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW)  Serial.print("Err7: read timeout low");
      else if (_error == ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH) Serial.print("Err8: read timeout high");
      else if (_error == ONEWIRE_PRESENCE_HIGH_ON_LINE)      Serial.print("Err9: presence high on line");
+     else if (_error == ONEWIRE_INCORRECT_ONEWIRE_CMD)      Serial.print("Err10: incorrect onewire command");
+     else if (_error == ONEWIRE_INCORRECT_SLAVE_USAGE)      Serial.print("Err11: slave was used in incorrect way");
      Serial.println("");
- }
+#endif
 }

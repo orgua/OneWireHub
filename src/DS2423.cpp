@@ -11,9 +11,9 @@ bool DS2423::duty(OneWireHub *hub)
     uint8_t b;
     uint16_t crc = 0;
 
-    uint8_t done = hub->recvAndCRC16(crc);
+    uint8_t cmd = hub->recvAndCRC16(crc);
 
-    switch (done)
+    switch (cmd)
     {
         // Read Memory + Counter
         case 0xA5:
@@ -46,20 +46,10 @@ bool DS2423::duty(OneWireHub *hub)
             hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
             hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
 
-            if (dbg_sensor)
-            {
-                Serial.print("DS2423 : Read Memory + Counter : ");
-                Serial.println(memory_address_start, HEX);
-            }
-
             break;
 
         default:
-            if (dbg_HINT)
-            {
-                Serial.print("DS2423=");
-                Serial.println(done, HEX);
-            }
+            hub->raiseSlaveError(cmd);
             break;
     }
 

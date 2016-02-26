@@ -8,8 +8,6 @@
 class DS2433 : public OneWireItem
 {
 private:
-    static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
-
     uint8_t memory[512];
 
 public:

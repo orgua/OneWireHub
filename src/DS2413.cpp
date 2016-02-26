@@ -11,10 +11,10 @@ DS2413::DS2413(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 bool DS2413::duty(OneWireHub *hub)
 {
-    uint8_t done = hub->recv();
+    uint8_t cmd = hub->recv();
     uint8_t data = 0;
 
-    switch (done)
+    switch (cmd)
     {
         case 0x5A: // PIO ACCESS WRITE
             data = ~hub->recv(); // Write inverse
@@ -23,11 +23,6 @@ bool DS2413::duty(OneWireHub *hub)
             setLatch(0, data & static_cast<uint8_t>(0x01)); // A
             setLatch(1, data & static_cast<uint8_t>(0x02)); // B
 
-            if (dbg_sensor)
-            {
-                Serial.print("DS2413 : PIO WRITE  : 5A = ");
-                Serial.println(data, HEX);
-            }
             break;
 
 
@@ -41,21 +36,11 @@ bool DS2413::duty(OneWireHub *hub)
             data = data | (~data << 4);
             hub->send(data);
 
-            if (dbg_sensor)
-            {
-                Serial.print("DS2413 : PIO ACCESS READ : F5 = ");
-                Serial.println(data, HEX);
-            }
-
             break;
 
         default:
-            if (dbg_HINT)
-            {
-                Serial.print("DS2413=");
-                Serial.println(done, HEX);
-            }
-            break;
+            hub->raiseSlaveError(cmd);
+            return false;
     }
 
     return true;

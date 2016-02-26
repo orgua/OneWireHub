@@ -12,12 +12,6 @@ bool DS2405::duty(OneWireHub *hub)
     pin_state = !pin_state;
     hub->sendBit(pin_state);
 
-    if (dbg_HINT)
-    {
-        Serial.print("DS2405=");
-        Serial.println(pin_state, HEX);
-    }
-
     return true;
 }
 

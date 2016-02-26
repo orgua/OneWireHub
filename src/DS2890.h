@@ -9,8 +9,6 @@
 class DS2890 : public OneWireItem
 {
 private:
-    static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
-
 
     static constexpr uint8_t REGISTER_MASK_POTI_CHAR = 0x01;
     static constexpr uint8_t REGISTER_MASK_WIPER_SET = 0x02;

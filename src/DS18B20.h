@@ -9,8 +9,6 @@
 class DS18B20 : public OneWireItem
 {
 private:
-    static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
-
     uint8_t scratchpad[9];
 
     void setTempRaw(const int16_t value_raw);

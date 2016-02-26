@@ -24,13 +24,14 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - hot-plug slaves as needed
 - cleaner, faster code with c++11 features (requires arduino sw 1.6.x or higher)
    - use of constexpr instead of #define for better compiler-messages
-   - Serial debug-output can be enabled in OneWireHub.h: set dbg_#NAME# to 1, otherwise the compiler ignores these code-sections
+   - Serial debug-output can be enabled in OneWireHub.h: set USE_SERIAL_DEBUG to 1
 - hardware-dependencies are combined in "platform.h", synced with [onewire-lib](https://github.com/PaulStoffregen/OneWire)
    - extra supported: arduino zero, teensy, sam3x, pic32, esp8266, nrf51822 (...)
    - for portability and tests it can even be compiled on a PC with the supplied mock-up functions
 - good documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top): 
+- rework of error system, slaves can raise errors now
 - rework of the whole timings, if needed you can configure overdrive speed (arduino uno would probably be to slow)
 - bug fix: non conformal behaviour as a onewire-slave (hopefully)
 - raise the maximal slave limit from 8 to 32, takes ~100b extra program-space

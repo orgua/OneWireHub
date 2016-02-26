@@ -6,16 +6,12 @@ DS2401::DS2401(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 bool DS2401::duty(OneWireHub *hub)
 {
-    const uint8_t done = hub->recv();
+    const uint8_t cmd = hub->recv();
 
-    switch (done)
+    switch (cmd)
     {
         default:
-            if (dbg_HINT)
-            {
-                Serial.print("DS2401=");
-                Serial.println(done, HEX);
-            }
+            hub->raiseSlaveError(cmd);
             break;
     }
     return true;

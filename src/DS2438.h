@@ -33,8 +33,6 @@ struct DS2438_page0 // overlay with memory if needed (like done in ds2408)
 class DS2438 : public OneWireItem
 {
 private:
-    static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
-
     static constexpr uint8_t PAGE_EMU_COUNT = 1; // how much of the real 8 pages should be emulated, use at least 1, max 8
 
     // Register Addresses
