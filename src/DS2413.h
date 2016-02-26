@@ -9,7 +9,6 @@
 class DS2413 : public OneWireItem
 {
 private:
-    static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
 
     bool pin_state[2];  // sensed input for A and B
     bool pin_latch[2];  // PIO can be set to input (0) or output-to-zero (1)

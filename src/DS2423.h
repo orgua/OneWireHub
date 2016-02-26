@@ -8,7 +8,6 @@
 class DS2423 : public OneWireItem
 {
 private:
-    static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
 
 public:
     static constexpr uint8_t family_code = 0x1D;

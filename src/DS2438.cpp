@@ -11,16 +11,15 @@ DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 bool DS2438::duty(OneWireHub *hub)
 {
-    uint8_t done = hub->recv();
+    uint8_t cmd = hub->recv();
     uint8_t page;
     uint8_t crc;
     uint8_t garbage[8];
 
-    switch (done)
+    switch (cmd)
     {
         case 0x44: // Convert T
             hub->sendBit(1);
-            if (dbg_sensor) Serial.println("DS2438 : Convert T");
             break;
 
         case 0x4E: // Write Scratchpad
@@ -29,25 +28,14 @@ bool DS2438::duty(OneWireHub *hub)
                 hub->recv(garbage, 8);
             else
                 hub->recv(&memory[page * 8], 8);
-            if (dbg_sensor)
-            {
-                Serial.print("DS2438 : Write Scratchpad - Page:");
-                Serial.println(page, HEX);
-            }
             break;
 
         case 0xB4: // Convert V
             hub->sendBit(1);
-            if (dbg_sensor) Serial.println("DS2438 : Convert V");
             break;
 
         case 0xB8: // Recall Memory
             page = hub->recv();
-            if (dbg_sensor)
-            {
-                Serial.print("DS2438 : Recall Memory - Page:");
-                Serial.println(page, HEX);
-            }
             break;
 
         case 0xBE: // Read Scratchpad
@@ -63,24 +51,15 @@ bool DS2438::duty(OneWireHub *hub)
                 hub->send(&memory[page * 8], 8);
             }
             hub->send(crc);
-            if (dbg_sensor)
-            {
-                Serial.print("DS2438 : Read Scratchpad - Page:");
-                Serial.println(page, HEX);
-            }
             break;
 
         case 0x48: // copy scratchpad
             page = hub->recv() & static_cast<uint8_t>(0x07);
             hub->sendBit(1);
-            if (dbg_sensor) Serial.println("DS2438 : Copy Scratchpad");
+            break;
 
         default:
-            if (dbg_HINT)
-            {
-                Serial.print("DS2438=");
-                Serial.println(done, HEX);
-            }
+            hub->raiseSlaveError(cmd);
             break;
     }
     return true;

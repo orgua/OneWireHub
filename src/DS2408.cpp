@@ -25,9 +25,9 @@ void DS2408::updateCRC()
 bool DS2408::duty(OneWireHub *hub)
 {
     memory.field.crc = 0;
-    uint8_t done = hub->recvAndCRC16(memory.field.crc);
+    uint8_t cmd = hub->recvAndCRC16(memory.field.crc);
 
-    switch (done)
+    switch (cmd)
     {
         // Read PIO Registers
         case 0xF0:
@@ -42,23 +42,10 @@ bool DS2408::duty(OneWireHub *hub)
             hub->send(memory.bytes[11]);
             hub->send(memory.bytes[12]);
 
-            if (dbg_sensor)
-            {
-                Serial.print("DS2408 : PIO Registers : ");
-                Serial.print(memory.bytes[2], HEX);
-                Serial.print(" ");
-                Serial.print(memory.bytes[1], HEX);
-                Serial.println();
-            }
-
             break;
 
         default:
-            if (dbg_HINT)
-            {
-                Serial.print("DS2408=");
-                Serial.println(done, HEX);
-            }
+            hub->raiseSlaveError(cmd);
             return false;
     }
 

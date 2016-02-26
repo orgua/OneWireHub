@@ -9,8 +9,6 @@
 class DS2405 : public OneWireItem
 {
 private:
-    static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
-
     bool pin_state;
 
 public:

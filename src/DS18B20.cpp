@@ -22,41 +22,35 @@ void DS18B20::updateCRC()
 
 bool DS18B20::duty(OneWireHub *hub)
 {
-    const uint8_t done = hub->recv();
+    const uint8_t cmd = hub->recv();
 
-    switch (done)
+    switch (cmd)
     {
         case 0x44: // CONVERT T --> start a new measurement conversion
             hub->sendBit(1);
-            if (dbg_sensor) Serial.println("DS18B20 : CONVERT T");
             break;
 
         case 0x4E: // WRITE SCRATCHPAD
             // write 3 byte of data to scratchpad[1:3]
             hub->recv(&scratchpad[2], 3);
             updateCRC();
-            if (dbg_sensor) Serial.println("DS18B20 : WRITE SCRATCHPAD");
             break;
 
         case 0xBE: // READ SCRATCHPAD
             hub->send(scratchpad, 9);
             if (hub->getError()) return false;
-            if (dbg_sensor)  Serial.println("DS18B20 : READ SCRATCHPAD");
             break;
 
         case 0x48: // COPY SCRATCHPAD to EEPROM
             // send1 if parasite power is used
-            if (dbg_sensor) Serial.println("DS18B20 : COPY SCRATCHPAD");
             break;
 
         case 0xB8: // RECALL E2 (EEPROM to 3byte from Scratchpad)
             hub->sendBit(1); // signal that OP is done
-            if (dbg_sensor) Serial.println("DS18B20 : RECALL E2");
             break;
 
         case 0xB4: // READ POWER SUPPLY
             hub->sendBit(1); // 1: say i am external powered, 0: uses parasite power
-            if (dbg_sensor) Serial.println("DS18B20 : READ POWER SUPPLY");
             break;
 
             // READ TIME SLOTS, respond with 1 if conversion is done, not usable with parasite power
@@ -69,16 +63,11 @@ bool DS18B20::duty(OneWireHub *hub)
             //  write trim1               0x95
         case 0xEC:
             // TODO: Alarm search command, respond if flag is set
-            if (dbg_sensor) Serial.println("DS18B20 : ALARM REQUESTED");
             break;
 
 
         default:
-            if (dbg_HINT)
-            {
-                Serial.print("DS18B20=");
-                Serial.println(done, HEX);
-            }
+            hub->raiseSlaveError(cmd);
             break;
     }
 

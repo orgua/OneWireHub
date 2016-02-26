@@ -9,8 +9,6 @@
 class DS2450 : public OneWireItem
 {
 private:
-    static constexpr bool    dbg_sensor  = 0; // give debug messages for this sensor
-
     static constexpr uint8_t PAGE_COUNT  = 4;
     static constexpr uint8_t PAGE_SIZE   = 8;
 

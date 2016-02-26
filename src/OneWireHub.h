@@ -5,10 +5,9 @@
 #include <Arduino.h>
 #include "platform.h" // code for compatibility
 
-constexpr bool dbg_IDTREE   = 0; // give debug messages
-constexpr bool dbg_SEARCH   = 0; // give debug messages
-constexpr bool dbg_MATCHROM = 0; // give debug messages
-constexpr bool dbg_HINT     = 0; // give debug messages for called unimplemented functions of sensors
+#define USE_SERIAL_DEBUG 0 // give debug messages when printError() is called
+// INFO: had to go with a define because some compilers use constexpr as simple const --> massive problems
+
 
 // TODO: rework this whole system
 // - cleaner timing-system throughout the lib (raw tick-counter of micros()?)
@@ -35,6 +34,8 @@ private:
     static constexpr uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW  = 7;
     static constexpr uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH = 8;
     static constexpr uint8_t ONEWIRE_PRESENCE_HIGH_ON_LINE      = 9;
+    static constexpr uint8_t ONEWIRE_INCORRECT_ONEWIRE_CMD      = 10;
+    static constexpr uint8_t ONEWIRE_INCORRECT_SLAVE_USAGE      = 11;
 
     /// the following TIME-values are in us and are taken from the ds2408 datasheet
     // should be --> datasheet
@@ -132,6 +133,11 @@ public:
     {
         return _error;
     };
+
+    void raiseSlaveError(const uint8_t cmd = 0)
+    {
+        _error = ONEWIRE_INCORRECT_SLAVE_USAGE;
+    }
 
 };
 

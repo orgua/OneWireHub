@@ -15,9 +15,9 @@ bool DS2450::duty(OneWireHub *hub)
     uint8_t  b;
     uint16_t crc = 0;
 
-    uint8_t done = hub->recv();
+    uint8_t cmd = hub->recv();
 
-    switch (done)
+    switch (cmd)
     {
         case 0xAA: // READ MEMORY
 
@@ -46,11 +46,6 @@ bool DS2450::duty(OneWireHub *hub)
 
             // TODO: not fully implemented
 
-            if (dbg_sensor)
-            {
-                Serial.print("DS2450 : READ MEMORY : ");
-                Serial.println(memory_address_start, HEX);
-            }
             break;
 
         case 0x55: // write memory (only page 1&2 allowed)
@@ -77,12 +72,7 @@ bool DS2450::duty(OneWireHub *hub)
             hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
 
             // TODO: write back data if wanted, till the end of register
-
-            if (dbg_sensor)
-            {
-                Serial.print("DS2450 : READ MEMORY : ");
-                Serial.println(memory_address_start, HEX);
-            }
+            break;
 
         case 0x3C: // convert, starts adc
             crc = crc16(0x3C, crc); // Cmd
@@ -93,13 +83,10 @@ bool DS2450::duty(OneWireHub *hub)
             hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
             hub->sendBit(0); // still converting....
             hub->sendBit(1); // finished conversion
+            break;
 
         default:
-            if (dbg_HINT)
-            {
-                Serial.print("DS2450=");
-                Serial.println(done, HEX);
-            }
+            hub->raiseSlaveError(cmd);
             break;
     }
 

@@ -12,9 +12,9 @@ bool DS2433::duty(OneWireHub *hub)
     uint8_t  mem_offset;
     uint8_t  b;
 
-    uint8_t done = hub->recv();
+    uint8_t cmd = hub->recv();
 
-    switch (done)
+    switch (cmd)
     {
         // WRITE SCRATCHPAD COMMAND
         case 0x0F:
@@ -32,12 +32,6 @@ bool DS2433::duty(OneWireHub *hub)
                 if (hub->getError()) break;
             }
 
-            if (dbg_sensor)
-            {
-                Serial.print("DS2433 : WRITE SCRATCHPAD COMMAND : ");
-                Serial.println(memory_address, HEX);
-            }
-
             break;
 
             // READ SCRATCHPAD COMMAND
@@ -52,14 +46,6 @@ bool DS2433::duty(OneWireHub *hub)
 
             // Offset
             mem_offset = hub->recv();
-
-            if (dbg_sensor)
-            {
-                Serial.print("DS2433 : READ SCRATCHPAD COMMAND : ");
-                Serial.print(memory_address, HEX);
-                Serial.print(",");
-                Serial.println(mem_offset, HEX);
-            }
 
             break;
 
@@ -77,20 +63,10 @@ bool DS2433::duty(OneWireHub *hub)
             for (int i = 0; i < 32; ++i) // TODO: check for memory_address + 32 < sizeof()
                 hub->send(memory[memory_address + i]);
 
-            if (dbg_sensor)
-            {
-                Serial.print("DS2433 : READ MEMORY : ");
-                Serial.println(memory_address, HEX);
-            }
-
             break;
 
         default:
-            if (dbg_HINT)
-            {
-                Serial.print("DS2433=");
-                Serial.println(done, HEX);
-            }
+            hub->raiseSlaveError(cmd);
             break;
     }
     return true;
