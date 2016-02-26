@@ -15,6 +15,23 @@
 // - offer interruptable read / write OPs
 // - safe timestamp of last HIGH, LOW state?
 
+enum class Error : uint8_t {
+    NO_ERROR                   = 0,
+    READ_TIMESLOT_TIMEOUT      = 1,
+    WRITE_TIMESLOT_TIMEOUT     = 2,
+    WAIT_RESET_TIMEOUT         = 3,
+    VERY_LONG_RESET            = 4,
+    VERY_SHORT_RESET           = 5,
+    PRESENCE_LOW_ON_LINE       = 6,
+    READ_TIMESLOT_TIMEOUT_LOW  = 7,
+    READ_TIMESLOT_TIMEOUT_HIGH = 8,
+    PRESENCE_HIGH_ON_LINE      = 9,
+    INCORRECT_ONEWIRE_CMD      = 10,
+    INCORRECT_SLAVE_USAGE      = 11,
+    TRIED_INCORRECT_WRITE      = 11,
+};
+
+
 class OneWireItem;
 
 class OneWireHub
@@ -24,18 +41,6 @@ private:
     static constexpr uint8_t ONEWIRESLAVE_LIMIT                 = 8; // 32 is max at the moment
     static constexpr uint8_t ONEWIRETREE_SIZE                   = 2*ONEWIRESLAVE_LIMIT - 1;
 
-    static constexpr uint8_t ONEWIRE_NO_ERROR                   = 0; // TODO: could be a enum
-    static constexpr uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT      = 1;
-    static constexpr uint8_t ONEWIRE_WRITE_TIMESLOT_TIMEOUT     = 2;
-    static constexpr uint8_t ONEWIRE_WAIT_RESET_TIMEOUT         = 3;
-    static constexpr uint8_t ONEWIRE_VERY_LONG_RESET            = 4;
-    static constexpr uint8_t ONEWIRE_VERY_SHORT_RESET           = 5;
-    static constexpr uint8_t ONEWIRE_PRESENCE_LOW_ON_LINE       = 6;
-    static constexpr uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW  = 7;
-    static constexpr uint8_t ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH = 8;
-    static constexpr uint8_t ONEWIRE_PRESENCE_HIGH_ON_LINE      = 9;
-    static constexpr uint8_t ONEWIRE_INCORRECT_ONEWIRE_CMD      = 10;
-    static constexpr uint8_t ONEWIRE_INCORRECT_SLAVE_USAGE      = 11;
 
     /// the following TIME-values are in us and are taken from the ds2408 datasheet
     // should be --> datasheet
@@ -63,13 +68,13 @@ private:
     static constexpr uint16_t ONEWIRE_TIME_READ_STD             =  30; // used
 
     static constexpr uint16_t ONEWIRE_TIME_WRITE_LOW_MIN        =   5;
-    static constexpr uint16_t ONEWIRE_TIME_WRITE_LOW_MAX        =  15;
+    static constexpr uint16_t ONEWIRE_TIME_WRITE_LOW_MAX        =  20; // was 15
     static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_MIN   =  15;
     static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =  35; // used
     static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_MAX   =  60;
     // TODO: define to switch to overdrive mode
 
-    uint8_t _error;
+    Error _error;
 
     uint8_t           pin_bitMask;
     volatile uint8_t *baseReg;
@@ -90,7 +95,7 @@ private:
     uint8_t buildIDTree(uint8_t position_IDBit, const uint32_t slave_mask);
 
     uint8_t getNrOfFirstBitSet(const uint32_t mask);
-    uint8_t  getNrOfFirstFreeIDTreeElement(void);
+    uint8_t getNrOfFirstFreeIDTreeElement(void);
 
     bool checkReset(uint16_t timeout_us);
 
@@ -100,7 +105,7 @@ private:
 
     bool recvAndProcessCmd();
 
-    bool waitTimeSlot();
+    bool awaitTimeSlot();
 
     bool waitWhilePinIs(const bool value, const uint16_t timeout_us);
 
@@ -131,16 +136,8 @@ public:
     uint8_t recvAndCRC16(uint16_t &crc16);
 
     void printError(void);
-
-    uint8_t getError(void)
-    {
-        return _error;
-    };
-
-    void raiseSlaveError(const uint8_t cmd = 0)
-    {
-        _error = ONEWIRE_INCORRECT_SLAVE_USAGE;
-    }
+    bool getError(void);
+    void raiseSlaveError(const uint8_t cmd = 0);
 
 };
 
