@@ -43,6 +43,9 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
         }
     }
 
+    if (position == 255)
+        return 255;
+
     slave_list[position] = &sensor;
     slave_count++;
     buildIDTree();
@@ -81,9 +84,9 @@ bool    OneWireHub::detach(const uint8_t slave_number)
 
 // just look through each bit of each ID and build a tree, so there are n=slaveCount decision-points
 // trade-off: more online calculation, but @4Slave 16byte storage instead of 3*256 byte
-uint8_t OneWireHub::getNrOfFirstBitSet(const uint32_t mask)
+uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask)
 {
-    uint32_t _mask = mask;
+    mask_t _mask = mask;
     for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
     {
         if (_mask & 1)  return i;
@@ -95,7 +98,7 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const uint32_t mask)
 // gone through the address, store this result
 uint8_t OneWireHub::getNrOfFirstFreeIDTreeElement(void)
 {
-    for (uint8_t i = 0; i < ONEWIRETREE_SIZE; ++i)
+    for (uint8_t i = 0; i < ONEWIRE_TREE_SIZE; ++i)
         if (idTree[i].id_position == 255)
             return i;
     return 0;
@@ -104,8 +107,8 @@ uint8_t OneWireHub::getNrOfFirstFreeIDTreeElement(void)
 // initial FN to build the ID-Tree
 uint8_t OneWireHub::buildIDTree(void)
 {
-    uint32_t mask_slaves = 0;
-    uint32_t bit_mask    = 0x01;
+    mask_t mask_slaves = 0;
+    mask_t bit_mask    = 0x01;
 
     // build mask
     for (uint8_t i = 0; i< ONEWIRESLAVE_LIMIT; ++i)
@@ -114,7 +117,7 @@ uint8_t OneWireHub::buildIDTree(void)
         bit_mask <<= 1;
     }
 
-    for (uint8_t i = 0; i< ONEWIRETREE_SIZE; ++i)
+    for (uint8_t i = 0; i< ONEWIRE_TREE_SIZE; ++i)
         idTree[i].id_position    = 255;
 
     // begin with root-element
@@ -124,17 +127,17 @@ uint8_t OneWireHub::buildIDTree(void)
 }
 
 // returns the branch that this iteration has worked on
-uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const uint32_t mask_slaves)
+uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const mask_t mask_slaves)
 {
     if (!mask_slaves) return (255);
 
     while (position_IDBit < 64)
     {
-        uint32_t mask_pos = 0;
-        uint32_t mask_neg = 0;
+        mask_t mask_pos = 0;
+        mask_t mask_neg = 0;
         const uint8_t pos_byte = (position_IDBit >> 3);
         const uint8_t mask_bit = (static_cast<uint8_t>(1) << (position_IDBit & (7)));
-        uint32_t mask_id = 1;
+        mask_t mask_id = 1;
 
         // search through all active slaves
         for (uint8_t id = 0; id < ONEWIRESLAVE_LIMIT; ++id)
@@ -312,7 +315,7 @@ bool OneWireHub::search(void)
         {
             sendBit(false);
             sendBit(false);
-            uint8_t bit_recv = recvBit();
+            const bool bit_recv = recvBit();
             if (_error != Error::NO_ERROR) return false;
 
             // switch to next junction
@@ -331,7 +334,7 @@ bool OneWireHub::search(void)
         {
             const uint8_t pos_byte = (position_IDBit >> 3);
             const uint8_t mask_bit = (static_cast<uint8_t>(1) << (position_IDBit & (7)));
-            uint8_t bit_send, bit_recv;
+            bool bit_send;
 
             if (slave_list[active_slave]->ID[pos_byte] & mask_bit)
             {
@@ -346,7 +349,7 @@ bool OneWireHub::search(void)
                 sendBit(true);
             }
 
-            bit_recv = recvBit();
+            const bool bit_recv = recvBit();
             if (_error != Error::NO_ERROR)  return false;
 
             if (bit_send != bit_recv)
