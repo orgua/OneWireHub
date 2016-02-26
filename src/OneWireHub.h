@@ -8,12 +8,23 @@
 #define USE_SERIAL_DEBUG 0 // give debug messages when printError() is called
 // INFO: had to go with a define because some compilers use constexpr as simple const --> massive problems
 
+#define HUB_SLAVE_LIMIT 8 // set the limit of the hub HERE
 
-// TODO: rework this whole system
-// - cleaner timing-system throughout the lib (raw tick-counter of micros()?)
-// - offer strict and relaxed timing option (if master is also emulated)
-// - offer interruptable read / write OPs
-// - safe timestamp of last HIGH, LOW state?
+
+#ifndef HUB_SLAVE_LIMIT
+#error "Slavelimit not defined (why?)"
+#elif (HUB_SLAVE_LIMIT > 32)
+#error "Slavelimit is set to high (32)"
+#elif (HUB_SLAVE_LIMIT > 16)
+using mask_t = uint32_t;
+#elif (HUB_SLAVE_LIMIT > 8)
+using mask_t = uint16_t;
+#elif (HUB_SLAVE_LIMIT > 0)
+using mask_t = uint8_t;
+#else
+#error "Slavelimit is set to zero (why?)"
+#endif
+
 
 enum class Error : uint8_t {
     NO_ERROR                   = 0,
@@ -38,8 +49,8 @@ class OneWireHub
 {
 private:
 
-    static constexpr uint8_t ONEWIRESLAVE_LIMIT                 = 8; // 32 is max at the moment
-    static constexpr uint8_t ONEWIRETREE_SIZE                   = 2*ONEWIRESLAVE_LIMIT - 1;
+    static constexpr uint8_t ONEWIRESLAVE_LIMIT                 = HUB_SLAVE_LIMIT;
+    static constexpr uint8_t ONEWIRE_TREE_SIZE                  = 2*ONEWIRESLAVE_LIMIT - 1;
 
 
     /// the following TIME-values are in us and are taken from the ds2408 datasheet
@@ -89,12 +100,12 @@ private:
         uint8_t id_position;    // where does the algorithm has to look for a junction
         uint8_t got_zero;        // if 0 switch to which tree branch
         uint8_t got_one;         // if 1 switch to which tree branch
-    } idTree[ONEWIRETREE_SIZE];
+    } idTree[ONEWIRE_TREE_SIZE];
 
     uint8_t buildIDTree(void);
-    uint8_t buildIDTree(uint8_t position_IDBit, const uint32_t slave_mask);
+    uint8_t buildIDTree(uint8_t position_IDBit, const mask_t slave_mask);
 
-    uint8_t getNrOfFirstBitSet(const uint32_t mask);
+    uint8_t getNrOfFirstBitSet(const mask_t mask);
     uint8_t getNrOfFirstFreeIDTreeElement(void);
 
     bool checkReset(uint16_t timeout_us);
