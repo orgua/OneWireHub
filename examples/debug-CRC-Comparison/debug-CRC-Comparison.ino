@@ -138,6 +138,20 @@ void setup()
     Serial.println(crc, HEX);
     Serial.flush();
 
+    /// Start Var 2E //////////////////////////////////////////////////
+
+    crc = 0;
+    time_start = micros();
+    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos)
+        crc = v2E_crc16(crc, li[bytePos]);
+    time_stop = micros();
+
+    Serial.print("Var 2E took ");
+    Serial.print(time_stop - time_start);
+    Serial.print(" us, got ");
+    Serial.println(crc, HEX);
+    Serial.flush();
+
     /// timer test //////////////////////////////////////////////////
     uint16_t counter = 0;
     time_stop = micros() + 1000;
@@ -275,7 +289,7 @@ uint16_t v2A_crc16(const uint8_t address[], const uint8_t len)
 };
 
 
-/// Variant 2B - onewire-lib callable one byte at once
+/// Variant 2B - onewire-lib callable one byte at once, untouched
 
 uint16_t v2B_crc16(uint16_t crc, const uint8_t value, const uint8_t len)
 {
@@ -302,7 +316,7 @@ uint16_t v2B_crc16(uint16_t crc, const uint8_t value, const uint8_t len)
     return crc;
 };
 
-/// Variant 2C - transformed for speed
+/// Variant 2C - call one by one (byte), transformed for speed
 
 uint16_t v2C_crc16(uint16_t crc, uint8_t value)
 {
@@ -316,7 +330,7 @@ uint16_t v2C_crc16(uint16_t crc, uint8_t value)
     return crc;
 };
 
-/// var 2D - call by reference
+/// var 2D - Test call by reference --> not a good idea
 
 void v2D_crc16(uint16_t &crc, uint8_t value)
 {
@@ -329,3 +343,77 @@ void v2D_crc16(uint16_t &crc, uint8_t value)
     crc ^= (static_cast<uint16_t>(cdata) << 1);
 };
 
+
+/// Variant 2E - more tuning with ASM-compare
+
+uint16_t v2E_crc16(uint16_t crc, uint8_t value)
+{
+    static const uint8_t oddParity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
+    //value = (value ^ static_cast<uint8_t>(crc));
+    value ^= static_cast<uint8_t>(crc);
+    crc >>= static_cast<uint8_t>(8);
+    if (oddParity[value & 0x0F] ^ oddParity[value >> 4])   crc ^= 0xC001;
+    //if (oddParity[static_cast<uint8_t>(value & static_cast<uint8_t>(0x0F))] ^ oddParity[value >> 4])   crc ^= 0xC001; // --> no difference
+    //if (oddParity[value & 0x0F] ^ oddParity[static_cast<uint8_t>(value >> static_cast<uint8_t>(4))])   crc ^= 0xC001; // --> no difference
+    //if (static_cast<uint8_t>(oddParity[value & 0x0F] ^ oddParity[value >> 4]))   crc ^= 0xC001; // --> no difference
+    uint16_t cdata = (static_cast<uint16_t>(value) << 6);
+    crc ^= cdata;
+    crc ^= (static_cast<uint16_t>(cdata) << 1);
+    return crc;
+};
+
+/*   Assembly of var 2D
+ *
+ * 	    static const uint8_t oddParity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
+	    value = (value ^ static_cast<uint8_t>(crc));
+  b0:	42 27       	eor	r20, r18
+	    crc >>= 8;
+  b2:	23 2f       	mov	r18, r19
+  b4:	33 27       	eor	r19, r19
+	    if (oddParity[value & 0x0F] ^ oddParity[value >> 4])   crc ^= 0xC001;
+  b6:	a4 2f       	mov	r26, r20
+  b8:	af 70       	andi	r26, 0x0F	; 15
+  ba:	b0 e0       	ldi	r27, 0x00	; 0
+  bc:	a0 50       	subi	r26, 0x00	; 0
+  be:	bf 4f       	sbci	r27, 0xFF	; 255
+  c0:	50 e0       	ldi	r21, 0x00	; 0
+  c2:	fa 01       	movw	r30, r20
+  c4:	84 e0       	ldi	r24, 0x04	; 4
+  c6:	f5 95       	asr	r31
+  c8:	e7 95       	ror	r30
+  ca:	8a 95       	dec	r24
+  cc:	e1 f7       	brne	.-8      	; 0xc6 <main+0x30>
+  ce:	e0 50       	subi	r30, 0x00	; 0
+  d0:	ff 4f       	sbci	r31, 0xFF	; 255
+  d2:	9c 91       	ld	r25, X
+  d4:	80 81       	ld	r24, Z
+  d6:	98 17       	cp	r25, r24
+  d8:	21 f0       	breq	.+8      	; 0xe2 <main+0x4c>
+  da:	81 e0       	ldi	r24, 0x01	; 1
+  dc:	28 27       	eor	r18, r24
+  de:	80 ec       	ldi	r24, 0xC0	; 192
+  e0:	38 27       	eor	r19, r24
+	    uint16_t cdata = (static_cast<uint16_t>(value) << 6);
+  e2:	86 e0       	ldi	r24, 0x06	; 6
+  e4:	44 0f       	add	r20, r20
+  e6:	55 1f       	adc	r21, r21
+  e8:	8a 95       	dec	r24
+  ea:	e1 f7       	brne	.-8      	; 0xe4 <main+0x4e>
+	    crc ^= cdata;
+	    crc ^= (static_cast<uint16_t>(cdata) << 1);
+  ec:	ca 01       	movw	r24, r20
+  ee:	88 0f       	add	r24, r24
+  f0:	99 1f       	adc	r25, r25
+	    static const uint8_t oddParity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
+	    value = (value ^ static_cast<uint8_t>(crc));
+	    crc >>= 8;
+	    if (oddParity[value & 0x0F] ^ oddParity[value >> 4])   crc ^= 0xC001;
+	    uint16_t cdata = (static_cast<uint16_t>(value) << 6);
+	    crc ^= cdata;
+  f2:	84 27       	eor	r24, r20
+  f4:	95 27       	eor	r25, r21
+	    crc ^= (static_cast<uint16_t>(cdata) << 1);
+  f6:	82 27       	eor	r24, r18
+  f8:	93 27       	eor	r25, r19
+
+ */
