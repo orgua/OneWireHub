@@ -1,4 +1,3 @@
 *.xml
 *.iml
-CMakeLists.txt
 main.cpp
