@@ -184,6 +184,7 @@ void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 #define DIRECT_WRITE_HIGH(base, pin)	directWriteHigh(base, pin)
 
 #else
+
 #define PIN_TO_BASEREG(pin)             (0)
 #define PIN_TO_BITMASK(pin)             (pin)
 #define IO_REG_TYPE unsigned int
@@ -194,6 +195,75 @@ void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 #define DIRECT_MODE_INPUT(base, pin)    pinMode(pin,INPUT)
 #define DIRECT_MODE_OUTPUT(base, pin)   pinMode(pin,OUTPUT)
 #warning "OneWire. Fallback mode. Using API calls for pinMode,digitalRead and digitalWrite. Operation of this library is not guaranteed on this architecture."
+
+
+
+/////////////////////////////////////////// EXTRA PART /////////////////////////////////////////
+// this part is loaded if no proper arduino-environment is found (good for external testing)
+// these functions are mockups and used by the Hub
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define INPUT 1
+#define OUTPUT 0
+#define HIGH 1
+#define LOW 0
+
+#define ARDUINO_attiny // to load up Serial below
+
+template <typename T1>
+uint8_t digitalRead(T1);
+
+template <typename T1, typename T2>
+uint8_t digitalWrite(T1, T2);
+
+template <typename T1, typename T2>
+uint8_t pinMode(T1, T2);
+
+uint8_t digitalPinToPort(uint8_t x);
+uint8_t *portInputRegister(uint8_t x);
+uint8_t digitalPinToBitMask(uint8_t x);
+
+uint32_t microsecondsToClockCycles(uint32_t x);
+
+uint32_t micros(void); // takes about 3 µs to process @ 16 MHz
+
+void cli(void);
+void sei(void);
+
+#endif
+
+
+#ifdef ARDUINO_attiny // Test to make it work on tiny85
+
+#include "inttypes.h"
+
+#define HEX 1
+
+class serial
+{
+public:
+    template <typename T1>
+    void print(T1 x) {};
+
+    template <typename T1, typename T2>
+    void print(T1 x,T2 y) {};
+
+    template <typename T1>
+    void println(T1 x) {};
+
+    template <typename T1, typename T2>
+    void println(T1 x,T2 y) {};
+
+    void print(void) {};
+    void println(void) {};
+    void flush(void) {};
+    void begin(uint32_t x) {};
+
+};
+serial Serial;
+
+template <typename T1, typename T2, typename T3>
+void memset(T1 x, T2 y, T3 z);
 
 #endif
 
