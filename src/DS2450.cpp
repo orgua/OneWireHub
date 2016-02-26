@@ -21,15 +21,15 @@ bool DS2450::duty(OneWireHub *hub)
     {
         case 0xAA: // READ MEMORY
 
-            crc = crc16(crc, 0xAA); // Cmd
+            crc = crc16(0xAA, crc); // Cmd
 
             b = hub->recv(); // Adr1
             reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
-            crc = crc16(crc, b);
+            crc = crc16(b, crc);
 
             b = hub->recv(); // Adr2
             reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
-            crc = crc16(crc, b);
+            crc = crc16(b, crc);
 
             memory_address_start = memory_address;
             if (memory_address > (PAGE_COUNT-1)*PAGE_SIZE) memory_address = 0; // prevent read out of bounds
@@ -38,7 +38,7 @@ bool DS2450::duty(OneWireHub *hub)
             {
                 b = memory[memory_address + i];
                 hub->send(b); // TODO: add possibility to break loop if send fails
-                crc = crc16(crc, b);
+                crc = crc16(b, crc);
             }
 
             hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
@@ -54,15 +54,15 @@ bool DS2450::duty(OneWireHub *hub)
             break;
 
         case 0x55: // write memory (only page 1&2 allowed)
-            crc = crc16(crc, 0x55); // Cmd
+            crc = crc16(0x55, crc); // Cmd
 
             b = hub->recv(); // Adr1
             reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
-            crc = crc16(crc, b);
+            crc = crc16(b, crc);
 
             b = hub->recv(); // Adr2
             reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
-            crc = crc16(crc, b);
+            crc = crc16(b, crc);
 
             memory_address_start = memory_address;
             if (memory_address > (PAGE_COUNT-1)*PAGE_SIZE) memory_address = 0; // prevent read out of bounds
@@ -70,7 +70,7 @@ bool DS2450::duty(OneWireHub *hub)
             for (uint8_t i = 0; i < PAGE_SIZE; ++i)
             {
                 memory[memory_address + i] = hub->recv(); // TODO: add possibility to break loop if recv fails, hub->read_error?
-                crc = crc16(crc, memory[memory_address + i]);
+                crc = crc16(memory[memory_address + i], crc);
             }
 
             hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
@@ -85,10 +85,10 @@ bool DS2450::duty(OneWireHub *hub)
             }
 
         case 0x3C: // convert, starts adc
-            crc = crc16(crc, 0x3C); // Cmd
-            crc = crc16(crc, hub->recv()); // input select mask, not important
+            crc = crc16(0x3C, crc); // Cmd
+            crc = crc16(hub->recv(), crc); // input select mask, not important
             b = hub->recv(); // read out control byte
-            crc = crc16(crc, b);
+            crc = crc16(b, crc);
             hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
             hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
             hub->sendBit(0); // still converting....
@@ -118,8 +118,8 @@ bool DS2450::setPotentiometer(const uint16_t p1, const uint16_t p2, const uint16
 bool DS2450::setPotentiometer(const uint8_t number, const uint16_t value)
 {
     if (number > 3) return 1;
-    uint8_t LByte = (value>>0) & static_cast<uint8_t>(0xFF);
-    uint8_t HByte = (value>>8) & static_cast<uint8_t>(0xFF);
+    uint8_t LByte = static_cast<uint8_t>(value>>0) & static_cast<uint8_t>(0xFF);
+    uint8_t HByte = static_cast<uint8_t>(value>>8) & static_cast<uint8_t>(0xFF);
     memory[2*number+0] = LByte;
     memory[2*number+1] = HByte;
     return true;

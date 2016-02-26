@@ -71,7 +71,7 @@ bool DS2438::duty(OneWireHub *hub)
             break;
 
         case 0x48: // copy scratchpad
-            page = hub->recv() & 0x07;
+            page = hub->recv() & static_cast<uint8_t>(0x07);
             hub->sendBit(1);
             if (dbg_sensor) Serial.println("DS2438 : Copy Scratchpad");
 
