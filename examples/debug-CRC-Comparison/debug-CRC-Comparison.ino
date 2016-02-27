@@ -152,40 +152,6 @@ void setup()
     Serial.println(crc, HEX);
     Serial.flush();
 
-    /// timer test //////////////////////////////////////////////////
-    uint16_t counter = 0;
-    time_stop = micros() + 1000;
-    while (micros() < time_stop)
-    {
-        counter++;
-    }
-    Serial.print("Benchmark: 1ms got us ");
-    Serial.print(counter);
-    Serial.println(" * (micros(), 32bit check, 32bit increment)");
-
-    /// Benchmark for waitTimeSlot-Code //////////////////////////////
-
-#define TIMESLOT_WAIT_RETRY_COUNT       (microsecondsToClockCycles(135))
-#define DIRECT_READ(base, mask)         (((*(base)) & (mask)) ? 1 : 0)
-#define DIRECT_MODE_INPUT(base, mask)   ((*((base)+1)) &= ~(mask))
-
-    uint8_t pin_bitMask = digitalPinToBitMask(8);
-    volatile uint8_t *baseReg;
-    baseReg = portInputRegister(digitalPinToPort(8));
-
-    volatile uint8_t *reg asm("r30") = baseReg;
-    uint16_t retries = TIMESLOT_WAIT_RETRY_COUNT;
-
-    time_start = micros();
-    while (DIRECT_READ(reg, pin_bitMask)+1)
-    {
-            if (--retries == 0) break;
-    }
-    time_stop = micros();
-    Serial.print("Loop took ");
-    Serial.print(time_stop - time_start);
-    Serial.println(" us. ");
-
 }
 
 void loop()
