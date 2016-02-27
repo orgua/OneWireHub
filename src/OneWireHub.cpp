@@ -211,7 +211,7 @@ bool OneWireHub::poll(void)
     if (!slave_count)           return true;
 
     //Once reset is done, go to next step
-    if (!checkReset(8000))      return false;
+    if (!checkReset(10000))      return false;
 
     // Reset is complete, tell the master we are present
     if (!showPresence())        return false;
@@ -461,12 +461,12 @@ bool OneWireHub::sendBit(const bool value)
     if (value)  waitWhilePinIs( 0, ONEWIRE_TIME_READ_ONE_LOW_MAX); // no pinCheck demanded, but this additional check can cut waitTime
     else
     {
-        // if we wait for release we could detect faulty writing slots
-        if (false&&!waitWhilePinIs( 0, ONEWIRE_TIME_WRITE_LOW_MAX))
-        {
-            _error = Error::TRIED_INCORRECT_WRITE;
-            return false;
-        }
+        // if we wait for release we could detect faulty writing slots --> pedantic Mode not needed for now
+//        if (!waitWhilePinIs( 0, ONEWIRE_TIME_WRITE_LOW_MAX))
+//        {
+//            _error = Error::TRIED_INCORRECT_WRITE;
+//            return false;
+//        }
         cli();
 
         DIRECT_WRITE_LOW(reg, pin_bitMask);
@@ -565,18 +565,29 @@ uint8_t OneWireHub::recvAndCRC16(uint16_t &crc16)
     return value;
 }
 
+#define USE_MICROS 1
+
 bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
 {
     volatile uint8_t *reg asm("r30") = baseReg;
     if (DIRECT_READ(reg, pin_bitMask) != value) return true; // shortcut
 
+#if (USE_MICROS > 0)
     uint32_t time_trigger = micros() + timeout_us;
     while (DIRECT_READ(reg, pin_bitMask) == value)
     {
         if (micros() > time_trigger) return false;
     }
+#else
+    uint16_t retries = static_cast<uint16_t>(microsecondsToClockCycles(timeout_us) >> 3);
+    while (DIRECT_READ(reg, pin_bitMask) == value)
+    {
+        if (--retries == 0) return false;
+    }
+#endif
     return true;
 }
+
 
 #define NEW_WAIT 0 // TODO: does not work as expected
 #if (NEW_WAIT > 0)
