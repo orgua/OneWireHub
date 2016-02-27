@@ -1,7 +1,7 @@
 OneWireHub
 ==========
 
-The OneWireHub is an Arduino (and many more) compatible library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously. 
+The OneWireHub is an Arduino (and many more platforms) compatible library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously. 
 The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your environment.
 
 ### Supported Slaves (bold ones are feature-complete):
@@ -26,17 +26,16 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
    - i.e. use of constexpr instead of #define for better compiler-messages
 - hardware-dependencies are combined in "platform.h", synced with [onewire-lib](https://github.com/PaulStoffregen/OneWire)
    - extra supported: arduino zero, teensy, sam3x, pic32, esp8266, nrf51822 (...)
-   - for portability and tests it can even be compiled on a PC with the supplied mock-up functions
+   - for portability and tests the hub can even be compiled on a PC with the supplied mock-up functions
 - Serial debug output can be enabled in OneWireHub.h: set USE_SERIAL_DEBUG to 1
 - good documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top): 
-- rework of error system, switch to enum, slaves can raise errors now & there is only one Block using Serial
+- rework of error system, switch to enum, slaves can raise errors now & and Serial does not interfere with OW-timings
 - rework of the whole timings, if needed you can configure overdrive speed (arduino uno would probably be to slow)
 - bug fix: non conformal behaviour as a onewire-slave (hopefully)
 - raise the maximal slave limit from 8 to 32, code adapts via variable dataTypes
 - open up for a lot more platforms with "platform.h" (taken from onewire-lib)
-- fix bug: open-drain violation on slave side
 - per-bit-CRC16 with sendAndCRC16() and sendAndCRC16() for load-balancing, 900ns/bit instead of 7µs/byte on Atmega328@16MHz
 - add examples for onewire-master, for testing the bus
 - rework of checkReset(), showPresence(), send(), recv() - Hub is much more reliable now and it saves ~120 byte program-space
