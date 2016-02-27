@@ -4,7 +4,6 @@
 
 #include <setjmp.h>
 static jmp_buf break_here;
-static jmp_buf std_resume;
 
 // setjmp(env) safes the current state in the program and returns 0
 // longjmp(env) goes back to that state saved state --> setjmp will exit with 1
@@ -65,19 +64,25 @@ void irq_mockup()
         longjmp(break_here,1);
     }
 
-    static uint8_t set_initial_jump = 1;
-    if(set_initial_jump)
-    {
-        set_initial_jump = 0;
-        setjmp(std_resume);
-        return; //safe ONE time
-    };
-
-    //// do your state-machine here
+    //// put the state-machine here
     // waitReset
     // showPresence
+/*
+    static bool flipFlop = true;
 
+    if (flipFlop)
+    {
+        //flipFlop = false;
+        if (!send(dataByte++)) return;
+    }
+    else
+    {
+        flipFlop = true;
+        if (!recv()) return;
+    }
+*/
     if (!send(dataByte++)) return;
+
     //Serial.println(" IRQ End");
 }
 
@@ -98,6 +103,7 @@ bool send(const uint8_t dataByte)
 }
 
 
+
 bool sendBit(const bool value)
 {
     Serial.print(value);
@@ -106,16 +112,48 @@ bool sendBit(const bool value)
     // wait for next Timeslot
     if (setjmp(break_here))
     {
-        return false;
+        return true;
     }
     else
     {
         has_to_resume = 1;
-        //longjmp(std_resume,1);
-        return true;
+        return false; // no bit send yet
     }
 }
+/*
+bool recv(void)
+{
+    Serial.print(" Receiving:");
+    static uint8_t fake_recv = 0;
 
+    for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
+    {
+        if (!recvBit(fake_recv--&bitMask))  return false;
+    }
+    has_to_resume = 0;
+
+    Serial.println(" done");
+    return true;
+}
+
+bool recvBit(uint8_t fake_recv)
+{
+
+    // wait for next Timeslot
+    if (setjmp(break_here))
+    {
+        if (fake_recv) Serial.print("1 ");
+        else Serial.print("0 ");
+
+        return true;
+    }
+    else
+    {
+        has_to_resume = 1;
+        return false; // no bit recv yet
+    }
+}
+*/
 
 void setup()
 {
