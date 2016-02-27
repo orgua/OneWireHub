@@ -2,7 +2,9 @@
 #ifndef ONEWIRE_HUB_H
 #define ONEWIRE_HUB_H
 
+#if defined(ARDUINO) && ARDUINO >= 100
 #include <Arduino.h>
+#endif
 #include "platform.h" // code for compatibility
 
 #define USE_SERIAL_DEBUG 0 // give debug messages when printError() is called
