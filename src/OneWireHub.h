@@ -55,10 +55,10 @@ private:
     static constexpr uint8_t ONEWIRE_TREE_SIZE                  = 2*ONEWIRESLAVE_LIMIT - 1;
 
 
-    /// the following TIME-values are in us and are taken from the ds2408 datasheet
+    /// the following TIME-values are in microseconds and are taken from the ds2408 datasheet
     // should be --> datasheet
     // was       --> shagrat-legacy
-    static constexpr uint16_t ONEWIRE_TIME_BUS_CHANGE_MAX       =    5; // 
+    static constexpr uint16_t ONEWIRE_TIME_BUS_CHANGE_MAX       =    5; //
 
     static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            =  380; // should be 480, and was 470
     static constexpr uint16_t ONEWIRE_TIME_RESET_MAX            =  960; // from ds2413
@@ -66,9 +66,9 @@ private:
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_SAMPLE_MIN  =   20; // probe measures 40us
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     =  140; // was 125
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     =  480; // should be 280, was 480 !!!! why
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =  999; //
+    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    = 9999; //
 
-    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =  240; // should be 120, was ~1050
+    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =  999; // should be 120, was ~1050
 
     // read and write from the viewpoint of the slave!!!!
     static constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MAX     =   60; //

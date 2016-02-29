@@ -12,6 +12,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2401 Serial Number**
 - **DS2405 Single address switch**
 - DS2408 8-Channel Addressable Switch, GPIO Port-expander
+- **DS2411 Serial Number** (use DS2401 with same family code 0x01)
 - **DS2413 Dual channel addressable switch with input-sensing**
 - DS2423 4kb 1-Wire RAM with Counter
 - DS2433 4Kb 1-Wire EEPROM
@@ -70,4 +71,4 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - original pieces seem to be adopted from [OneWireSlave](http://robocraft.ru/blog/arduino/302.html)
 - further development was done in [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire) 
 - first implementation of the [OneWireHub](https://github.com/Shagrat2/OneWireHub) by Shagrat2
-- the current state of code has the concepts in common, but the codebase is a (nearly) total rewrite
+- the current state of code has the concepts in common, but the codebase is a total rewrite
