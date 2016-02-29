@@ -239,31 +239,27 @@ void sei(void);
 
 #define HEX 1
 
-class serial
+class
 {
 public:
-    template <typename T1>
-    void print(T1 x) {};
 
-    template <typename T1, typename T2>
-    void print(T1 x,T2 y) {};
+    void print(...) {};
 
-    template <typename T1>
-    void println(T1 x) {};
+    void println(...) {};
 
-    template <typename T1, typename T2>
-    void println(T1 x,T2 y) {};
-
-    void print(void) {};
-    void println(void) {};
     void flush(void) {};
     void begin(uint32_t x) {};
 
-};
-serial Serial;
+} Serial;
 
-template <typename T1, typename T2, typename T3>
-void memset(T1 x, T2 y, T3 z);
+template <typename T1, typename T2>
+void memset(T1 address[], T1 initValue, T2 size)
+{
+    for (T2 counter = 0; counter < size; ++counter)
+    {
+        address[counter] = (initValue);
+    }
+};
 
 #endif
 
