@@ -58,33 +58,22 @@ private:
     /// the following TIME-values are in us and are taken from the ds2408 datasheet
     // should be --> datasheet
     // was       --> shagrat-legacy
-    static constexpr uint16_t ONEWIRE_TIME_BUS_CHANGE_MAX       =   5; // used
+    static constexpr uint16_t ONEWIRE_TIME_BUS_CHANGE_MAX       =    5; // 
 
-    static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            = 380; // used, should be 480, and was 470
-    static constexpr uint16_t ONEWIRE_TIME_RESET_MAX            = 960; // used, from ds2413
+    static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            =  380; // should be 480, and was 470
+    static constexpr uint16_t ONEWIRE_TIME_RESET_MAX            =  960; // from ds2413
 
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MIN    =  15;
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =  60;
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_SAMPLE_MIN  =  20; // used, probe measures 40us
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MIN     =  60;
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     = 140; // used, was 125
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     = 480; // used, should be 280, was 480 !!!! why
+    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_SAMPLE_MIN  =   20; // probe measures 40us
+    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     =  140; // was 125
+    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     =  480; // should be 280, was 480 !!!! why
+    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =  999; //
 
-    static constexpr uint16_t ONEWIRE_TIME_SLOT_MIN             =  65;
-    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             = 240; // used, should be 120, was ~1050
+    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =  240; // should be 120, was ~1050
 
     // read and write from the viewpoint of the slave!!!!
-    static constexpr uint16_t ONEWIRE_TIME_READ_ZERO_LOW_MIN    =  60;
-    static constexpr uint16_t ONEWIRE_TIME_READ_ZERO_LOW_MAX    = 120;
-    static constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MIN     =  15;
-    static constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MAX     =  60; // used
-    static constexpr uint16_t ONEWIRE_TIME_READ_STD             =  30; // used
-
-    static constexpr uint16_t ONEWIRE_TIME_WRITE_LOW_MIN        =   5;
-    static constexpr uint16_t ONEWIRE_TIME_WRITE_LOW_MAX        =  20; // was 15
-    static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_MIN   =  15;
-    static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =  35; // used
-    static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_MAX   =  60;
+    static constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MAX     =   60; //
+    static constexpr uint16_t ONEWIRE_TIME_READ_STD             =   30; //
+    static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =   35; //
     // TODO: define to switch to overdrive mode
 
     Error _error;
