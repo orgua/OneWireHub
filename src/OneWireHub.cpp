@@ -290,7 +290,7 @@ bool OneWireHub::showPresence(void)
     }
 
     // we wait here for the start of the first timeslot (falling Edge)
-    if (!waitWhilePinIs( 1, ONEWIRE_TIME_RESET_MAX))
+    if (!waitWhilePinIs( 1, ONEWIRE_TIME_PRESENCE_HIGH_MAX))
     {
         _error = Error::PRESENCE_HIGH_ON_LINE;
         return false;
