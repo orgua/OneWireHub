@@ -365,7 +365,7 @@ bool OneWireHub::search(void)
 bool OneWireHub::recvAndProcessCmd(void)
 {
     uint8_t address[8];
-    bool    flag;
+    bool    flag = false;
     uint8_t cmd = recv();
 
     switch (cmd)
@@ -378,7 +378,6 @@ bool OneWireHub::recvAndProcessCmd(void)
             recv(address, 8);
             if (_error != Error::NO_ERROR)  return false;
 
-            flag = false;
             slave_selected = 0;
 
             for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
@@ -406,7 +405,6 @@ bool OneWireHub::recvAndProcessCmd(void)
             if (slave_selected != nullptr) slave_selected->duty(this);
             return true;
 
-
         case 0xCC: // SKIP ROM
             slave_selected = nullptr;
             return true;
@@ -417,7 +415,6 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         default: // Unknown command
             _error = Error::INCORRECT_ONEWIRE_CMD;
-
     }
     return false;
 }
@@ -579,7 +576,7 @@ bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
         if (micros() > time_trigger) return false;
     }
 #else
-    uint16_t retries = static_cast<uint16_t>(microsecondsToClockCycles(timeout_us) >> 3);
+    uint16_t retries = static_cast<uint16_t>(microsecondsToClockCycles(timeout_us)/11);
     while (DIRECT_READ(reg, pin_bitMask) == value)
     {
         if (--retries == 0) return false;

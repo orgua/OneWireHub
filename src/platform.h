@@ -233,7 +233,7 @@ void sei(void);
 #endif
 
 
-#ifdef ARDUINO_attiny // Test to make it work on tiny85
+#ifdef ARDUINO_attiny // Test to make it work on aTtiny85, 8MHz
 
 #include "inttypes.h"
 
