@@ -234,6 +234,8 @@ void sei(void);
 
 
 #ifdef ARDUINO_attiny // Test to make it work on aTtiny85, 8MHz
+/// README: use pin2 or pin3 for Attiny, source: https://github.com/gioblu/PJON/wiki/ATtiny-interfacing
+
 
 #include "inttypes.h"
 
@@ -255,6 +257,7 @@ public:
 template <typename T1, typename T2>
 void memset(T1 address[], T1 initValue, T2 size)
 {
+    size = size / sizeof(T2);
     for (T2 counter = 0; counter < size; ++counter)
     {
         address[counter] = (initValue);
