@@ -22,7 +22,7 @@ auto ds2401b  = DS2401( 0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0B );
 
 bool blinking()
 {
-    const  uint32_t interval    = 500;          // interval at which to blink (milliseconds)
+    const  uint32_t interval    = 5000;          // interval at which to blink (milliseconds)
     static uint32_t nextMillis  = millis();     // will store next time LED will updated
 
     if (millis() > nextMillis)
