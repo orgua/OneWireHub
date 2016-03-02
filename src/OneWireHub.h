@@ -60,13 +60,13 @@ private:
     // was       --> shagrat-legacy
     static constexpr uint16_t ONEWIRE_TIME_BUS_CHANGE_MAX       =    5; //
 
-    static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            =  380; // should be 480, and was 470
+    static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            =  460; // should be 480, and was 470
     static constexpr uint16_t ONEWIRE_TIME_RESET_MAX            =  960; // from ds2413
 
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_SAMPLE_MIN  =   20; // probe measures 40us
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     =  140; // was 125
+    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     =  130; // was 125
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     =  480; // should be 280, was 480 !!!! why
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    = 9999; //
+    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =20000; //
 
     static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =  999; // should be 120, was ~1050
 
