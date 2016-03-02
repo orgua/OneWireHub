@@ -27,7 +27,7 @@ bool DS18B20::duty(OneWireHub *hub)
     switch (cmd)
     {
         case 0x44: // CONVERT T --> start a new measurement conversion
-            hub->sendBit(1);
+            //hub->sendBit(1); // 1 is passive ...
             break;
 
         case 0x4E: // WRITE SCRATCHPAD
@@ -46,11 +46,11 @@ bool DS18B20::duty(OneWireHub *hub)
             break;
 
         case 0xB8: // RECALL E2 (EEPROM to 3byte from Scratchpad)
-            hub->sendBit(1); // signal that OP is done
+            //hub->sendBit(1); // signal that OP is done // 1 is passive ...
             break;
 
         case 0xB4: // READ POWER SUPPLY
-            hub->sendBit(1); // 1: say i am external powered, 0: uses parasite power
+            //hub->sendBit(1); // 1: say i am external powered, 0: uses parasite power, // 1 is passive ...
             break;
 
             // READ TIME SLOTS, respond with 1 if conversion is done, not usable with parasite power
