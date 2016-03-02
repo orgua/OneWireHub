@@ -84,7 +84,7 @@ void loop()
 {
     // following function must be called periodically
     hub.poll();
-    // this part is just for debugging (dbg_HINT in OneWire.h must be enables for output)
+    // this part is just for debugging (USE_SERIAL_DEBUG in OneWire.h must be enabled for output)
     if (hub.getError()) hub.printError();
 
     // Blink triggers the state-change
