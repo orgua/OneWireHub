@@ -68,7 +68,7 @@ private:
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     =  480; // should be 280, was 480 !!!! why
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =20000; //
 
-    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =  999; // should be 120, was ~1050
+    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =  130; // should be 120, was ~1050
 
     // read and write from the viewpoint of the slave!!!!
     static constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MAX     =   60; //

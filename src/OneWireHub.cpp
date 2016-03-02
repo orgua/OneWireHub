@@ -207,19 +207,20 @@ bool OneWireHub::poll(void)
 {
     _error = Error::NO_ERROR;
 
-    // this additional check prevents an infinite loop when calling this FN without sensors attached
-    if (!slave_count)           return true;
+    while (1)
+    {
+        // this additional check prevents an infinite loop when calling this FN without sensors attached
+        if (!slave_count)           return true;
 
-    //Once reset is done, go to next step
-    if (!checkReset(10000))      return false;
+        //Once reset is done, go to next step
+        if (!checkReset(10000))     return false;
 
-    // Reset is complete, tell the master we are present
-    if (!showPresence())        return false;
+        // Reset is complete, tell the master we are present
+        if (!showPresence())        return false;
 
-    //Now that the master should know we are here, we will get a command from the bus
-    if (recvAndProcessCmd())    return true;
-
-    return false;
+        //Now that the master should know we are here, we will get a command from the bus
+        if (!recvAndProcessCmd())   return false;
+    }
 }
 
 
@@ -239,7 +240,7 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // TODO: is there a specific hi
     // wait for the bus to become low (master-controlled), since we are polling we don't know for how long it was zero
     if (!waitWhilePinIs(1, timeout_us))
     {
-        _error = Error::WAIT_RESET_TIMEOUT;
+        //_error = Error::WAIT_RESET_TIMEOUT;
         return false;
     }
 
@@ -255,7 +256,7 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // TODO: is there a specific hi
     // If the master pulled low for to short this will trigger an error
     if ((time_start + ONEWIRE_TIME_RESET_MIN) > micros())
     {
-        _error = Error::VERY_SHORT_RESET;
+        //_error = Error::VERY_SHORT_RESET;
         return false;
     }
 
@@ -289,14 +290,7 @@ bool OneWireHub::showPresence(void)
         return false;
     }
 
-    // we wait here for the start of the first timeslot (falling Edge)
-//    if (!waitWhilePinIs( 1, ONEWIRE_TIME_PRESENCE_HIGH_MAX))
-//    {
-//        _error = Error::PRESENCE_HIGH_ON_LINE;
-//        return false;
-//    }
-
-    extend_timeslot_detection = 1;
+    extend_timeslot_detection = 1; // DS9490R takes 7-9 ms after presence-detection to start with timeslots
     return true;
 }
 
@@ -402,7 +396,12 @@ bool OneWireHub::recvAndProcessCmd(void)
             }
 
             if (!flag) return false;
-            if (slave_selected != nullptr) slave_selected->duty(this);
+
+            if (slave_selected != nullptr)
+            {
+                extend_timeslot_detection = 1;
+                slave_selected->duty(this);
+            }
             return true;
 
         case 0xCC: // SKIP ROM
@@ -459,17 +458,11 @@ bool OneWireHub::sendBit(const bool value)
     else
     {
         // if we wait for release we could detect faulty writing slots --> pedantic Mode not needed for now
-//        if (!waitWhilePinIs( 0, ONEWIRE_TIME_WRITE_LOW_MAX))
-//        {
-//            _error = Error::TRIED_INCORRECT_WRITE;
-//            return false;
-//        }
         cli();
-
         DIRECT_WRITE_LOW(reg, pin_bitMask);
         DIRECT_MODE_OUTPUT(reg, pin_bitMask);
         sei();
-        waitWhilePinIs( 0, ONEWIRE_TIME_WRITE_ZERO_LOW_STD); // no pinCheck demanded, but this additional check can cut waitTime
+        waitWhilePinIs( 0, ONEWIRE_TIME_WRITE_ZERO_LOW_STD); // no pinCheck demanded
         DIRECT_MODE_INPUT(reg, pin_bitMask);
     }
     sei();
@@ -534,7 +527,6 @@ bool OneWireHub::recvBit(void)
     }
     sei();
     waitWhilePinIs( 0, ONEWIRE_TIME_READ_STD); // no pinCheck demanded, but this additional check can cut waitTime
-
     return DIRECT_READ(reg, pin_bitMask);
 }
 
@@ -586,7 +578,7 @@ bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
 }
 
 
-#define NEW_WAIT 0 // TODO: does not work as expected
+#define NEW_WAIT 0 // TODO: NewWait does not work as expected
 #if (NEW_WAIT > 0)
 
 // wait for a low to high transition followed by a high to low within the time-out
@@ -627,7 +619,7 @@ bool OneWireHub::awaitTimeSlot(void)
 
 #else
 
-#define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135))
+#define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135)/11)   /// :11 is a specif value for 8bit-atmega, still to determine
 bool OneWireHub::awaitTimeSlot(void)
 {
     volatile uint8_t *reg asm("r30") = baseReg;
