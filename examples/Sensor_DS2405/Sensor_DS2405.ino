@@ -1,6 +1,7 @@
 /*
- *    Example-Code that emulates a DS2413 Dual channel addressable switch
- *    Tested with https://github.com/PaulStoffregen/OneWire --> still untested
+ *    Example-Code that emulates a DS2405 - One Channel addressable switch
+ *    Tested with
+ *    - DS9490R, atmega328@16MHz as Slave
  */
 
 #include "OneWireHub.h"
@@ -32,7 +33,7 @@ bool blinking()
 void setup()
 {
     Serial.begin(115200);
-    Serial.println("OneWire-Hub DS2413 Dual channel addressable switch");
+    Serial.println("OneWire-Hub DS2405 - One channel addressable switch");
 
     pinMode(led_PIN, OUTPUT);
 
