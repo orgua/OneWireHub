@@ -60,7 +60,7 @@ private:
     // was       --> shagrat-legacy
     static constexpr uint16_t ONEWIRE_TIME_BUS_CHANGE_MAX       =    5; //
 
-    static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            =  460; // should be 480, and was 470
+    static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            =  430; // should be 480, and was 470
     static constexpr uint16_t ONEWIRE_TIME_RESET_MAX            =  960; // from ds2413
 
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_SAMPLE_MIN  =   20; // probe measures 40us
@@ -80,7 +80,7 @@ private:
 
     uint8_t           pin_bitMask;
     volatile uint8_t *baseReg;
-    uint8_t           skip_timeslot_detection;
+    uint8_t           extend_timeslot_detection;
 
     uint8_t      slave_count;
     OneWireItem *slave_list[ONEWIRESLAVE_LIMIT];  // private slave-list (use attach/detach)
