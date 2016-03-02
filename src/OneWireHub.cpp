@@ -11,7 +11,7 @@ OneWireHub::OneWireHub(uint8_t pin)
 
     baseReg = portInputRegister(digitalPinToPort(pin));
 
-    skip_timeslot_detection = 0;
+    extend_timeslot_detection = 0;
 
     slave_count = 0;
     slave_selected = nullptr;
@@ -290,13 +290,13 @@ bool OneWireHub::showPresence(void)
     }
 
     // we wait here for the start of the first timeslot (falling Edge)
-    if (!waitWhilePinIs( 1, ONEWIRE_TIME_PRESENCE_HIGH_MAX))
-    {
-        _error = Error::PRESENCE_HIGH_ON_LINE;
-        return false;
-    }
+//    if (!waitWhilePinIs( 1, ONEWIRE_TIME_PRESENCE_HIGH_MAX))
+//    {
+//        _error = Error::PRESENCE_HIGH_ON_LINE;
+//        return false;
+//    }
 
-    skip_timeslot_detection = 1;
+    extend_timeslot_detection = 1;
     return true;
 }
 
@@ -592,27 +592,33 @@ bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
 // wait for a low to high transition followed by a high to low within the time-out
 bool OneWireHub::awaitTimeSlot(void)
 {
-    if (skip_timeslot_detection)
-    {
-        skip_timeslot_detection = 0;
-        return true;
-    }
-
     cli();
     volatile uint8_t *reg asm("r30") = baseReg;
     DIRECT_MODE_INPUT(reg, pin_bitMask);
     sei();
 
     //While bus is low, retry until HIGH
+
     if (!waitWhilePinIs( false, ONEWIRE_TIME_SLOT_MAX))
     {
-        _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_LOW;
+        _error = Error::READ_TIMESLOT_TIMEOUT_LOW;
         return false;
     }
 
-    if (!waitWhilePinIs( true, ONEWIRE_TIME_SLOT_MAX ))
+    uint16_t wait_us;
+    if (extend_timeslot_detection)
     {
-        _error = ONEWIRE_READ_TIMESLOT_TIMEOUT_HIGH;
+        extend_timeslot_detection = 0;
+        wait_us = ONEWIRE_TIME_PRESENCE_HIGH_MAX;
+    }
+    else
+    {
+        wait_us = ONEWIRE_TIME_SLOT_MAX;
+    }
+
+    if (!waitWhilePinIs( true, wait_us ))
+    {
+        _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
         return false;
     }
 
@@ -624,11 +630,6 @@ bool OneWireHub::awaitTimeSlot(void)
 #define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135))
 bool OneWireHub::awaitTimeSlot(void)
 {
-    if (skip_timeslot_detection)
-    {
-        skip_timeslot_detection = 0;
-        return true;
-    }
     volatile uint8_t *reg asm("r30") = baseReg;
 
     //While bus is low, retry until HIGH
@@ -643,7 +644,15 @@ bool OneWireHub::awaitTimeSlot(void)
     }
 
     //Wait for bus to fall form 1 to 0
-    retries = TIMESLOT_WAIT_RETRY_COUNT;
+    if (extend_timeslot_detection)
+    {
+        retries = 60000;
+    }
+    else
+    {
+        retries = TIMESLOT_WAIT_RETRY_COUNT;
+    }
+
     while (DIRECT_READ(reg, pin_bitMask))
     {
         if (--retries == 0)
