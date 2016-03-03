@@ -25,15 +25,13 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - hot-plug slaves as needed
 - cleaner, faster code with c++11 features (requires arduino sw 1.6.x or higher)
    - i.e. use of constexpr instead of #define for better compiler-messages
-- hardware-dependencies are combined in "platform.h", synced with [onewire-lib](OW)
-   - extra supported: arduino zero, teensy, sam3x, pic32, [ATtiny](AT), esp8266, nrf51822 (...)
+- hardware-dependencies are combined in "platform.h", synced with [onewire-lib](https://github.com/PaulStoffregen/OneWire)
+   - extra supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822 (...)
    - for portability and tests the hub can even be compiled on a PC with the supplied mock-up functions
    - at the moment the lib relies sole on the micros()-fn for timing, no direct access to interrupt or timers
 - Serial debug output can be enabled in OneWireHub.h: set USE_SERIAL_DEBUG to 1
 - good documentation, numerous examples, easy interface for hub and sensors
 
-[AT]: https://github.com/damellis/attiny
-[OW]: https://github.com/PaulStoffregen/OneWire
 ### Recent development (latest at the top): 
 - tested with DS9490R: ds28b20, ds2401, ds2405, ds2413, more will follow
 - rework of error system, switch to enum, slaves can raise errors now & and Serial does not interfere with OW-timings
