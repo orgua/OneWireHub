@@ -22,12 +22,14 @@ bool DS2413::duty(OneWireHub *hub)
 
             setLatch(0, data & static_cast<uint8_t>(0x01)); // A
             setLatch(1, data & static_cast<uint8_t>(0x02)); // B
-
+            setState(0, ~(data & static_cast<uint8_t>(0x01)));
+            setState(1, ~(data & static_cast<uint8_t>(0x01)));
             break;
 
 
         case 0xF5: // PIO ACCESS READ
             data = 0;
+
             if (pin_state[0])  data = data | static_cast<uint8_t>(0x01);
             if (!pin_latch[0]) data = data | static_cast<uint8_t>(0x02);
             if (pin_state[1])  data = data | static_cast<uint8_t>(0x04);
