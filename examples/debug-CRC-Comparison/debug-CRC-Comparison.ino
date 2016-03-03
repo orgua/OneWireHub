@@ -152,6 +152,21 @@ void setup()
     Serial.println(crc, HEX);
     Serial.flush();
 
+
+    /// Start Var 3A //////////////////////////////////////////////////
+
+    crc = 0;
+    time_start = micros();
+    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos)
+        crc = v3A_crc16(crc, li[bytePos]);
+    time_stop = micros();
+
+    Serial.print("Var 3A took ");
+    Serial.print(time_stop - time_start);
+    Serial.print(" us, got ");
+    Serial.println(crc, HEX);
+    Serial.flush();
+
 }
 
 void loop()
@@ -383,3 +398,17 @@ uint16_t v2E_crc16(uint16_t crc, uint8_t value)
   f8:	93 27       	eor	r25, r19
 
  */
+
+/// Variant 2E - AVR Libc-Reference
+
+uint16_t v3A_crc16(uint16_t crc, uint8_t value)
+{
+    crc ^= value;
+    for (uint8_t i = 0; i < 8; ++i)
+    {
+        if (crc & 1)    crc = (crc >> 1) ^ 0xA001;
+        else            crc = (crc >> 1);
+    }
+
+    return crc;
+}

@@ -25,7 +25,7 @@ public:
     // important: the final crc is expected to be inverted (crc=~crc) !!!
     static uint16_t crc16(const uint8_t address[], const uint8_t len);
 
-    // CRC16 of type 0xC001 for little endian
+    // CRC16 of type 0xA001 for little endian
     // takes ~6µs/byte (Atmega328P@16MHz) (see debug-crc-comparison.ino)
     // important: the final crc is expected to be inverted (crc=~crc) !!!
     static uint16_t crc16(uint8_t value, uint16_t crc) // TODO: further tuning with asm
