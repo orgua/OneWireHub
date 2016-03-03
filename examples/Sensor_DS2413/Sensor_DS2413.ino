@@ -1,6 +1,8 @@
 /*
  *    Example-Code that emulates a DS2413 Dual channel addressable switch
- *    Tested with https://github.com/PaulStoffregen/OneWire --> still untested
+ *
+ *    Tested with
+ *    - DS9490R-Master, atmega328@16MHz as Slave
  */
 
 #include "OneWireHub.h"
