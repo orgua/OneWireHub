@@ -22,6 +22,8 @@
  *       - ~0.9 µs per Bit-Step for Var1C
  */
 
+#include <util/crc16.h>
+
 void setup()
 {
     Serial.begin(115200);
@@ -162,6 +164,20 @@ void setup()
     time_stop = micros();
 
     Serial.print("Var 3A took ");
+    Serial.print(time_stop - time_start);
+    Serial.print(" us, got ");
+    Serial.println(crc, HEX);
+    Serial.flush();
+
+    /// Start Var 3B //////////////////////////////////////////////////
+
+    crc = 0;
+    time_start = micros();
+    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos)
+        crc = _crc16_update(crc, li[bytePos]);
+    time_stop = micros();
+
+    Serial.print("Var 3B took ");
     Serial.print(time_stop - time_start);
     Serial.print(" us, got ");
     Serial.println(crc, HEX);
