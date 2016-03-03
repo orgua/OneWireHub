@@ -50,7 +50,7 @@ bool DS18B20::duty(OneWireHub *hub)
             break;
 
         case 0xB4: // READ POWER SUPPLY
-            //hub->sendBit(1); // 1: say i am external powered, 0: uses parasite power, // 1 is passive ...
+            //hub->sendBit(1); // 1: say i am external powered, 0: uses parasite power, // 1 is passive, so ommit it ...
             break;
 
             // READ TIME SLOTS, respond with 1 if conversion is done, not usable with parasite power

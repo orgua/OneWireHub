@@ -19,7 +19,7 @@ bool DS2438::duty(OneWireHub *hub)
     switch (cmd)
     {
         case 0x44: // Convert T
-            hub->sendBit(1);
+            //hub->sendBit(1); // 1 is passive, so ommit it ...
             break;
 
         case 0x4E: // Write Scratchpad
@@ -31,7 +31,7 @@ bool DS2438::duty(OneWireHub *hub)
             break;
 
         case 0xB4: // Convert V
-            hub->sendBit(1);
+            //hub->sendBit(1); // 1 is passive, so ommit it ...
             break;
 
         case 0xB8: // Recall Memory
@@ -55,13 +55,14 @@ bool DS2438::duty(OneWireHub *hub)
 
         case 0x48: // copy scratchpad
             page = hub->recv() & static_cast<uint8_t>(0x07);
-            hub->sendBit(1);
+            //hub->sendBit(1); // 1 is passive, so ommit it ...
             break;
 
         default:
             hub->raiseSlaveError(cmd);
             break;
     }
+    //Serial.print(cmd,HEX);
     return true;
 }
 

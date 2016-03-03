@@ -296,6 +296,11 @@ bool OneWireHub::showPresence(void)
     return true;
 }
 
+void OneWireHub::extendTimeslot(void)
+{
+    extend_timeslot_detection = 1;
+}
+
 
 bool OneWireHub::search(void)
 {
@@ -397,7 +402,10 @@ bool OneWireHub::recvAndProcessCmd(void)
                 }
             }
 
-            if (!flag) return false;
+            if (!flag)
+            {
+                return false;
+            }
 
             if (slave_selected != nullptr)
             {
