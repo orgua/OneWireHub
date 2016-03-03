@@ -38,6 +38,25 @@ uint8_t OneWireItem::crc8(const uint8_t address[], const uint8_t length)
     return crc;
 }
 
+/*
+// TODO: alternative: http://www.atmel.com/webdoc/AVRLibcReferenceManual/group__util__crc_1ga37b2f691ebbd917e36e40b096f78d996.html
+uint8_t _crc_ibutton_update(uint8_t crc, uint8_t data)
+{
+    uint8_t i;
+
+    crc = crc ^ data;
+    for (i = 0; i < 8; i++)
+    {
+        if (crc & 0x01)
+            crc = (crc >> 1) ^ 0x8C;
+        else
+            crc >>= 1;
+    }
+
+    return crc;
+}*/
+
+
 uint16_t OneWireItem::crc16(const uint8_t address[], const uint8_t length)
 {
     static const uint8_t oddParity[16] =
@@ -64,3 +83,22 @@ uint16_t OneWireItem::crc16(const uint8_t address[], const uint8_t length)
 
     return crc;
 };
+
+/* TODO: alternative for round based bitSend bitRecv
+uint16_t
+crc16_update(uint16_t crc, uint8_t a)
+{
+    int i;
+
+    crc ^= a;
+    for (i = 0; i < 8; ++i)
+    {
+        if (crc & 1)
+            crc = (crc >> 1) ^ 0xA001;
+        else
+            crc = (crc >> 1);
+    }
+
+    return crc;
+}
+ */
