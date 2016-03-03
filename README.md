@@ -35,6 +35,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 [AT]: https://github.com/damellis/attiny
 [OW]: https://github.com/PaulStoffregen/OneWire
 ### Recent development (latest at the top): 
+- tested with DS9490R: ds28b20, ds2401, ds2405, ds2413, more will follow
 - rework of error system, switch to enum, slaves can raise errors now & and Serial does not interfere with OW-timings
 - rework of the whole timings, if needed you can configure overdrive speed (arduino uno would probably be to slow)
 - bug fix: non conformal behaviour as a onewire-slave (hopefully)

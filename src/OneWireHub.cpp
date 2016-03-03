@@ -213,19 +213,21 @@ bool OneWireHub::poll(void)
         if (!slave_count)           return true;
 
         //Once reset is done, go to next step
-        if (!checkReset(10000))     return false;
+        if (!checkReset(10000))     return false; // TODO: should optimize, lower value is better
 
         // Reset is complete, tell the master we are present
         if (!showPresence())        return false;
 
         //Now that the master should know we are here, we will get a command from the bus
         if (!recvAndProcessCmd())   return false;
+
+        // on total success we want to start again, because the next reset could only be ~125 us away
     }
 }
 
 
 
-bool OneWireHub::checkReset(uint16_t timeout_us) // TODO: is there a specific high-time needed before a reset may occur?
+bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-time needed before a reset may occur -->  >120us
 {
     volatile uint8_t *reg asm("r30") = baseReg;
 
