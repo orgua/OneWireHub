@@ -41,7 +41,7 @@ public:
     void setLatch(const uint8_t a_or_b, const bool value)
     {
         pin_latch[a_or_b & 1] = value;
-        if (!value) setState(a_or_b, 0);
+        if (value) setState(a_or_b, 0);
     }
 };
 
