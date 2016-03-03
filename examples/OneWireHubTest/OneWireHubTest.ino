@@ -1,6 +1,7 @@
 /*
  *    Example-Code that emulates various Sensor - mostly for development
  *    --> attach sensors as needed
+ *
  *    Tested with https://github.com/PaulStoffregen/OneWire on the other side as Master
  */
 

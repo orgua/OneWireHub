@@ -1,7 +1,8 @@
 /*
  *    Example-Code that emulates a DS2405 - One Channel addressable switch
+ *
  *    Tested with
- *    - DS9490R, atmega328@16MHz as Slave
+ *    - DS9490R-Master, atmega328@16MHz as Slave
  */
 
 #include "OneWireHub.h"
