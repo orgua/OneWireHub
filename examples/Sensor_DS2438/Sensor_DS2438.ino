@@ -1,5 +1,6 @@
 /*
  *    Example-Code that emulates a DS2438 Smart Battery Monitor
+ *
  *    Tested with:
  *       https://github.com/PaulStoffregen/OneWire
  *       https://github.com/jbechter/arduino-onewire-DS2438  --> still untested
@@ -64,7 +65,7 @@ void loop()
         ds2438.setVolt(volt_10mV);
         ds2438.setCurr(current);
 
-        Serial.println(temp);
+        //Serial.println(temp);
     }
 }
 

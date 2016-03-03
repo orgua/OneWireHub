@@ -64,7 +64,7 @@ private:
     static constexpr uint16_t ONEWIRE_TIME_RESET_MAX            =  960; // from ds2413
 
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_SAMPLE_MIN  =   20; // probe measures 40us
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     =  130; // was 125
+    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     =  160; // was 125
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     =  480; // should be 280, was 480 !!!! why
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =20000; //
 
@@ -123,6 +123,8 @@ public:
 
     [[deprecated("use the non-blocking poll() instead of waitForRequest()")]]
     bool waitForRequest(const bool ignore_errors = false);
+
+    void extendTimeslot(void);
 
     bool send(const uint8_t dataByte);
     bool send(const uint8_t address[], const uint8_t data_length);
