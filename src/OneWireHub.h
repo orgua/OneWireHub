@@ -7,7 +7,7 @@
 #endif
 #include "platform.h" // code for compatibility
 
-#define USE_SERIAL_DEBUG 0 // give debug messages when printError() is called
+#define USE_SERIAL_DEBUG 1 // give debug messages when printError() is called
 // INFO: had to go with a define because some compilers use constexpr as simple const --> massive problems
 
 #define HUB_SLAVE_LIMIT 8 // set the limit of the hub HERE
@@ -68,7 +68,7 @@ private:
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     =  480; // should be 280, was 480 !!!! why
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =20000; //
 
-    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =  130; // should be 120, was ~1050
+    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =  135; // should be 120, was ~1050
 
     // read and write from the viewpoint of the slave!!!!
     static constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MAX     =   60; //
@@ -79,7 +79,7 @@ private:
     Error _error;
 
     uint8_t           pin_bitMask;
-    volatile uint8_t *baseReg;
+    volatile uint8_t *pin_baseReg;
     uint8_t           extend_timeslot_detection;
 
     uint8_t      slave_count;
@@ -106,6 +106,8 @@ private:
     bool search(void);
 
     bool recvAndProcessCmd();
+
+    void wait(const uint16_t timeout_us);
 
     bool awaitTimeSlot();
 
