@@ -3,6 +3,10 @@
 
 #include "OneWireHub.h"
 
+#if defined(__AVR__)
+#include <util/crc16.h>
+#endif
+
 // Feature to get first byte (family code) constant for every sensor --> var4 is implemented
 // - var 1: use second init with one byte less (Serial 1-6 instead of ID)
 // - var 2: write ID1 of OneWireItem with the proper value without asking
@@ -28,17 +32,7 @@ public:
     // CRC16 of type 0xA001 for little endian
     // takes ~6µs/byte (Atmega328P@16MHz) (see debug-crc-comparison.ino)
     // important: the final crc is expected to be inverted (crc=~crc) !!!
-    static uint16_t crc16(uint8_t value, uint16_t crc) // TODO: further tuning with asm
-    {
-        static const uint8_t oddParity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
-        value = (value ^ static_cast<uint8_t>(crc));
-        crc >>= 8;
-        if (oddParity[value & 0x0F] ^ oddParity[value >> 4])   crc ^= 0xC001;
-        uint16_t cdata = (static_cast<uint16_t>(value) << 6);
-        crc ^= cdata;
-        crc ^= (static_cast<uint16_t>(cdata) << 1);
-        return crc;
-    };
+    static uint16_t crc16(uint8_t value, uint16_t crc);
 
 };
 

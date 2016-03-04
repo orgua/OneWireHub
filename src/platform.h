@@ -230,6 +230,9 @@ uint32_t micros(void); // takes about 3 µs to process @ 16 MHz
 void cli(void);
 void sei(void);
 
+void noInterrupts(void);
+void interrupts(void);
+
 #endif
 
 
