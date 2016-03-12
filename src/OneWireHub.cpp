@@ -679,18 +679,19 @@ void OneWireHub::printError(void)
 {
 #if USE_SERIAL_DEBUG
      if (_error == Error::NO_ERROR)                        return;
-     else if (_error == Error::READ_TIMESLOT_TIMEOUT)      Serial.print("Err: read timeslot timeout");
-     else if (_error == Error::WRITE_TIMESLOT_TIMEOUT)     Serial.print("Err: write timeslot timeout");
-     else if (_error == Error::WAIT_RESET_TIMEOUT)         Serial.print("Err: reset wait timeout");
-     else if (_error == Error::VERY_LONG_RESET)            Serial.print("Err: very long reset");
-     else if (_error == Error::VERY_SHORT_RESET)           Serial.print("Err: very short reset");
-     else if (_error == Error::PRESENCE_LOW_ON_LINE)       Serial.print("Err: presence low on line");
-     else if (_error == Error::READ_TIMESLOT_TIMEOUT_LOW)  Serial.print("Err: read timeout low");
-     else if (_error == Error::READ_TIMESLOT_TIMEOUT_HIGH) Serial.print("Err: read timeout high");
-     else if (_error == Error::PRESENCE_HIGH_ON_LINE)      Serial.print("Err: presence high on line");
-     else if (_error == Error::INCORRECT_ONEWIRE_CMD)      Serial.print("Err: incorrect onewire command");
-     else if (_error == Error::INCORRECT_SLAVE_USAGE)      Serial.print("Err: slave was used in incorrect way");
-     else if (_error == Error::TRIED_INCORRECT_WRITE)      Serial.print("Err: tried to write in read-slot");
+     Serial.print("Error: ");
+     if      (_error == Error::READ_TIMESLOT_TIMEOUT)      Serial.print("read timeslot timeout");
+     else if (_error == Error::WRITE_TIMESLOT_TIMEOUT)     Serial.print("write timeslot timeout");
+     else if (_error == Error::WAIT_RESET_TIMEOUT)         Serial.print("reset wait timeout");
+     else if (_error == Error::VERY_LONG_RESET)            Serial.print("very long reset");
+     else if (_error == Error::VERY_SHORT_RESET)           Serial.print("very short reset");
+     else if (_error == Error::PRESENCE_LOW_ON_LINE)       Serial.print("presence low on line");
+     else if (_error == Error::READ_TIMESLOT_TIMEOUT_LOW)  Serial.print("read timeout low");
+     else if (_error == Error::READ_TIMESLOT_TIMEOUT_HIGH) Serial.print("read timeout high");
+     else if (_error == Error::PRESENCE_HIGH_ON_LINE)      Serial.print("presence high on line");
+     else if (_error == Error::INCORRECT_ONEWIRE_CMD)      Serial.print("incorrect onewire command");
+     else if (_error == Error::INCORRECT_SLAVE_USAGE)      Serial.print("slave was used in incorrect way");
+     else if (_error == Error::TRIED_INCORRECT_WRITE)      Serial.print("tried to write in read-slot");
      Serial.println("");
 #endif
 }
