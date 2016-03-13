@@ -1,6 +1,8 @@
 /*
  *    Example-Code that emulates a DS2890 Single channel digital potentiometer (datasheet has it covered for up to 4 CH)
- *    Tested with https://github.com/PaulStoffregen/OneWire --> still untested
+ *
+ *    Tested with
+ *    - https://github.com/PaulStoffregen/OneWire --> still untested
  */
 
 #include "OneWireHub.h"

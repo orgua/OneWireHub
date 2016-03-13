@@ -2,8 +2,8 @@
  *    Example-Code that emulates a DS2438 Smart Battery Monitor
  *
  *    Tested with:
- *       https://github.com/PaulStoffregen/OneWire
- *       https://github.com/jbechter/arduino-onewire-DS2438  --> still untested
+ *    - https://github.com/PaulStoffregen/OneWire
+ *    - https://github.com/jbechter/arduino-onewire-DS2438  --> still untested
  */
 
 #include "OneWireHub.h"
