@@ -33,8 +33,10 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - good documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top): 
+- detect a reset after a reset (when there should be a timeslot)
+- speed up atmel-crc-functions
 - tested with DS9490R: ds28b20, ds2401, ds2405, ds2413, more will follow
-- rework of error system, switch to enum, slaves can raise errors now & and Serial does not interfere with OW-timings
+- rework of error system, switch to enum, slaves can raise errors now & and Serial interferes less with OW-timings
 - rework of the whole timings, if needed you can configure overdrive speed (arduino uno would probably be to slow)
 - bug fix: non conformal behaviour as a onewire-slave (hopefully)
 - raise the maximal slave limit from 8 to 32, code adapts via variable dataTypes
