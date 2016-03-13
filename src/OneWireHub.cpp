@@ -422,6 +422,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         default: // Unknown command
             _error = Error::INCORRECT_ONEWIRE_CMD;
+            _error_cmd = cmd;
     }
     return false;
 }
@@ -563,12 +564,18 @@ uint8_t OneWireHub::recvAndCRC16(uint16_t &crc16)
     return value;
 }
 
+#define USE_DELAY 1
+
 void OneWireHub::wait(const uint16_t timeout_us)
 {
+#if (USE_DELAY > 0)
+    delayMicroseconds(timeout_us);
+#else
     uint32_t time_trigger = micros() + timeout_us;
     while (micros() < time_trigger)
     {
     }
+#endif
 }
 
 #define USE_MICROS 1
@@ -582,7 +589,7 @@ bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
     uint32_t time_trigger = micros() + timeout_us;
     while (DIRECT_READ(reg, pin_bitMask) == value)
     {
-        if (micros() > time_trigger) return false;
+        if (micros() >= time_trigger) return false;
     }
 #else
     uint16_t retries = static_cast<uint16_t>(microsecondsToClockCycles(timeout_us)/11);
@@ -617,7 +624,7 @@ bool OneWireHub::awaitTimeSlot(void)
     uint16_t wait_us;
     if (extend_timeslot_detection)
     {
-        extend_timeslot_detection = 0;
+        //extend_timeslot_detection = 0;
         wait_us = ONEWIRE_TIME_PRESENCE_HIGH_MAX;
     }
     else
@@ -636,7 +643,7 @@ bool OneWireHub::awaitTimeSlot(void)
 
 #else
 
-#define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135)/11)   /// :11 is a specif value for 8bit-atmega, still to determine
+#define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135)/8)   /// :11 is a specif value for 8bit-atmega, still to determine
 bool OneWireHub::awaitTimeSlot(void)
 {
     volatile uint8_t *reg asm("r30") = pin_baseReg;
@@ -656,6 +663,7 @@ bool OneWireHub::awaitTimeSlot(void)
     if (extend_timeslot_detection)
     {
         retries = 60000;
+        //extend_timeslot_detection = 0;
     }
     else
     {
@@ -670,6 +678,7 @@ bool OneWireHub::awaitTimeSlot(void)
             return false;
         }
     }
+
     return true;
 }
 #endif
@@ -692,7 +701,9 @@ void OneWireHub::printError(void)
      else if (_error == Error::INCORRECT_ONEWIRE_CMD)      Serial.print("incorrect onewire command");
      else if (_error == Error::INCORRECT_SLAVE_USAGE)      Serial.print("slave was used in incorrect way");
      else if (_error == Error::TRIED_INCORRECT_WRITE)      Serial.print("tried to write in read-slot");
-     Serial.println("");
+    Serial.print(" [");
+    Serial.print(_error_cmd);
+    Serial.println("]");
 #endif
 }
 
@@ -704,4 +715,5 @@ bool OneWireHub::getError(void)
 void OneWireHub::raiseSlaveError(const uint8_t cmd)
 {
     _error = Error::INCORRECT_SLAVE_USAGE;
+    _error_cmd = cmd;
 };
