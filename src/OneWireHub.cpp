@@ -366,6 +366,7 @@ bool OneWireHub::recvAndProcessCmd(void)
     uint8_t address[8];
     bool    flag = false;
     uint8_t cmd = recv();
+    if (_error != Error::NO_ERROR)  return false;
 
     switch (cmd)
     {
@@ -659,17 +660,18 @@ bool OneWireHub::awaitTimeSlot(void)
         }
     }
 
-    //Wait for bus to fall form 1 to 0
+    // extend the wait-time after reset and presence-detection
     if (extend_timeslot_detection)
     {
         retries = 60000;
-        //extend_timeslot_detection = 0;
+        extend_timeslot_detection = 0;
     }
     else
     {
         retries = TIMESLOT_WAIT_RETRY_COUNT;
     }
 
+    //Wait for bus to fall form 1 to 0
     while (DIRECT_READ(reg, pin_bitMask))
     {
         if (--retries == 0)
