@@ -1,7 +1,8 @@
 /*
  *    Example-Code that emulates a DS18B20
  *
- *    Tested with https://github.com/PaulStoffregen/OneWire --> DS18x20-Example, atmega328@16MHz as Slave
+ *    Tested with:
+ *    - https://github.com/PaulStoffregen/OneWire --> DS18x20-Example, atmega328@16MHz as Slave
  *    - DS9490R-Master, atmega328@16MHz as Slave
  */
 

@@ -2,7 +2,8 @@
  *    Example-Code that emulates various Sensor - mostly for development
  *    --> attach sensors as needed
  *
- *    Tested with https://github.com/PaulStoffregen/OneWire on the other side as Master
+ *    Tested with:
+ *    - https://github.com/PaulStoffregen/OneWire on the other side as Master
  */
 
 #include "OneWireHub.h"
@@ -85,6 +86,7 @@ void loop()
 {
     // following function must be called periodically
     hub.poll();
+
     // this part is just for debugging (USE_SERIAL_DEBUG in OneWire.h must be enabled for output)
     if (hub.getError()) hub.printError();
 

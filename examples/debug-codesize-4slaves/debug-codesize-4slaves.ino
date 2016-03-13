@@ -2,7 +2,8 @@
  *    Example-Code that emulates 4 sensors (2x ds2401, 2x ds18b20)
  *    --> attach sensors as needed
  *
- *    Tested with https://github.com/PaulStoffregen/OneWire on the other side as Master, atmega328@16MHz as Slave
+ *    Tested with:
+ *    - https://github.com/PaulStoffregen/OneWire on the other side as Master, atmega328@16MHz as Slave
  *    - DS9490R-Master, atmega328@16MHz as Slave
  */
 

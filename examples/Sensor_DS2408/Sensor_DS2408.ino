@@ -1,6 +1,8 @@
 /*
  *    Example-Code that emulates a DS2408 - an 8CH GPIO Port Extender
- *    Tested with https://github.com/PaulStoffregen/OneWire on the other side as Master
+ *
+ *    Tested with:
+ *    - https://github.com/PaulStoffregen/OneWire on the other side as Master
  */
 
 #include "OneWireHub.h"
