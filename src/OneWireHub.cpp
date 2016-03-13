@@ -17,7 +17,13 @@ OneWireHub::OneWireHub(uint8_t pin)
 
     for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
         slave_list[i] = nullptr;
+
+    // prepare pin
+    volatile uint8_t *reg asm("r30") = pin_baseReg;
+    DIRECT_MODE_INPUT(reg, pin_bitMask);
+
 };
+
 
 
 // attach a sensor to the hub

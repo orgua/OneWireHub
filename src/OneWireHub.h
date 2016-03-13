@@ -27,6 +27,7 @@ using mask_t = uint8_t;
 #error "Slavelimit is set to zero (why?)"
 #endif
 
+using time_t = uint32_t;
 
 enum class Error : uint8_t {
     NO_ERROR                   = 0,
@@ -75,7 +76,20 @@ private:
     static constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MAX     =   60; //
     static constexpr uint16_t ONEWIRE_TIME_READ_STD             =   30; //
     static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =   35; //
-    // TODO: define to switch to overdrive mode
+    // TODO: use #define to switch to overdrive mode
+
+    time_t LOOPS_BUS_CHANGE_MAX;
+    time_t LOOPS_RESET_MIN;
+    time_t LOOPS_RESET_MAX;
+    time_t LOOPS_PRESENCE_SAMPLE_MIN;
+    time_t LOOPS_PRESENCE_LOW_STD;
+    time_t LOOPS_PRESENCE_LOW_MAX;
+    time_t LOOPS_PRESENCE_HIGH_MAX;
+    time_t LOOPS_SLOT_MAX;
+    time_t LOOPS_READ_ONE_LOW_MAX;
+    time_t LOOPS_READ_STD;
+    time_t LOOPS_WRITE_ZERO_LOW_STD;
+
 
     Error   _error;
     uint8_t _error_cmd;
