@@ -77,6 +77,7 @@ private:
     // TODO: define to switch to overdrive mode
 
     Error _error;
+    uint8_t _error_cmd;
 
     uint8_t           pin_bitMask;
     volatile uint8_t *pin_baseReg;
@@ -107,10 +108,13 @@ private:
 
     bool recvAndProcessCmd();
 
+    __attribute__((always_inline))
     void wait(const uint16_t timeout_us);
 
+    __attribute__((always_inline))
     bool awaitTimeSlot();
 
+    __attribute__((always_inline))
     bool waitWhilePinIs(const bool value, const uint16_t timeout_us);
 
 public:
