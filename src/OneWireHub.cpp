@@ -535,11 +535,15 @@ bool OneWireHub::recvBit(void)
         interrupts();
 
         if (extend_timeslot_detection==2)
+        {
             _error = Error::FIRST_TIMESLOT_TIMEOUT;
+            extend_timeslot_detection = 0;
+        }
         else
+        {
             _error = Error::READ_TIMESLOT_TIMEOUT;
+        }
 
-        extend_timeslot_detection = 0;
         return 0;
     }
     interrupts();
@@ -670,7 +674,7 @@ bool OneWireHub::awaitTimeSlot(void)
     if (extend_timeslot_detection == 1)
     {
         retries = 60000;
-        extend_timeslot_detection = 2;
+        extend_timeslot_detection = 2; // prepare to detect missing timeslot
     }
     else
     {
