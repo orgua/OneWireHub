@@ -77,12 +77,14 @@ private:
     static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =   35; //
     // TODO: define to switch to overdrive mode
 
-    Error _error;
+    Error   _error;
     uint8_t _error_cmd;
 
     uint8_t           pin_bitMask;
     volatile uint8_t *pin_baseReg;
     uint8_t           extend_timeslot_detection;
+    uint8_t           skip_reset_detection;
+
 
     uint8_t      slave_count;
     OneWireItem *slave_list[ONEWIRESLAVE_LIMIT];  // private slave-list (use attach/detach)
