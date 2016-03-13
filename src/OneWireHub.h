@@ -41,7 +41,8 @@ enum class Error : uint8_t {
     PRESENCE_HIGH_ON_LINE      = 9,
     INCORRECT_ONEWIRE_CMD      = 10,
     INCORRECT_SLAVE_USAGE      = 11,
-    TRIED_INCORRECT_WRITE      = 11,
+    TRIED_INCORRECT_WRITE      = 12,
+    FIRST_TIMESLOT_TIMEOUT     = 13,
 };
 
 

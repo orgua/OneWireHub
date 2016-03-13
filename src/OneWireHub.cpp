@@ -533,7 +533,13 @@ bool OneWireHub::recvBit(void)
     if (!awaitTimeSlot())
     {
         interrupts();
-        _error = Error::READ_TIMESLOT_TIMEOUT;
+
+        if (extend_timeslot_detection==2)
+            _error = Error::FIRST_TIMESLOT_TIMEOUT;
+        else
+            _error = Error::READ_TIMESLOT_TIMEOUT;
+
+        extend_timeslot_detection = 0;
         return 0;
     }
     interrupts();
@@ -661,10 +667,10 @@ bool OneWireHub::awaitTimeSlot(void)
     }
 
     // extend the wait-time after reset and presence-detection
-    if (extend_timeslot_detection)
+    if (extend_timeslot_detection == 1)
     {
         retries = 60000;
-        extend_timeslot_detection = 0;
+        extend_timeslot_detection = 2;
     }
     else
     {
@@ -703,9 +709,19 @@ void OneWireHub::printError(void)
      else if (_error == Error::INCORRECT_ONEWIRE_CMD)      Serial.print("incorrect onewire command");
      else if (_error == Error::INCORRECT_SLAVE_USAGE)      Serial.print("slave was used in incorrect way");
      else if (_error == Error::TRIED_INCORRECT_WRITE)      Serial.print("tried to write in read-slot");
-    Serial.print(" [");
-    Serial.print(_error_cmd);
-    Serial.println("]");
+     else if (_error == Error::FIRST_TIMESLOT_TIMEOUT)     Serial.print("found no timeslot after reset / presence");
+
+    if ((_error == Error::INCORRECT_ONEWIRE_CMD)||(_error == Error::INCORRECT_SLAVE_USAGE))
+    {
+        Serial.print(" [");
+        Serial.print(_error_cmd);
+        Serial.println("]");
+    }
+    else
+    {
+        Serial.println("");
+    }
+
 #endif
 }
 
