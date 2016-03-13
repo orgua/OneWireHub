@@ -235,6 +235,18 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-tim
 
     wait(ONEWIRE_TIME_BUS_CHANGE_MAX); // let the input settle
 
+    // is entered if there are two resets within a given time (timeslot-detection can issue this skip)
+    if (skip_reset_detection)
+    {
+        skip_reset_detection = 0;
+        _error = Error::NO_ERROR;
+
+        if (!waitWhilePinIs(0, ONEWIRE_TIME_RESET_MIN - ONEWIRE_TIME_SLOT_MAX))
+        {
+            return true;
+        }
+    }
+
     if (!DIRECT_READ(reg, pin_bitMask)) return false; // just leave if pin is Low, don't bother to wait
 
     // wait for the bus to become low (master-controlled), since we are polling we don't know for how long it was zero
@@ -366,6 +378,7 @@ bool OneWireHub::recvAndProcessCmd(void)
     uint8_t address[8];
     bool    flag = false;
     uint8_t cmd = recv();
+    if (skip_reset_detection)       return true; // stay in loop and trigger another datastream-detection
     if (_error != Error::NO_ERROR)  return false;
 
     switch (cmd)
@@ -410,6 +423,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             {
                 extend_timeslot_detection = 1;
                 slave_selected->duty(this);
+
             }
             return true;
 
@@ -665,7 +679,15 @@ bool OneWireHub::awaitTimeSlot(void)
     {
         if (--retries == 0)
         {
-            _error = Error::READ_TIMESLOT_TIMEOUT_LOW;
+            if (extend_timeslot_detection==2)
+            {
+                extend_timeslot_detection = 0;
+                skip_reset_detection      = 1;
+            }
+            else
+            {
+                _error = Error::READ_TIMESLOT_TIMEOUT_LOW;
+            }
             return false;
         }
     }
@@ -674,7 +696,7 @@ bool OneWireHub::awaitTimeSlot(void)
     if (extend_timeslot_detection == 1)
     {
         retries = 60000;
-        extend_timeslot_detection = 2; // prepare to detect missing timeslot
+        extend_timeslot_detection = 2; // prepare to detect missing timeslot or second reset
     }
     else
     {
@@ -713,7 +735,7 @@ void OneWireHub::printError(void)
      else if (_error == Error::INCORRECT_ONEWIRE_CMD)      Serial.print("incorrect onewire command");
      else if (_error == Error::INCORRECT_SLAVE_USAGE)      Serial.print("slave was used in incorrect way");
      else if (_error == Error::TRIED_INCORRECT_WRITE)      Serial.print("tried to write in read-slot");
-     else if (_error == Error::FIRST_TIMESLOT_TIMEOUT)     Serial.print("found no timeslot after reset / presence");
+     else if (_error == Error::FIRST_TIMESLOT_TIMEOUT)     Serial.print("found no timeslot after reset / presence (is OK)");
 
     if ((_error == Error::INCORRECT_ONEWIRE_CMD)||(_error == Error::INCORRECT_SLAVE_USAGE))
     {
