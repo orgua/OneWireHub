@@ -397,7 +397,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             recv(address, 8);
             if (_error != Error::NO_ERROR)  return false;
 
-            slave_selected = 0;
+            slave_selected = nullptr;
 
             for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
             {
@@ -435,6 +435,21 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         case 0xCC: // SKIP ROM
             slave_selected = nullptr;
+
+            for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
+            {
+                if (slave_list[i] != nullptr)
+                {
+                    slave_selected = slave_list[i];
+                    break;
+                }
+            }
+
+            if (slave_selected != nullptr)
+            {
+                extend_timeslot_detection = 1;
+                slave_selected->duty(this);
+            }
             return true;
 
         case 0x33: // READ ROM
