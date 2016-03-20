@@ -129,7 +129,7 @@ private:
     void wait(const uint16_t timeout_us);
 
     __attribute__((always_inline))
-    bool awaitTimeSlot();
+    bool awaitTimeSlotAndWrite(const bool writeZero = 0);
 
     __attribute__((always_inline))
     bool waitWhilePinIs(const bool value, const uint16_t timeout_us);

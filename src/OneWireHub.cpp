@@ -485,37 +485,6 @@ bool OneWireHub::send(const uint8_t dataByte)
     return true;
 }
 
-
-bool OneWireHub::sendBit(const bool value)
-{
-    volatile uint8_t *reg asm("r30") = pin_baseReg;
-
-    noInterrupts();
-    DIRECT_MODE_INPUT(reg, pin_bitMask);
-    // wait for a low to high transition followed by a high to low within the time-out
-    if (!awaitTimeSlot())
-    {
-        interrupts();
-        _error = Error::WRITE_TIMESLOT_TIMEOUT;
-        return false; // timeslot violation
-    }
-
-    if (value)  waitWhilePinIs( 0, ONEWIRE_TIME_READ_ONE_LOW_MAX); // no pinCheck demanded, but this additional check can cut waitTime
-    else
-    {
-        // if we wait for release we could detect faulty writing slots --> pedantic Mode not needed for now
-        noInterrupts();
-        DIRECT_WRITE_LOW(reg, pin_bitMask);
-        DIRECT_MODE_OUTPUT(reg, pin_bitMask);
-        interrupts();
-        wait(ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
-        DIRECT_MODE_INPUT(reg, pin_bitMask);
-    }
-    interrupts();
-    return true;
-}
-
-
 uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
 {
     for (uint8_t counter = 0; counter < 8; ++counter)
@@ -530,6 +499,27 @@ uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
         if (_error != Error::NO_ERROR) return 0; // CRC is not important if sending fails
     }
     return crc16;
+}
+
+bool OneWireHub::sendBit(const bool value)
+{
+    // wait for a low to high transition followed by a high to low within the time-out
+    if (!awaitTimeSlotAndWrite(!value))
+    {
+        _error = Error::WRITE_TIMESLOT_TIMEOUT;
+        return false; // timeslot violation
+    }
+
+    if (value)  waitWhilePinIs( 0, ONEWIRE_TIME_READ_ONE_LOW_MAX); // no pinCheck demanded, but this additional check can cut waitTime
+    else
+    {
+        // if we wait for release we could detect faulty writing slots --> pedantic Mode not needed for now
+        wait(ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
+        volatile uint8_t *reg asm("r30") = pin_baseReg;
+        DIRECT_MODE_INPUT(reg, pin_bitMask);
+    }
+
+    return true;
 }
 
 
@@ -557,35 +547,6 @@ uint8_t OneWireHub::recv(void)
     return value;
 }
 
-bool OneWireHub::recvBit(void)
-{
-    volatile uint8_t *reg asm("r30") = pin_baseReg;
-
-    noInterrupts();
-    DIRECT_MODE_INPUT(reg, pin_bitMask);
-
-    // wait for a low to high transition followed by a high to low within the time-out
-    if (!awaitTimeSlot())
-    {
-        interrupts();
-
-        if (extend_timeslot_detection==2)
-        {
-            _error = Error::FIRST_TIMESLOT_TIMEOUT;
-            extend_timeslot_detection = 0;
-        }
-        else
-        {
-            _error = Error::READ_TIMESLOT_TIMEOUT;
-        }
-
-        return 0;
-    }
-    interrupts();
-    waitWhilePinIs( 0, ONEWIRE_TIME_READ_STD); // no pinCheck demanded, but this additional check can cut waitTime
-    return DIRECT_READ(reg, pin_bitMask);
-}
-
 // TODO: not happy with the interface - call by ref is slow here. maybe use a crc in class and expand with crc-reset and get?
 uint8_t OneWireHub::recvAndCRC16(uint16_t &crc16)
 {
@@ -608,6 +569,32 @@ uint8_t OneWireHub::recvAndCRC16(uint16_t &crc16)
         if (_error != Error::NO_ERROR) return 0;
     }
     return value;
+}
+
+bool OneWireHub::recvBit(void)
+{
+
+    // wait for a low to high transition followed by a high to low within the time-out
+    if (!awaitTimeSlotAndWrite())
+    {
+        if (extend_timeslot_detection==2)
+        {
+            _error = Error::FIRST_TIMESLOT_TIMEOUT;
+            extend_timeslot_detection = 0;
+        }
+        else
+        {
+            _error = Error::READ_TIMESLOT_TIMEOUT;
+        }
+
+        return 0;
+    }
+
+    waitWhilePinIs( 0, ONEWIRE_TIME_READ_STD); // no pinCheck demanded, but this additional check can cut waitTime
+    volatile uint8_t *reg asm("r30") = pin_baseReg;
+    DIRECT_MODE_INPUT(reg, pin_bitMask);
+
+    return DIRECT_READ(reg, pin_bitMask);
 }
 
 #define USE_DELAY 1
@@ -648,11 +635,11 @@ bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
 }
 
 
-#define NEW_WAIT 0 // TODO: NewWait does not work as expected
+#define NEW_WAIT 0 // TODO: NewWait does not work as expected (and is deprecated)
 #if (NEW_WAIT > 0)
 
 // wait for a low to high transition followed by a high to low within the time-out
-bool OneWireHub::awaitTimeSlot(void)
+bool OneWireHub::awaitTimeSlotAndWrite(void)
 {
     noInterrupts();
     volatile uint8_t *reg asm("r30") = pin_baseReg;
@@ -690,9 +677,12 @@ bool OneWireHub::awaitTimeSlot(void)
 #else
 
 #define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135)/8)   /// :11 is a specif value for 8bit-atmega, still to determine
-bool OneWireHub::awaitTimeSlot(void)
+bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 {
     volatile uint8_t *reg asm("r30") = pin_baseReg;
+    noInterrupts();
+    DIRECT_WRITE_LOW(reg, pin_bitMask);
+    DIRECT_MODE_INPUT(reg, pin_bitMask);
 
     //While bus is low, retry until HIGH
     uint16_t retries = TIMESLOT_WAIT_RETRY_COUNT;
@@ -709,6 +699,7 @@ bool OneWireHub::awaitTimeSlot(void)
             {
                 _error = Error::READ_TIMESLOT_TIMEOUT_LOW;
             }
+            interrupts();
             return false;
         }
     }
@@ -716,12 +707,13 @@ bool OneWireHub::awaitTimeSlot(void)
     // extend the wait-time after reset and presence-detection
     if (extend_timeslot_detection == 1)
     {
-        retries = 60000;
+        retries = 65535;
         extend_timeslot_detection = 2; // prepare to detect missing timeslot or second reset
     }
     else
     {
-        retries = TIMESLOT_WAIT_RETRY_COUNT;
+        //retries = TIMESLOT_WAIT_RETRY_COUNT;
+        retries = 65535; // TODO: workaround for better compatibility (will be solved later)
     }
 
     //Wait for bus to fall form 1 to 0
@@ -730,10 +722,18 @@ bool OneWireHub::awaitTimeSlot(void)
         if (--retries == 0)
         {
             _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
+            interrupts();
             return false;
         }
     }
 
+    if (writeZero)
+    {
+        // Low is allready set
+        DIRECT_MODE_OUTPUT(reg, pin_bitMask);
+    }
+
+    interrupts();
     return true;
 }
 #endif
