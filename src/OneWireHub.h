@@ -7,7 +7,7 @@
 #endif
 #include "platform.h" // code for compatibility
 
-#define USE_SERIAL_DEBUG 1 // give debug messages when printError() is called
+#define USE_SERIAL_DEBUG 0 // give debug messages when printError() is called
 // INFO: had to go with a define because some compilers use constexpr as simple const --> massive problems
 
 #define HUB_SLAVE_LIMIT 8 // set the limit of the hub HERE
