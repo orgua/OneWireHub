@@ -33,7 +33,10 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - good documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top): 
-- detect a reset after a reset (when there should be a timeslot)
+- hub is more robust to odd master-behaviour (lazy timings and subsequent resets)
+- prepare new timing-method which will replace the old one in the next couple of weeks (a 6µs millis() call at 8MHz is not suitable for OW) 
+- cleanup send / receive / waitForTimeslot to react faster to bus (better for µC with less than 16 MHz)
+- support for skipROM-cmd if only one slave is present (thanks to Giermann)
 - speed up atmel-crc-functions
 - tested with DS9490R: ds28b20, ds2401, ds2405, ds2413, more will follow
 - rework of error system, switch to enum, slaves can raise errors now & and Serial interferes less with OW-timings
