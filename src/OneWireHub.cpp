@@ -760,8 +760,8 @@ void OneWireHub::printError(void)
 
     if ((_error == Error::INCORRECT_ONEWIRE_CMD)||(_error == Error::INCORRECT_SLAVE_USAGE))
     {
-        Serial.print(" [");
-        Serial.print(_error_cmd);
+        Serial.print(" [0x");
+        Serial.print(_error_cmd,HEX);
         Serial.println("]");
     }
     else
