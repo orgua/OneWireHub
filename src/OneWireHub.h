@@ -74,7 +74,7 @@ private:
 
     // read and write from the viewpoint of the slave!!!!
     static constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MAX     =   60; //
-    static constexpr uint16_t ONEWIRE_TIME_READ_STD             =   30; //
+    static constexpr uint16_t ONEWIRE_TIME_READ_STD             =   20; // was 30
     static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =   35; //
     // TODO: use #define to switch to overdrive mode
 
