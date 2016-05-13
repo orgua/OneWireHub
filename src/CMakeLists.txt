@@ -18,4 +18,4 @@ set(SOURCE_FILES
         platform.h
         )
 
-add_executable(OneWireSRC ${SOURCE_FILES})
+#add_executable(OneWireSRC ${SOURCE_FILES})

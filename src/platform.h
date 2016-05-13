@@ -185,6 +185,8 @@ void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 
 #else
 
+#include <inttypes.h>
+
 #define PIN_TO_BASEREG(pin)             (0)
 #define PIN_TO_BITMASK(pin)             (pin)
 #define IO_REG_TYPE unsigned int
@@ -197,10 +199,9 @@ void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 #warning "OneWire. Fallback mode. Using API calls for pinMode,digitalRead and digitalWrite. Operation of this library is not guaranteed on this architecture."
 
 
-
 /////////////////////////////////////////// EXTRA PART /////////////////////////////////////////
 // this part is loaded if no proper arduino-environment is found (good for external testing)
-// these functions are mockups and used by the Hub
+// these used functions are mockups
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define INPUT 1
@@ -211,28 +212,28 @@ void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 #define ARDUINO_attiny // to load up Serial below
 
 template <typename T1>
-uint8_t digitalRead(T1);
+uint8_t digitalRead(T1) {return 0;};
 
 template <typename T1, typename T2>
-uint8_t digitalWrite(T1, T2);
+uint8_t digitalWrite(T1, T2) {return 0;};
 
 template <typename T1, typename T2>
-uint8_t pinMode(T1, T2);
+uint8_t pinMode(T1, T2) {return 0;};
 
-uint8_t digitalPinToPort(uint8_t x);
-uint8_t *portInputRegister(uint8_t x);
-uint8_t digitalPinToBitMask(uint8_t x);
+uint8_t digitalPinToPort(uint8_t x) {return 0;};
+uint8_t *portInputRegister(uint8_t x) {return 0;};
+uint8_t digitalPinToBitMask(uint8_t x) {return 0;};
 
-uint32_t microsecondsToClockCycles(uint32_t x);
+uint32_t microsecondsToClockCycles(uint32_t x) {return 0;};
 
-void delayMicroseconds(...);
-uint32_t micros(void); // takes about 3 µs to process @ 16 MHz
+void delayMicroseconds(...) {};
+uint32_t micros(void) {return 0;}; // takes about 3 µs to process @ 16 MHz
 
-void cli(void);
-void sei(void);
+void cli(void) {};
+void sei(void) {};
 
-void noInterrupts(void);
-void interrupts(void);
+void noInterrupts(void) {};
+void interrupts(void) {};
 
 #endif
 
@@ -241,7 +242,7 @@ void interrupts(void);
 /// README: use pin2 or pin3 for Attiny, source: https://github.com/gioblu/PJON/wiki/ATtiny-interfacing
 
 
-#include "inttypes.h"
+#include "inttypes.h" // why here?
 
 #define HEX 1
 
