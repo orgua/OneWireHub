@@ -8,7 +8,7 @@ DS2890::DS2890(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     register_poti[2] = 0;
     register_poti[3] = 0;
     register_ctrl    = 0b00001100;
-}
+};
 
 bool DS2890::duty(OneWireHub *hub)
 {
@@ -70,7 +70,7 @@ bool DS2890::duty(OneWireHub *hub)
 
         default:
             hub->raiseSlaveError(cmd);
-    }
+    };
 
     return true;
-}
+};

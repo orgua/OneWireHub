@@ -410,27 +410,26 @@ bool OneWireHub::recvAndProcessCmd(void)
                     {
                         flag = false;
                         break;
-                    }
-                }
+                    };
+                };
 
                 if (flag)
                 {
                     slave_selected = slave_list[i];
                     break;
-                }
-            }
+                };
+            };
 
             if (!flag)
             {
                 return false;
-            }
+            };
 
             if (slave_selected != nullptr)
             {
                 extend_timeslot_detection = 1;
                 slave_selected->duty(this);
-
-            }
+            };
             return true;
 
         case 0xCC: // SKIP ROM
@@ -442,14 +441,14 @@ bool OneWireHub::recvAndProcessCmd(void)
                 {
                     slave_selected = slave_list[i];
                     break;
-                }
-            }
+                };
+            };
 
             if (slave_selected != nullptr)
             {
                 extend_timeslot_detection = 1;
                 slave_selected->duty(this);
-            }
+            };
             return true;
 
         case 0x33: // READ ROM
@@ -459,9 +458,9 @@ bool OneWireHub::recvAndProcessCmd(void)
         default: // Unknown command
             _error = Error::INCORRECT_ONEWIRE_CMD;
             _error_cmd = cmd;
-    }
+    };
     return false;
-}
+};
 
 bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
 {
@@ -471,9 +470,9 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
     {
         send(address[bytes_sent]);
         if (_error != Error::NO_ERROR)  break;
-    }
+    };
     return (bytes_sent == data_length);
-}
+};
 
 bool OneWireHub::send(const uint8_t dataByte)
 {
@@ -481,9 +480,9 @@ bool OneWireHub::send(const uint8_t dataByte)
     {
         sendBit((bitMask & dataByte) ? bool(1) : bool(0));
         if (_error != Error::NO_ERROR) return false;
-    }
+    };
     return true;
-}
+};
 
 uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
 {
@@ -698,11 +697,11 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
             else
             {
                 _error = Error::READ_TIMESLOT_TIMEOUT_LOW;
-            }
+            };
             interrupts();
             return false;
-        }
-    }
+        };
+    };
 
     // extend the wait-time after reset and presence-detection
     if (extend_timeslot_detection == 1)
@@ -714,7 +713,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
     {
         //retries = TIMESLOT_WAIT_RETRY_COUNT;
         retries = 65535; // TODO: workaround for better compatibility (will be solved later)
-    }
+    };
 
     //Wait for bus to fall form 1 to 0
     while (DIRECT_READ(reg, pin_bitMask))
@@ -724,18 +723,18 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
             _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
             interrupts();
             return false;
-        }
-    }
+        };
+    };
 
     if (writeZero)
     {
         // Low is allready set
         DIRECT_MODE_OUTPUT(reg, pin_bitMask);
-    }
+    };
 
     interrupts();
     return true;
-}
+};
 #endif
 
 
@@ -770,7 +769,7 @@ void OneWireHub::printError(void)
     }
 
 #endif
-}
+};
 
 bool OneWireHub::getError(void)
 {

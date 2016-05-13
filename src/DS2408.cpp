@@ -15,12 +15,12 @@ DS2408::DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     memory.bytes[10] = 0xFF; // D7
     memory.bytes[11] = 0;  // CRCL
     memory.bytes[12] = 0;  // CRCH
-}
+};
 
 void DS2408::updateCRC()
 {
     //(reinterpret_cast<sDS2408 *>(memory))->CRC = ~crc16(memory, 11);
-}
+};
 
 bool DS2408::duty(OneWireHub *hub)
 {
@@ -47,7 +47,7 @@ bool DS2408::duty(OneWireHub *hub)
         default:
             hub->raiseSlaveError(cmd);
             return false;
-    }
+    };
 
     return true;
-}
+};

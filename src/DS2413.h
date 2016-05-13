@@ -1,5 +1,5 @@
 // 0x3A  Dual channel addressable switch
-// Work - 100%, supported overdrive not implemented
+// Works - 100%, supported overdrive not implemented
 
 #ifndef ONEWIRE_DS2413_H
 #define ONEWIRE_DS2413_H
@@ -31,18 +31,18 @@ public:
             return 0; // can't set 1 because pin is latched
         pin_state[a_or_b & 1] = value;
         return 1;
-    }
+    };
 
     bool readLatch(const uint8_t a_or_b)
     {
         return pin_latch[a_or_b & 1];
-    }
+    };
 
     void setLatch(const uint8_t a_or_b, const bool value)
     {
         pin_latch[a_or_b & 1] = value;
         if (value) setState(a_or_b, 0);
-    }
+    };
 };
 
 #endif

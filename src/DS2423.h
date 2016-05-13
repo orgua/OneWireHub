@@ -1,4 +1,5 @@
 // 0x1D  4kb 1-Wire RAM with Counter
+// not finished
 
 #ifndef ONEWIRE_DS2423_H
 #define ONEWIRE_DS2423_H
