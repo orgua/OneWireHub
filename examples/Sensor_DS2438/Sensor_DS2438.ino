@@ -66,9 +66,10 @@ void loop()
         ds2438.setCurr(current);
 
         //Serial.println(temp);
-    }
-}
+    };
+};
 
 /*
- *   A1.6.7 compiles to 7592 // 374
+ *   A1.6.7 compiles to 7592 // 374 bytes
+ *   A1.6.8 compiles to 5626 // 310 bytes @ v0.9.1
  */

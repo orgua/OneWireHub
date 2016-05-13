@@ -13,8 +13,8 @@
 #include "DS2401.h"  // Serial Number
 #include "DS18B20.h" // Digital Thermometer
 
-const uint8_t led_PIN       = 13;         // the number of the LED pin
-const uint8_t OneWire_PIN   = 8;
+const uint8_t led_PIN       = 8;         // the number of the LED pin
+const uint8_t OneWire_PIN   = 1;
 
 auto hub      = OneWireHub(OneWire_PIN);
 auto ds18B20a = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x0A);     // Work - Digital Thermometer
@@ -25,7 +25,7 @@ auto ds2401b  = DS2401( 0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0B );
 
 bool blinking()
 {
-    const  uint32_t interval    = 5000;          // interval at which to blink (milliseconds)
+    const  uint32_t interval    = 1000;          // interval at which to blink (milliseconds)
     static uint32_t nextMillis  = millis();     // will store next time LED will updated
 
     if (millis() > nextMillis)
@@ -61,7 +61,7 @@ void loop()
     {
         static uint8_t temperature = 20;
         temperature += 1;
-        if (temperature > 40) temperature = 10;
+        if (temperature > 90) temperature = 5;
         ds18B20b.setTemp(temperature);
     }
 }
