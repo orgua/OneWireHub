@@ -18,7 +18,7 @@ DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5
 void DS18B20::updateCRC()
 {
     scratchpad[8] = crc8(scratchpad, 8);
-}
+};
 
 bool DS18B20::duty(OneWireHub *hub)
 {
@@ -70,10 +70,10 @@ bool DS18B20::duty(OneWireHub *hub)
         default:
             hub->raiseSlaveError(cmd);
             break;
-    }
+    };
 
     return true;
-}
+};
 
 
 void DS18B20::setTemp(const float temperature_degC)
@@ -99,7 +99,7 @@ void DS18B20::setTempRaw(const int16_t value_raw)
     {
         value = -value;
         value |= 0xF000;
-    }
+    };
 
     scratchpad[0] = uint8_t(value);
     scratchpad[1] = uint8_t(value >> 8);

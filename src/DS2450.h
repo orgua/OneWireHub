@@ -1,5 +1,5 @@
 // 0x20 4 channel A/D
-// not ready, supported overdrive not implemented
+// not finished, supported overdrive not implemented
 
 #ifndef ONEWIRE_DS2450_H
 #define ONEWIRE_DS2450_H

@@ -1,4 +1,5 @@
 // 0x23  4Kb 1-Wire EEPROM
+// not finished
 
 #ifndef ONEWIRE_DS2433_H
 #define ONEWIRE_DS2433_H

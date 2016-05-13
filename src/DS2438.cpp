@@ -2,19 +2,20 @@
 
 DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-
     for (uint8_t i = 0; i < (PAGE_EMU_COUNT*8); ++i)
         memory[i] = MemDS2438[i]; // 0x00;
 
     setTemp(static_cast<uint8_t>(80));
-}
+};
 
 bool DS2438::duty(OneWireHub *hub)
 {
-    uint8_t cmd = hub->recv();
     uint8_t page;
     uint8_t crc;
     uint8_t garbage[8];
+
+    uint8_t cmd = hub->recv();
+    hub->extendTimeslot(); // test
 
     switch (cmd)
     {
@@ -61,10 +62,10 @@ bool DS2438::duty(OneWireHub *hub)
         default:
             hub->raiseSlaveError(cmd);
             break;
-    }
+    };
     //Serial.print(cmd,HEX);
     return true;
-}
+};
 
 void DS2438::setTemp(const float temp_degC)
 {
@@ -78,27 +79,26 @@ void DS2438::setTemp(const float temp_degC)
 
     if (temp_degC < 0)
         memory[2] = memory[2] | static_cast<uint8_t>(0x80);
-
-}
+};
 
 void DS2438::setTemp(const uint8_t temp_degC)
 {
     memory[1] = 0;
     memory[2] = temp_degC;
-    if (temp_degC < 0)
+    if (temp_degC < 0) // TODO: how should this value fall below 0, unsigned
         memory[2] = memory[2] | static_cast<uint8_t>(0x80);
-}
+};
 
 
 void DS2438::setVolt(const uint16_t voltage_10mV)
 {
     memory[3] = uint8_t(voltage_10mV);
     memory[4] = uint8_t((voltage_10mV >> 8) & static_cast<uint8_t>(0x03));
-}
+};
 
 void DS2438::setCurr(const int16_t value) // signed 11 bit
 {
     memory[5] = uint8_t(value);
     memory[6] = uint8_t((value >> 8) & static_cast<uint8_t>(0x03));
     if (value<0) memory[6] |= 0xFC; // all upper bits (7:2) are the sign
-}
+};

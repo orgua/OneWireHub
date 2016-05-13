@@ -1,5 +1,5 @@
 // 0x29  8-Channel Addressable Switch @@@
-// Not ready
+// Not finished
 
 #ifndef ONEWIRE_DS2408_H
 #define ONEWIRE_DS2408_H

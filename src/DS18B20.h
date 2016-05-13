@@ -1,5 +1,5 @@
 // 0x28  Digital Thermometer
-// Work - 100%
+// Works - 100%
 
 #ifndef ONEWIRE_DS18B20_H
 #define ONEWIRE_DS18B20_H

@@ -4,9 +4,9 @@ DS2450::DS2450(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
         OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
     uint8_t mem_size = PAGE_COUNT*PAGE_SIZE;
-    memset(&memory, 0, mem_size);
+    memset(&memory[0], static_cast<uint8_t>(0), mem_size);
     if (mem_size > 0x1C) memory[0x1C] = 0x40;
-}
+};
 
 bool DS2450::duty(OneWireHub *hub)
 {
@@ -39,7 +39,7 @@ bool DS2450::duty(OneWireHub *hub)
                 b = memory[memory_address + i];
                 hub->send(b); // TODO: add possibility to break loop if send fails
                 crc = crc16(b, crc);
-            }
+            };
 
             hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
             hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
@@ -66,7 +66,7 @@ bool DS2450::duty(OneWireHub *hub)
             {
                 memory[memory_address + i] = hub->recv(); // TODO: add possibility to break loop if recv fails, hub->read_error?
                 crc = crc16(memory[memory_address + i], crc);
-            }
+            };
 
             hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
             hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
@@ -88,10 +88,10 @@ bool DS2450::duty(OneWireHub *hub)
         default:
             hub->raiseSlaveError(cmd);
             break;
-    }
+    };
 
     return true;
-}
+};
 
 bool DS2450::setPotentiometer(const uint16_t p1, const uint16_t p2, const uint16_t p3, const uint16_t p4)
 {

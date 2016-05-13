@@ -7,7 +7,7 @@ DS2413::DS2413(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     pin_latch[0] = false;
     pin_state[1] = false;
     pin_latch[1] = false;
-}
+};
 
 bool DS2413::duty(OneWireHub *hub)
 {
@@ -43,7 +43,7 @@ bool DS2413::duty(OneWireHub *hub)
         default:
             hub->raiseSlaveError(cmd);
             return false;
-    }
+    };
 
     return true;
-}
+};

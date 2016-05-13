@@ -4,7 +4,7 @@ DS2433::DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 {
     for (int i = 0; i < sizeof(memory); ++i)
         memory[i] = 0xFF;
-}
+};
 
 bool DS2433::duty(OneWireHub *hub)
 {
@@ -30,7 +30,7 @@ bool DS2433::duty(OneWireHub *hub)
             {
                 hub->send(memory[memory_address + i]);
                 if (hub->getError()) break;
-            }
+            };
 
             break;
 
@@ -68,6 +68,6 @@ bool DS2433::duty(OneWireHub *hub)
         default:
             hub->raiseSlaveError(cmd);
             break;
-    }
+    };
     return true;
-}
+};

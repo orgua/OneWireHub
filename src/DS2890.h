@@ -1,5 +1,5 @@
 // 0x2C  Single channel digital potentiometer
-// Work - 100%
+// Works - 100%
 
 #ifndef ONEWIRE_DS2890_H
 #define ONEWIRE_DS2890_H
@@ -30,15 +30,15 @@ public:
     uint8_t readPoti(uint8_t number)
     {
         return register_poti[number&0x03];
-    }
+    };
     uint8_t readCtrl(void)
     {
         return register_ctrl;
-    }
+    };
     uint8_t readFeat(void)
     {
         return register_feat;
-    }
+    };
 };
 
 #endif

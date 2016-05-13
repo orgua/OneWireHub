@@ -13,6 +13,7 @@ bool DS2401::duty(OneWireHub *hub)
         default:
             hub->raiseSlaveError(cmd);
             break;
-    }
+    };
+
     return true;
-}
+};
