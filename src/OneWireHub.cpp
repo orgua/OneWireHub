@@ -7,8 +7,8 @@ OneWireHub::OneWireHub(uint8_t pin)
 {
     _error = Error::NO_ERROR;
 
- 	pin_bitMask = PIN_TO_BITMASK(pin);
-	pin_baseReg = PIN_TO_BASEREG(pin);
+     pin_bitMask = PIN_TO_BITMASK(pin);
+    pin_baseReg = PIN_TO_BASEREG(pin);
 
     extend_timeslot_detection = 0;
 
@@ -452,15 +452,15 @@ bool OneWireHub::recvAndProcessCmd(void)
             return true;
 
         case 0x33: // READ ROM
-			// only usable when there is ONE slave on the bus
-			if (ONEWIRESLAVE_LIMIT == 1) {
-				slave_selected = slave_list[0];
-				if (slave_selected != nullptr)
-				{
-					slave_selected->sendID(this);
-				};
-			}
-			return true;
+            // only usable when there is ONE slave on the bus
+            if (ONEWIRESLAVE_LIMIT == 1) {
+                slave_selected = slave_list[0];
+                if (slave_selected != nullptr)
+                {
+                    slave_selected->sendID(this);
+                };
+            }
+            return true;
         case 0x0F: // OLD READ ROM
             // only usable when there is ONE slave on the bus
 
