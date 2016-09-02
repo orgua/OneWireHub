@@ -21,7 +21,7 @@ public:
 
     uint8_t ID[8];
 
-	void sendID(OneWireHub *hub);
+    void sendID(OneWireHub *hub);
 
     virtual bool duty(OneWireHub *hub) = 0;
 

@@ -47,8 +47,8 @@ auto ds2890C  = DS2890( 0x2C, 0x0D, 0x02, 0x08, 0x09, 0x00, 0x0C );
 int main()
 {
     cout << "Hello, World!" << endl;
-	
-	// Setup OneWire
+    
+    // Setup OneWire
     ds1822.setTemp(static_cast<int16_t>(21));
     ds18S20.setTemp(static_cast<int16_t>(10));
     hub.attach(ds1822);
@@ -57,7 +57,7 @@ int main()
     hub.attach(ds2401a);
     hub.attach(ds2401b);
     hub.attach(ds2413);
-	hub.attach(ds2431);
+    hub.attach(ds2431);
     hub.attach(ds2438);
     //hub.attach(ds2450);
     hub.attach(ds2890A);

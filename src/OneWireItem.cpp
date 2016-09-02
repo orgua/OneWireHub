@@ -13,7 +13,7 @@ OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uin
 };
 
 void OneWireItem::sendID(OneWireHub *hub) {
-	hub->send(ID, 8);
+    hub->send(ID, 8);
 }
 
 // The 1-Wire CRC scheme is described in Maxim Application Note 27:
