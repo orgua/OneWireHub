@@ -452,6 +452,15 @@ bool OneWireHub::recvAndProcessCmd(void)
             return true;
 
         case 0x33: // READ ROM
+			// only usable when there is ONE slave on the bus
+			if (ONEWIRESLAVE_LIMIT == 1) {
+				slave_selected = slave_list[0];
+				if (slave_selected != nullptr)
+				{
+					slave_selected->sendID(this);
+				};
+			}
+			return true;
         case 0x0F: // OLD READ ROM
             // only usable when there is ONE slave on the bus
 
