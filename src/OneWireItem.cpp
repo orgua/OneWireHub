@@ -12,6 +12,9 @@ OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uin
     ID[7] = crc8(ID, 7);
 };
 
+void OneWireItem::sendID(OneWireHub *hub) {
+    hub->send(ID, 8);
+}
 
 // The 1-Wire CRC scheme is described in Maxim Application Note 27:
 // "Understanding and Using Cyclic Redundancy Checks with Maxim iButton Products"
@@ -45,9 +48,9 @@ uint8_t OneWireItem::crc8(const uint8_t address[], const uint8_t length)
 }
 
 
-uint16_t OneWireItem::crc16(const uint8_t address[], const uint8_t length)
+uint16_t OneWireItem::crc16(const uint8_t address[], const uint8_t length, const uint16_t init = 0)
 {
-    uint16_t crc = 0; // init value
+    uint16_t crc = init; // init value
 
 #if defined(__AVR__)
     for (uint8_t i = 0; i < length; ++i)
