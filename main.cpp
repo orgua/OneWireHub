@@ -18,6 +18,7 @@ using namespace std;
 #include "DS2433.h"  // 4Kb 1-Wire EEPROM
 #include "DS2438.h"  // Smart Battery Monitor
 #include "DS2450.h"  // 4 channel A/D
+#include "DS2502.h"  // 1kb EEPROM
 #include "DS2890.h"  // Single channel digital potentiometer
 
 
