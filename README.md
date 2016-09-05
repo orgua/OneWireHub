@@ -29,14 +29,14 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 ### Features:
 - supports up to 32 slaves (8 is standard setting), adjust HUB_SLAVE_LIMIT in OneWireHub.h to safe RAM & program space
 - hot-plug slaves as needed
-- cleaner, faster code with c++11 features (requires arduino sw 1.6.x or higher)
+- cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=1.6.10 recommended)**
    - i.e. use of constexpr instead of #define for better compiler-messages
 - hardware-dependencies are combined in "platform.h", synced with [onewire-lib](https://github.com/PaulStoffregen/OneWire)
    - extra supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822 (...)
    - for portability and tests the hub can even be compiled on a PC with the supplied mock-up functions
    - at the moment the lib relies sole on the micros()-fn for timing, no direct access to interrupt or timers
-- Serial debug output can be enabled in OneWireHub.h: set USE_SERIAL_DEBUG to 1
-- good documentation, numerous examples, easy interface for hub and sensors
+- Serial debug output can be enabled in OneWireHub.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
+- documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
 - added ds2431 (thanks to j-langlois) and BAE910 (thanks to Giermann), Dell Power Supply (thanks to Kondi)
@@ -61,8 +61,9 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - replace search() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
 
 ### Plans for the future:
-- implementation of ds2450
-- add table of tested and working sensors 
+- implementation of ds2450, ds2433, ds2501, ds2502
+- ~~add table of tested and working sensors~~ (documented in the examples of the device)
+- introduce unittests
 - irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
 - ~~DS1963S 0x18 iButton, datasheet under NDA~~
