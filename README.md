@@ -4,7 +4,8 @@ OneWireHub
 The OneWireHub is an Arduino compatible (and many more platforms) library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously. 
 The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your environment.
 
-### Supported Slaves (bold ones are feature-complete):
+### Supported Slaves:
+- **BAE910 multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
 - **DS1822 Digital Thermometer, 12bit** (use DS18B20 with family code set to 0x22)
 - **DS18B20 Digital Thermometer, 12bit** 
 - **DS18S20 Digital Thermometer, 12bit** (use DS18B20 with family code set to 0x10)
@@ -15,10 +16,13 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2411 Serial Number** (use DS2401 with same family code 0x01)
 - **DS2413 Dual channel addressable switch with input-sensing**
 - DS2423 4kb 1-Wire RAM with Counter
+- **DS2431 1kb protected EEPROM (also known as DS1972 or DS28E07 same ID)**
 - DS2433 4Kb 1-Wire EEPROM
 - **DS2438 Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
 - DS2450 4 channel A/D
 - **DS2890 Single channel digital potentiometer - extended to 1-4 CH**
+
+Note: **Bold printed devices are feature-complete and were mostly tested with a DS9490 (look into the regarding example-file for more information)**
 
 ### Features:
 - supports up to 32 slaves (8 is standard setting), adjust HUB_SLAVE_LIMIT in OneWireHub.h to safe RAM & program space
@@ -32,7 +36,8 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - Serial debug output can be enabled in OneWireHub.h: set USE_SERIAL_DEBUG to 1
 - good documentation, numerous examples, easy interface for hub and sensors
 
-### Recent development (latest at the top): 
+### Recent development (latest at the top):
+- added ds2431 (thanks to j-langlois) and BAE910 (thanks to Giermann)
 - hub is more robust to odd master-behaviour (lazy timings and subsequent resets)
 - prepare new timing-method which will replace the old one in the next couple of weeks (a 6µs millis() call at 8MHz is not suitable for OW) 
 - cleanup send / receive / waitForTimeslot to react faster to bus (better for µC with less than 16 MHz)
