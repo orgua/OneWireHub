@@ -25,9 +25,9 @@ void OneWireItem::sendID(OneWireHub *hub) {
 // INFO: this is the slow but memory saving version of the CRC() --> the calculation is not time-critical and happens offline
 // alternative for AVR: http://www.atmel.com/webdoc/AVRLibcReferenceManual/group__util__crc_1ga37b2f691ebbd917e36e40b096f78d996.html
 
-uint8_t OneWireItem::crc8(const uint8_t address[], const uint8_t length)
+uint8_t OneWireItem::crc8(const uint8_t address[], const uint8_t length, const uint8_t init = 0)
 {
-    uint8_t crc = 0;
+    uint8_t crc = init;
 
     for (uint8_t i = 0; i < length; ++i)
     {

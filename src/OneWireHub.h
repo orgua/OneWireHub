@@ -142,6 +142,8 @@ public:
     bool    detach(const OneWireItem &sensor);
     bool    detach(const uint8_t slave_number);
 
+    uint8_t getIndexOfNextSensorInList(const uint8_t index_start = 0);
+
     bool poll(void);
 
     [[deprecated("use the non-blocking poll() instead of waitForRequest()")]]

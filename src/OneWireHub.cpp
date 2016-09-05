@@ -99,6 +99,14 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask)
     return 0;
 }
 
+uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start = 0)
+{
+    for (uint8_t i = index_start; i < ONEWIRE_TREE_SIZE; ++i)
+        if (slave_list[i] != nullptr)
+            return i;
+    return 0;
+}
+
 // gone through the address, store this result
 uint8_t OneWireHub::getNrOfFirstFreeIDTreeElement(void)
 {
@@ -451,18 +459,19 @@ bool OneWireHub::recvAndProcessCmd(void)
             };
             return true;
 
+        case 0x0F: // OLD READ ROM
+            // only usable when there is ONE slave on the bus --> continue to current readRom
+
         case 0x33: // READ ROM
             // only usable when there is ONE slave on the bus
-            if (ONEWIRESLAVE_LIMIT == 1) {
-                slave_selected = slave_list[0];
+            if (slave_count == 1) {
+                slave_selected = slave_list[getIndexOfNextSensorInList()];
                 if (slave_selected != nullptr)
                 {
                     slave_selected->sendID(this);
                 };
             }
             return true;
-        case 0x0F: // OLD READ ROM
-            // only usable when there is ONE slave on the bus
 
         default: // Unknown command
             _error = Error::INCORRECT_ONEWIRE_CMD;
