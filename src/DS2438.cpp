@@ -12,7 +12,7 @@ DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
         calcCRC(page);
     }
 
-    setTemp(static_cast<uint8_t>(20));
+    setTemp(static_cast<int8_t>(20));
 };
 
 bool DS2438::duty(OneWireHub *hub)
@@ -77,23 +77,24 @@ void DS2438::setTemp(const float temp_degC)
 {
     int16_t value = static_cast<int16_t>(temp_degC * 256.0);
 
-    if (temp_degC < 0)
-        value = -value;
+    if (value > 125*256) value = 125*256;
+    if (value < -55*256) value = -55*256;
 
     memory[1] = static_cast<uint8_t>(value&0xF8);
     memory[2] = uint8_t(value >> 8);
 
-    if (temp_degC < 0)
-        memory[2] = memory[2] | static_cast<uint8_t>(0x80);
     calcCRC(0);
 };
 
-void DS2438::setTemp(const uint8_t temp_degC)
+void DS2438::setTemp(const int8_t temp_degC) // can vary from -55 to 125deg
 {
+    int8_t value = temp_degC;
+    if (value > 125) value = 125;
+    if (value < -55) value = -55;
+
     memory[1] = 0;
-    memory[2] = temp_degC;
-    if (temp_degC < 0) // TODO: how should this value fall below 0, unsigned
-        memory[2] = memory[2] | static_cast<uint8_t>(0x80);
+    memory[2] = static_cast<uint8_t>(value);
+
     calcCRC(0);
 };
 
@@ -109,6 +110,6 @@ void DS2438::setCurr(const int16_t value) // signed 11 bit
 {
     memory[5] = uint8_t(value & 0xFF);
     memory[6] = uint8_t((value >> 8) & static_cast<uint8_t>(0x03));
-    if (value<0) memory[6] |= 0xFC; // all upper bits (7:2) are the sign
+    if (value<0) memory[6] |= 0xFC; // all upper bits (7:2) are the signum
     calcCRC(0);
 };

@@ -57,7 +57,7 @@ public:
     bool duty(OneWireHub *hub);
 
     void setTemp(const float   temp_degC);
-    void setTemp(const uint8_t temp_degC);
+    void setTemp(const int8_t temp_degC);
 
     void setVolt(const uint16_t voltage_10mV);
 
