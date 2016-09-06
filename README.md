@@ -39,8 +39,8 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
+- hub is more robust to odd master-behaviour (lazy timings and subsequent resets are handled now), extended in 0.9.3
 - added ds2431 (thanks to j-langlois) and BAE910 (thanks to Giermann), Dell Power Supply (thanks to Kondi)
-- hub is more robust to odd master-behaviour (lazy timings and subsequent resets)
 - prepare new timing-method which will replace the old one in the next couple of weeks (a 6µs millis() call at 8MHz is not suitable for OW) 
 - cleanup send / receive / waitForTimeslot to react faster to bus (better for µC with less than 16 MHz)
 - support for skipROM-cmd if only one slave is present (thanks to Giermann)
