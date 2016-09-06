@@ -99,6 +99,7 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask)
     return 0;
 }
 
+// return next not empty element in slave-list
 uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start = 0)
 {
     for (uint8_t i = index_start; i < ONEWIRE_TREE_SIZE; ++i)
