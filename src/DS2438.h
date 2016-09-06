@@ -45,6 +45,9 @@ private:
     static constexpr uint8_t DS2438_ADB  = 0x40; // adc busy flag
 
     uint8_t memory[(PAGE_EMU_COUNT+1)*8]; // there are another 8byte for garbage-collection if master chooses out of bound adress
+    uint8_t crc[(PAGE_EMU_COUNT+1)];      // keep the matching crc for each memory-page, reading can be very timesensitive
+
+    void calcCRC(const uint8_t page);
 
 public:
     static constexpr uint8_t family_code = 0x26;
