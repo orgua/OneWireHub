@@ -254,10 +254,9 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-tim
     if (skip_reset_detection)
     {
         skip_reset_detection = 0;
-        _error = Error::NO_ERROR;
-
-        if (!waitWhilePinIs(0, ONEWIRE_TIME_RESET_MIN - ONEWIRE_TIME_SLOT_MAX))
+        if (!waitWhilePinIs(0, ONEWIRE_TIME_RESET_MIN - ONEWIRE_TIME_SLOT_MAX - ONEWIRE_TIME_READ_STD))
         {
+            waitWhilePinIs(0, ONEWIRE_TIME_RESET_MAX); // showPresence() wants to start at high, so wait for it
             return true;
         }
     }
@@ -392,8 +391,10 @@ bool OneWireHub::recvAndProcessCmd(void)
 {
     uint8_t address[8];
     bool    flag = false;
+
     uint8_t cmd = recv();
-    if (skip_reset_detection)       return true; // stay in loop and trigger another datastream-detection
+
+    if (skip_reset_detection)       return true; // stay in poll()-loop and trigger another datastream-detection
     if (_error != Error::NO_ERROR)  return false;
 
     switch (cmd)
@@ -548,7 +549,11 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
     for (bytes_received; bytes_received < data_length; ++bytes_received)
     {
         address[bytes_received] = recv();
-        if (_error != Error::NO_ERROR)  break;
+        if (_error != Error::NO_ERROR)
+        {
+            if (skip_reset_detection) _error = Error::NO_ERROR; // remove the pseudo error to leave recv() early,
+            break;
+        }
     }
     return (bytes_received == data_length);
 }
@@ -560,7 +565,11 @@ uint8_t OneWireHub::recv(void)
     for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
     {
         if (recvBit())  value |= bitMask;
-        if (_error != Error::NO_ERROR)  break;
+        if (_error != Error::NO_ERROR)
+        {
+            if (skip_reset_detection) _error = Error::NO_ERROR; // remove the pseudo error to leave recv() early
+            break;
+        }
     }
     return value;
 }
@@ -595,16 +604,15 @@ bool OneWireHub::recvBit(void)
     // wait for a low to high transition followed by a high to low within the time-out
     if (!awaitTimeSlotAndWrite())
     {
-        if (extend_timeslot_detection==2)
+        if (skip_reset_detection)
         {
+            // after running through awaitTimeSlotAndWrite() for the second time and still getting a low this branch raises a pseudo-error to leave the caller recv()
             _error = Error::FIRST_TIMESLOT_TIMEOUT;
-            extend_timeslot_detection = 0;
         }
         else
         {
             _error = Error::READ_TIMESLOT_TIMEOUT;
         }
-
         return 0;
     }
 
@@ -631,6 +639,7 @@ void OneWireHub::wait(const uint16_t timeout_us)
 
 #define USE_MICROS 1
 
+// returns true if pins stays in the wanted state all the time
 bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
 {
     volatile uint8_t *reg asm("r30") = pin_baseReg;
@@ -708,8 +717,9 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
     {
         if (--retries == 0)
         {
-            if (extend_timeslot_detection==2)
+            if (extend_timeslot_detection == 2)
             {
+                // this branch can be taken after calling THIS functions the second time in recvBit()
                 extend_timeslot_detection = 0;
                 skip_reset_detection      = 1;
             }
@@ -744,6 +754,8 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
             return false;
         };
     };
+
+    // if extend_timeslot_detection == 2 we could safe millis()
 
     if (writeZero)
     {
