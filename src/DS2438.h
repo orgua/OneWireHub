@@ -44,7 +44,7 @@ private:
     static constexpr uint8_t DS2438_NVB  = 0x20; // eeprom busy flag
     static constexpr uint8_t DS2438_ADB  = 0x40; // adc busy flag
 
-    uint8_t memory[PAGE_EMU_COUNT*8];
+    uint8_t memory[(PAGE_EMU_COUNT+1)*8]; // there are another 8byte for garbage-collection if master chooses out of bound adress
 
 public:
     static constexpr uint8_t family_code = 0x26;

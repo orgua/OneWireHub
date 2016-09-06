@@ -10,52 +10,56 @@ DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 bool DS2438::duty(OneWireHub *hub)
 {
-    uint8_t page;
-    uint8_t crc;
-    uint8_t garbage[8];
+    static uint8_t page;
+    static uint8_t crc;
+    uint8_t page_new;
 
     uint8_t cmd = hub->recv();
     hub->extendTimeslot(); // test
 
     switch (cmd)
     {
-        case 0x44: // Convert T
-            //hub->sendBit(1); // 1 is passive, so ommit it ...
+        // reordered for better timing during debug
+        case 0xBE: // Read Scratchpad
+            page_new = hub->recv();
+
+            if (page_new != page) // this case may produce errors --> we should recalc crc on the fly after changing something
+            {
+                page = page_new;
+                if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT;
+                crc = crc8(&memory[page * 8], 8);
+            }
+            hub->send(&memory[page * 8], 8);
+            hub->send(crc);
             break;
 
         case 0x4E: // Write Scratchpad
             page = hub->recv();
-            if (page >= PAGE_EMU_COUNT)
-                hub->recv(garbage, 8);
-            else
-                hub->recv(&memory[page * 8], 8);
-            break;
 
-        case 0xB4: // Convert V
-            //hub->sendBit(1); // 1 is passive, so ommit it ...
-            break;
+            if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT;
 
-        case 0xB8: // Recall Memory
-            page = hub->recv();
-            break;
+            hub->recv(&memory[page * 8], 8);
+            crc = crc8(&memory[page * 8], 8);
 
-        case 0xBE: // Read Scratchpad
-            page = hub->recv();
-            if (page >= PAGE_EMU_COUNT)
-            {
-                crc = crc8(garbage, 8);
-                hub->send(garbage, 8);
-            }
-            else
-            {
-                crc = crc8(&memory[page * 8], 8);
-                hub->send(&memory[page * 8], 8);
-            }
-            hub->send(crc);
             break;
 
         case 0x48: // copy scratchpad
-            page = hub->recv() & static_cast<uint8_t>(0x07);
+            // do nother special, goto recall for now
+
+        case 0xB8: // Recall Memory
+            page = hub->recv();
+
+            if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT;
+
+            crc = crc8(&memory[page * 8], 8);
+
+            break;
+
+        case 0x44: // Convert T
+            //hub->sendBit(1); // 1 is passive, so ommit it ...
+            break;
+
+        case 0xB4: // Convert V
             //hub->sendBit(1); // 1 is passive, so ommit it ...
             break;
 
@@ -92,13 +96,13 @@ void DS2438::setTemp(const uint8_t temp_degC)
 
 void DS2438::setVolt(const uint16_t voltage_10mV)
 {
-    memory[3] = uint8_t(voltage_10mV);
+    memory[3] = uint8_t(voltage_10mV & 0xFF);
     memory[4] = uint8_t((voltage_10mV >> 8) & static_cast<uint8_t>(0x03));
 };
 
 void DS2438::setCurr(const int16_t value) // signed 11 bit
 {
-    memory[5] = uint8_t(value);
+    memory[5] = uint8_t(value & 0xFF);
     memory[6] = uint8_t((value >> 8) & static_cast<uint8_t>(0x03));
     if (value<0) memory[6] |= 0xFC; // all upper bits (7:2) are the sign
 };
