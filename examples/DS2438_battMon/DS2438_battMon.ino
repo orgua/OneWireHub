@@ -57,7 +57,7 @@ void loop()
         static uint16_t volt_10mV = 10;
         static uint16_t current   = 10;
 
-        if ((temp += 0.2) > 30.0) temp = 10.0;
+        if ((temp += 0.05) > 30.0) temp = 10.0;
         if ((volt_10mV++) > 200 ) volt_10mV = 10;
         if ((current++)   > 200 ) current = 10;
 
