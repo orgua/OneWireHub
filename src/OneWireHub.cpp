@@ -103,8 +103,9 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask)
 uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start = 0)
 {
     for (uint8_t i = index_start; i < ONEWIRE_TREE_SIZE; ++i)
-        if (slave_list[i] != nullptr)
-            return i;
+    {
+        if (slave_list[i] != nullptr)  return i;
+    }
     return 0;
 }
 
@@ -112,8 +113,9 @@ uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start = 0)
 uint8_t OneWireHub::getNrOfFirstFreeIDTreeElement(void)
 {
     for (uint8_t i = 0; i < ONEWIRE_TREE_SIZE; ++i)
-        if (idTree[i].id_position == 255)
-            return i;
+    {
+        if (idTree[i].id_position == 255) return i;
+    }
     return 0;
 };
 
@@ -131,7 +133,9 @@ uint8_t OneWireHub::buildIDTree(void)
     }
 
     for (uint8_t i = 0; i< ONEWIRE_TREE_SIZE; ++i)
-        idTree[i].id_position    = 255;
+    {
+        idTree[i].id_position = 255;
+    }
 
     // begin with root-element
     buildIDTree(0, mask_slaves); // goto branch
@@ -282,7 +286,7 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-tim
     // If the master pulled low for to short this will trigger an error
     if ((time_start + ONEWIRE_TIME_RESET_MIN) > micros())
     {
-        //_error = Error::VERY_SHORT_RESET;
+        //_error = Error::VERY_SHORT_RESET; // TODO: activate again, like the error above, errorhandling is mature enough now
         return false;
     }
 
@@ -339,21 +343,18 @@ bool OneWireHub::search(void)
         if (position_IDBit == trigger_bit)
         {
             sendBit(false);
+            if (_error != Error::NO_ERROR)  return false;
             sendBit(false);
+            if (_error != Error::NO_ERROR)  return false;
             const bool bit_recv = recvBit();
-            if (_error != Error::NO_ERROR) return false;
+            if (_error != Error::NO_ERROR)  return false;
 
             // switch to next junction
-            if (bit_recv)   trigger_pos = idTree[trigger_pos].got_one;
-            else            trigger_pos = idTree[trigger_pos].got_zero;
+            trigger_pos = bit_recv ? idTree[trigger_pos].got_one : idTree[trigger_pos].got_zero;
 
             active_slave = idTree[trigger_pos].slave_selected;
 
-            if (trigger_pos == 255)
-                trigger_bit  = 255;
-            else
-                trigger_bit  = idTree[trigger_pos].id_position;
-
+            trigger_bit = (trigger_pos == 255) ? uint8_t(255) : idTree[trigger_pos].id_position;
         }
         else
         {
@@ -365,20 +366,23 @@ bool OneWireHub::search(void)
             {
                 bit_send = 1;
                 sendBit(true);
+                if (_error != Error::NO_ERROR)  return false;
                 sendBit(false);
+                if (_error != Error::NO_ERROR)  return false;
             }
             else
             {
                 bit_send = 0;
                 sendBit(false);
+                if (_error != Error::NO_ERROR)  return false;
                 sendBit(true);
+                if (_error != Error::NO_ERROR)  return false;
             }
 
             const bool bit_recv = recvBit();
             if (_error != Error::NO_ERROR)  return false;
 
-            if (bit_send != bit_recv)
-                return false;
+            if (bit_send != bit_recv)  return false;
         }
         position_IDBit++;
     }
@@ -440,7 +444,7 @@ bool OneWireHub::recvAndProcessCmd(void)
                 extend_timeslot_detection = 1;
                 slave_selected->duty(this);
             };
-            return true;
+            return !(getError());
 
         case 0xCC: // SKIP ROM
             slave_selected = nullptr;
@@ -459,7 +463,7 @@ bool OneWireHub::recvAndProcessCmd(void)
                 extend_timeslot_detection = 1;
                 slave_selected->duty(this);
             };
-            return true;
+            return !(getError());
 
         case 0x0F: // OLD READ ROM
             // only usable when there is ONE slave on the bus --> continue to current readRom
@@ -482,6 +486,7 @@ bool OneWireHub::recvAndProcessCmd(void)
     return false;
 };
 
+// info: check for errors after calling and break/return if possible
 bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
 {
     uint8_t bytes_sent = 0;
@@ -494,6 +499,7 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
     return (bytes_sent == data_length);
 };
 
+// info: check for errors after calling and break/return if possible, or check for return==false
 bool OneWireHub::send(const uint8_t dataByte)
 {
     for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
@@ -504,6 +510,7 @@ bool OneWireHub::send(const uint8_t dataByte)
     return true;
 };
 
+// info: check for errors after calling and break/return if possible, TODO: why return crc both ways
 uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
 {
     for (uint8_t counter = 0; counter < 8; ++counter)
@@ -520,6 +527,7 @@ uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
     return crc16;
 }
 
+// info: check for errors after calling and break/return if possible, or check for return==false
 bool OneWireHub::sendBit(const bool value)
 {
     // wait for a low to high transition followed by a high to low within the time-out
@@ -811,4 +819,9 @@ void OneWireHub::raiseSlaveError(const uint8_t cmd)
 {
     _error = Error::INCORRECT_SLAVE_USAGE;
     _error_cmd = cmd;
+};
+
+void OneWireHub::clearError(void)
+{
+    _error = Error::NO_ERROR;
 };

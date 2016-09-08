@@ -16,7 +16,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2411 Serial Number** (use DS2401 with same family code 0x01)
 - **DS2413 Dual channel addressable switch with input-sensing**
 - DS2423 4kb 1-Wire RAM with Counter
-- **DS2431 1kb protected EEPROM (also known as DS1972 or DS28E07 same ID)**
+- **DS2431 1kb protected EEPROM (also known as DS1972 or DS28E07, same ID)**
 - DS2433 4Kb 1-Wire EEPROM
 - **DS2438 Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
 - DS2450 4 channel A/D
@@ -39,7 +39,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
-- hub is more robust to odd master-behaviour (lazy timings and subsequent resets are handled now), extended in 0.9.3
+- hub is more resilient to odd master-behaviour (lazy timings and subsequent resets are handled now), extended in 0.9.3 and 0.9.4
 - added ds2431 (thanks to j-langlois) and BAE910 (thanks to Giermann), Dell Power Supply (thanks to Kondi)
 - prepare new timing-method which will replace the old one in the next couple of weeks (a 6µs millis() call at 8MHz is not suitable for OW) 
 - cleanup send / receive / waitForTimeslot to react faster to bus (better for µC with less than 16 MHz)

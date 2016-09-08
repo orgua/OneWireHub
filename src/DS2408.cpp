@@ -26,28 +26,33 @@ bool DS2408::duty(OneWireHub *hub)
 {
     memory.field.crc = 0;
     uint8_t cmd = hub->recvAndCRC16(memory.field.crc);
+    if (hub->getError())  return false;
 
     switch (cmd)
     {
         // Read PIO Registers
         case 0xF0:
             hub->recvAndCRC16(memory.field.crc);
+            if (hub->getError())  return false;
             hub->recvAndCRC16(memory.field.crc);
+            if (hub->getError())  return false;
 
             for (uint8_t count = 3; count < 11; ++count)
             {
                 memory.field.crc = hub->sendAndCRC16(memory.bytes[count], memory.field.crc);
+                if (hub->getError())  return false; // directly quit when master stops, omit following data
             }
             memory.field.crc = ~memory.field.crc; // most important step, easy to miss....
             hub->send(memory.bytes[11]);
+            if (hub->getError())  return false;
             hub->send(memory.bytes[12]);
+            if (hub->getError())  return false;
 
             break;
 
         default:
             hub->raiseSlaveError(cmd);
-            return false;
     };
 
-    return true;
+    return !(hub->getError());
 };
