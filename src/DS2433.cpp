@@ -13,6 +13,7 @@ bool DS2433::duty(OneWireHub *hub)
     uint8_t  b;
 
     uint8_t cmd = hub->recv();
+    if (hub->getError())  return false;
 
     switch (cmd)
     {
@@ -20,16 +21,22 @@ bool DS2433::duty(OneWireHub *hub)
         case 0x0F:
             // Adr1
             b = hub->recv();
+            if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
 
             // Adr2
             b = hub->recv();
+            if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
 
             for (int i = 0; i < 32; ++i) // TODO: check for memory_address + 32 < sizeof()
             {
                 hub->send(memory[memory_address + i]);
-                if (hub->getError()) break;
+                if (hub->getError())
+                {
+                    hub->clearError();
+                    break;
+                }
             };
 
             break;
@@ -38,36 +45,44 @@ bool DS2433::duty(OneWireHub *hub)
         case 0xAA:
             // Adr1
             b = hub->recv();
+            if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
 
             // Adr2
             b = hub->recv();
+            if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
 
             // Offset
             mem_offset = hub->recv();
-
             break;
 
             // READ MEMORY
         case 0xF0:
             // Adr1
             b = hub->recv();
+            if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
 
             // Adr2
             b = hub->recv();
+            if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
 
             // data
             for (int i = 0; i < 32; ++i) // TODO: check for memory_address + 32 < sizeof()
+            {
                 hub->send(memory[memory_address + i]);
-
+                if (hub->getError())
+                {
+                    hub->clearError();
+                    break;
+                }
+            }
             break;
 
         default:
             hub->raiseSlaveError(cmd);
-            break;
     };
-    return true;
+    return !(hub->getError());
 };

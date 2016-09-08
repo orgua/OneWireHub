@@ -12,12 +12,14 @@ DS2413::DS2413(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 bool DS2413::duty(OneWireHub *hub)
 {
     uint8_t cmd = hub->recv();
+    if (hub->getError())  return false;
     uint8_t data = 0;
 
     switch (cmd)
     {
         case 0x5A: // PIO ACCESS WRITE
             data = ~hub->recv(); // Write inverse
+            if (hub->getError())  return false;
             hub->send(data); // send inverted form for safety
 
             setLatch(0, data & static_cast<uint8_t>(0x01)); // A
@@ -25,7 +27,6 @@ bool DS2413::duty(OneWireHub *hub)
             setState(0, ~(data & static_cast<uint8_t>(0x01)));
             setState(1, ~(data & static_cast<uint8_t>(0x01)));
             break;
-
 
         case 0xF5: // PIO ACCESS READ
             data = 0;
@@ -37,13 +38,11 @@ bool DS2413::duty(OneWireHub *hub)
 
             data = data | (~data << 4);
             hub->send(data);
-
             break;
 
         default:
             hub->raiseSlaveError(cmd);
-            return false;
     };
 
-    return true;
+    return !(hub->getError());
 };

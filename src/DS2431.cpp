@@ -7,6 +7,7 @@ DS2431::DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 bool DS2431::duty(OneWireHub *hub)
 {
     uint8_t cmd = hub->recv();
+    if (hub->getError())  return false;
     uint8_t  b;
     switch (cmd)
     {
@@ -14,20 +15,26 @@ bool DS2431::duty(OneWireHub *hub)
         case 0x0F:
             // Adr1
             b = hub->recv();
+            if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address_w)[0] = b;
             crcArg[1] = b;
 
             // Adr2
             b = hub->recv();
+            if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address_w)[1] = b;
             crcArg[2] = b;
 
             // 8 bytes of data
             for (uint8_t i = 0; i < 8; ++i) {
                 b = hub->recv();
+                if (hub->getError())
+                {
+                    hub->clearError();
+                    break;
+                }
                 scratchpad[i] = b;
                 crcArg[3 + i] = b;
-                if (hub->getError()) break;
             };
 
             // Compute the auth code
@@ -35,48 +42,50 @@ bool DS2431::duty(OneWireHub *hub)
 
             // Compute the CRC
             crc = crc16(crcArg, 11, CRC_INIT);
-
             break;
 
         // READ SCRATCHPAD COMMAND
         case 0xAA:
             // Write-to address
             hub->send(memory_address_w & 0xff);
+            if (hub->getError())  return false;
             hub->send(memory_address_w >> 8);
+            if (hub->getError())  return false;
             
             // Auth code
             hub->send(auth_code);
+            if (hub->getError())  return false;
             
             //Scratchpad content
-            for (uint8_t i = 0; i < 8; ++i) {
+            for (uint8_t i = 0; i < 8; ++i) { // TODO: address can point directly to offset-byte in scratchpad, so this code is not fully compliant (same above)
                 hub->send(scratchpad[i]);
-                if (hub->getError()) break;
+                if (hub->getError()) return false; // master can break, but gets no crc afterwards
             };
             
             // CRC-16
             hub->send(crc & 0xff);
+            if (hub->getError())  return false;
             hub->send((crc >> 8));
-
             break;
         
         // COPY SCRATCHPAD COMMAND
         case 0x55:
             // Adr1
             b = hub->recv();
+            if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address_w_confirmation)[0] = b;
 
             // Adr2
             b = hub->recv();
+            if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address_w_confirmation)[1] = b;
             
             // Write-to addresses must match
-            if (memory_address_w != memory_address_w_confirmation)
-                break;
+            if (memory_address_w != memory_address_w_confirmation) break;
             
             // Auth code must match
             b = hub->recv();
-            if (b != auth_code)
-                break;
+            if (b != auth_code)   break;
             
             // Write Scratchpad
             for (uint8_t i = 0; i < 8; ++i) {
@@ -91,22 +100,24 @@ bool DS2431::duty(OneWireHub *hub)
         case 0xF0:
             // Adr1
             b = hub->recv();
+            if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address_r)[0] = b;
 
             // Adr2
             b = hub->recv();
+            if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address_r)[1] = b;
  
-            for (; memory_address_r < sizeof(memory); ++memory_address_r) {
+            for (; memory_address_r < sizeof(memory); ++memory_address_r)
+            {
                 hub->send(memory[memory_address_r]);
-                if (hub->getError())
-                    break; 
+                if (hub->getError())  break;
             }
-
             break;
+
         default:
             hub->raiseSlaveError(cmd);
-            break;
+
     };
-    return true;
+    return !(hub->getError());
 };

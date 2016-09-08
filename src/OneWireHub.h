@@ -167,7 +167,7 @@ public:
     void printError(void);
     bool getError(void);
     void raiseSlaveError(const uint8_t cmd = 0);
-
+    void clearError(void);
 };
 
 

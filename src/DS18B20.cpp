@@ -23,7 +23,7 @@ void DS18B20::updateCRC()
 bool DS18B20::duty(OneWireHub *hub)
 {
     const uint8_t cmd = hub->recv();
-    //if (hub->getError())  return false;
+    if (hub->getError())  return false;
 
     switch (cmd)
     {
@@ -34,12 +34,12 @@ bool DS18B20::duty(OneWireHub *hub)
         case 0x4E: // WRITE SCRATCHPAD
             // write 3 byte of data to scratchpad[1:3]
             hub->recv(&scratchpad[2], 3);
+            if (hub->getError())  return false;
             updateCRC();
             break;
 
         case 0xBE: // READ SCRATCHPAD
             hub->send(scratchpad, 9);
-            if (hub->getError()) return false;
             break;
 
         case 0x48: // COPY SCRATCHPAD to EEPROM
@@ -66,13 +66,11 @@ bool DS18B20::duty(OneWireHub *hub)
             // TODO: Alarm search command, respond if flag is set
             break;
 
-
         default:
             hub->raiseSlaveError(cmd);
-            break;
     };
 
-    return true;
+    return !(hub->getError());
 };
 
 

@@ -12,6 +12,6 @@ bool DS2405::duty(OneWireHub *hub)
     pin_state = !pin_state;
     hub->sendBit(pin_state);
 
-    return true;
+    return !(hub->getError());
 };
 

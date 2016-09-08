@@ -13,6 +13,7 @@ bool DS2423::duty(OneWireHub *hub)
     uint16_t crc = 0;
 
     uint8_t cmd = hub->recvAndCRC16(crc);
+    if (hub->getError())  return false;
 
     switch (cmd)
     {
@@ -20,40 +21,36 @@ bool DS2423::duty(OneWireHub *hub)
         case 0xA5:
 
             reinterpret_cast<uint8_t *>(&memory_address)[0] = hub->recvAndCRC16(crc); // Adr1
+            if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address)[1] = hub->recvAndCRC16(crc);
-
+            if (hub->getError())  return false;
             memory_address_start = memory_address;
 
             // data
-            for (int i = 0; i < 32; ++i) // TODO: check for (memory_address + 32) < sizeof() before running out of allowed range
+            for (int8_t i = 0; i < 32; ++i) // TODO: check for (memory_address + 32) < sizeof() before running out of allowed range
             {
                 crc = hub->sendAndCRC16(0xff,crc);
+                if (hub->getError())  return false; // directly quit when master stops, omit following data
             }
 
-            // cnt
-            crc = hub->sendAndCRC16(0x00,crc);
-            crc = hub->sendAndCRC16(0x00,crc);
-            crc = hub->sendAndCRC16(0x00,crc);
-            crc = hub->sendAndCRC16(0x00,crc);
-
-            // zero
-            crc = hub->sendAndCRC16(0x00,crc);
-            crc = hub->sendAndCRC16(0x00,crc);
-            crc = hub->sendAndCRC16(0x00,crc);
-            crc = hub->sendAndCRC16(0x00,crc);
+            // 4x cnt & 4x zero
+            for (uint8_t i = 0; i < 8; ++i)
+            {
+                crc = hub->sendAndCRC16(0x00, crc);
+                if (hub->getError())  return false; // directly quit when master stops, omit following data
+            }
 
             // crc
             crc = ~crc;
             hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
+            if (hub->getError())  return false;
             hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-
             break;
 
         default:
             hub->raiseSlaveError(cmd);
-            break;
     };
 
-    return true;
+    return !(hub->getError());
 };
 
