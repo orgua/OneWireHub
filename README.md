@@ -17,7 +17,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2413 Dual channel addressable switch with input-sensing**
 - DS2423 4kb 1-Wire RAM with Counter
 - **DS2431 1kb protected EEPROM (also known as DS1972 or DS28E07, same ID)**
-- DS2433 4Kb 1-Wire EEPROM
+- **DS2433 4Kb 1-Wire EEPROM**
 - **DS2438 Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
 - DS2450 4 channel A/D
 - DS2502 1kb EEPROM, Add Only Memory
