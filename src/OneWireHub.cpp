@@ -22,6 +22,11 @@ OneWireHub::OneWireHub(uint8_t pin)
     volatile uint8_t *reg asm("r30") = pin_baseReg;
     DIRECT_MODE_INPUT(reg, pin_bitMask);
 
+    // debug:
+#ifdef USE_GPIO_DEBUG
+    pinMode(GPIO_DEBUG_PIN_D,OUTPUT);
+    digitalWrite(GPIO_DEBUG_PIN_D,LOW);
+#endif
 };
 
 
@@ -290,6 +295,8 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-tim
         return false;
     }
 
+    overdrive_mode = false; // normal reset detected, so leave OD-Mode
+
     return true;
 }
 
@@ -407,6 +414,8 @@ bool OneWireHub::recvAndProcessCmd(void)
             search();
             return true; // always trigger a re-init after search
 
+        case 0x69: // overdrive MATCH ROM
+            overdrive_mode = true;
         case 0x55: // MATCH ROM - Choose/Select ROM
             recv(address, 8);
             if (_error != Error::NO_ERROR)  return false;
@@ -442,10 +451,18 @@ bool OneWireHub::recvAndProcessCmd(void)
             if (slave_selected != nullptr)
             {
                 extend_timeslot_detection = 1;
+#ifdef USE_GPIO_DEBUG
+                digitalWrite(GPIO_DEBUG_PIN_D,HIGH);
                 slave_selected->duty(this);
+                digitalWrite(GPIO_DEBUG_PIN_D,LOW);
+#else
+                slave_selected->duty(this);
+#endif
             };
             return !(getError());
 
+        case 0x3C: // overdrive SKIP ROM
+            overdrive_mode = true;
         case 0xCC: // SKIP ROM
             slave_selected = nullptr;
 
@@ -461,7 +478,13 @@ bool OneWireHub::recvAndProcessCmd(void)
             if (slave_selected != nullptr)
             {
                 extend_timeslot_detection = 1;
+#ifdef USE_GPIO_DEBUG
+                digitalWrite(GPIO_DEBUG_PIN_D,HIGH);
                 slave_selected->duty(this);
+                digitalWrite(GPIO_DEBUG_PIN_D,LOW);
+#else
+                slave_selected->duty(this);
+#endif
             };
             return !(getError());
 
@@ -505,12 +528,16 @@ bool OneWireHub::send(const uint8_t dataByte)
     for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
     {
         sendBit((bitMask & dataByte) ? bool(1) : bool(0));
-        if (_error != Error::NO_ERROR) return false;
+        if (_error != Error::NO_ERROR)
+        {
+            if (bitMask == 0x01)      _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
+            return false;
+        }
     };
     return true;
 };
 
-// info: check for errors after calling and break/return if possible, TODO: why return crc both ways
+// info: check for errors after calling and break/return if possible, TODO: why return crc both ways, detect first bit break
 uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
 {
     for (uint8_t counter = 0; counter < 8; ++counter)
@@ -576,13 +603,14 @@ uint8_t OneWireHub::recv(void)
         if (_error != Error::NO_ERROR)
         {
             if (skip_reset_detection) _error = Error::NO_ERROR; // remove the pseudo error to leave recv() early
+            if (bitMask == 0x01)      _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
             break;
         }
     }
     return value;
 }
 
-// TODO: not happy with the interface - call by ref is slow here. maybe use a crc in class and expand with crc-reset and get?
+// TODO: not happy with the interface - call by ref is slow here. maybe use a crc in class and expand with crc-reset and get?, TODO: detect first bit break
 uint8_t OneWireHub::recvAndCRC16(uint16_t &crc16)
 {
     uint8_t value = 0;
@@ -821,7 +849,9 @@ void OneWireHub::raiseSlaveError(const uint8_t cmd)
     _error_cmd = cmd;
 };
 
-void OneWireHub::clearError(void)
+Error OneWireHub::clearError(void) // and return it if needed
 {
+    Error _tmp = _error;
     _error = Error::NO_ERROR;
+    return _tmp;
 };

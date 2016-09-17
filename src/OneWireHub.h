@@ -8,6 +8,8 @@
 #include "platform.h" // code for compatibility
 
 #define USE_SERIAL_DEBUG 0 // give debug messages when printError() is called
+#define USE_GPIO_DEBUG 1
+#define GPIO_DEBUG_PIN_D 4
 // INFO: had to go with a define because some compilers use constexpr as simple const --> massive problems
 
 #define HUB_SLAVE_LIMIT 8 // set the limit of the hub HERE
@@ -44,6 +46,7 @@ enum class Error : uint8_t {
     INCORRECT_SLAVE_USAGE      = 11,
     TRIED_INCORRECT_WRITE      = 12,
     FIRST_TIMESLOT_TIMEOUT     = 13,
+    FIRST_BIT_OF_BYTE_TIMEOUT  = 14
 };
 
 
@@ -68,7 +71,7 @@ private:
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_SAMPLE_MIN  =   20; // probe measures 40us
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     =  160; // was 125
     static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     =  480; // should be 280, was 480 !!!! why
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =20000; //
+    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =20000; // TODO: length of high-side not really relevant, so we should switch to a fn that detects the length of the most recent low-phase
 
     static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =  135; // should be 120, was ~1050
 
@@ -99,6 +102,7 @@ private:
     uint8_t           extend_timeslot_detection;
     uint8_t           skip_reset_detection;
 
+    bool              overdrive_mode;
 
     uint8_t      slave_count;
     OneWireItem *slave_list[ONEWIRESLAVE_LIMIT];  // private slave-list (use attach/detach)
@@ -167,7 +171,7 @@ public:
     void printError(void);
     bool getError(void);
     void raiseSlaveError(const uint8_t cmd = 0);
-    void clearError(void);
+    Error clearError(void);
 };
 
 
