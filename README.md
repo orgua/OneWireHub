@@ -5,23 +5,24 @@ The OneWireHub is an Arduino compatible (and many more platforms) library to emu
 The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your environment.
 
 ### Supported Slaves:
-- **BAE910 multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
-- **DS1822 Digital Thermometer, 12bit** (use DS18B20 with family code set to 0x22)
-- **DS18B20 Digital Thermometer, 12bit** 
-- **DS18S20 Digital Thermometer, 12bit** (use DS18B20 with family code set to 0x10)
-- **DS1990 iButton** (use DS2401 with same family code 0x01)
-- **DS2401 Serial Number**
-- **DS2405 Single address switch**
-- DS2408 8-Channel Addressable Switch, GPIO Port-expander
-- **DS2411 Serial Number** (use DS2401 with same family code 0x01)
-- **DS2413 Dual channel addressable switch with input-sensing**
-- DS2423 4kb 1-Wire RAM with Counter
-- **DS2431 1kb protected EEPROM (also known as DS1972 or DS28E07, same ID)**
-- **DS2433 4Kb 1-Wire EEPROM**
-- **DS2438 Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
-- DS2450 4 channel A/D
-- DS2502 1kb EEPROM, Add Only Memory
-- **DS2890 Single channel digital potentiometer - extended to 1-4 CH**
+- **BAE910 (0xFC) multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
+- **DS1822 (0x22) Digital Thermometer, 12bit** (use DS18B20 with different family code)
+- **DS18B20 (0x28) Digital Thermometer, 12bit** 
+- **DS18S20 (0x10) Digital Thermometer, 12bit** (use DS18B20 with different family code)
+- **DS1990 (0x01) iButton** (DS2401 with same family code)
+- **DS2401 (0x01) Serial Number**
+- **DS2405 (0x05) Single address switch**
+- DS2408 (0x29) 8-Channel Addressable Switch, GPIO Port-expander
+- **DS2411 (0x01) Serial Number** (use DS2401 with same family code)
+- **DS2413 (0x3A) Dual channel addressable switch with input-sensing**
+- DS2423 (0x1D) 4kbit 1-Wire RAM with Counter
+- **DS2431 (0x2D) 1kbit protected EEPROM (also known as DS1972 or DS28E07, same ID)**
+- **DS2433 (0x23) 4Kbit 1-Wire EEPROM**
+- **DS2438 (0x26) Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
+- DS2450 (0x20) 4 channel A/D
+- DS2501 (0x11) 512bit EEPROM (use DS2502 with different family code)
+- DS2502 (0x09) 1kbit EEPROM, Add Only Memory
+- **DS2890 (0x2C) 0x Single channel digital potentiometer - extended to 1-4 CH**
 - Dell Power Supply (use DS2502 with family code set to 0x28)
 
 Note: **Bold printed devices are feature-complete and were mostly tested with a DS9490 (look into the regarding example-file for more information)**
