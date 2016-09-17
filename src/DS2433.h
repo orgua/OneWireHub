@@ -9,7 +9,7 @@
 class DS2433 : public OneWireItem
 {
 private:
-    uint8_t memory[512];
+    uint8_t memory[512]; // 4kb max storage
 
 public:
     static constexpr uint8_t family_code = 0x23;
