@@ -534,6 +534,7 @@ bool OneWireHub::send(const uint8_t dataByte)
             return false;
         }
     };
+    // TODO: was there an extend timeslot before? should be needed for loxone
     return true;
 };
 
@@ -607,6 +608,7 @@ uint8_t OneWireHub::recv(void)
             break;
         }
     }
+    // TODO: was there an extend timeslot before? should be needed for loxone
     return value;
 }
 

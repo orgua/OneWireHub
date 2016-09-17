@@ -4,7 +4,7 @@ DS2433::DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 {
     for (int i = 0; i < sizeof(memory); ++i)
     {
-        memory[i] = 0xAA;
+        memory[i] = 0x00;
     };
 
 };
@@ -58,7 +58,7 @@ bool DS2433::duty(OneWireHub *hub)
             if (register_es != 0b00011111) break;
 
             // TODO: device should send inverted crc16 of command, address and data
-            crc = ~crc;
+            crc = ~crc; // normally crc16 is sent ~inverted
             hub->send(uint8_t(crc & 0xff));
             if (hub->getError())  return false;
             hub->send(uint8_t(crc >> 8));
@@ -84,13 +84,17 @@ bool DS2433::duty(OneWireHub *hub)
             register_es |= 0b10000000;
 
             // TODO: maybe implement a real scratchpad
-
+            delayMicroseconds(5000); // simulate writing
+            hub->extendTimeslot();
+            hub->sendBit(1);
+            hub->clearError();
+            hub->extendTimeslot();
             while (1) // send alternating 1 & 0 after copy is complete
             {
                 hub->send(0b10101010);
                 if (hub->getError())
                 {
-                    hub->clearError();
+                    hub->clearError(); // TODO: should not clear, to get fast to next reset
                     break;
                 };
             };
@@ -122,7 +126,7 @@ bool DS2433::duty(OneWireHub *hub)
 
             if (hub->getError())
             {
-                hub->clearError();
+                hub->clearError();// TODO: should not clear, to get fast to next reset
                 break;
             }
 
@@ -132,7 +136,7 @@ bool DS2433::duty(OneWireHub *hub)
                 hub->send(255);
                 if (hub->getError())
                 {
-                    hub->clearError();
+                    hub->clearError();// TODO: should not clear, to get fast to next reset
                     break;
                 };
             };
@@ -160,7 +164,7 @@ bool DS2433::duty(OneWireHub *hub)
 
             if (hub->getError())
             {
-                hub->clearError();
+                hub->clearError();// TODO: should not clear, to get fast to next reset
                 break;
             };
 
@@ -170,7 +174,7 @@ bool DS2433::duty(OneWireHub *hub)
                 hub->send(255);
                 if (hub->getError())
                 {
-                    hub->clearError();
+                    hub->clearError();// TODO: should not clear, to get fast to next reset
                     break;
                 };
             };
