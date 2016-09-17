@@ -33,17 +33,20 @@ private:
                             0x00, 0xAA, 0xAA, 0xAA, 0x04, 0x55, 0x06, 0x07, \
                             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x55 };
     uint8_t scratchpad[8];
-    uint16_t memory_address_r;
-    uint16_t memory_address_w;
-    uint16_t memory_address_w_confirmation;
-    uint8_t auth_code;
-    uint8_t crcArg[11] = { 0x0F };
-    uint16_t crc;
+    uint8_t page_protection;
+    uint8_t page_eprom_mode;
+
+    bool checkProtection(const uint8_t position);
+    bool checkEpromMode(const uint8_t position);
 
 public:
     static constexpr uint8_t family_code = 0x2D;
     DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
     bool duty(OneWireHub *hub);
+
+    bool clearMemory(void);
+    bool writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position);
+    bool checkMemory(void);
 };
 
 #endif
