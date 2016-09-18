@@ -502,6 +502,9 @@ bool OneWireHub::recvAndProcessCmd(void)
             }
             return true;
 
+        case 0xA5: // RESUME COMMAND
+            // TODO: maybe add function to fully support the ds2432
+
         default: // Unknown command
             _error = Error::INCORRECT_ONEWIRE_CMD;
             _error_cmd = cmd;
