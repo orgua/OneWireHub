@@ -111,7 +111,7 @@ bool DS2433::duty(OneWireHub *hub)
             hub->extendTimeslot();
 
             // data
-            for (uint8_t i = (uint8_t(register_ta) & uint8_t(0b00011111)); i < 32; ++i) // model of the 32byte scratchpad
+            for (uint8_t i = 0; i < 32; ++i) // model of the 32byte scratchpad
             {
                 const uint16_t mem_start = (register_ta & ~uint16_t(0b00011111));
                 hub->send(memory[mem_start + i]);
