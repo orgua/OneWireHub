@@ -45,8 +45,8 @@ public:
     DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
     bool duty(OneWireHub *hub);
 
-    bool clearMemory(void);
-    bool writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position);
+    void clearMemory(void);
+    bool writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position = 0);
     bool checkMemory(void);
 };
 

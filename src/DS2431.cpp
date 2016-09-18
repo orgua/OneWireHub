@@ -2,16 +2,20 @@
 
 DS2431::DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
+    for (uint8_t i = 0; i < sizeof(scratchpad); ++i) scratchpad[i] = 0x00;
+    page_protection = 0;
+    page_eprom_mode = 0;
+
     checkMemory();
 };
 
 bool DS2431::duty(OneWireHub *hub)
 {
-    static uint16_t register_ta = 0; // contains TA1, TA2
-    static uint8_t  register_es = 0;  // E/S register
+    static uint16_t reg_TA = 0; // contains TA1, TA2
+    static uint8_t  reg_ES = 0;  // E/S register
     static uint16_t crc = 0;
 
-    uint8_t  scratch_start = 0;
+    uint8_t  page_offset = 0;
 
     uint8_t cmd = hub->recv();
     if (hub->getError())  return false;
@@ -24,53 +28,53 @@ bool DS2431::duty(OneWireHub *hub)
             // Adr1
             b = hub->recv();
             if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&register_ta)[0] = b;
-            register_es = b & uint8_t(0x00000111); // TODO: when not zero we should issue register_es |= 0b00100000; (datasheet not clear)
+            reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
+            reg_ES = b & uint8_t(0x00000111); // TODO: when not zero we should issue reg_ES |= 0b00100000; (datasheet not clear)
             crc = crc16(b, crc);
 
             // Adr2
             b = hub->recv();
             if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&register_ta)[1] = b;
+            reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
             crc = crc16(b, crc);
 
             // up to 8 bytes of data
-            scratch_start = register_es;
-            for (uint8_t i = register_es; i < 8; ++i) { // address can point directly to offset-byte in scratchpad
+            page_offset = reg_ES;
+            for (uint8_t i = reg_ES; i < 8; ++i) { // address can point directly to offset-byte in scratchpad
                 b = hub->recv();
                 if (hub->getError())
                 {
                     // set the PF-Flag if error occured in the middle of the byte
-                    if (hub->clearError() != Error::FIRST_BIT_OF_BYTE_TIMEOUT) register_es |= 0b00100000;
+                    if (hub->clearError() != Error::FIRST_BIT_OF_BYTE_TIMEOUT) reg_ES |= 0b00100000;
                     break;
                 }
-                if (register_es < 7) register_es++;
+                if (reg_ES < 7) reg_ES++;
                 scratchpad[i] = b;
                 crc = crc16(b, crc);
             };
 
             // check if page is protected or in eprom-mode
-            if (register_ta < 128)
+            if (reg_TA < 128)
             {
-                const uint8_t position = register_ta & 0b11111000;
-                if (checkProtection(register_ta))
+                const uint8_t position = uint8_t(reg_TA) & uint8_t(0b11111000);
+                if (checkProtection(reinterpret_cast<uint8_t *>(&reg_TA)[0]))
                 {
                     // protected: load memory-segment to scratchpad
                     for (uint8_t i = 0; i < 8; ++i)
                     {
                         scratchpad[i] = memory[position + i];
                     }
-                } else if (checkEpromMode(register_ta))
+                } else if (checkEpromMode(reinterpret_cast<uint8_t *>(&reg_TA)[0]))
                 {
                     // eprom: logical AND of memory and data, TODO: there is somehow a bug here, protection works but EPROM-Mode not (CRC-Error)
-                    for (uint8_t i = scratch_start; i < 8; ++i)
+                    for (uint8_t i = page_offset; i < 8; ++i)
                     {
                         scratchpad[i] &= memory[position + i];
                     }
                 };
             };
 
-            if (register_es & 0b00100000) return false; // only partial filling of bytes
+            if (reg_ES & 0b00100000) return false; // only partial filling of bytes
 
             // CRC-16
             crc = ~crc; // normally crc16 is sent ~inverted
@@ -84,20 +88,21 @@ bool DS2431::duty(OneWireHub *hub)
         case 0xAA:
             crc = crc16(0xAA, 0);
             // Write-to address
-            hub->send(reinterpret_cast<uint8_t *>(&register_ta)[0]);
-            crc = crc16(reinterpret_cast<uint8_t *>(&register_ta)[0], crc);
+            hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[0]);
+            crc = crc16(reinterpret_cast<uint8_t *>(&reg_TA)[0], crc);
             if (hub->getError())  return false;
 
-            hub->send(reinterpret_cast<uint8_t *>(&register_ta)[1]);
-            crc = crc16(reinterpret_cast<uint8_t *>(&register_ta)[1], crc);
+            hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[1]);
+            crc = crc16(reinterpret_cast<uint8_t *>(&reg_TA)[1], crc);
             if (hub->getError())  return false;
 
-            hub->send(register_es);
-            crc = crc16(register_es, crc);
+            hub->send(reg_ES);
+            crc = crc16(reg_ES, crc);
             if (hub->getError())  return false;
 
             //Scratchpad content
-            for (uint8_t i = (register_ta & 0x03); i < (register_es & 0x03)+1; ++i) {
+            page_offset = reinterpret_cast<uint8_t *>(&reg_TA)[0] & uint8_t(0x03);
+            for (uint8_t i = page_offset; i < (reg_ES & 0x03)+1; ++i) {
                 hub->send(scratchpad[i]);
                 if (hub->getError()) return false; // master can break, but gets no crc afterwards
                 crc = crc16(scratchpad[i], crc);
@@ -123,27 +128,27 @@ bool DS2431::duty(OneWireHub *hub)
             // Adr1
             b = hub->recv();
             if (hub->getError())  return false;
-            if (b != reinterpret_cast<uint8_t *>(&register_ta)[0]) break;
+            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[0]) break;
 
             // Adr2
             b = hub->recv();
             if (hub->getError())  return false;
-            if (b != reinterpret_cast<uint8_t *>(&register_ta)[1]) break; // Write-to addresses must match
+            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[1]) break; // Write-to addresses must match
             
             // Auth code must match
             b = hub->recv();
             if (hub->getError())  return false;
-            if (b != register_es) break;
+            if (b != reg_ES) break;
 
-            if (register_es & 0b00100000) break; // writing failed before
+            if (reg_ES & 0b00100000) break; // writing failed before
 
-            register_ta &= ~uint16_t(0b00000111);
+            reg_TA &= ~uint16_t(0b00000111);
 
             // Write Scratchpad
-            writeMemory(scratchpad, 8, register_ta); // checks if copy protected
+            writeMemory(scratchpad, 8, reinterpret_cast<uint8_t *>(&reg_TA)[0]); // checks if copy protected
 
             // set the auth code uppermost bit, AA
-            register_es |= 0b10000000;
+            reg_ES |= 0b10000000;
             delayMicroseconds(10000); // writing takes so long
             hub->extendTimeslot();
             hub->sendBit(1);
@@ -165,14 +170,14 @@ bool DS2431::duty(OneWireHub *hub)
             // Adr1
             b = hub->recv();
             if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&register_ta)[0] = b;
+            reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
 
             // Adr2
             b = hub->recv();
             if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&register_ta)[1] = b;
+            reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
  
-            for (uint16_t index_byte = register_ta; index_byte < sizeof(memory); ++index_byte)
+            for (uint16_t index_byte = reg_TA; index_byte < sizeof(memory); ++index_byte)
             {
                 hub->send(memory[index_byte]);
                 if (hub->getError())  break;
@@ -270,13 +275,9 @@ bool DS2431::checkEpromMode(const uint8_t position)
 };
 
 
-bool DS2431::clearMemory(void)
+void DS2431::clearMemory(void)
 {
-    for (int i = 0; i < sizeof(memory); ++i)
-    {
-        memory[i] = 0x00;
-    };
-    return true;
+    for (int i = 0; i < sizeof(memory); ++i) memory[i] = 0x00;
 };
 
 bool DS2431::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)
