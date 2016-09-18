@@ -32,7 +32,7 @@ void setup()
 void loop()
 {
     static bool switch_state = 0;
-    
+
     // following function must be called periodically
     hub.poll();
 
