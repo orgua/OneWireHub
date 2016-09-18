@@ -20,8 +20,8 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2433 (0x23) 4Kbit 1-Wire EEPROM**
 - **DS2438 (0x26) Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
 - DS2450 (0x20) 4 channel A/D
-- DS2501 (0x11, 0x91) 512bit EEPROM (use DS2502 with different family code)
-- DS2502 (0x09, 0x89) 1kbit EEPROM, Add Only Memory (also known as DS1982, same FC)
+- **DS2501 (0x11, 0x91) 512bit EEPROM (use DS2502 with different family code)**
+- **DS2502 (0x09, 0x89) 1kbit EEPROM, Add Only Memory (also known as DS1982, same FC)**
 - **DS2890 (0x2C) 0x Single channel digital potentiometer - extended to 1-4 CH**
 - Dell Power Supply (use DS2502 with family code set to 0x28)
 
