@@ -2,11 +2,12 @@
 
 DS2502::DS2502(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    clearMemory();
-    clearStatus();
     if      (ID1 == 0x11)   sizeof_memory = (64 < sizeof(memory)) ? 64 : sizeof(memory); // autorecognize the ds2501 with smaller mem-size
     else if (ID1 == 0x91)   sizeof_memory = (64 < sizeof(memory)) ? 64 : sizeof(memory); // autorecognize the ds2501 with smaller men-size
     else                    sizeof_memory = sizeof(memory);
+
+    clearMemory();
+    clearStatus();
 };
 
 bool DS2502::duty(OneWireHub *hub)
@@ -19,20 +20,20 @@ bool DS2502::duty(OneWireHub *hub)
     uint8_t cmd = hub->recv();
     if (hub->getError())  return false;
     crc = crc8(&cmd,1,crc);
+
+    b = hub->recv(); // Adr1
+    if (hub->getError())  return false;
+    reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
+    crc = crc8(&b,1,crc);
+
+    b = hub->recv(); // Adr2
+    if (hub->getError())  return false;
+    reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
+    crc = crc8(&b,1,crc);
     
     switch (cmd)
     {
         case 0xF0: // READ MEMORY
-            b = hub->recv(); // Adr1
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
-            crc = crc8(&b,1,crc);
-
-            b = hub->recv(); // Adr2
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
-            crc = crc8(&b,1,crc);
-
             hub->send(crc);
             if (hub->getError()) break;
 
@@ -57,16 +58,6 @@ bool DS2502::duty(OneWireHub *hub)
             break;
 
         case 0xC3: // READ DATA (like 0xF0, but repeatedly till the end of page with following CRC)
-            b = hub->recv(); // Adr1
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
-            crc = crc8(&b,1,crc);
-
-            b = hub->recv(); // Adr2
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
-            crc = crc8(&b,1,crc);
-
             hub->send(crc);
             if (hub->getError()) break;
 
@@ -97,16 +88,6 @@ bool DS2502::duty(OneWireHub *hub)
 
 
         case 0xAA: // READ STATUS // TODO: nearly same code as 0xF0, but with status[] instead of memory[]
-            b = hub->recv(); // Adr1
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
-            crc = crc8(&b,1,crc);
-
-            b = hub->recv(); // Adr2
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
-            crc = crc8(&b,1,crc);
-
             hub->send(crc);
             if (hub->getError()) break;
 
@@ -131,16 +112,6 @@ bool DS2502::duty(OneWireHub *hub)
             break;
 
         case 0x0F: // WRITE MEMORY
-            b = hub->recv(); // Adr1
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
-            crc = crc8(&b,1,crc);
-
-            b = hub->recv(); // Adr2
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
-            crc = crc8(&b,1,crc);
-
             if (reg_TA > sizeof_memory) return false; // check for valid address
 
             b = hub->recv(); // data
@@ -183,16 +154,6 @@ bool DS2502::duty(OneWireHub *hub)
             break;
 
         case 0x55: // WRITE STATUS
-            b = hub->recv(); // Adr1
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
-            crc = crc8(&b,1,crc);
-
-            b = hub->recv(); // Adr2
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
-            crc = crc8(&b,1,crc);
-
             if (reg_TA > sizeof(status)) return false; // check for valid address
 
             b = hub->recv(); // data
@@ -235,12 +196,12 @@ bool DS2502::duty(OneWireHub *hub)
 
 void DS2502::clearMemory(void)
 {
-    for (int i = 0; i < sizeof_memory; ++i)  memory[i] = 0xFF;
+    for (uint8_t i = 0; i < sizeof_memory; ++i)  memory[i] = 0xFF;
 };
 
 void DS2502::clearStatus(void)
 {
-    for (int i = 0; i < sizeof(status); ++i)  status[i] = 0xFF;
+    for (uint8_t i = 0; i < sizeof(status); ++i)  status[i] = 0xFF;
     status[sizeof(status)-1] = 0x00; // last byte should be always zero
 };
 
@@ -264,7 +225,7 @@ uint8_t DS2502::translateRedirection(const uint16_t reg_address)
 {
     uint8_t reg_index = uint8_t(1) + uint8_t(reg_address >> 5);
 
-    uint8_t reg_offset = (status[reg_index] == 0xFF) ? uint8_t(reg_address) : status[reg_index];
+    uint8_t reg_offset = (status[reg_index] == 0xFF) ? uint8_t(reg_address) : ((~status[reg_index])<<5);
 
     return ((reg_offset & ~page_mask) | uint8_t(reg_address & page_mask));
 };
@@ -274,7 +235,7 @@ bool DS2502::redirectPage(const uint8_t page_source, const uint8_t page_dest)
     if (page_source > 3) return false;
     if (page_dest > 3) return false;
 
-    status[page_source + 1] = (page_dest == page_source) ? uint8_t(0xFF) : page_dest << 5;
+    status[page_source + 1] = (page_dest == page_source) ? uint8_t(0xFF) : ~page_dest; // datasheet dictates this, so no page can be redirected to page 0
     return true;
 };
 

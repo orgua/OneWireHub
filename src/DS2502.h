@@ -18,8 +18,8 @@ private:
     uint8_t sizeof_memory;
     uint8_t status[8]; // eprom status bytes
 
-    void clearStatus(void);
-    bool checkProtection(const uint16_t reg_address = 0);
+    void    clearStatus(void);
+    bool    checkProtection(const uint16_t reg_address = 0);
     uint8_t translateRedirection(const uint16_t reg_address = 0);
 
 public:
