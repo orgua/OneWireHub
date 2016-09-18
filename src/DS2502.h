@@ -1,5 +1,5 @@
 // 0x09  1Kbit 1-Wire EEPROM, Add Only Memory
-// works
+// works, writing could not be tested (DS9490 does not support hi-voltage mode and complains)
 // Copyright by Kondi (initial version), https://forum.pjrc.com/threads/33640-Teensy-2-OneWire-Slave
 // DS2501: 0x11, autoset to 512bits
 // dell powersupply: 0x28
@@ -16,13 +16,11 @@ private:
 
     uint8_t memory[128]; // 4 pages of 32 bytes
     uint8_t sizeof_memory;
-    uint8_t scratchpad[8];
     uint8_t status[8]; // eprom status bytes
 
-    void clearScratchpad(void);
     void clearStatus(void);
-    bool checkProtection(const uint8_t reg_address = 0);
-    uint8_t translateRedirection(const uint8_t reg_address = 0);
+    bool checkProtection(const uint16_t reg_address = 0);
+    uint8_t translateRedirection(const uint16_t reg_address = 0);
 
 public:
     static constexpr uint8_t family_code = 0x09;
