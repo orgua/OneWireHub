@@ -2,6 +2,7 @@
 
 DS2502::DS2502(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
+    clearMemory();
 };
 
 bool DS2502::duty(OneWireHub *hub)
@@ -83,4 +84,25 @@ bool DS2502::duty(OneWireHub *hub)
             hub->raiseSlaveError(cmd);
     };
     return !(hub->getError());
+};
+
+void DS2502::clearMemory(void)
+{
+    for (int i = 0; i < sizeof(memory); ++i)
+    {
+        memory[i] = 0x00;
+    };
+};
+
+bool DS2502::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)
+{
+    for (uint8_t i = 0; i < length; ++i) {
+        if ((position + i) >= sizeof(memory)) return false;
+        //if (checkProtection(position+i)) continue;
+        memory[position + i] = source[i];
+    };
+
+    //if ((position+length) > 127) checkMemory();
+
+    return true;
 };
