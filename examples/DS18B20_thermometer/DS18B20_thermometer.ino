@@ -13,8 +13,9 @@ const uint8_t led_PIN       = 13;         // the number of the LED pin
 const uint8_t OneWire_PIN   = 8;
 
 auto hub     = OneWireHub(OneWire_PIN);
-auto sensorA = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x0A);    // Digital Thermometer
-auto sensorB = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x0B);    // Digital Thermometer
+auto ds18b20 = DS18B20(DS18B20::family_code, 0x00, 0x02, 0x0B, 0x08, 0x01, 0x0D);    // Digital Thermometer
+auto ds18s20 = DS18B20(0x10, 0x00, 0x02, 0x0F, 0x08, 0x01, 0x0D);    // Digital Thermometer
+auto ds1822  = DS18B20(0x22, 0x00, 0x02, 0x0F, 0x08, 0x01, 0x0D);    // Digital Thermometer
 
 
 bool blinking()
@@ -43,11 +44,14 @@ void setup()
     pinMode(led_PIN, OUTPUT);
 
     // Setup OneWire
-    hub.attach(sensorA);
-    hub.attach(sensorB);
+    hub.attach(ds18b20);
+    hub.attach(ds18s20);
+    hub.attach(ds1822);
 
     // Set const temperature
-    sensorA.setTemp(21);
+    ds18b20.setTemp(21);
+    ds18s20.setTemp(21);
+    ds1822.setTemp(21);
 
     Serial.println("config done");
 }
@@ -66,6 +70,8 @@ void loop()
         static float temperature = 20.0;
         temperature += 0.1;
         if (temperature > 30.0) temperature = 20.0;
-        sensorB.setTemp(temperature);
+        ds18b20.setTemp(temperature);
+        ds18s20.setTemp(temperature);
+        ds1822.setTemp(temperature);
     }
 }

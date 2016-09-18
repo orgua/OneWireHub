@@ -7,8 +7,8 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 ### Supported Slaves:
 - **BAE910 (0xFC) multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
 - **DS1822 (0x22) Digital Thermometer, 12bit** (use DS18B20 with different family code)
-- **DS18B20 (0x28) Digital Thermometer, 12bit** 
-- **DS18S20 (0x10) Digital Thermometer, 12bit** (use DS18B20 with different family code)
+- **DS18B20 (0x28) Digital Thermometer, 12bit** (also known as DS1820) 
+- **DS18S20 (0x10) Digital Thermometer, 12bit** (also known as DS1920, use DS18B20 with different family code)
 - **DS1990 (0x01) iButton** (DS2401 with same family code)
 - **DS2401 (0x01) Serial Number**
 - **DS2405 (0x05) Single address switch**
@@ -16,13 +16,13 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2411 (0x01) Serial Number** (use DS2401 with same family code)
 - **DS2413 (0x3A) Dual channel addressable switch with input-sensing**
 - DS2423 (0x1D) 4kbit 1-Wire RAM with Counter
-- **DS2431 (0x2D) 1kbit protected EEPROM (also known as DS1972 or DS28E07, same FC)**
+- **DS2431 (0x2D) 1kbit protected EEPROM** (also known as DS1972 or DS28E07, same FC)
 - DS2432 (0x33) 1kbit protected EEPROM (basically a ds2431 with extra sha-engine)
 - **DS2433 (0x23) 4Kbit 1-Wire EEPROM**
 - **DS2438 (0x26) Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
 - DS2450 (0x20) 4 channel A/D
-- **DS2501 (0x11, 0x91) 512bit EEPROM (use DS2502 with different family code)**
-- **DS2502 (0x09, 0x89) 1kbit EEPROM, Add Only Memory (also known as DS1982, same FC)**
+- **DS2501 (0x11, 0x91) 512bit EEPROM** (use DS2502 with different family code)
+- **DS2502 (0x09, 0x89) 1kbit EEPROM, Add Only Memory** (also known as DS1982, same FC)
 - **DS2890 (0x2C) 0x Single channel digital potentiometer - extended to 1-4 CH**
 - Dell Power Supply (use DS2502 with family code set to 0x28)
 
