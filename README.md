@@ -40,6 +40,8 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
+- prepare hub for overdrive-mode
+- added or extended the ds2431, ds2431, ds2501, ds2502 (also tested)
 - hub is more resilient to odd master-behaviour (lazy timings and subsequent resets are handled now), extended in 0.9.3 and 0.9.4
 - added ds2431 (thanks to j-langlois) and BAE910 (thanks to Giermann), Dell Power Supply (thanks to Kondi)
 - prepare new timing-method which will replace the old one in the next couple of weeks (a 6µs millis() call at 8MHz is not suitable for OW) 
@@ -62,7 +64,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - replace search() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
 
 ### Plans for the future:
-- implementation of ds2450, ds2433, ds2501, ds2502
+- implementation of ds2450
 - ~~add table of tested and working sensors~~ (documented in the examples of the device)
 - introduce unittests
 - irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
