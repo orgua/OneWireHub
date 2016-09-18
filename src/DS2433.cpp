@@ -12,7 +12,7 @@ DS2433::DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 bool DS2433::duty(OneWireHub *hub)
 {
     static uint16_t register_ta; // contains TA1, TA2
-    static uint8_t  register_es = 0;  // E/S register
+    static uint8_t  register_es = 31;  // E/S register
 
     uint8_t  mem_counter = 0; // offer feedback with PF-bit
     uint16_t crc = 0;
@@ -52,18 +52,15 @@ bool DS2433::duty(OneWireHub *hub)
                 crc = crc16(b,crc);
                 mem_counter++;
             };
-
+            if ((register_es + mem_counter) > 31) mem_counter = uint8_t(31) - register_es;
             register_es += mem_counter; // store current pointer
 
             if (register_es != 0b00011111) break;
 
-            // TODO: device should send inverted crc16 of command, address and data
             crc = ~crc; // normally crc16 is sent ~inverted
-            hub->send(uint8_t(crc & 0xff));
+            hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0]));
             if (hub->getError())  return false;
-            hub->send(uint8_t(crc >> 8));
-
-            if (mem_counter & uint8_t(0b00000111)) register_es |= 0b00100000;
+            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
 
             break;
 
@@ -92,11 +89,7 @@ bool DS2433::duty(OneWireHub *hub)
             while (1) // send alternating 1 & 0 after copy is complete
             {
                 hub->send(0b10101010);
-                if (hub->getError())
-                {
-                    hub->clearError(); // TODO: should not clear, to get fast to next reset
-                    break;
-                };
+                if (hub->getError()) break;
             };
 
             break;
@@ -115,30 +108,23 @@ bool DS2433::duty(OneWireHub *hub)
             hub->send(register_es);
             if (hub->getError())  return false;
 
-            mem_counter = register_es & uint8_t(0b00011111);
+            hub->extendTimeslot();
 
             // data
-            for (int i = 0; i < (32-mem_counter); ++i) // model of the 32byte scratchpad
+            for (uint8_t i = (uint8_t(register_ta) & uint8_t(0b00011111)); i < 32; ++i) // model of the 32byte scratchpad
             {
-                hub->send(memory[register_ta + i]);
+                const uint16_t mem_start = (register_ta & ~uint16_t(0b00011111));
+                hub->send(memory[mem_start + i]);
                 if (hub->getError()) break;
             };
 
-            if (hub->getError())
-            {
-                hub->clearError();// TODO: should not clear, to get fast to next reset
-                break;
-            }
+            if (hub->getError()) break;
 
             // datasheed says we should return all 1s, send(255), till reset
             while (1)
             {
                 hub->send(255);
-                if (hub->getError())
-                {
-                    hub->clearError();// TODO: should not clear, to get fast to next reset
-                    break;
-                };
+                if (hub->getError()) break;
             };
 
             break;
@@ -162,21 +148,13 @@ bool DS2433::duty(OneWireHub *hub)
                 if (hub->getError()) break;
             };
 
-            if (hub->getError())
-            {
-                hub->clearError();// TODO: should not clear, to get fast to next reset
-                break;
-            };
+            if (hub->getError()) break;
 
             // datasheed says we should return all 1s, send(255), till reset
             while (1)
             {
                 hub->send(255);
-                if (hub->getError())
-                {
-                    hub->clearError();// TODO: should not clear, to get fast to next reset
-                    break;
-                };
+                if (hub->getError()) break;
             };
             break;
 
