@@ -11,7 +11,7 @@ bool DS2431::duty(OneWireHub *hub)
     static uint8_t  register_es = 0;  // E/S register
     static uint16_t crc = 0;
 
-    uint8_t  mem_counter = 0; // offer feedback with PF-bit
+    uint8_t  scratch_start = 0;
 
     uint8_t cmd = hub->recv();
     if (hub->getError())  return false;
@@ -20,12 +20,12 @@ bool DS2431::duty(OneWireHub *hub)
     {
         // WRITE SCRATCHPAD COMMAND
         case 0x0F:
-            crc = crc16(0x0F, 0x00);//CRC_INIT);
+            crc = crc16(0x0F, 0x00);
             // Adr1
             b = hub->recv();
             if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&register_ta)[0] = b;
-            register_es = b & uint8_t(0x00000111); // TODO: when not zero we should issue register_es |= 0b00100000;
+            register_es = b & uint8_t(0x00000111); // TODO: when not zero we should issue register_es |= 0b00100000; (datasheet not clear)
             crc = crc16(b, crc);
 
             // Adr2
@@ -35,6 +35,7 @@ bool DS2431::duty(OneWireHub *hub)
             crc = crc16(b, crc);
 
             // up to 8 bytes of data
+            scratch_start = register_es;
             for (uint8_t i = register_es; i < 8; ++i) { // address can point directly to offset-byte in scratchpad
                 b = hub->recv();
                 if (hub->getError())
@@ -49,23 +50,24 @@ bool DS2431::duty(OneWireHub *hub)
             };
 
             // check if page is protected or in eprom-mode
-            if (checkProtection(register_ta))
+            if (register_ta < 128)
             {
-                // protected: load memory-segment to scratchpad
                 const uint8_t position = register_ta & 0b11111000;
-                for (uint8_t i = 0; i < 8; ++i)
+                if (checkProtection(register_ta))
                 {
-                    scratchpad[i] = memory[position + i];
-                }
-            }
-            else if (checkEpromMode(register_ta))
-            {
-                // eprom: logical AND of memory and datav
-                const uint8_t position = register_ta & 0b11111000;
-                for (uint8_t i = 0; i < 8; ++i)
+                    // protected: load memory-segment to scratchpad
+                    for (uint8_t i = 0; i < 8; ++i)
+                    {
+                        scratchpad[i] = memory[position + i];
+                    }
+                } else if (checkEpromMode(register_ta))
                 {
-                    scratchpad[i] &= memory[position + i];
-                }
+                    // eprom: logical AND of memory and data, TODO: there is somehow a bug here, protection works but EPROM-Mode not (CRC-Error)
+                    for (uint8_t i = scratch_start; i < 8; ++i)
+                    {
+                        scratchpad[i] &= memory[position + i];
+                    }
+                };
             };
 
             if (register_es & 0b00100000) return false; // only partial filling of bytes
@@ -198,9 +200,10 @@ bool DS2431::duty(OneWireHub *hub)
 
 bool DS2431::checkProtection(const uint8_t position)
 {
+    // should be an accurate model of the control bytes
     if      (position <  32)
     {
-        if (page_protection & 1) return true; // not pretty
+        if (page_protection & 1) return true;
     }
     else if (position <  64)
     {
@@ -214,7 +217,31 @@ bool DS2431::checkProtection(const uint8_t position)
     {
         if (page_protection & 8) return true;
     }
-    else if (position > 127)
+    else if (position == 0x80)
+    {
+        if ((page_protection & (1 + 16)) || (page_eprom_mode & 1)) return true;
+    }
+    else if (position == 0x81)
+    {
+        if ((page_protection & (2 + 16)) || (page_eprom_mode & 2)) return true;
+    }
+    else if (position == 0x82)
+    {
+        if ((page_protection & (4 + 16)) || (page_eprom_mode & 4)) return true;
+    }
+    else if (position == 0x83)
+    {
+        if ((page_protection & (8 + 16)) || (page_eprom_mode & 8)) return true;
+    }
+    else if (position == 0x85)
+    {
+        if (page_protection & (32+16)) return true;
+    }
+    else if ((position == 0x86) || (position == 0x87))
+    {
+        if (page_protection & (64+16)) return true;
+    }
+    else if (position > 127) // filter the rest
     {
         if (page_protection & 16) return true;
     };
@@ -238,10 +265,6 @@ bool DS2431::checkEpromMode(const uint8_t position)
     else if (position < 128)
     {
         if (page_eprom_mode & 8) return true;
-    }
-    else if (position > 127)
-    {
-        if (page_eprom_mode & 16) return true;
     };
     return false;
 };
@@ -258,14 +281,13 @@ bool DS2431::clearMemory(void)
 
 bool DS2431::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)
 {
-    if (checkProtection(position)) return false;
-
     for (uint8_t i = 0; i < length; ++i) {
         if ((position + i) >= sizeof(memory)) break;
+        if (checkProtection(position+i)) continue;
         memory[position + i] = source[i];
     };
 
-    if (position & 0x80) checkMemory();
+    if ((position+length) > 127) checkMemory();
 
     return true;
 };
@@ -282,14 +304,16 @@ bool DS2431::checkMemory(void)
     if (memory[0x81] == WPM) page_protection |= 2;
     if (memory[0x82] == WPM) page_protection |= 4;
     if (memory[0x83] == WPM) page_protection |= 8;
-    if (memory[0x83] == WPM) page_protection |= 8;
+
     if (memory[0x84] == WPM) page_protection |= 16;
     if (memory[0x84] == EPM) page_protection |= 16;
+
+    if (memory[0x85] == WPM) page_protection |= 32; // only byte x85
+    if (memory[0x85] == EPM) page_protection |= 64+32; // also byte x86 x87
 
     if (memory[0x80] == EPM) page_eprom_mode |= 1;
     if (memory[0x81] == EPM) page_eprom_mode |= 2;
     if (memory[0x82] == EPM) page_eprom_mode |= 4;
-    if (memory[0x83] == EPM) page_eprom_mode |= 8;
     if (memory[0x83] == EPM) page_eprom_mode |= 8;
     return true;
 };
