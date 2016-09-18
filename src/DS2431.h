@@ -1,5 +1,6 @@
 // 0x2D  1Kb 1-Wire EEPROM
-// tested on buspirate and two different real 1-wire masters (DS9490 and a PIC18-Device)
+// works, tested on buspirate and two different real 1-wire masters (DS9490 and a PIC18-Device)
+// note: datasheet is fuzzy, but device is similar to ds2433
 
 #ifndef ONEWIRE_DS2431_H
 #define ONEWIRE_DS2431_H

@@ -80,7 +80,6 @@ bool DS2433::duty(OneWireHub *hub)
 
             register_es |= 0b10000000;
 
-            // TODO: maybe implement a real scratchpad
             delayMicroseconds(5000); // simulate writing
             hub->extendTimeslot();
             hub->sendBit(1);
@@ -109,9 +108,10 @@ bool DS2433::duty(OneWireHub *hub)
             if (hub->getError())  return false;
 
             hub->extendTimeslot();
+            // TODO: maybe implement a real scratchpad, would need 32byte extra ram
 
             // data
-            for (uint8_t i = 0; i < 32; ++i) // model of the 32byte scratchpad
+            for (uint8_t i = 0; i < 32; ++i) // model of the 32byte scratchpad, always aligned with blocks
             {
                 const uint16_t mem_start = (register_ta & ~uint16_t(0b00011111));
                 hub->send(memory[mem_start + i]);
