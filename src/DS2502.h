@@ -1,6 +1,8 @@
-// 0x28  1Kb 1-Wire EEPROM, Add Only Memory
-// not finished
+// 0x09  1Kbit 1-Wire EEPROM, Add Only Memory
+// works
 // Copyright by Kondi (initial version), https://forum.pjrc.com/threads/33640-Teensy-2-OneWire-Slave
+// DS2501: 0x11, autoset to 512bits
+// dell powersupply: 0x28
 
 #ifndef ONEWIRE_DS2502_H
 #define ONEWIRE_DS2502_H
@@ -10,9 +12,17 @@
 class DS2502 : public OneWireItem
 {
 private:
+    static constexpr uint8_t page_mask = 0b00011111;
+
     uint8_t memory[128]; // 4 pages of 32 bytes
+    uint8_t sizeof_memory;
     uint8_t scratchpad[8];
     uint8_t status[8]; // eprom status bytes
+
+    void clearScratchpad(void);
+    void clearStatus(void);
+    bool checkProtection(const uint8_t reg_address = 0);
+    uint8_t translateRedirection(const uint8_t reg_address = 0);
 
 public:
     static constexpr uint8_t family_code = 0x09;
@@ -24,6 +34,9 @@ public:
     void clearMemory(void);
 
     bool writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position = 0);
+
+    bool redirectPage(const uint8_t page_source, const uint8_t page_dest);
+    bool protectPage(const uint8_t page, const bool status_protected);
 };
 
 #endif

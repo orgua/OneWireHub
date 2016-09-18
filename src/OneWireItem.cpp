@@ -45,7 +45,7 @@ uint8_t OneWireItem::crc8(const uint8_t address[], const uint8_t length, const u
 #endif
     }
     return crc;
-}
+};
 
 
 uint16_t OneWireItem::crc16(const uint8_t address[], const uint8_t length, const uint16_t init = 0)
