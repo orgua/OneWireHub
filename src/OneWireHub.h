@@ -1,4 +1,3 @@
-
 #ifndef ONEWIRE_HUB_H
 #define ONEWIRE_HUB_H
 
@@ -7,13 +6,20 @@
 #endif
 #include "platform.h" // code for compatibility
 
-#define USE_SERIAL_DEBUG 0 // give debug messages when printError() is called
-#define USE_GPIO_DEBUG 1
-#define GPIO_DEBUG_PIN_D 4
-// INFO: had to go with a define because some compilers use constexpr as simple const --> massive problems
+/////////////////////////////////////////////////////
+// CONFIG ///////////////////////////////////////////
+/////////////////////////////////////////////////////
 
+// INFO: had to go with a define because some compilers use constexpr as simple const --> massive problems
 #define HUB_SLAVE_LIMIT 8 // set the limit of the hub HERE
 
+#define USE_SERIAL_DEBUG    0 // give debug messages when printError() is called
+#define USE_GPIO_DEBUG      0
+#define GPIO_DEBUG_PIN      4 // digital pin
+
+/////////////////////////////////////////////////////
+// END OF CONFIG ////////////////////////////////////
+/////////////////////////////////////////////////////
 
 #ifndef HUB_SLAVE_LIMIT
 #error "Slavelimit not defined (why?)"

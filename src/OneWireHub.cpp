@@ -24,8 +24,8 @@ OneWireHub::OneWireHub(uint8_t pin)
 
     // debug:
 #ifdef USE_GPIO_DEBUG
-    pinMode(GPIO_DEBUG_PIN_D,OUTPUT);
-    digitalWrite(GPIO_DEBUG_PIN_D,LOW);
+    pinMode(GPIO_DEBUG_PIN,OUTPUT);
+    digitalWrite(GPIO_DEBUG_PIN,LOW);
 #endif
 };
 
@@ -452,9 +452,9 @@ bool OneWireHub::recvAndProcessCmd(void)
             {
                 extend_timeslot_detection = 1;
 #ifdef USE_GPIO_DEBUG
-                digitalWrite(GPIO_DEBUG_PIN_D,HIGH);
+                digitalWrite(GPIO_DEBUG_PIN,HIGH);
                 slave_selected->duty(this);
-                digitalWrite(GPIO_DEBUG_PIN_D,LOW);
+                digitalWrite(GPIO_DEBUG_PIN,LOW);
 #else
                 slave_selected->duty(this);
 #endif
@@ -479,9 +479,9 @@ bool OneWireHub::recvAndProcessCmd(void)
             {
                 extend_timeslot_detection = 1;
 #ifdef USE_GPIO_DEBUG
-                digitalWrite(GPIO_DEBUG_PIN_D,HIGH);
+                digitalWrite(GPIO_DEBUG_PIN,HIGH);
                 slave_selected->duty(this);
-                digitalWrite(GPIO_DEBUG_PIN_D,LOW);
+                digitalWrite(GPIO_DEBUG_PIN,LOW);
 #else
                 slave_selected->duty(this);
 #endif
