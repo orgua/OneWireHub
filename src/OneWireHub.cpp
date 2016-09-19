@@ -23,7 +23,7 @@ OneWireHub::OneWireHub(uint8_t pin)
     DIRECT_MODE_INPUT(reg, pin_bitMask);
 
     // debug:
-#ifdef USE_GPIO_DEBUG
+#if USE_GPIO_DEBUG
     pinMode(GPIO_DEBUG_PIN,OUTPUT);
     digitalWrite(GPIO_DEBUG_PIN,LOW);
 #endif
@@ -451,7 +451,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             if (slave_selected != nullptr)
             {
                 extend_timeslot_detection = 1;
-#ifdef USE_GPIO_DEBUG
+#if USE_GPIO_DEBUG
                 digitalWrite(GPIO_DEBUG_PIN,HIGH);
                 slave_selected->duty(this);
                 digitalWrite(GPIO_DEBUG_PIN,LOW);
@@ -478,7 +478,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             if (slave_selected != nullptr)
             {
                 extend_timeslot_detection = 1;
-#ifdef USE_GPIO_DEBUG
+#if USE_GPIO_DEBUG
                 digitalWrite(GPIO_DEBUG_PIN,HIGH);
                 slave_selected->duty(this);
                 digitalWrite(GPIO_DEBUG_PIN,LOW);
@@ -668,7 +668,7 @@ bool OneWireHub::recvBit(void)
 
 void OneWireHub::wait(const uint16_t timeout_us)
 {
-#if (USE_DELAY > 0)
+#if USE_DELAY
     delayMicroseconds(timeout_us);
 #else
     uint32_t time_trigger = micros() + timeout_us;
@@ -686,7 +686,7 @@ bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
     volatile uint8_t *reg asm("r30") = pin_baseReg;
     if (DIRECT_READ(reg, pin_bitMask) != value) return true; // shortcut
 
-#if (USE_MICROS > 0)
+#if USE_MICROS
     uint32_t time_trigger = micros() + timeout_us;
     while (DIRECT_READ(reg, pin_bitMask) == value)
     {
@@ -704,7 +704,7 @@ bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
 
 
 #define NEW_WAIT 0 // TODO: NewWait does not work as expected (and is deprecated)
-#if (NEW_WAIT > 0)
+#if NEW_WAIT
 
 // wait for a low to high transition followed by a high to low within the time-out
 bool OneWireHub::awaitTimeSlotAndWrite(void)
