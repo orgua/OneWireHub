@@ -7,7 +7,7 @@ OneWireHub::OneWireHub(uint8_t pin)
 {
     _error = Error::NO_ERROR;
 
-     pin_bitMask = PIN_TO_BITMASK(pin);
+    pin_bitMask = PIN_TO_BITMASK(pin);
     pin_baseReg = PIN_TO_BASEREG(pin);
 
     extend_timeslot_detection = 0;
@@ -19,8 +19,7 @@ OneWireHub::OneWireHub(uint8_t pin)
         slave_list[i] = nullptr;
 
     // prepare pin
-    volatile uint8_t *reg asm("r30") = pin_baseReg;
-    DIRECT_MODE_INPUT(reg, pin_bitMask);
+    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     // debug:
 #if USE_GPIO_DEBUG
@@ -251,11 +250,7 @@ bool OneWireHub::poll(void)
 
 bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-time needed before a reset may occur -->  >120us
 {
-    volatile uint8_t *reg asm("r30") = pin_baseReg;
-
-    noInterrupts();
-    DIRECT_MODE_INPUT(reg, pin_bitMask);
-    interrupts();
+    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     wait(ONEWIRE_TIME_BUS_CHANGE_MAX); // let the input settle
 
@@ -270,7 +265,7 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-tim
         }
     }
 
-    if (!DIRECT_READ(reg, pin_bitMask)) return false; // just leave if pin is Low, don't bother to wait
+    if (!DIRECT_READ(pin_baseReg, pin_bitMask)) return false; // just leave if pin is Low, don't bother to wait
 
     // wait for the bus to become low (master-controlled), since we are polling we don't know for how long it was zero
     if (!waitWhilePinIs(1, timeout_us))
@@ -303,22 +298,16 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-tim
 
 bool OneWireHub::showPresence(void)
 {
-    volatile uint8_t *reg asm("r30") = pin_baseReg;
-
     // Master will delay it's "Presence" check (bus-read)  after the reset
     waitWhilePinIs( 1, ONEWIRE_TIME_PRESENCE_SAMPLE_MIN); // no pinCheck demanded, but this additional check can cut waitTime
 
     // pull the bus low and hold it some time
-    noInterrupts();
-    DIRECT_WRITE_LOW(reg, pin_bitMask);
-    DIRECT_MODE_OUTPUT(reg, pin_bitMask);    // drive output low
-    interrupts();
+    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
+    DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);    // drive output low
 
     wait(ONEWIRE_TIME_PRESENCE_LOW_STD);
 
-    noInterrupts();
-    DIRECT_MODE_INPUT(reg, pin_bitMask);     // allow it to float
-    interrupts();
+    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);     // allow it to float
 
     // When the master or other slaves release the bus within a given time everything is fine
     if (!waitWhilePinIs( 0, (ONEWIRE_TIME_PRESENCE_LOW_MAX - ONEWIRE_TIME_PRESENCE_LOW_STD)))
@@ -573,8 +562,7 @@ bool OneWireHub::sendBit(const bool value)
     {
         // if we wait for release we could detect faulty writing slots --> pedantic Mode not needed for now
         wait(ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
-        volatile uint8_t *reg asm("r30") = pin_baseReg;
-        DIRECT_MODE_INPUT(reg, pin_bitMask);
+        DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
     }
 
     return true;
@@ -658,10 +646,9 @@ bool OneWireHub::recvBit(void)
     }
 
     waitWhilePinIs( 0, ONEWIRE_TIME_READ_STD); // no pinCheck demanded, but this additional check can cut waitTime
-    volatile uint8_t *reg asm("r30") = pin_baseReg;
-    DIRECT_MODE_INPUT(reg, pin_bitMask);
+    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
-    return DIRECT_READ(reg, pin_bitMask);
+    return DIRECT_READ(pin_baseReg, pin_bitMask);
 }
 
 #define USE_DELAY 1
@@ -683,18 +670,17 @@ void OneWireHub::wait(const uint16_t timeout_us)
 // returns true if pins stays in the wanted state all the time
 bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
 {
-    volatile uint8_t *reg asm("r30") = pin_baseReg;
-    if (DIRECT_READ(reg, pin_bitMask) != value) return true; // shortcut
+    if (DIRECT_READ(pin_baseReg, pin_bitMask) != value) return true; // shortcut
 
 #if USE_MICROS
     uint32_t time_trigger = micros() + timeout_us;
-    while (DIRECT_READ(reg, pin_bitMask) == value)
+    while (DIRECT_READ(pin_baseReg, pin_bitMask) == value)
     {
         if (micros() >= time_trigger) return false;
     }
 #else
     uint16_t retries = static_cast<uint16_t>(microsecondsToClockCycles(timeout_us)/11);
-    while (DIRECT_READ(reg, pin_bitMask) == value)
+    while (DIRECT_READ(pin_baseReg, pin_bitMask) == value)
     {
         if (--retries == 0) return false;
     }
@@ -747,14 +733,13 @@ bool OneWireHub::awaitTimeSlotAndWrite(void)
 #define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135)/8)   /// :11 is a specif value for 8bit-atmega, still to determine
 bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 {
-    volatile uint8_t *reg asm("r30") = pin_baseReg;
     noInterrupts();
-    DIRECT_WRITE_LOW(reg, pin_bitMask);
-    DIRECT_MODE_INPUT(reg, pin_bitMask);
+    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
+    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     //While bus is low, retry until HIGH
     uint16_t retries = TIMESLOT_WAIT_RETRY_COUNT;
-    while (!DIRECT_READ(reg, pin_bitMask))
+    while (!DIRECT_READ(pin_baseReg, pin_bitMask))
     {
         if (--retries == 0)
         {
@@ -786,7 +771,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
     };
 
     //Wait for bus to fall form 1 to 0
-    while (DIRECT_READ(reg, pin_bitMask))
+    while (DIRECT_READ(pin_baseReg, pin_bitMask))
     {
         if (--retries == 0)
         {
@@ -801,7 +786,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
     if (writeZero)
     {
         // Low is allready set
-        DIRECT_MODE_OUTPUT(reg, pin_bitMask);
+        DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
     };
 
     interrupts();
