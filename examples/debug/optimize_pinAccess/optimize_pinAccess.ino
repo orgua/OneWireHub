@@ -108,7 +108,7 @@ void setup()
     const uint8_t pin_test = 8;
 
     // measurement with oszi --> each of this work with an atmega328p, 16MHz Clock bring 571 kHz pinFreq for case 1-3, double for case 4
-    switch(3)
+    switch(4)
     {
         case 0:
         case 1:
