@@ -18,6 +18,10 @@ OneWireHub::OneWireHub(uint8_t pin)
     for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
         slave_list[i] = nullptr;
 
+    // prepare pin
+    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
+    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
+
     // prepare timings
     delayLoopsConfig();
     constexpr timeOW_t value1k      { 1000 };
@@ -33,10 +37,6 @@ OneWireHub::OneWireHub(uint8_t pin)
     LOOPS_READ_ONE_LOW_MAX      = delayLoopsCalculate(value1k * ONEWIRE_TIME_READ_ONE_LOW_MAX);
     LOOPS_READ_STD              = delayLoopsCalculate(value1k * ONEWIRE_TIME_READ_STD);
     LOOPS_WRITE_ZERO_LOW_STD    = delayLoopsCalculate(value1k * ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
-
-    // prepare pin
-    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
-    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     // debug:
 #if USE_GPIO_DEBUG
@@ -688,9 +688,6 @@ void OneWireHub::wait(const uint16_t timeout_us)
 #define USE_MICROS 1
 
 
-
-
-
 #define NEW_WAIT 0 // TODO: NewWait does not work as expected (and is deprecated)
 #if NEW_WAIT
 
@@ -793,23 +790,28 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 void OneWireHub::delayLoopsConfig(void)
 {
     // prepare measurement
-    DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
-    DIRECT_WRITE_HIGH(pin_baseReg, pin_bitMask);
+    //DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
+    //DIRECT_WRITE_HIGH(pin_baseReg, pin_bitMask);
     bool pin_value = true;
     static_assert(microsecondsToClockCycles(1) < (4000000000L / REPETITIONS), "CPU is too fast"); // protect from overrun with static_assert, maybe convert to dynamic type
     const timeOW_t retries = REPETITIONS * microsecondsToClockCycles(1); // get some freq-independent retrie-rate
 
-    // measure
-    const uint32_t time_start = micros();
-    delayLoopsWhilePinIs(retries,pin_value);
-    const uint32_t time_stop = micros();
+    bool success = false;
+    while (!success)
+    {
+        // measure
+        const uint32_t time_start = micros();
+        success = delayLoopsWhilePinIs(retries, pin_value);
+        const uint32_t time_stop = micros();
 
-    // analyze
-    constexpr timeOW_t value1k      { 1000 };
-    const timeOW_t time_ns = (time_stop - time_start) * value1k;
-    factor_nslp = (time_ns / retries) + 1; // nanoseconds per loop
-    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask); // disable internal pullup
-    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
+        // analyze
+        constexpr timeOW_t value1k{1000};
+        const timeOW_t time_ns = (time_stop - time_start) * value1k;
+        factor_nslp = (time_ns / retries) + 1; // nanoseconds per loop
+    };
+
+    //DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask); // disable internal pullup
+    //DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 };
 
 timeOW_t OneWireHub::delayLoopsCalculate(const timeOW_t time_ns)
@@ -857,7 +859,6 @@ void OneWireHub::printError(void)
     {
         Serial.println("");
     }
-
 #endif
 };
 
