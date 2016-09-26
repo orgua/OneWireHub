@@ -41,6 +41,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
+- fix and clean pin access, fix a portability issue (time_t)
 - prepare hub for overdrive-mode
 - added or extended the ds2431, ds2431, ds2501, ds2502 (also tested)
 - hub is more resilient to odd master-behaviour (lazy timings and subsequent resets are handled now), extended in 0.9.3 and 0.9.4
