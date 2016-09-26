@@ -173,7 +173,7 @@ void setup()
     DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
     DIRECT_MODE_OUTPUT(debug_baseReg, debug_bitMask);
 
-    // measurement with logic analyzer was fine! 
+    // measurement with logic analyzer was fine!
 
     { // just delay
         DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
