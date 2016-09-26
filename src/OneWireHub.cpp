@@ -453,6 +453,9 @@ bool OneWireHub::recvAndProcessCmd(void)
         case 0x3C: // overdrive SKIP ROM
             overdrive_mode = true;
         case 0xCC: // SKIP ROM
+            // NOTE: If more than one slave is present on the bus,
+            // and a read command is issued following the Skip ROM command,
+            // data collision will occur on the bus as multiple slaves transmit simultaneously
             slave_selected = nullptr;
 
             for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
