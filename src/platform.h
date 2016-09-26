@@ -3,6 +3,8 @@
 #ifndef ONEWIREHUB_PLATFORM_H
 #define ONEWIREHUB_PLATFORM_H
 
+// NOTE: added io_reg_t, don't use IO_REG_TYPE and IO_REG_ASM anymore
+// TODO: sync with onewireLib
 // Platform specific I/O definitions
 
 #if defined(__AVR__)
@@ -15,6 +17,7 @@
 #define DIRECT_MODE_OUTPUT(base, mask)  ((*((base)+1)) |= (mask))
 #define DIRECT_WRITE_LOW(base, mask)    ((*((base)+2)) &= ~(mask))
 #define DIRECT_WRITE_HIGH(base, mask)   ((*((base)+2)) |= (mask))
+using io_reg_t = uint8_t; // define special datatype for register-access
 
 #elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK66FX1M0__) || defined(__MK64FX512__)
 #define PIN_TO_BASEREG(pin)             (portOutputRegister(pin))
@@ -26,6 +29,7 @@
 #define DIRECT_MODE_OUTPUT(base, mask)  (*((base)+640) = 1)
 #define DIRECT_WRITE_LOW(base, mask)    (*((base)+256) = 1)
 #define DIRECT_WRITE_HIGH(base, mask)   (*((base)+128) = 1)
+using io_reg_t = uint8_t; // define special datatype for register-access
 
 #elif defined(__MKL26Z64__)
 #define PIN_TO_BASEREG(pin)             (portOutputRegister(pin))
@@ -37,6 +41,7 @@
 #define DIRECT_MODE_OUTPUT(base, mask)  (*((base)+20) |= (mask))
 #define DIRECT_WRITE_LOW(base, mask)    (*((base)+8) = (mask))
 #define DIRECT_WRITE_HIGH(base, mask)   (*((base)+4) = (mask))
+using io_reg_t = uint8_t; // define special datatype for register-access
 
 #elif defined(__SAM3X8E__)
 // Arduino 1.5.1 may have a bug in delayMicroseconds() on Arduino Due.
@@ -58,6 +63,7 @@
 #ifndef pgm_read_byte
 #define pgm_read_byte(address) (*(const uint8_t *)(address))
 #endif
+using io_reg_t = uint32_t; // define special datatype for register-access
 
 #elif defined(__PIC32MX__)
 #define PIN_TO_BASEREG(pin)             (portModeRegister(digitalPinToPort(pin)))
@@ -69,6 +75,7 @@
 #define DIRECT_MODE_OUTPUT(base, mask)  ((*(base+1)) = (mask))            //TRISXCLR + 0x04
 #define DIRECT_WRITE_LOW(base, mask)    ((*(base+8+1)) = (mask))          //LATXCLR  + 0x24
 #define DIRECT_WRITE_HIGH(base, mask)   ((*(base+8+2)) = (mask))          //LATXSET + 0x28
+using io_reg_t = uint32_t; // define special datatype for register-access
 
 #elif defined(ARDUINO_ARCH_ESP8266)
 #define PIN_TO_BASEREG(pin)             ((volatile uint32_t*) GPO)
@@ -80,6 +87,7 @@
 #define DIRECT_MODE_OUTPUT(base, mask)  (GPE |= (mask))             //GPIO_ENABLE_W1TS_ADDRESS
 #define DIRECT_WRITE_LOW(base, mask)    (GPOC = (mask))             //GPIO_OUT_W1TC_ADDRESS
 #define DIRECT_WRITE_HIGH(base, mask)   (GPOS = (mask))             //GPIO_OUT_W1TS_ADDRESS
+using io_reg_t = uint32_t; // define special datatype for register-access
 
 #elif defined(__SAMD21G18A__)
 #define PIN_TO_BASEREG(pin)             portModeRegister(digitalPinToPort(pin))
@@ -91,6 +99,7 @@
 #define DIRECT_MODE_OUTPUT(base, mask)  ((*((base)+2)) = (mask))
 #define DIRECT_WRITE_LOW(base, mask)    ((*((base)+5)) = (mask))
 #define DIRECT_WRITE_HIGH(base, mask)   ((*((base)+6)) = (mask))
+using io_reg_t = uint32_t; // define special datatype for register-access
 
 #elif defined(RBL_NRF51822)
 #define PIN_TO_BASEREG(pin)             (0)
@@ -102,6 +111,7 @@
 #define DIRECT_WRITE_HIGH(base, pin)    nrf_gpio_pin_set(pin)
 #define DIRECT_MODE_INPUT(base, pin)    nrf_gpio_cfg_input(pin, NRF_GPIO_PIN_NOPULL)
 #define DIRECT_MODE_OUTPUT(base, pin)   nrf_gpio_cfg_output(pin)
+using io_reg_t = uint32_t; // define special datatype for register-access
 
 #elif defined(__arc__) /* Arduino101/Genuino101 specifics */
 
@@ -122,6 +132,7 @@
 #define PIN_TO_BITMASK(pin)		pin
 #define IO_REG_TYPE			uint32_t
 #define IO_REG_ASM
+using io_reg_t = uint32_t; // define special datatype for register-access
 
 static inline __attribute__((always_inline))
 IO_REG_TYPE directRead(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
@@ -197,7 +208,7 @@ void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 #define DIRECT_MODE_INPUT(base, pin)    pinMode(pin,INPUT)
 #define DIRECT_MODE_OUTPUT(base, pin)   pinMode(pin,OUTPUT)
 #warning "OneWire. Fallback mode. Using API calls for pinMode,digitalRead and digitalWrite. Operation of this library is not guaranteed on this architecture."
-
+using io_reg_t = uint32_t; // define special datatype for register-access
 
 /////////////////////////////////////////// EXTRA PART /////////////////////////////////////////
 // this part is loaded if no proper arduino-environment is found (good for external testing)
