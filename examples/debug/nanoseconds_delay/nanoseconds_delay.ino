@@ -13,11 +13,11 @@
 
 #include "OneWireHub.h"
 
-constexpr uint32_t repetitions  { 10000 };
+constexpr uint32_t repetitions  { 10000 };  // 100000L take 1100ms on atmega328p@16Mhz
 constexpr uint32_t value1k      { 1000 };
 
 /////////////////////////////////////////////////////////////////////////
-/////// Debug  //////////////////////////////////////////
+/////// Debug                  //////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 
 using io_reg_t = uint8_t; // define special datatype for register-access
@@ -33,7 +33,6 @@ void debugConfig(const uint8_t pin)
     debug_baseReg = PIN_TO_BASEREG(pin);
 };
 
-
 /*
     DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
     DIRECT_MODE_OUTPUT(debug_baseReg, debug_bitMask);
@@ -41,7 +40,6 @@ void debugConfig(const uint8_t pin)
     DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
     DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
  */
-
 
 /////////////////////////////////////////////////////////////////////////
 /////// Wait while pin has the given state //////////////////////////////
@@ -54,9 +52,8 @@ private:
     // setup direct pin-access
     uint8_t pin_bitMask;
     volatile uint8_t *pin_baseReg;
-    //volatile uint8_t *reg asm("r30") = baseReg;
 
-    uint32_t factor_nslp; // nanoseconds per loop
+    timeOW_t factor_nslp; // nanoseconds per loop
 
 public:
     WaitWhilePinIs(uint8_t digital_pin) // initialize and calibrate
@@ -70,9 +67,7 @@ public:
         DIRECT_WRITE_HIGH(pin_baseReg, pin_bitMask);
         bool pin_value = true;
         static_assert(microsecondsToClockCycles(1) < (4000000000L / repetitions), "CPU is too fast"); // protect from overrun with static_assert, maybe convert to dynanic type
-        const uint32_t retries = repetitions * microsecondsToClockCycles(1); // 100ms (if loop takes 1 cylce) for every frequency, uint32-overrun at 40 GHz
-        // 100000L takes 1100ms on atmega328p@16Mhz
-        // 10000L takes
+        const timeOW_t retries = repetitions * microsecondsToClockCycles(1); // get some freq-independent retry-rate
 
         // measure
         const uint32_t time_start = micros();
@@ -80,29 +75,30 @@ public:
         const uint32_t time_stop = micros();
 
         // analyze
-        const uint32_t time_ns = (time_stop - time_start) * value1k;
+        const timeOW_t time_ns = (time_stop - time_start) * value1k;
         factor_nslp = (time_ns / retries) + 1; // nanoseconds per loop
         DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask); // disable internal pullup
         DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
     };
 
-    void loops(volatile uint32_t retries, const bool pin_value = false)
+    bool loops(volatile timeOW_t retries, const bool pin_value = false)
     {
-        while (DIRECT_READ(pin_baseReg, pin_bitMask) == pin_value) if (retries-- == 0) break; // standard loop for measuring, 13 cycles per loop32 for an atmega328p
+        while (DIRECT_READ(pin_baseReg, pin_bitMask) == pin_value) if (retries-- == 0) return false; // standard loop for measuring, 13 cycles per loop32 for an atmega328p
+        return true;
     };
 
-    uint32_t calculateRetries(const uint32_t time_ns)
+    timeOW_t calculateRetries(const timeOW_t time_ns)
     {
         // precalc waitvalues, the OP can take up da 550 cylces
-        uint32_t retries = (time_ns / factor_nslp);
+        timeOW_t retries = (time_ns / factor_nslp);
         if (retries) retries--;
         return retries;
     };
 
-    void nanoseconds(const uint32_t time_ns, const bool pin_value = false)
+    void nanoseconds(const timeOW_t time_ns, const bool pin_value = false)
     {
         if (time_ns < factor_nslp) return;
-        uint32_t retries = calculateRetries(time_ns); // not cheap .... precalc if possible
+        timeOW_t retries = calculateRetries(time_ns); // not cheap .... precalc if possible
         loops(retries, pin_value);
     };
 };
@@ -114,15 +110,15 @@ public:
 class Delay
 {
 private:
-    uint32_t factor_nslp; // nanoseconds per loop
+    timeOW_t factor_nslp; // nanoseconds per loop
 
 public:
     Delay(void) // initialize and calibrate
     {
         // prepare measurement
         static_assert(microsecondsToClockCycles(1) < (4000000000L / repetitions), "CPU is too fast"); // protect from overrun with static_assert, maybe convert to dynanic type
-        const uint32_t retries = repetitions * microsecondsToClockCycles(1); // 100ms (if loop takes 1 cylce) for every frequency, uint32-overrun at 40 GHz
-        // 100000L takes 600ms on atmega328p@16Mhz
+        const timeOW_t retries = repetitions * microsecondsToClockCycles(1); // get some freq-independent retry-rate
+        // 100000L take 600ms on atmega328p@16Mhz
 
         // measure
         const uint32_t time_start = micros();
@@ -130,27 +126,27 @@ public:
         const uint32_t time_stop = micros();
 
         // analyze
-        const uint32_t time_ns = (time_stop - time_start) * value1k;
+        const timeOW_t time_ns = (time_stop - time_start) * value1k;
         factor_nslp = (time_ns / retries) + 1;
     };
 
-    void loops(volatile uint32_t retries)
+    void loops(volatile timeOW_t retries)
     {
         while (retries--); // standard loop for measuring
     };
 
-    uint32_t calculateRetries(const uint32_t time_ns)
+    timeOW_t calculateRetries(const timeOW_t time_ns)
     {
         // precalc waitvalues, the OP can take up da 550 cylces
-        uint32_t retries = (time_ns / factor_nslp);
+        timeOW_t retries = (time_ns / factor_nslp);
         if (retries) retries--;
         return retries;
     };
 
-    void nanoseconds(const uint32_t time_ns)
+    void nanoseconds(const timeOW_t time_ns)
     {
         if (time_ns < factor_nslp) return;
-        const uint32_t retries = calculateRetries(time_ns); // not cheap .... precalc if possible
+        const timeOW_t retries = calculateRetries(time_ns); // not cheap .... precalc if possible
         loops(retries);
     };
 };
@@ -166,7 +162,7 @@ void setup()
     const uint8_t pin_delay = 8;
     const bool    pin_value = false;
 
-    const uint32_t wait_ns[] = { 1000, 10000, 100000, 1000000}; // 1us, 10us, 100us, 1ms
+    const timeOW_t wait_ns[] = { 1000, 10000, 100000, 1000000}; // 1us, 10us, 100us, 1ms
     const uint8_t  sizeof_wait = sizeof(wait_ns) >> 2;
 
     debugConfig(pin_debug);
@@ -183,7 +179,7 @@ void setup()
 
         for (uint8_t i = 0; i < sizeof_wait; ++i)
         {
-            const uint32_t retries = delay32.calculateRetries(wait_ns[i]);
+            const timeOW_t retries = delay32.calculateRetries(wait_ns[i]);
 
             DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
             delay32.loops(retries);
@@ -191,7 +187,7 @@ void setup()
 
             delay(5);
         };
-    }; // got: 700ns, 2us, 13.4us, 103.6us, 1005us
+    };
 
     delay(10);
 
@@ -203,7 +199,7 @@ void setup()
 
         for (uint8_t i = 0; i < sizeof_wait; ++i)
         {
-            const uint32_t retries = delay32.calculateRetries(wait_ns[i]);
+            const timeOW_t retries = delay32.calculateRetries(wait_ns[i]);
 
             DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
             delay32.loops(retries, pin_value);
@@ -211,7 +207,7 @@ void setup()
 
             delay(5);
         };
-    }; // got: 5us, 13.4us, 103.2us, 1005us
+    };
 };
 
 void loop()
