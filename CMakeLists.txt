@@ -22,6 +22,7 @@ set(SOURCE_FILES
         src/DS2502.cpp
         src/DS2890.cpp
         src/OneWireHub.cpp
+        src/OneWireHub_config.h
         src/OneWireItem.cpp
         src/platform.h
         )

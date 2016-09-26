@@ -18,7 +18,24 @@ OneWireHub::OneWireHub(uint8_t pin)
     for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
         slave_list[i] = nullptr;
 
+    // prepare timings
+    delayLoopsConfig();
+    constexpr timeOW_t value1k      { 1000 };
+    LOOPS_BUS_CHANGE_MAX        = delayLoopsCalculate(value1k * ONEWIRE_TIME_BUS_CHANGE_MAX);
+    LOOPS_RESET_MIN             = delayLoopsCalculate(value1k * ONEWIRE_TIME_RESET_MIN);
+    LOOPS_RESET_MAX             = delayLoopsCalculate(value1k * ONEWIRE_TIME_RESET_MAX);
+    LOOPS_RESET_TIMEOUT         = delayLoopsCalculate(value1k * ONEWIRE_TIME_RESET_TIMEOUT);
+    LOOPS_PRESENCE_SAMPLE_MIN   = delayLoopsCalculate(value1k * ONEWIRE_TIME_PRESENCE_SAMPLE_MIN);
+    LOOPS_PRESENCE_LOW_STD      = delayLoopsCalculate(value1k * ONEWIRE_TIME_PRESENCE_LOW_STD);
+    LOOPS_PRESENCE_LOW_MAX      = delayLoopsCalculate(value1k * ONEWIRE_TIME_PRESENCE_LOW_MAX);
+    LOOPS_PRESENCE_HIGH_MAX     = delayLoopsCalculate(value1k * ONEWIRE_TIME_PRESENCE_HIGH_MAX);
+    LOOPS_SLOT_MAX              = delayLoopsCalculate(value1k * ONEWIRE_TIME_SLOT_MAX);
+    LOOPS_READ_ONE_LOW_MAX      = delayLoopsCalculate(value1k * ONEWIRE_TIME_READ_ONE_LOW_MAX);
+    LOOPS_READ_STD              = delayLoopsCalculate(value1k * ONEWIRE_TIME_READ_STD);
+    LOOPS_WRITE_ZERO_LOW_STD    = delayLoopsCalculate(value1k * ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
+
     // prepare pin
+    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     // debug:
@@ -234,7 +251,7 @@ bool OneWireHub::poll(void)
         if (!slave_count)           return true;
 
         //Once reset is done, go to next step
-        if (!checkReset(10000))     return false; // TODO: should optimize, lower value is better
+        if (!checkReset())     return false;
 
         // Reset is complete, tell the master we are present
         if (!showPresence())        return false;
@@ -248,7 +265,7 @@ bool OneWireHub::poll(void)
 
 
 
-bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-time needed before a reset may occur -->  >120us
+bool OneWireHub::checkReset(void) // there is a specific high-time needed before a reset may occur -->  >120us
 {
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
@@ -258,9 +275,9 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-tim
     if (skip_reset_detection)
     {
         skip_reset_detection = 0;
-        if (!waitWhilePinIs(0, ONEWIRE_TIME_RESET_MIN - ONEWIRE_TIME_SLOT_MAX - ONEWIRE_TIME_READ_STD))
+        if (!delayLoopsWhilePinIs(LOOPS_RESET_MIN - LOOPS_SLOT_MAX - LOOPS_READ_STD, false))
         {
-            waitWhilePinIs(0, ONEWIRE_TIME_RESET_MAX); // showPresence() wants to start at high, so wait for it
+            delayLoopsWhilePinIs(LOOPS_RESET_MAX, false); // showPresence() wants to start at high, so wait for it
             return true;
         }
     }
@@ -268,7 +285,7 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-tim
     if (!DIRECT_READ(pin_baseReg, pin_bitMask)) return false; // just leave if pin is Low, don't bother to wait
 
     // wait for the bus to become low (master-controlled), since we are polling we don't know for how long it was zero
-    if (!waitWhilePinIs(1, timeout_us))
+    if (!delayLoopsWhilePinIs(LOOPS_RESET_TIMEOUT, true))
     {
         //_error = Error::WAIT_RESET_TIMEOUT;
         return false;
@@ -277,7 +294,7 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-tim
     uint32_t time_start = micros();
 
     // wait for bus-release by master
-    if (!waitWhilePinIs(0, ONEWIRE_TIME_RESET_MAX))
+    if (!delayLoopsWhilePinIs(LOOPS_RESET_MAX, false))
     {
         _error = Error::VERY_LONG_RESET;
         return false;
@@ -299,7 +316,7 @@ bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-tim
 bool OneWireHub::showPresence(void)
 {
     // Master will delay it's "Presence" check (bus-read)  after the reset
-    waitWhilePinIs( 1, ONEWIRE_TIME_PRESENCE_SAMPLE_MIN); // no pinCheck demanded, but this additional check can cut waitTime
+    delayLoopsWhilePinIs(LOOPS_PRESENCE_SAMPLE_MIN, true); // no pinCheck demanded, but this additional check can cut waitTime
 
     // pull the bus low and hold it some time
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
@@ -310,7 +327,7 @@ bool OneWireHub::showPresence(void)
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);     // allow it to float
 
     // When the master or other slaves release the bus within a given time everything is fine
-    if (!waitWhilePinIs( 0, (ONEWIRE_TIME_PRESENCE_LOW_MAX - ONEWIRE_TIME_PRESENCE_LOW_STD)))
+    if (!delayLoopsWhilePinIs((LOOPS_PRESENCE_LOW_MAX - LOOPS_PRESENCE_LOW_STD), false))
     {
         _error = Error::PRESENCE_LOW_ON_LINE;
         return false;
@@ -560,7 +577,7 @@ bool OneWireHub::sendBit(const bool value)
         return false; // timeslot violation
     }
 
-    if (value)  waitWhilePinIs( 0, ONEWIRE_TIME_READ_ONE_LOW_MAX); // no pinCheck demanded, but this additional check can cut waitTime
+    if (value)  delayLoopsWhilePinIs(LOOPS_READ_ONE_LOW_MAX, false); // no pinCheck demanded, but this additional check can cut waitTime
     else
     {
         // if we wait for release we could detect faulty writing slots --> pedantic Mode not needed for now
@@ -648,7 +665,7 @@ bool OneWireHub::recvBit(void)
         return 0;
     }
 
-    waitWhilePinIs( 0, ONEWIRE_TIME_READ_STD); // no pinCheck demanded, but this additional check can cut waitTime
+    delayLoopsWhilePinIs(LOOPS_READ_STD, false); // no pinCheck demanded, but this additional check can cut waitTime
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     return DIRECT_READ(pin_baseReg, pin_bitMask);
@@ -670,26 +687,8 @@ void OneWireHub::wait(const uint16_t timeout_us)
 
 #define USE_MICROS 1
 
-// returns true if pins stays in the wanted state all the time
-bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
-{
-    if (DIRECT_READ(pin_baseReg, pin_bitMask) != value) return true; // shortcut
 
-#if USE_MICROS
-    uint32_t time_trigger = micros() + timeout_us;
-    while (DIRECT_READ(pin_baseReg, pin_bitMask) == value)
-    {
-        if (micros() >= time_trigger) return false;
-    }
-#else
-    uint16_t retries = static_cast<uint16_t>(microsecondsToClockCycles(timeout_us)/11);
-    while (DIRECT_READ(pin_baseReg, pin_bitMask) == value)
-    {
-        if (--retries == 0) return false;
-    }
-#endif
-    return true;
-}
+
 
 
 #define NEW_WAIT 0 // TODO: NewWait does not work as expected (and is deprecated)
@@ -698,10 +697,7 @@ bool OneWireHub::waitWhilePinIs(const bool value, const uint16_t timeout_us)
 // wait for a low to high transition followed by a high to low within the time-out
 bool OneWireHub::awaitTimeSlotAndWrite(void)
 {
-    noInterrupts();
-    volatile uint8_t *reg asm("r30") = pin_baseReg;
-    DIRECT_MODE_INPUT(reg, pin_bitMask);
-    interrupts();
+    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     //While bus is low, retry until HIGH
 
@@ -736,7 +732,6 @@ bool OneWireHub::awaitTimeSlotAndWrite(void)
 #define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135)/8)   /// :11 is a specif value for 8bit-atmega, still to determine
 bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 {
-    noInterrupts();
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
@@ -756,7 +751,6 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
             {
                 _error = Error::READ_TIMESLOT_TIMEOUT_LOW;
             };
-            interrupts();
             return false;
         };
     };
@@ -779,7 +773,6 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
         if (--retries == 0)
         {
             _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
-            interrupts();
             return false;
         };
     };
@@ -792,11 +785,48 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
         DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
     };
 
-    interrupts();
     return true;
 };
 #endif
 
+
+void OneWireHub::delayLoopsConfig(void)
+{
+    // prepare measurement
+    DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
+    DIRECT_WRITE_HIGH(pin_baseReg, pin_bitMask);
+    bool pin_value = true;
+    static_assert(microsecondsToClockCycles(1) < (4000000000L / REPETITIONS), "CPU is too fast"); // protect from overrun with static_assert, maybe convert to dynamic type
+    const timeOW_t retries = REPETITIONS * microsecondsToClockCycles(1); // get some freq-independent retrie-rate
+
+    // measure
+    const uint32_t time_start = micros();
+    delayLoopsWhilePinIs(retries,pin_value);
+    const uint32_t time_stop = micros();
+
+    // analyze
+    constexpr timeOW_t value1k      { 1000 };
+    const timeOW_t time_ns = (time_stop - time_start) * value1k;
+    factor_nslp = (time_ns / retries) + 1; // nanoseconds per loop
+    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask); // disable internal pullup
+    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
+};
+
+timeOW_t OneWireHub::delayLoopsCalculate(const timeOW_t time_ns)
+{
+    // precalc waitvalues, the OP can take up da 550 cylces
+    timeOW_t retries = (time_ns / factor_nslp);
+    if (retries) retries--;
+    return retries;
+};
+
+// returns true if pins stays in the wanted state all the time
+bool OneWireHub::delayLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value)
+{
+    // standard loop for measuring, ~13 cycles per loop32 for an atmega328p
+    while (DIRECT_READ(pin_baseReg, pin_bitMask) == pin_value) if (retries-- == 0) return false;
+    return true;
+};
 
 void OneWireHub::printError(void)
 {
