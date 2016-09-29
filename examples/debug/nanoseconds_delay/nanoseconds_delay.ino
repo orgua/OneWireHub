@@ -83,8 +83,9 @@ public:
 
     bool loops(volatile timeOW_t retries, const bool pin_value = false)
     {
-        while (DIRECT_READ(pin_baseReg, pin_bitMask) == pin_value) if (retries-- == 0) return false; // standard loop for measuring, 13 cycles per loop32 for an atmega328p
-        return true;
+        // standard loop for measuring, 38 cycles per loop32 for an atmega328p
+        while ((DIRECT_READ(pin_baseReg, pin_bitMask) == pin_value) && (retries--));
+        return (++retries);
     };
 
     timeOW_t calculateRetries(const timeOW_t time_ns)
@@ -100,6 +101,11 @@ public:
         if (time_ns < factor_nslp) return;
         timeOW_t retries = calculateRetries(time_ns); // not cheap .... precalc if possible
         loops(retries, pin_value);
+    };
+
+    timeOW_t getFactor(void)
+    {
+        return factor_nslp;
     };
 };
 
@@ -149,6 +155,11 @@ public:
         const timeOW_t retries = calculateRetries(time_ns); // not cheap .... precalc if possible
         loops(retries);
     };
+
+    timeOW_t getFactor(void)
+    {
+        return factor_nslp;
+    };
 };
 
 /////////////////////////////////////////////////////////////////////////
@@ -190,6 +201,7 @@ void setup()
     };
 
     delay(10);
+    timeOW_t factor_storage;
 
     { // do a pincheck
         DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
@@ -207,7 +219,34 @@ void setup()
 
             delay(5);
         };
+
+        factor_storage = delay32.getFactor();
     };
+
+    Serial.begin(115200);
+    Serial.println(factor_storage);
+
+    { // do a pincheck
+        DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+        auto delay32  = WaitWhilePinIs(pin_delay);
+        DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+        delay(5);
+
+        for (uint8_t i = 0; i < sizeof_wait; ++i)
+        {
+            const timeOW_t retries = delay32.calculateRetries(wait_ns[i]);
+
+            DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+            delay32.loops(retries, pin_value);
+            DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+
+            delay(5);
+        };
+
+        factor_storage = delay32.getFactor();
+    };
+
+    Serial.println(factor_storage);
 };
 
 void loop()

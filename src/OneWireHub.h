@@ -69,7 +69,7 @@ private:
     Error   _error;
     uint8_t _error_cmd;
 
-    io_reg_t          pin_bitMask;
+    volatile io_reg_t pin_bitMask; // TODO: test volatile
     volatile io_reg_t *pin_baseReg;
     uint8_t           extend_timeslot_detection;
     uint8_t           skip_reset_detection;
@@ -107,11 +107,13 @@ private:
     __attribute__((always_inline))
     bool awaitTimeSlotAndWrite(const bool writeZero = 0);
 
-    void delayLoopsConfig(void);
+    //void delayLoopsConfig(void);TODO: move back
     timeOW_t delayLoopsCalculate(const timeOW_t time_ns);
     bool delayLoopsWhilePinIs(volatile timeOW_t retries, const bool bin_value = false);
 
 public:
+    void delayLoopsConfig(void);
+    void begin(void);
 
     explicit OneWireHub(uint8_t pin);
 
@@ -145,6 +147,39 @@ public:
     bool getError(void);
     void raiseSlaveError(const uint8_t cmd = 0);
     Error clearError(void);
+
+    void debugTiming(void)
+    {
+        Serial.println("DEBUG TIMINGS for the HUB");
+        Serial.print("factor : \t");
+        Serial.println(factor_nslp);
+        Serial.print("bus change : \t");
+        Serial.println(LOOPS_BUS_CHANGE_MAX);
+        Serial.print("reset min : \t");
+        Serial.println(LOOPS_RESET_MIN);
+        Serial.print("reset max : \t");
+        Serial.println(LOOPS_RESET_MAX);
+        Serial.print("reset tout : \t");
+        Serial.println(LOOPS_RESET_TIMEOUT);
+        Serial.print("presence min : \t");
+        Serial.println(LOOPS_PRESENCE_SAMPLE_MIN);
+        Serial.print("presence low : \t");
+        Serial.println(LOOPS_PRESENCE_LOW_STD);
+        Serial.print("pres low max : \t");
+        Serial.println(LOOPS_PRESENCE_LOW_MAX);
+        Serial.print("pres hi max : \t");
+        Serial.println(LOOPS_PRESENCE_HIGH_MAX);
+        Serial.print("slot max : \t");
+        Serial.println(LOOPS_SLOT_MAX);
+        Serial.print("read1low : \t");
+        Serial.println(LOOPS_READ_ONE_LOW_MAX);
+        Serial.print("read std : \t");
+        Serial.println(LOOPS_READ_STD);
+        Serial.print("write zero : \t");
+        Serial.println(LOOPS_WRITE_ZERO_LOW_STD);
+    };
+
+
 };
 
 
