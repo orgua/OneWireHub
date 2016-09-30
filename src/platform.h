@@ -10,37 +10,34 @@
 #if defined(__AVR__)
 #define PIN_TO_BASEREG(pin)             (portInputRegister(digitalPinToPort(pin)))
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
-#define IO_REG_TYPE uint8_t
-#define IO_REG_ASM asm("r30")
 #define DIRECT_READ(base, mask)         (((*(base)) & (mask)) ? 1 : 0)
 #define DIRECT_MODE_INPUT(base, mask)   ((*((base)+1)) &= ~(mask))
 #define DIRECT_MODE_OUTPUT(base, mask)  ((*((base)+1)) |= (mask))
 #define DIRECT_WRITE_LOW(base, mask)    ((*((base)+2)) &= ~(mask))
 #define DIRECT_WRITE_HIGH(base, mask)   ((*((base)+2)) |= (mask))
+constexpr uint8_t factor_ilp            {34}; // instructions per loop (waitWhilePinIs())
 using io_reg_t = uint8_t; // define special datatype for register-access
 
 #elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK66FX1M0__) || defined(__MK64FX512__)
 #define PIN_TO_BASEREG(pin)             (portOutputRegister(pin))
 #define PIN_TO_BITMASK(pin)             (1)
-#define IO_REG_TYPE uint8_t
-#define IO_REG_ASM
 #define DIRECT_READ(base, mask)         (*((base)+512))
 #define DIRECT_MODE_INPUT(base, mask)   (*((base)+640) = 0)
 #define DIRECT_MODE_OUTPUT(base, mask)  (*((base)+640) = 1)
 #define DIRECT_WRITE_LOW(base, mask)    (*((base)+256) = 1)
 #define DIRECT_WRITE_HIGH(base, mask)   (*((base)+128) = 1)
+constexpr uint8_t factor_ilp            {1}; // instructions per loop (waitWhilePinIs())
 using io_reg_t = uint8_t; // define special datatype for register-access
 
 #elif defined(__MKL26Z64__)
 #define PIN_TO_BASEREG(pin)             (portOutputRegister(pin))
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
-#define IO_REG_TYPE uint8_t
-#define IO_REG_ASM
 #define DIRECT_READ(base, mask)         ((*((base)+16) & (mask)) ? 1 : 0)
 #define DIRECT_MODE_INPUT(base, mask)   (*((base)+20) &= ~(mask))
 #define DIRECT_MODE_OUTPUT(base, mask)  (*((base)+20) |= (mask))
 #define DIRECT_WRITE_LOW(base, mask)    (*((base)+8) = (mask))
 #define DIRECT_WRITE_HIGH(base, mask)   (*((base)+4) = (mask))
+constexpr uint8_t factor_ilp            {1}; // instructions per loop (waitWhilePinIs())
 using io_reg_t = uint8_t; // define special datatype for register-access
 
 #elif defined(__SAM3X8E__)
@@ -50,8 +47,6 @@ using io_reg_t = uint8_t; // define special datatype for register-access
 // status of delayMicroseconds() before reporting a bug in OneWire!
 #define PIN_TO_BASEREG(pin)             (&(digitalPinToPort(pin)->PIO_PER))
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
-#define IO_REG_TYPE uint32_t
-#define IO_REG_ASM
 #define DIRECT_READ(base, mask)         (((*((base)+15)) & (mask)) ? 1 : 0)
 #define DIRECT_MODE_INPUT(base, mask)   ((*((base)+5)) = (mask))
 #define DIRECT_MODE_OUTPUT(base, mask)  ((*((base)+4)) = (mask))
@@ -63,54 +58,51 @@ using io_reg_t = uint8_t; // define special datatype for register-access
 #ifndef pgm_read_byte
 #define pgm_read_byte(address) (*(const uint8_t *)(address))
 #endif
+constexpr uint8_t factor_ilp            {1}; // instructions per loop (waitWhilePinIs())
 using io_reg_t = uint32_t; // define special datatype for register-access
 
 #elif defined(__PIC32MX__)
 #define PIN_TO_BASEREG(pin)             (portModeRegister(digitalPinToPort(pin)))
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
-#define IO_REG_TYPE uint32_t
-#define IO_REG_ASM
 #define DIRECT_READ(base, mask)         (((*(base+4)) & (mask)) ? 1 : 0)  //PORTX + 0x10
 #define DIRECT_MODE_INPUT(base, mask)   ((*(base+2)) = (mask))            //TRISXSET + 0x08
 #define DIRECT_MODE_OUTPUT(base, mask)  ((*(base+1)) = (mask))            //TRISXCLR + 0x04
 #define DIRECT_WRITE_LOW(base, mask)    ((*(base+8+1)) = (mask))          //LATXCLR  + 0x24
 #define DIRECT_WRITE_HIGH(base, mask)   ((*(base+8+2)) = (mask))          //LATXSET + 0x28
+constexpr uint8_t factor_ilp            {1}; // instructions per loop (waitWhilePinIs())
 using io_reg_t = uint32_t; // define special datatype for register-access
 
 #elif defined(ARDUINO_ARCH_ESP8266)
 #define PIN_TO_BASEREG(pin)             ((volatile uint32_t*) GPO)
 #define PIN_TO_BITMASK(pin)             (1 << pin)
-#define IO_REG_TYPE uint32_t
-#define IO_REG_ASM
 #define DIRECT_READ(base, mask)         ((GPI & (mask)) ? 1 : 0)    //GPIO_IN_ADDRESS
 #define DIRECT_MODE_INPUT(base, mask)   (GPE &= ~(mask))            //GPIO_ENABLE_W1TC_ADDRESS
 #define DIRECT_MODE_OUTPUT(base, mask)  (GPE |= (mask))             //GPIO_ENABLE_W1TS_ADDRESS
 #define DIRECT_WRITE_LOW(base, mask)    (GPOC = (mask))             //GPIO_OUT_W1TC_ADDRESS
 #define DIRECT_WRITE_HIGH(base, mask)   (GPOS = (mask))             //GPIO_OUT_W1TS_ADDRESS
+constexpr uint8_t factor_ilp            {1}; // instructions per loop (waitWhilePinIs())
 using io_reg_t = uint32_t; // define special datatype for register-access
 
 #elif defined(__SAMD21G18A__)
 #define PIN_TO_BASEREG(pin)             portModeRegister(digitalPinToPort(pin))
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
-#define IO_REG_TYPE uint32_t
-#define IO_REG_ASM
 #define DIRECT_READ(base, mask)         (((*((base)+8)) & (mask)) ? 1 : 0)
 #define DIRECT_MODE_INPUT(base, mask)   ((*((base)+1)) = (mask))
 #define DIRECT_MODE_OUTPUT(base, mask)  ((*((base)+2)) = (mask))
 #define DIRECT_WRITE_LOW(base, mask)    ((*((base)+5)) = (mask))
 #define DIRECT_WRITE_HIGH(base, mask)   ((*((base)+6)) = (mask))
+constexpr uint8_t factor_ilp            {1}; // instructions per loop (waitWhilePinIs())
 using io_reg_t = uint32_t; // define special datatype for register-access
 
 #elif defined(RBL_NRF51822)
 #define PIN_TO_BASEREG(pin)             (0)
 #define PIN_TO_BITMASK(pin)             (pin)
-#define IO_REG_TYPE uint32_t
-#define IO_REG_ASM
 #define DIRECT_READ(base, pin)          nrf_gpio_pin_read(pin)
 #define DIRECT_WRITE_LOW(base, pin)     nrf_gpio_pin_clear(pin)
 #define DIRECT_WRITE_HIGH(base, pin)    nrf_gpio_pin_set(pin)
 #define DIRECT_MODE_INPUT(base, pin)    nrf_gpio_cfg_input(pin, NRF_GPIO_PIN_NOPULL)
 #define DIRECT_MODE_OUTPUT(base, pin)   nrf_gpio_cfg_output(pin)
+constexpr uint8_t factor_ilp            {1}; // instructions per loop (waitWhilePinIs())
 using io_reg_t = uint32_t; // define special datatype for register-access
 
 #elif defined(__arc__) /* Arduino101/Genuino101 specifics */
@@ -130,8 +122,7 @@ using io_reg_t = uint32_t; // define special datatype for register-access
 /* GPIO registers base address */
 #define PIN_TO_BASEREG(pin)		((volatile uint32_t *)g_APinDescription[pin].ulGPIOBase)
 #define PIN_TO_BITMASK(pin)		pin
-#define IO_REG_TYPE			uint32_t
-#define IO_REG_ASM
+constexpr uint8_t factor_ilp            {1}; // instructions per loop (waitWhilePinIs())
 using io_reg_t = uint32_t; // define special datatype for register-access
 
 static inline __attribute__((always_inline))
@@ -200,14 +191,13 @@ void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 
 #define PIN_TO_BASEREG(pin)             (0)
 #define PIN_TO_BITMASK(pin)             (pin)
-#define IO_REG_TYPE unsigned int
-#define IO_REG_ASM
 #define DIRECT_READ(base, pin)          digitalRead(pin)
 #define DIRECT_WRITE_LOW(base, pin)     digitalWrite(pin, LOW)
 #define DIRECT_WRITE_HIGH(base, pin)    digitalWrite(pin, HIGH)
 #define DIRECT_MODE_INPUT(base, pin)    pinMode(pin,INPUT)
 #define DIRECT_MODE_OUTPUT(base, pin)   pinMode(pin,OUTPUT)
 #warning "OneWire. Fallback mode. Using API calls for pinMode,digitalRead and digitalWrite. Operation of this library is not guaranteed on this architecture."
+constexpr uint8_t factor_ilp            {1}; // instructions per loop (waitWhilePinIs())
 using io_reg_t = uint32_t; // define special datatype for register-access
 
 /////////////////////////////////////////// EXTRA PART /////////////////////////////////////////
@@ -247,7 +237,6 @@ void noInterrupts(void) {};
 void interrupts(void) {};
 
 #endif
-
 
 #ifdef ARDUINO_attiny // Test to make it work on aTtiny85, 8MHz
 /// README: use pin2 or pin3 for Attiny, source: https://github.com/gioblu/PJON/wiki/ATtiny-interfacing

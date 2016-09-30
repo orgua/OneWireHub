@@ -20,7 +20,7 @@ auto ds1822  = DS18B20(0x22, 0x00, 0x02, 0x0F, 0x08, 0x01, 0x0D);    // Digital 
 
 bool blinking()
 {
-    const  uint32_t interval    = 500;          // interval at which to blink (milliseconds)
+    const  uint32_t interval    = 1000;          // interval at which to blink (milliseconds)
     static uint32_t nextMillis  = millis();     // will store next time LED will updated
 
     if (millis() > nextMillis)
@@ -40,6 +40,8 @@ void setup()
 {
     Serial.begin(115200);
     Serial.println("OneWire-Hub DS18B20 Temperature-Sensor");
+    hub.debugTiming();
+    Serial.flush();
 
     pinMode(led_PIN, OUTPUT);
 
@@ -54,6 +56,7 @@ void setup()
     ds1822.setTemp(21);
 
     Serial.println("config done");
+
 }
 
 void loop()
