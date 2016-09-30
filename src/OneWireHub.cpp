@@ -23,17 +23,6 @@ OneWireHub::OneWireHub(uint8_t pin)
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     // prepare timings
-    // TODO: made problems here, factor=1, timer not initialized
-
-    // debug:
-#if USE_GPIO_DEBUG
-    pinMode(GPIO_DEBUG_PIN,OUTPUT);
-    digitalWrite(GPIO_DEBUG_PIN,LOW);
-#endif
-};
-
-void OneWireHub::begin(void)
-{
     delayLoopsConfig();
     constexpr timeOW_t value1k      { 1000 };
     LOOPS_BUS_CHANGE_MAX        = delayLoopsCalculate(value1k * ONEWIRE_TIME_BUS_CHANGE_MAX);
@@ -48,7 +37,13 @@ void OneWireHub::begin(void)
     LOOPS_READ_ONE_LOW_MAX      = delayLoopsCalculate(value1k * ONEWIRE_TIME_READ_ONE_LOW_MAX);
     LOOPS_READ_STD              = delayLoopsCalculate(value1k * ONEWIRE_TIME_READ_STD);
     LOOPS_WRITE_ZERO_LOW_STD    = delayLoopsCalculate(value1k * ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
-}
+
+    // debug:
+#if USE_GPIO_DEBUG
+    pinMode(GPIO_DEBUG_PIN,OUTPUT);
+    digitalWrite(GPIO_DEBUG_PIN,LOW);
+#endif
+};
 
 
 // attach a sensor to the hub
@@ -795,46 +790,27 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 
 void OneWireHub::delayLoopsConfig(void)
 {
-    // prepare measurement
-    DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
-    DIRECT_WRITE_HIGH(pin_baseReg, pin_bitMask);
-    bool pin_value = true;
-    static_assert(microsecondsToClockCycles(1) < (4000000000L / REPETITIONS), "CPU is too fast"); // protect from overrun with static_assert, maybe convert to dynamic type
-    const timeOW_t retries = REPETITIONS * microsecondsToClockCycles(1); // get some freq-independent retrie-rate
-
-    bool success = false;
-    interrupts();
-    while ((!success)||(factor_nslp<100))
-    {
-        // measure
-        const uint32_t time_start = micros();
-        success = delayLoopsWhilePinIs(retries, pin_value);
-        const uint32_t time_stop = micros();
-
-        // analyze
-        constexpr timeOW_t value1k{1000};
-        const timeOW_t time_ns = (time_stop - time_start) * value1k;
-        factor_nslp = (time_ns / retries) + 1; // nanoseconds per loop
-    };
-
-    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask); // disable internal pullup
-    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
+    // analyze
+    static_assert(factor_ilp >= 3, "factor_ilp is still not determined for your architecture. run /examples/debug/nanoseconds_calibration and put the resulting value into platform.h");
+    constexpr timeOW_t value1k{1000};
+    factor_nspl = factor_ilp * value1k / microsecondsToClockCycles(1); // nanoseconds per loop
 };
 
 timeOW_t OneWireHub::delayLoopsCalculate(const timeOW_t time_ns)
 {
     // precalc waitvalues, the OP can take up da 550 cylces
-    timeOW_t retries = (time_ns / factor_nslp);
-    if (retries) retries--;
+    timeOW_t retries = (time_ns / factor_nspl);
+    //if (retries) retries--;
     return retries;
 };
 
-// returns true if pins stays in the wanted state all the time
-bool OneWireHub::delayLoopsWhilePinIs(volatile timeOW_t retries, const volatile bool pin_value) // test pin volatile
+// returns true if pins stays in the wanted state all the time // TODO: why is only inverted working? is there a major bug?
+bool OneWireHub::delayLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value)
 {
-    // standard loop for measuring, ~13 cycles per loop32 for an atmega328p
-    while ((DIRECT_READ(pin_baseReg, pin_bitMask) == pin_value) && (retries--));
-    return bool(++retries);
+    if (retries == 0) return true;
+    // standard loop for measuring, 38 cycles per loop32 for an atmega328p
+    while ((DIRECT_READ(pin_baseReg, pin_bitMask) == pin_value) && (--retries));
+    return (retries == 0);
 };
 
 void OneWireHub::printError(void)

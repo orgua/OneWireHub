@@ -52,7 +52,7 @@ private:
     static constexpr uint8_t ONEWIRESLAVE_LIMIT                 = HUB_SLAVE_LIMIT;
     static constexpr uint8_t ONEWIRE_TREE_SIZE                  = 2*ONEWIRESLAVE_LIMIT - 1;
 
-    timeOW_t factor_nslp; // nanoseconds per loop
+    timeOW_t factor_nspl; // nanoseconds per loop
     timeOW_t LOOPS_BUS_CHANGE_MAX;
     timeOW_t LOOPS_RESET_MIN;
     timeOW_t LOOPS_RESET_MAX;
@@ -107,14 +107,11 @@ private:
     __attribute__((always_inline))
     bool awaitTimeSlotAndWrite(const bool writeZero = 0);
 
-    //void delayLoopsConfig(void);TODO: move back
+    void delayLoopsConfig(void);
     timeOW_t delayLoopsCalculate(const timeOW_t time_ns);
     bool delayLoopsWhilePinIs(volatile timeOW_t retries, const bool bin_value = false);
 
 public:
-    void delayLoopsConfig(void);
-    void begin(void);
-
     explicit OneWireHub(uint8_t pin);
 
     uint8_t attach(OneWireItem &sensor);
@@ -152,7 +149,7 @@ public:
     {
         Serial.println("DEBUG TIMINGS for the HUB");
         Serial.print("factor : \t");
-        Serial.println(factor_nslp);
+        Serial.println(factor_nspl);
         Serial.print("bus change : \t");
         Serial.println(LOOPS_BUS_CHANGE_MAX);
         Serial.print("reset min : \t");
