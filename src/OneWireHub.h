@@ -74,7 +74,7 @@ private:
     uint8_t           extend_timeslot_detection;
     uint8_t           skip_reset_detection;
 
-    bool              loop_timing_calibrated;
+    bool              calibrate_loop_timing;
     bool              overdrive_mode;
 
     uint8_t      slave_count;
@@ -114,7 +114,9 @@ private:
 
 public:
 
+    __attribute__((always_inline))
     bool waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false); // todo: temp
+    __attribute__((always_inline))
     timeOW_t measureLoopsWhilePinIs(const bool pin_value = false);
     void waitWhilePinIs(const bool pin_value);
 
