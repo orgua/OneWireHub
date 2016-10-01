@@ -71,6 +71,10 @@ private:
 
     io_reg_t          pin_bitMask;
     volatile io_reg_t *pin_baseReg;
+#if USE_GPIO_DEBUG
+    io_reg_t          debug_bitMask;
+    volatile io_reg_t *debug_baseReg;
+#endif
     uint8_t           extend_timeslot_detection;
     uint8_t           skip_reset_detection;
 

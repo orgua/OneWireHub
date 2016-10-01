@@ -13,6 +13,7 @@ constexpr uint8_t pin_led       { 13 }; // TODO: take this code to other example
 constexpr uint8_t pin_onewire   { 8 };
 
 auto hub    = OneWireHub(pin_onewire);
+
 auto ds18b20 = DS18B20(DS18B20::family_code, 0x00, 0x02, 0x0B, 0x08, 0x01, 0x0D);    // Digital Thermometer
 auto ds18s20 = DS18B20(0x10, 0x00, 0x02, 0x0F, 0x08, 0x01, 0x0D);    // Digital Thermometer
 auto ds1822  = DS18B20(0x22, 0x00, 0x02, 0x0F, 0x08, 0x01, 0x0D);    // Digital Thermometer
@@ -57,7 +58,6 @@ void setup()
     hub.debugTiming();
 
     Serial.println("config done");
-
 }
 
 void loop()
