@@ -27,8 +27,10 @@ OneWireHub::OneWireHub(uint8_t pin)
 
     // debug:
 #if USE_GPIO_DEBUG
-    pinMode(GPIO_DEBUG_PIN,OUTPUT);
-    digitalWrite(GPIO_DEBUG_PIN,LOW);
+    debug_bitMask = PIN_TO_BITMASK(GPIO_DEBUG_PIN);
+    debug_baseReg = PIN_TO_BASEREG(GPIO_DEBUG_PIN);
+    DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+    DIRECT_MODE_OUTPUT(debug_baseReg, debug_bitMask);
 #endif
 };
 
@@ -453,9 +455,9 @@ bool OneWireHub::recvAndProcessCmd(void)
             {
                 extend_timeslot_detection = 1;
 #if USE_GPIO_DEBUG
-                digitalWrite(GPIO_DEBUG_PIN,HIGH);
+                DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
                 slave_selected->duty(this);
-                digitalWrite(GPIO_DEBUG_PIN,LOW);
+                DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
 #else
                 slave_selected->duty(this);
 #endif
@@ -483,9 +485,9 @@ bool OneWireHub::recvAndProcessCmd(void)
             {
                 extend_timeslot_detection = 1;
 #if USE_GPIO_DEBUG
-                digitalWrite(GPIO_DEBUG_PIN,HIGH);
+                DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
                 slave_selected->duty(this);
-                digitalWrite(GPIO_DEBUG_PIN,LOW);
+                DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
 #else
                 slave_selected->duty(this);
 #endif
@@ -855,13 +857,15 @@ void OneWireHub::waitLoopsConfig(void)
     LOOPS_READ_STD              = waitLoopsCalculate(value1k * ONEWIRE_TIME_READ_STD);
     LOOPS_WRITE_ZERO_LOW_STD    = waitLoopsCalculate(value1k * ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
 
+#if USE_GPIO_DEBUG
     timeOW_t loops_1ms = waitLoopsCalculate(value1k * 10);
     DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
-    digitalWrite(GPIO_DEBUG_PIN,HIGH);
+    DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
     waitLoopsWhilePinIs(loops_1ms,false);
-    digitalWrite(GPIO_DEBUG_PIN,LOW);
+    DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
+#endif
 };
 
 timeOW_t OneWireHub::waitLoopsCalculate(const timeOW_t time_ns)
