@@ -23,8 +23,7 @@ OneWireHub::OneWireHub(uint8_t pin)
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     // prepare timings
-    loop_timing_calibrated = false;
-
+    calibrate_loop_timing = true;
 
     // debug:
 #if USE_GPIO_DEBUG
@@ -40,10 +39,10 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
     if (slave_count >= ONEWIRESLAVE_LIMIT) return 0; // hub is full
 
     // prepare timing, done here because this FN is always called before hub is used
-    if (!loop_timing_calibrated)
+    if (calibrate_loop_timing)
     {
         waitLoopsConfig();
-        loop_timing_calibrated = true;
+        calibrate_loop_timing = false;
     };
 
     // find position of next free storage-position
@@ -112,7 +111,7 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask)
         _mask >>= 1;
     }
     return 0;
-}
+};
 
 // return next not empty element in slave-list
 uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start = 0)
@@ -122,7 +121,7 @@ uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start = 0)
         if (slave_list[i] != nullptr)  return i;
     }
     return 0;
-}
+};
 
 // gone through the address, store this result
 uint8_t OneWireHub::getNrOfFirstFreeIDTreeElement(void)
@@ -278,7 +277,7 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
         }
     }
 
-    if (!DIRECT_READ(pin_baseReg, pin_bitMask)) return false; // just leave if pin is Low, don't bother to wait
+    if (!DIRECT_READ(pin_baseReg, pin_bitMask)) return false; // just leave if pin is Low, don't bother to wait, TODO: really needed?
 
     // wait for the bus to become low (master-controlled), since we are polling we don't know for how long it was zero
     if (!waitLoopsWhilePinIs(LOOPS_RESET_TIMEOUT, true))
@@ -287,7 +286,7 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
         return false;
     }
 
-    uint32_t time_start = micros();
+    uint32_t time_start = micros(); // TODO: can be done without using micros, just return left retries
 
     // wait for bus-release by master
     if (!waitLoopsWhilePinIs(LOOPS_RESET_MAX, false))
@@ -662,7 +661,7 @@ bool OneWireHub::recvBit(void)
     }
 
     waitLoopsWhilePinIs(LOOPS_READ_STD, false); // no pinCheck demanded, but this additional check can cut waitTime
-    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
+    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask); // TODO: should not be needed
 
     return DIRECT_READ(pin_baseReg, pin_bitMask);
 }
@@ -739,6 +738,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 #define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135)/8)   /// :11 is a specif value for 8bit-atmega, still to determine
 bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 {
+    noInterrupts();
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
@@ -758,6 +758,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
             {
                 _error = Error::READ_TIMESLOT_TIMEOUT_LOW;
             };
+            interrupts();
             return false;
         };
     };
@@ -780,6 +781,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
         if (--retries == 0)
         {
             _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
+            interrupts();
             return false;
         };
     };
@@ -791,7 +793,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
         // Low is allready set
         DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
     };
-
+    interrupts();
     return true;
 };
 #endif
@@ -840,7 +842,7 @@ void OneWireHub::waitLoopsConfig(void)
     //factor_nspl = factor_ipl * value1k / microsecondsToClockCycles(1); // nanoseconds per loop
     factor_nspl = time_max * value1k / retries_max;
 
-    LOOPS_BUS_CHANGE_MAX        = waitLoopsCalculate(value1k * ONEWIRE_TIME_BUS_CHANGE_MAX);
+    LOOPS_BUS_CHANGE_MAX        = waitLoopsCalculate(value1k * ONEWIRE_TIME_BUS_CHANGE_MAX); // TODO: could be that we can reduce to uint16_t for atmega
     LOOPS_RESET_MIN             = waitLoopsCalculate(value1k * ONEWIRE_TIME_RESET_MIN);
     LOOPS_RESET_MAX             = waitLoopsCalculate(value1k * ONEWIRE_TIME_RESET_MAX);
     LOOPS_RESET_TIMEOUT         = waitLoopsCalculate(value1k * ONEWIRE_TIME_RESET_TIMEOUT);
@@ -853,6 +855,13 @@ void OneWireHub::waitLoopsConfig(void)
     LOOPS_READ_STD              = waitLoopsCalculate(value1k * ONEWIRE_TIME_READ_STD);
     LOOPS_WRITE_ZERO_LOW_STD    = waitLoopsCalculate(value1k * ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
 
+    timeOW_t loops_1ms = waitLoopsCalculate(value1k * 10);
+    DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
+    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
+    digitalWrite(GPIO_DEBUG_PIN,HIGH);
+    waitLoopsWhilePinIs(loops_1ms,false);
+    digitalWrite(GPIO_DEBUG_PIN,LOW);
+    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 };
 
 timeOW_t OneWireHub::waitLoopsCalculate(const timeOW_t time_ns)
