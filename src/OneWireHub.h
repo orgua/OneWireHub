@@ -69,11 +69,12 @@ private:
     Error   _error;
     uint8_t _error_cmd;
 
-    volatile io_reg_t pin_bitMask; // TODO: test volatile
+    io_reg_t          pin_bitMask;
     volatile io_reg_t *pin_baseReg;
     uint8_t           extend_timeslot_detection;
     uint8_t           skip_reset_detection;
 
+    bool              loop_timing_calibrated;
     bool              overdrive_mode;
 
     uint8_t      slave_count;
@@ -107,11 +108,16 @@ private:
     __attribute__((always_inline))
     bool awaitTimeSlotAndWrite(const bool writeZero = 0);
 
-    void delayLoopsConfig(void);
-    timeOW_t delayLoopsCalculate(const timeOW_t time_ns);
-    bool delayLoopsWhilePinIs(volatile timeOW_t retries, const bool bin_value = false);
+    void waitLoopsConfig(void);
+    timeOW_t waitLoopsCalculate(const timeOW_t time_ns);
+
 
 public:
+
+    bool waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false); // todo: temp
+    timeOW_t measureLoopsWhilePinIs(const bool pin_value = false);
+    void waitWhilePinIs(const bool pin_value);
+
     explicit OneWireHub(uint8_t pin);
 
     uint8_t attach(OneWireItem &sensor);
@@ -147,9 +153,10 @@ public:
 
     void debugTiming(void)
     {
-        Serial.println("DEBUG TIMINGS for the HUB");
+        Serial.println("DEBUG TIMINGS for the HUB (measured in loops)");
         Serial.print("factor : \t");
-        Serial.println(factor_nspl);
+        Serial.print(factor_nspl);
+        Serial.println(" nanoseconds per loop");
         Serial.print("bus change : \t");
         Serial.println(LOOPS_BUS_CHANGE_MAX);
         Serial.print("reset min : \t");
@@ -174,6 +181,7 @@ public:
         Serial.println(LOOPS_READ_STD);
         Serial.print("write zero : \t");
         Serial.println(LOOPS_WRITE_ZERO_LOW_STD);
+        Serial.flush();
     };
 
 

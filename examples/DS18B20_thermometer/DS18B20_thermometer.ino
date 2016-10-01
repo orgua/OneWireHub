@@ -9,10 +9,10 @@
 #include "OneWireHub.h"
 #include "DS18B20.h"  // Digital Thermometer, 12bit
 
-const uint8_t led_PIN       = 13;         // the number of the LED pin
-const uint8_t OneWire_PIN   = 8;
+constexpr uint8_t pin_led       { 13 }; // TODO: take this code to other examples
+constexpr uint8_t pin_onewire   { 8 };
 
-auto hub     = OneWireHub(OneWire_PIN);
+auto hub    = OneWireHub(pin_onewire);
 auto ds18b20 = DS18B20(DS18B20::family_code, 0x00, 0x02, 0x0B, 0x08, 0x01, 0x0D);    // Digital Thermometer
 auto ds18s20 = DS18B20(0x10, 0x00, 0x02, 0x0F, 0x08, 0x01, 0x0D);    // Digital Thermometer
 auto ds1822  = DS18B20(0x22, 0x00, 0x02, 0x0F, 0x08, 0x01, 0x0D);    // Digital Thermometer
@@ -29,7 +29,7 @@ bool blinking()
         static uint8_t ledState = LOW;      // ledState used to set the LED
         if (ledState == LOW)    ledState = HIGH;
         else                    ledState = LOW;
-        digitalWrite(led_PIN, ledState);
+        digitalWrite(pin_led, ledState);
         return 1;
     }
     return 0;
@@ -40,10 +40,9 @@ void setup()
 {
     Serial.begin(115200);
     Serial.println("OneWire-Hub DS18B20 Temperature-Sensor");
-    hub.debugTiming();
     Serial.flush();
 
-    pinMode(led_PIN, OUTPUT);
+    pinMode(pin_led, OUTPUT);
 
     // Setup OneWire
     hub.attach(ds18b20);
@@ -54,6 +53,8 @@ void setup()
     ds18b20.setTemp(21);
     ds18s20.setTemp(21);
     ds1822.setTemp(21);
+
+    hub.debugTiming();
 
     Serial.println("config done");
 
