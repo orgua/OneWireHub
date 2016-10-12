@@ -3,7 +3,7 @@
 #include "OneWireHub.h"
 #include "OneWireItem.h"
 
-OneWireHub::OneWireHub(uint8_t pin)
+OneWireHub::OneWireHub(const uint8_t pin, const uint8_t factor_ipl)
 {
     _error = Error::NO_ERROR;
 
@@ -22,9 +22,6 @@ OneWireHub::OneWireHub(uint8_t pin)
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
-    // prepare timings
-    calibrate_loop_timing = true;
-
     // debug:
 #if USE_GPIO_DEBUG
     debug_bitMask = PIN_TO_BITMASK(GPIO_DEBUG_PIN);
@@ -32,6 +29,25 @@ OneWireHub::OneWireHub(uint8_t pin)
     DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
     DIRECT_MODE_OUTPUT(debug_baseReg, debug_bitMask);
 #endif
+
+    // prepare timings
+    if (factor_ipl == 1) // read back value from hub-config
+    {
+        static_assert(VALUE_IPL, "You tried to use fixed timing-values. Your architecture has not been calibrated yet, please run examples/debug/auto_timing and report instructions per loop (IPL) to https://github.com/orgua/OneWireHub");
+        calibrate_loop_timing = false;
+        factor_nspl = VALUE_IPL * VALUE1k / microsecondsToClockCycles(1); // nanoseconds per loop
+        waitLoopsConfig();
+    }
+    else if (factor_ipl > 1)
+    {
+        calibrate_loop_timing = false;
+        factor_nspl = factor_ipl * VALUE1k / microsecondsToClockCycles(1); // nanoseconds per loop
+        waitLoopsConfig();
+    }
+    else
+    {
+        calibrate_loop_timing = true; // do an auto-calibrate during first attachment (should be avoided)
+    }
 };
 
 
@@ -43,8 +59,7 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
     // prepare timing, done here because this FN is always called before hub is used
     if (calibrate_loop_timing)
     {
-        waitLoopsConfig();
-        calibrate_loop_timing = false;
+        waitLoopsCalibrate();
     };
 
     // find position of next free storage-position
@@ -801,21 +816,21 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 #endif
 
 
-void OneWireHub::waitLoopsConfig(void)
+
+timeOW_t OneWireHub::waitLoopsCalibrate(void)
 {
     constexpr timeOW_t repetitions{5000}; // how many low_states will measured before assuming that there was a reset in it
     constexpr timeOW_t wait_retries{1000000 * microsecondsToClockCycles(1)}; // loops before cancelling a pin-change-wait
-    constexpr timeOW_t value1k{1000};
 
     timeOW_t time_max = 0;
     timeOW_t measure = 10;
 
-    // measure the longest low-states on the bus with millis(), assume it is a reset
+    // measure the longest low-states on the bus with millis(), assume it is a OW-reset
     while (measure--)
     {
         uint32_t time_needed = 0;
 
-        // try to catch a reset
+        // try to catch a OW-reset each time
         while (time_needed < ONEWIRE_TIME_RESET_MIN)
         {
             waitLoopsWhilePinIs(wait_retries, true);
@@ -838,35 +853,45 @@ void OneWireHub::waitLoopsConfig(void)
         if (retries_needed>retries_max) retries_max = retries_needed;
     };
 
-    //const timeOW_t factor_ipl = time_max * microsecondsToClockCycles(1) / retries_max;
-
     // analyze
-    //factor_nspl = factor_ipl * value1k / microsecondsToClockCycles(1); // nanoseconds per loop
-    factor_nspl = time_max * value1k / retries_max;
+    factor_nspl = time_max * VALUE1k / retries_max;
+    waitLoopsConfig();
 
-    LOOPS_BUS_CHANGE_MAX        = waitLoopsCalculate(value1k * ONEWIRE_TIME_BUS_CHANGE_MAX); // TODO: could be that we can reduce to uint16_t for atmega
-    LOOPS_RESET_MIN             = waitLoopsCalculate(value1k * ONEWIRE_TIME_RESET_MIN);
-    LOOPS_RESET_MAX             = waitLoopsCalculate(value1k * ONEWIRE_TIME_RESET_MAX);
-    LOOPS_RESET_TIMEOUT         = waitLoopsCalculate(value1k * ONEWIRE_TIME_RESET_TIMEOUT);
-    LOOPS_PRESENCE_SAMPLE_MIN   = waitLoopsCalculate(value1k * ONEWIRE_TIME_PRESENCE_SAMPLE_MIN);
-    LOOPS_PRESENCE_LOW_STD      = waitLoopsCalculate(value1k * ONEWIRE_TIME_PRESENCE_LOW_STD);
-    LOOPS_PRESENCE_LOW_MAX      = waitLoopsCalculate(value1k * ONEWIRE_TIME_PRESENCE_LOW_MAX);
-    LOOPS_PRESENCE_HIGH_MAX     = waitLoopsCalculate(value1k * ONEWIRE_TIME_PRESENCE_HIGH_MAX);
-    LOOPS_SLOT_MAX              = waitLoopsCalculate(value1k * ONEWIRE_TIME_SLOT_MAX);
-    LOOPS_READ_ONE_LOW_MAX      = waitLoopsCalculate(value1k * ONEWIRE_TIME_READ_ONE_LOW_MAX);
-    LOOPS_READ_STD              = waitLoopsCalculate(value1k * ONEWIRE_TIME_READ_STD);
-    LOOPS_WRITE_ZERO_LOW_STD    = waitLoopsCalculate(value1k * ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
+    calibrate_loop_timing = false;
+
+    //factor_nspl = factor_ipl * VALUE1k / microsecondsToClockCycles(1);
+    //const timeOW_t factor_ipl = time_max * microsecondsToClockCycles(1) / retries_max;
+    const timeOW_t factor_ipl = factor_nspl * microsecondsToClockCycles(1) / VALUE1k;
+    return factor_ipl;
+};
+
+void OneWireHub::waitLoopsConfig(void)
+{
+    if (!factor_nspl) return;
+
+    LOOPS_BUS_CHANGE_MAX        = waitLoopsCalculate(VALUE1k * ONEWIRE_TIME_BUS_CHANGE_MAX); // TODO: could be that we can reduce to uint16_t for atmega
+    LOOPS_RESET_MIN             = waitLoopsCalculate(VALUE1k * ONEWIRE_TIME_RESET_MIN);
+    LOOPS_RESET_MAX             = waitLoopsCalculate(VALUE1k * ONEWIRE_TIME_RESET_MAX);
+    LOOPS_RESET_TIMEOUT         = waitLoopsCalculate(VALUE1k * ONEWIRE_TIME_RESET_TIMEOUT);
+    LOOPS_PRESENCE_SAMPLE_MIN   = waitLoopsCalculate(VALUE1k * ONEWIRE_TIME_PRESENCE_SAMPLE_MIN);
+    LOOPS_PRESENCE_LOW_STD      = waitLoopsCalculate(VALUE1k * ONEWIRE_TIME_PRESENCE_LOW_STD);
+    LOOPS_PRESENCE_LOW_MAX      = waitLoopsCalculate(VALUE1k * ONEWIRE_TIME_PRESENCE_LOW_MAX);
+    LOOPS_PRESENCE_HIGH_MAX     = waitLoopsCalculate(VALUE1k * ONEWIRE_TIME_PRESENCE_HIGH_MAX);
+    LOOPS_SLOT_MAX              = waitLoopsCalculate(VALUE1k * ONEWIRE_TIME_SLOT_MAX);
+    LOOPS_READ_ONE_LOW_MAX      = waitLoopsCalculate(VALUE1k * ONEWIRE_TIME_READ_ONE_LOW_MAX);
+    LOOPS_READ_STD              = waitLoopsCalculate(VALUE1k * ONEWIRE_TIME_READ_STD);
+    LOOPS_WRITE_ZERO_LOW_STD    = waitLoopsCalculate(VALUE1k * ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
 
 #if USE_GPIO_DEBUG
-    timeOW_t loops_1ms = waitLoopsCalculate(value1k * 10);
-    DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
-    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
-    DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+    // demonstrate an 1ms-Low-State on the debug pin (only if bus stays high during this time)
+    const timeOW_t loops_1ms = waitLoopsCalculate(VALUE1k * VALUE1k);
     waitLoopsWhilePinIs(loops_1ms,false);
+    DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+    waitLoopsWhilePinIs(loops_1ms,true);
     DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 #endif
 };
+
 
 timeOW_t OneWireHub::waitLoopsCalculate(const timeOW_t time_ns)
 {

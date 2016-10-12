@@ -22,7 +22,9 @@ using mask_t = uint8_t;
 #error "Slavelimit is set to zero (why?)"
 #endif
 
-using timeOW_t = uint32_t;
+using     timeOW_t = uint32_t;
+
+constexpr timeOW_t VALUE1k{1000}; // commonly used constant
 
 enum class Error : uint8_t {
     NO_ERROR                   = 0,
@@ -71,10 +73,12 @@ private:
 
     io_reg_t          pin_bitMask;
     volatile io_reg_t *pin_baseReg;
+
 #if USE_GPIO_DEBUG
     io_reg_t          debug_bitMask;
     volatile io_reg_t *debug_baseReg;
 #endif
+
     uint8_t           extend_timeslot_detection;
     uint8_t           skip_reset_detection;
 
@@ -112,19 +116,20 @@ private:
     __attribute__((always_inline))
     bool awaitTimeSlotAndWrite(const bool writeZero = 0);
 
-    void waitLoopsConfig(void);
-    timeOW_t waitLoopsCalculate(const timeOW_t time_ns);
 
+    timeOW_t waitLoopsCalculate(const timeOW_t time_ns);
+    void waitLoopsConfig(void);
 
 public:
 
+    timeOW_t waitLoopsCalibrate(void); // TODO: should be public to return Instructons per loop
     __attribute__((always_inline))
     bool waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false); // todo: temp
     __attribute__((always_inline))
     timeOW_t measureLoopsWhilePinIs(const bool pin_value = false);
     void waitWhilePinIs(const bool pin_value);
 
-    explicit OneWireHub(uint8_t pin);
+    explicit OneWireHub(const uint8_t pin, const uint8_t factor_ipl = 1); // set instructions per loop to 1 to read from platform.h
 
     uint8_t attach(OneWireItem &sensor);
     bool    detach(const OneWireItem &sensor);
