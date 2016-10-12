@@ -16,6 +16,7 @@
 #define DIRECT_WRITE_LOW(base, mask)    ((*((base)+2)) &= ~(mask))
 #define DIRECT_WRITE_HIGH(base, mask)   ((*((base)+2)) |= (mask))
 using io_reg_t = uint8_t; // define special datatype for register-access
+constexpr uint8_t VALUE_IPL {11}; // instructions per loop
 
 #elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK66FX1M0__) || defined(__MK64FX512__)
 #define PIN_TO_BASEREG(pin)             (portOutputRegister(pin))
@@ -26,6 +27,7 @@ using io_reg_t = uint8_t; // define special datatype for register-access
 #define DIRECT_WRITE_LOW(base, mask)    (*((base)+256) = 1)
 #define DIRECT_WRITE_HIGH(base, mask)   (*((base)+128) = 1)
 using io_reg_t = uint8_t; // define special datatype for register-access
+constexpr uint8_t VALUE_IPL {0}; // instructions per loop
 
 #elif defined(__MKL26Z64__)
 #define PIN_TO_BASEREG(pin)             (portOutputRegister(pin))
@@ -36,6 +38,7 @@ using io_reg_t = uint8_t; // define special datatype for register-access
 #define DIRECT_WRITE_LOW(base, mask)    (*((base)+8) = (mask))
 #define DIRECT_WRITE_HIGH(base, mask)   (*((base)+4) = (mask))
 using io_reg_t = uint8_t; // define special datatype for register-access
+constexpr uint8_t VALUE_IPL {0}; // instructions per loop
 
 #elif defined(__SAM3X8E__)
 // Arduino 1.5.1 may have a bug in delayMicroseconds() on Arduino Due.
@@ -56,6 +59,7 @@ using io_reg_t = uint8_t; // define special datatype for register-access
 #define pgm_read_byte(address) (*(const uint8_t *)(address))
 #endif
 using io_reg_t = uint32_t; // define special datatype for register-access
+constexpr uint8_t VALUE_IPL {0}; // instructions per loop
 
 #elif defined(__PIC32MX__)
 #define PIN_TO_BASEREG(pin)             (portModeRegister(digitalPinToPort(pin)))
@@ -66,6 +70,7 @@ using io_reg_t = uint32_t; // define special datatype for register-access
 #define DIRECT_WRITE_LOW(base, mask)    ((*(base+8+1)) = (mask))          //LATXCLR  + 0x24
 #define DIRECT_WRITE_HIGH(base, mask)   ((*(base+8+2)) = (mask))          //LATXSET + 0x28
 using io_reg_t = uint32_t; // define special datatype for register-access
+constexpr uint8_t VALUE_IPL {0}; // instructions per loop
 
 #elif defined(ARDUINO_ARCH_ESP8266)
 #define PIN_TO_BASEREG(pin)             ((volatile uint32_t*) GPO)
@@ -76,6 +81,7 @@ using io_reg_t = uint32_t; // define special datatype for register-access
 #define DIRECT_WRITE_LOW(base, mask)    (GPOC = (mask))             //GPIO_OUT_W1TC_ADDRESS
 #define DIRECT_WRITE_HIGH(base, mask)   (GPOS = (mask))             //GPIO_OUT_W1TS_ADDRESS
 using io_reg_t = uint32_t; // define special datatype for register-access
+constexpr uint8_t VALUE_IPL {0}; // instructions per loop
 
 #elif defined(__SAMD21G18A__)
 #define PIN_TO_BASEREG(pin)             portModeRegister(digitalPinToPort(pin))
@@ -86,6 +92,7 @@ using io_reg_t = uint32_t; // define special datatype for register-access
 #define DIRECT_WRITE_LOW(base, mask)    ((*((base)+5)) = (mask))
 #define DIRECT_WRITE_HIGH(base, mask)   ((*((base)+6)) = (mask))
 using io_reg_t = uint32_t; // define special datatype for register-access
+constexpr uint8_t VALUE_IPL {0}; // instructions per loop
 
 #elif defined(RBL_NRF51822)
 #define PIN_TO_BASEREG(pin)             (0)
@@ -96,6 +103,7 @@ using io_reg_t = uint32_t; // define special datatype for register-access
 #define DIRECT_MODE_INPUT(base, pin)    nrf_gpio_cfg_input(pin, NRF_GPIO_PIN_NOPULL)
 #define DIRECT_MODE_OUTPUT(base, pin)   nrf_gpio_cfg_output(pin)
 using io_reg_t = uint32_t; // define special datatype for register-access
+constexpr uint8_t VALUE_IPL {0}; // instructions per loop
 
 #elif defined(__arc__) /* Arduino101/Genuino101 specifics */
 
@@ -115,6 +123,7 @@ using io_reg_t = uint32_t; // define special datatype for register-access
 #define PIN_TO_BASEREG(pin)		((volatile uint32_t *)g_APinDescription[pin].ulGPIOBase)
 #define PIN_TO_BITMASK(pin)		pin
 using io_reg_t = uint32_t; // define special datatype for register-access
+constexpr uint8_t VALUE_IPL {0}; // instructions per loop
 
 static inline __attribute__((always_inline))
 IO_REG_TYPE directRead(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
@@ -189,6 +198,7 @@ void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 #define DIRECT_MODE_OUTPUT(base, pin)   pinMode(pin,OUTPUT)
 #warning "OneWire. Fallback mode. Using API calls for pinMode,digitalRead and digitalWrite. Operation of this library is not guaranteed on this architecture."
 using io_reg_t = uint32_t; // define special datatype for register-access
+constexpr uint8_t VALUE_IPL {0}; // instructions per loop
 
 /////////////////////////////////////////// EXTRA PART /////////////////////////////////////////
 // this part is loaded if no proper arduino-environment is found (good for external testing)
