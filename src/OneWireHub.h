@@ -4,6 +4,7 @@
 #if defined(ARDUINO) && ARDUINO >= 100
 #include <Arduino.h>
 #endif
+
 #include "platform.h" // code for compatibility
 #include "OneWireHub_config.h" // outsource configfile
 
@@ -24,7 +25,8 @@ using mask_t = uint8_t;
 
 using     timeOW_t = uint32_t;
 
-constexpr timeOW_t VALUE1k{1000}; // commonly used constant
+constexpr timeOW_t VALUE1k      {1000}; // commonly used constant
+constexpr timeOW_t TIMEOW_MAX   {-1};   //
 
 enum class Error : uint8_t {
     NO_ERROR                   = 0,
@@ -122,12 +124,9 @@ private:
 
 public:
 
-    timeOW_t waitLoopsCalibrate(void); // TODO: should be public to return Instructons per loop
+    timeOW_t waitLoopsCalibrate(void); // return Instructons per loop
     __attribute__((always_inline))
-    bool waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false); // todo: temp
-    __attribute__((always_inline))
-    timeOW_t measureLoopsWhilePinIs(const bool pin_value = false);
-    void waitWhilePinIs(const bool pin_value);
+    timeOW_t waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false);
 
     explicit OneWireHub(const uint8_t pin, const uint8_t factor_ipl = 1); // set instructions per loop to 1 to read from platform.h
 

@@ -16,7 +16,7 @@
 #define DIRECT_WRITE_LOW(base, mask)    ((*((base)+2)) &= ~(mask))
 #define DIRECT_WRITE_HIGH(base, mask)   ((*((base)+2)) |= (mask))
 using io_reg_t = uint8_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL {11}; // instructions per loop
+constexpr uint8_t VALUE_IPL {13}; // instructions per loop
 
 #elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK66FX1M0__) || defined(__MK64FX512__)
 #define PIN_TO_BASEREG(pin)             (portOutputRegister(pin))
