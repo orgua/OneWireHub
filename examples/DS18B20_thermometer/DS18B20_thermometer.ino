@@ -55,10 +55,8 @@ void setup()
     ds18s20.setTemp(21);
     ds1822.setTemp(21);
 
-    hub.debugTiming();
-
     Serial.println("config done");
-}
+};
 
 void loop()
 {
