@@ -56,19 +56,19 @@ private:
     static constexpr uint8_t ONEWIRESLAVE_LIMIT                 = HUB_SLAVE_LIMIT;
     static constexpr uint8_t ONEWIRE_TREE_SIZE                  = 2*ONEWIRESLAVE_LIMIT - 1;
 
-    timeOW_t factor_nspl; // nanoseconds per loop
-    timeOW_t LOOPS_BUS_CHANGE_MAX;
-    timeOW_t LOOPS_RESET_MIN;
-    timeOW_t LOOPS_RESET_MAX;
-    timeOW_t LOOPS_RESET_TIMEOUT;
-    timeOW_t LOOPS_PRESENCE_SAMPLE_MIN;
-    timeOW_t LOOPS_PRESENCE_LOW_STD;
-    timeOW_t LOOPS_PRESENCE_LOW_MAX;
-    timeOW_t LOOPS_PRESENCE_HIGH_MAX;
-    timeOW_t LOOPS_SLOT_MAX;
-    timeOW_t LOOPS_READ_ONE_LOW_MAX;
-    timeOW_t LOOPS_READ_STD;
-    timeOW_t LOOPS_WRITE_ZERO_LOW_STD;
+    timeOW_t value_nspl; // nanoseconds per loop
+    timeOW_t loops_bus_change_max;
+    timeOW_t loops_reset_min;
+    timeOW_t loops_reset_max;
+    timeOW_t loops_reset_timeout;
+    timeOW_t loops_presence_sample_min;
+    timeOW_t loops_presence_low_std;
+    timeOW_t loops_presence_low_max;
+    timeOW_t loops_presence_high_max;
+    timeOW_t loops_slot_max;
+    timeOW_t loops_read_one_low_max;
+    timeOW_t loops_read_std;
+    timeOW_t loops_write_zero_low_std;
 
     Error   _error;
     uint8_t _error_cmd;
@@ -118,17 +118,12 @@ private:
     __attribute__((always_inline))
     bool awaitTimeSlotAndWrite(const bool writeZero = 0);
 
-
     timeOW_t waitLoopsCalculate(const timeOW_t time_ns);
     void waitLoopsConfig(void);
 
 public:
 
-    timeOW_t waitLoopsCalibrate(void); // return Instructons per loop
-    __attribute__((always_inline))
-    timeOW_t waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false);
-
-    explicit OneWireHub(const uint8_t pin, const uint8_t factor_ipl = 1); // set instructions per loop to 1 to read from platform.h
+    explicit OneWireHub(const uint8_t pin, const uint8_t value_ipl = 1); // std: set instructions per loop to 1 to read from platform.h
 
     uint8_t attach(OneWireItem &sensor);
     bool    detach(const OneWireItem &sensor);
@@ -156,44 +151,15 @@ public:
     bool    recvBit(void);
     uint8_t recvAndCRC16(uint16_t &crc16);
 
+    timeOW_t waitLoopsCalibrate(void); // returns Instructions per loop
+    __attribute__((always_inline))
+    timeOW_t waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false);
+    void waitLoopsDebug(void);
+
     void printError(void);
     bool getError(void);
     void raiseSlaveError(const uint8_t cmd = 0);
     Error clearError(void);
-
-    void debugTiming(void)
-    {
-        Serial.println("DEBUG TIMINGS for the HUB (measured in loops)");
-        Serial.print("factor : \t");
-        Serial.print(factor_nspl);
-        Serial.println(" nanoseconds per loop");
-        Serial.print("bus change : \t");
-        Serial.println(LOOPS_BUS_CHANGE_MAX);
-        Serial.print("reset min : \t");
-        Serial.println(LOOPS_RESET_MIN);
-        Serial.print("reset max : \t");
-        Serial.println(LOOPS_RESET_MAX);
-        Serial.print("reset tout : \t");
-        Serial.println(LOOPS_RESET_TIMEOUT);
-        Serial.print("presence min : \t");
-        Serial.println(LOOPS_PRESENCE_SAMPLE_MIN);
-        Serial.print("presence low : \t");
-        Serial.println(LOOPS_PRESENCE_LOW_STD);
-        Serial.print("pres low max : \t");
-        Serial.println(LOOPS_PRESENCE_LOW_MAX);
-        Serial.print("pres hi max : \t");
-        Serial.println(LOOPS_PRESENCE_HIGH_MAX);
-        Serial.print("slot max : \t");
-        Serial.println(LOOPS_SLOT_MAX);
-        Serial.print("read1low : \t");
-        Serial.println(LOOPS_READ_ONE_LOW_MAX);
-        Serial.print("read std : \t");
-        Serial.println(LOOPS_READ_STD);
-        Serial.print("write zero : \t");
-        Serial.println(LOOPS_WRITE_ZERO_LOW_STD);
-        Serial.flush();
-    };
-
 
 };
 

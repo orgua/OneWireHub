@@ -1,17 +1,21 @@
 /*
- *    Test-Code for a suitable timing function
+ *    Test-Code for calibration - this sketch determines the value for "instructions per loop"
  *
- *      --> try to determine bus-timing by observing the master
+ *      --> read value per serial-com and write it to /src/platform.h to your specific architecture
+ *          >>>>  constexpr uint8_t VALUE_IPL {0}; // instructions per loop
  *
+ *      --> test it with a normal sensor-sketch (like ds18b20_thermometer.ini)
+ *
+ *      --> if it works please make a pullrequest or open an issue to report your determined value
+ *          >>>> https://github.com/orgua/OneWireHub
  */
 
 #include "OneWireHub.h"
 #include "DS18B20.h"  // Digital Thermometer, 12bit
 
-constexpr uint8_t pin_led       { 13 }; // TODO: take this code to other examples
 constexpr uint8_t pin_onewire   { 8 };
 
-auto hub     = OneWireHub(pin_onewire,0);
+auto hub     = OneWireHub(pin_onewire,0); // do an bus-timing-calibration on first sensor-attachment
 auto ds18b20 = DS18B20(DS18B20::family_code, 0x00, 0x02, 0x0B, 0x08, 0x01, 0x0D);    // Digital Thermometer
 
 /////////////////////////////////////////////////////////////////////////
@@ -20,7 +24,6 @@ auto ds18b20 = DS18B20(DS18B20::family_code, 0x00, 0x02, 0x0B, 0x08, 0x01, 0x0D)
 
 void setup()
 {
-    pinMode(pin_led, OUTPUT);
     Serial.begin(115200);
     hub.attach(ds18b20);
 };
@@ -31,6 +34,6 @@ void loop()
 
     Serial.print(factor_ipl);
     Serial.println("\t instructions per loop");
-    hub.debugTiming();
+
     hub.poll();
 }
