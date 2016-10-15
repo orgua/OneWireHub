@@ -90,7 +90,7 @@ private:
 
 protected:
     uint8_t scratchpad[BAE910_SCRATCHPAD_SIZE];
-    virtual void extCommand(const uint8_t ecmd, const uint8_t payload_len); // read payload from scratchpad
+    virtual void extCommand(const uint8_t ecmd, const uint8_t payload_len = 0); // read payload from scratchpad
 
 public:
     static constexpr uint8_t  BAE910_SW_VER           = 0x01;  // undefined data (0x00 = corrupted)
