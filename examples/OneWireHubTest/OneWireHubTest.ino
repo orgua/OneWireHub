@@ -9,15 +9,18 @@
 #include "OneWireHub.h"
 
 // include all libs to find errors
-#include "DS2401.h"  // Serial Number
+#include "BAE910.h"  //
 #include "DS18B20.h" // Digital Thermometer
+#include "DS2401.h"  // Serial Number
 #include "DS2405.h"  // Single adress switch
 #include "DS2408.h"  // 8-Channel Addressable Switch
 #include "DS2413.h"  // Dual channel addressable switch
 #include "DS2423.h"  // 4kb 1-Wire RAM with Counter
+#include "DS2431.h"  //
 #include "DS2433.h"  // 4Kb 1-Wire EEPROM
 #include "DS2438.h"  // Smart Battery Monitor
 #include "DS2450.h"  // 4 channel A/D
+#include "DS2502.h"  //
 #include "DS2890.h"  // Single channel digital potentiometer
 
 constexpr uint8_t pin_led       { 13 };
