@@ -2,6 +2,7 @@
 
 DS2433::DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
+    static_assert(sizeof(memory) < 65535,  "Implementation does not cover the whole address-space");
     clearMemory();
 };
 
@@ -35,7 +36,7 @@ bool DS2433::duty(OneWireHub *hub)
             reinterpret_cast<uint8_t *>(&reg_TA)[1] = b & uint8_t(0b1);
             crc = crc16(b,crc);
 
-            for (uint16_t i = 0; i < (32-reg_ES); ++i) // model of the 32byte scratchpad, directly to memory
+            for (uint8_t i = 0; i < static_cast<uint8_t>(32-reg_ES); ++i) // model of the 32byte scratchpad, directly to memory
             {
                 b = hub->recv();
                 if (hub->getError())
@@ -162,12 +163,12 @@ bool DS2433::duty(OneWireHub *hub)
 
 void DS2433::clearMemory(void)
 {
-    for (int i = 0; i < sizeof(memory); ++i) memory[i] = 0x00;
+    for (uint16_t i = 0; i < sizeof(memory); ++i) memory[i] = 0x00;
 };
 
-bool DS2433::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)
+bool DS2433::writeMemory(const uint8_t* source, const uint16_t length, const uint16_t position)
 {
-    for (uint8_t i = 0; i < length; ++i) {
+    for (uint16_t i = 0; i < length; ++i) {
         if ((position + i) >= sizeof(memory)) return false;
         memory[position + i] = source[i];
     };

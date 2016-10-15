@@ -2,16 +2,30 @@
 
 BAE910::BAE910(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    for (uint8_t i = 0; i < 0x80; ++i)
-        memory.bytes[i] = 0x00;
-}
+    static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
 
-void BAE910::extCommand(uint8_t ecmd, uint8_t payload_len)
+    for (uint8_t i = 0; i < 0x80; ++i) memory.bytes[i] = 0x00;
+    extCommand(0xBB,0);
+};
+
+void BAE910::extCommand(const uint8_t ecmd, const uint8_t payload_len)
 {
-    // reserved:
-    // 0xBB  Erase Firmware
-    // 0xBA  Flash Firmware
-}
+    if (payload_len >= sizeof (memory)) return;
+    if (payload_len >= sizeof (scratchpad)) return;
+
+    // reserved: // TODO: this is untested and just a good guess
+    if (ecmd == 0xBB) // 0xBB  Erase Firmware
+    {
+        for (uint8_t i = 0; i < sizeof(memory.bytes); ++i) memory.bytes[i] = 0x00;
+    }
+    else if (ecmd == 0xBA) // 0xBA  Flash Firmware
+    {
+        for (uint8_t i = payload_len; i < sizeof(memory); --i)
+        {
+            memory.bytes[0x7F - i] = scratchpad[i];
+        }
+    }
+};
 
 bool BAE910::duty(OneWireHub *hub)
 {
@@ -46,12 +60,15 @@ bool BAE910::duty(OneWireHub *hub)
         case 0x13: // EXTENDED COMMAND
             ecmd = hub->recvAndCRC16(crc);
             len  = hub->recvAndCRC16(crc);
-            if (len > BAE910_SCRATCHPAD_SIZE) {
+            if (len > BAE910_SCRATCHPAD_SIZE)
+            {
                 hub->raiseSlaveError(cmd);
                 return false;
             }
             for( uint8_t i = 0; i < len; ++i )
+            {
                 scratchpad[i] = hub->recvAndCRC16(crc);
+            }
             // crc
             crc = ~crc;
             hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
@@ -65,7 +82,8 @@ bool BAE910::duty(OneWireHub *hub)
             ta1 = hub->recvAndCRC16(crc);
             ta2 = hub->recvAndCRC16(crc);
             len = hub->recvAndCRC16(crc);
-            if ((ta1 + len > 0x80) || (ta2 > 0)) {
+            if ((ta1 + len > 0x80) || (ta2 > 0))
+            {
                 hub->raiseSlaveError(cmd);
                 return false;
             }
