@@ -9,7 +9,7 @@
 #include "OneWireHub.h"
 #include "DS18B20.h"  // Digital Thermometer, 12bit
 
-constexpr uint8_t pin_led       { 13 }; // TODO: take this code to other examples
+constexpr uint8_t pin_led       { 13 };
 constexpr uint8_t pin_onewire   { 8 };
 
 auto hub    = OneWireHub(pin_onewire);
@@ -21,7 +21,7 @@ auto ds1822  = DS18B20(0x22, 0x00, 0x02, 0x0F, 0x08, 0x01, 0x0D);    // Digital 
 
 bool blinking()
 {
-    const  uint32_t interval    = 1000;          // interval at which to blink (milliseconds)
+    constexpr  uint32_t interval    = 1000;          // interval at which to blink (milliseconds)
     static uint32_t nextMillis  = millis();     // will store next time LED will updated
 
     if (millis() > nextMillis)

@@ -8,12 +8,11 @@
 #include "OneWireHub.h"
 #include "DS2408.h"
 
-const uint8_t led_PIN       = 13;         // the number of the LED pin
-const uint8_t OneWire_PIN   = 8;
+constexpr uint8_t pin_led       { 13 };
+constexpr uint8_t pin_onewire   { 8 };
 
-auto hub    = OneWireHub(OneWire_PIN);
+auto hub    = OneWireHub(pin_onewire);
 auto ds2408 = DS2408( 0x29, 0x0D, 0x02, 0x04, 0x00, 0x08, 0x0A );
-
 
 bool blinking()
 {
@@ -26,7 +25,7 @@ bool blinking()
         static uint8_t ledState = LOW;      // ledState used to set the LED
         if (ledState == LOW)    ledState = HIGH;
         else                    ledState = LOW;
-        digitalWrite(led_PIN, ledState);
+        digitalWrite(pin_led, ledState);
         return 1;
     }
     return 0;
@@ -38,7 +37,7 @@ void setup()
     Serial.begin(115200);
     Serial.println("OneWire-Hub DS2408 - 8CH GPIO Port Extender");
 
-    pinMode(led_PIN, OUTPUT);
+    pinMode(pin_led, OUTPUT);
 
     // Setup OneWire
     hub.attach(ds2408); // always online
