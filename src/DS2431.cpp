@@ -2,6 +2,9 @@
 
 DS2431::DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
+    static_assert(sizeof(scratchpad) < 256, "Implementation does not cover the whole address-space");
+    static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
+
     for (uint8_t i = 0; i < sizeof(scratchpad); ++i) scratchpad[i] = 0x00;
     page_protection = 0;
     page_eprom_mode = 0;
@@ -277,7 +280,7 @@ bool DS2431::checkEpromMode(const uint8_t position)
 
 void DS2431::clearMemory(void)
 {
-    for (int i = 0; i < sizeof(memory); ++i) memory[i] = 0x00;
+    for (uint8_t i = 0; i < sizeof(memory); ++i) memory[i] = 0x00;
 };
 
 bool DS2431::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)

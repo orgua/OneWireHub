@@ -104,7 +104,7 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask)
 }
 
 // return next not empty element in slave-list
-uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start = 0)
+uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start)
 {
     for (uint8_t i = index_start; i < ONEWIRE_TREE_SIZE; ++i)
     {
@@ -201,28 +201,6 @@ uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const mask_t mask_slaves
     return active_element;
 }
 
-// legacy code
-bool OneWireHub::waitForRequest(const bool ignore_errors)
-{
-    while (1)
-    {
-        bool interaction  = poll();
-
-        if ((_error == Error::NO_ERROR) || ignore_errors)
-        {
-            continue;
-        }
-        else if (interaction)
-        {
-            return true;
-        }
-        if (_error != Error::NO_ERROR)
-        {
-            printError();
-        }
-    }
-}
-
 
 bool OneWireHub::poll(void)
 {
@@ -245,7 +223,6 @@ bool OneWireHub::poll(void)
         // on total success we want to start again, because the next reset could only be ~125 us away
     }
 }
-
 
 
 bool OneWireHub::checkReset(uint16_t timeout_us) // there is a specific high-time needed before a reset may occur -->  >120us
@@ -509,7 +486,7 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
 {
     uint8_t bytes_sent = 0;
 
-    for (bytes_sent; bytes_sent < data_length; ++bytes_sent)
+    for ( ; bytes_sent < data_length; ++bytes_sent)
     {
         send(address[bytes_sent]);
         if (_error != Error::NO_ERROR)  break;
@@ -576,7 +553,7 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
 {
     uint8_t bytes_received = 0;
 
-    for (bytes_received; bytes_received < data_length; ++bytes_received)
+    for ( ; bytes_received < data_length; ++bytes_received)
     {
         address[bytes_received] = recv();
         if (_error != Error::NO_ERROR)
