@@ -2,6 +2,8 @@
 
 DS2502::DS2502(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
+    static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
+
     if      (ID1 == 0x11)   sizeof_memory = (64 < sizeof(memory)) ? 64 : sizeof(memory); // autorecognize the ds2501 with smaller mem-size
     else if (ID1 == 0x91)   sizeof_memory = (64 < sizeof(memory)) ? 64 : sizeof(memory); // autorecognize the ds2501 with smaller men-size
     else                    sizeof_memory = sizeof(memory);
@@ -196,7 +198,7 @@ bool DS2502::duty(OneWireHub *hub)
 
 void DS2502::clearMemory(void)
 {
-    for (uint8_t i = 0; i < sizeof_memory; ++i)  memory[i] = 0xFF;
+    memset(&memory[0], static_cast<uint8_t>(0xFF), sizeof_memory);
 };
 
 void DS2502::clearStatus(void)

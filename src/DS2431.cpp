@@ -5,7 +5,8 @@ DS2431::DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     static_assert(sizeof(scratchpad) < 256, "Implementation does not cover the whole address-space");
     static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
 
-    for (uint8_t i = 0; i < sizeof(scratchpad); ++i) scratchpad[i] = 0x00;
+    memset(&scratchpad[0], static_cast<uint8_t>(0x00), sizeof(scratchpad));
+
     page_protection = 0;
     page_eprom_mode = 0;
 
@@ -280,7 +281,7 @@ bool DS2431::checkEpromMode(const uint8_t position)
 
 void DS2431::clearMemory(void)
 {
-    for (uint8_t i = 0; i < sizeof(memory); ++i) memory[i] = 0x00;
+    memset(&memory[0], static_cast<uint8_t>(0x00), sizeof(memory));
 };
 
 bool DS2431::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)
