@@ -8,8 +8,7 @@ DS2423::DS2423(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 bool DS2423::duty(OneWireHub *hub)
 {
     uint16_t memory_address;
-    uint16_t memory_address_start;
-    uint8_t b;
+    //uint8_t b;
     uint16_t crc = 0;
 
     uint8_t cmd = hub->recvAndCRC16(crc);
@@ -24,7 +23,7 @@ bool DS2423::duty(OneWireHub *hub)
             if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&memory_address)[1] = hub->recvAndCRC16(crc);
             if (hub->getError())  return false;
-            memory_address_start = memory_address;
+            //memory_address_start = memory_address;
 
             // data
             for (int8_t i = 0; i < 32; ++i) // TODO: check for (memory_address + 32) < sizeof() before running out of allowed range
