@@ -4,8 +4,7 @@ BAE910::BAE910(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 {
     static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
 
-    for (uint8_t i = 0; i < 0x80; ++i) memory.bytes[i] = 0x00;
-    extCommand(0xBB,0);
+    extCommand(0xBB); // clear memory
 };
 
 void BAE910::extCommand(const uint8_t ecmd, const uint8_t payload_len)
@@ -16,7 +15,7 @@ void BAE910::extCommand(const uint8_t ecmd, const uint8_t payload_len)
     // reserved: // TODO: this is untested and just a good guess
     if (ecmd == 0xBB) // 0xBB  Erase Firmware
     {
-        for (uint8_t i = 0; i < sizeof(memory.bytes); ++i) memory.bytes[i] = 0x00;
+        memset(&memory.bytes[0], static_cast<uint8_t>(0x00), sizeof(memory.bytes));
     }
     else if (ecmd == 0xBA) // 0xBA  Flash Firmware
     {
