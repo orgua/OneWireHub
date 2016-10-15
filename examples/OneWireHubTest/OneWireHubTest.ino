@@ -9,21 +9,24 @@
 #include "OneWireHub.h"
 
 // include all libs to find errors
-#include "DS2401.h"  // Serial Number
+#include "BAE910.h"  //
 #include "DS18B20.h" // Digital Thermometer
+#include "DS2401.h"  // Serial Number
 #include "DS2405.h"  // Single adress switch
 #include "DS2408.h"  // 8-Channel Addressable Switch
 #include "DS2413.h"  // Dual channel addressable switch
 #include "DS2423.h"  // 4kb 1-Wire RAM with Counter
+#include "DS2431.h"  //
 #include "DS2433.h"  // 4Kb 1-Wire EEPROM
 #include "DS2438.h"  // Smart Battery Monitor
 #include "DS2450.h"  // 4 channel A/D
+#include "DS2502.h"  //
 #include "DS2890.h"  // Single channel digital potentiometer
 
-const uint8_t led_PIN       = 13;         // the number of the LED pin
-const uint8_t OneWire_PIN   = 8;
+constexpr uint8_t pin_led       { 13 };
+constexpr uint8_t pin_onewire   { 8 };
 
-auto hub      = OneWireHub(OneWire_PIN);
+auto hub      = OneWireHub(pin_onewire);
 auto ds1822   = DS18B20(0x22, 0x0D, 0x01, 0x08, 0x02, 0x00, 0x00);
 auto ds18B20  = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);      // Work - Digital Thermometer
 auto ds18S20  = DS18B20(0x10, 0x0D, 0x01, 0x08, 0x0F, 0x02, 0x00);
@@ -42,7 +45,7 @@ auto ds2890A  = DS2890( 0x2C, 0x0D, 0x02, 0x08, 0x09, 0x00, 0x0A );    // Work -
 
 bool blinking()
 {
-    const  uint32_t interval    = 500;          // interval at which to blink (milliseconds)
+    constexpr  uint32_t interval    = 500;          // interval at which to blink (milliseconds)
     static uint32_t nextMillis  = millis();     // will store next time LED will updated
 
     if (millis() > nextMillis)
@@ -51,7 +54,7 @@ bool blinking()
         static uint8_t ledState = LOW;      // ledState used to set the LED
         if (ledState == LOW)    ledState = HIGH;
         else                    ledState = LOW;
-        digitalWrite(led_PIN, ledState);
+        digitalWrite(pin_led, ledState);
         return 1;
     }
     return 0;
@@ -59,10 +62,10 @@ bool blinking()
 
 void setup()
 {
-    Serial.begin(115200);
+    //Serial.begin(115200);
     Serial.println("OneWire-Hub Test with various Sensors");
 
-    pinMode(led_PIN, OUTPUT);
+    pinMode(pin_led, OUTPUT);
 
     // Setup OneWire
     ds1822.setTemp(21);
