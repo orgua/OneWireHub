@@ -131,7 +131,7 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask)
 };
 
 // return next not empty element in slave-list
-uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start = 0)
+uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start)
 {
     for (uint8_t i = index_start; i < ONEWIRE_TREE_SIZE; ++i)
     {
@@ -837,7 +837,7 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
         // try to catch a OW-reset each time
         while (time_needed < ONEWIRE_TIME_RESET_MIN)
         {
-            waitLoopsWhilePinIs(wait_loops, true);
+            if (!waitLoopsWhilePinIs(wait_loops, true)) continue;
             const uint32_t time_start = micros();
             waitLoopsWhilePinIs(TIMEOW_MAX, false);
             const uint32_t time_stop = micros();
@@ -851,15 +851,15 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
     timeOW_t loops_for_reset = 0;
     repetitions = 0;
 
+    noInterrupts();
     while (repetitions++ < repetitions_max)
     {
-        waitLoopsWhilePinIs(wait_loops, true);
-        noInterrupts();
+        if (!waitLoopsWhilePinIs(wait_loops, true)) continue;
         const timeOW_t loops_left = waitLoopsWhilePinIs(TIMEOW_MAX, false);
         const timeOW_t loops_needed = TIMEOW_MAX - loops_left;
-        interrupts();
         if (loops_needed>loops_for_reset) loops_for_reset = loops_needed;
     };
+    interrupts();
 
     // analyze
     value_nspl = time_for_reset * VALUE1k / loops_for_reset;

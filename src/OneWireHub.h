@@ -26,7 +26,7 @@ using mask_t = uint8_t;
 using     timeOW_t = uint32_t;
 
 constexpr timeOW_t VALUE1k      {1000}; // commonly used constant
-constexpr timeOW_t TIMEOW_MAX   {-1};   //
+constexpr timeOW_t TIMEOW_MAX   {4294967295};   // arduino does not support std-lib...
 
 enum class Error : uint8_t {
     NO_ERROR                   = 0,
