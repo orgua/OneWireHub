@@ -9,10 +9,10 @@
 #include "OneWireHub.h"
 #include "DS2405.h"  // Dual channel addressable switch
 
-const uint8_t led_PIN       = 13;         // the number of the LED pin
-const uint8_t OneWire_PIN   = 8;
+constexpr uint8_t pin_led       { 13 };
+constexpr uint8_t pin_onewire   { 8 };
 
-auto hub    = OneWireHub(OneWire_PIN);
+auto hub    = OneWireHub(pin_onewire);
 auto ds2405 = DS2405( DS2405::family_code, 0x00, 0x0D, 0x02, 0x04, 0x00, 0x05 );    // Work - Dual channel addressable switch
 
 void setup()
@@ -20,7 +20,7 @@ void setup()
     Serial.begin(115200);
     Serial.println("OneWire-Hub DS2405 - One channel addressable switch");
 
-    pinMode(led_PIN, OUTPUT);
+    pinMode(pin_led, OUTPUT);
 
     // Setup OneWire
     hub.attach(ds2405);
@@ -44,8 +44,7 @@ void loop()
         Serial.print(" PinState: ");
         Serial.println(switch_state);
 
-        if (switch_state)       digitalWrite(led_PIN, HIGH);
-        else                    digitalWrite(led_PIN, LOW);
+        digitalWrite(pin_led, switch_state);
     }
 
 
