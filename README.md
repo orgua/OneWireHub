@@ -41,7 +41,10 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
-- debug-pin shows state by issuing high-states: during presence detection (after reset), while attached sensor-routines are active
+- debug-pin shows state by issuing high-states: 
+   - during presence detection (after reset), 
+   - while attached sensor-routines are active (after match-rom)
+   - while hub-startup it issues a 1ms long high-state (you can check the instruction-per-loop-value for your architecture with this)
 - calibration by watching the bus
 - teensy3.2 tested: cleaned warnings, fixed port access, cleaned examples
 - sensors with emulated memory use memset and static_asserts to secure implementation

@@ -798,6 +798,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 // after that it measures with a waitLoops()-FN to determine the instructions-per-loop-value for the used architecture
 timeOW_t OneWireHub::waitLoopsCalibrate(void)
 {
+#if CALIBRATION_ENABLE
     constexpr timeOW_t repetitions_max{5000}; // how many low_states will be measured before assuming that there was a reset in it
     constexpr timeOW_t wait_loops{1000000 * microsecondsToClockCycles(1)}; // loops before cancelling a pin-change-wait, 1s
 
@@ -846,6 +847,10 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
     const timeOW_t value_ipl = ( time_for_reset * microsecondsToClockCycles(1) ) / loops_for_reset;
     //const timeOW_t value_ipl = (value_nspl * microsecondsToClockCycles(1)) / VALUE1k; // alternative calculation, same result
     return value_ipl;
+#else
+    //static_assert(!calibrate_loop_timing, "activate calibration in /src/OneWireHub_config.h -> CALIBRATION_ENABLE");
+    return 0;
+#endif
 };
 
 void OneWireHub::waitLoopsConfig(void)
@@ -880,9 +885,17 @@ void OneWireHub::waitLoopsConfig(void)
 #endif
 };
 
+// you should precalc waitvalues, the OP can take up da 550 cylces
+timeOW_t OneWireHub::waitLoopsCalculate(const timeOW_t time_ns)
+{
+    timeOW_t retries = (time_ns / value_nspl);
+    //if (retries) retries--;
+    return retries;
+};
+
 void OneWireHub::waitLoopsDebug(void)
 {
-#if 1 //USE_SERIAL_DEBUG
+#if USE_SERIAL_DEBUG
     Serial.println("DEBUG TIMINGS for the HUB (measured in loops)");
     Serial.print("factor : \t");
     Serial.print(value_nspl);
@@ -913,14 +926,6 @@ void OneWireHub::waitLoopsDebug(void)
     Serial.println(loops_write_zero_low_std);
     Serial.flush();
 #endif
-};
-
-// you should precalc waitvalues, the OP can take up da 550 cylces
-timeOW_t OneWireHub::waitLoopsCalculate(const timeOW_t time_ns)
-{
-    timeOW_t retries = (time_ns / value_nspl);
-    //if (retries) retries--;
-    return retries;
 };
 
 // returns false if pins stays in the wanted state all the time
