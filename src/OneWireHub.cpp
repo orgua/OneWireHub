@@ -19,7 +19,8 @@ OneWireHub::OneWireHub(uint8_t pin)
         slave_list[i] = nullptr;
 
     // prepare pin
-    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
+    pinMode(pin, INPUT); // first port-access should by done by this FN, does more than DIRECT_MODE_....
+    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
 
     // debug:
 #if USE_GPIO_DEBUG
