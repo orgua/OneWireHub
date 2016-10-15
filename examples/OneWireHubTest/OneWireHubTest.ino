@@ -68,8 +68,8 @@ void setup()
     pinMode(pin_led, OUTPUT);
 
     // Setup OneWire
-    ds1822.setTemp(21);
-    ds18S20.setTemp(10);
+    ds1822.setTemp(21.0);
+    ds18S20.setTemp(10.0);
     hub.attach(ds1822);
     hub.attach(ds18B20);
     hub.attach(ds18S20);

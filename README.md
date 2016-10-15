@@ -41,6 +41,8 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
+- teensy3.2 tested: cleaned warnings, fixed port access, cleaned examples
+- sensors with emulated memory use memset and static_asserts to secure implementation
 - fix and clean pin access, fix a portability issue (time_t)
 - prepare hub for overdrive-mode
 - added or extended the ds2431, ds2431, ds2501, ds2502 (also tested)
