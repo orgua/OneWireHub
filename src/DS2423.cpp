@@ -8,6 +8,7 @@ DS2423::DS2423(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 bool DS2423::duty(OneWireHub *hub)
 {
     uint16_t memory_address;
+    //uint16_t memory_address_start; // not used atm, but maybe later
     //uint8_t b;
     uint16_t crc = 0;
 
