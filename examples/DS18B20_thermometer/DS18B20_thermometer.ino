@@ -76,5 +76,6 @@ void loop()
         ds18b20.setTemp(temperature);
         ds18s20.setTemp(temperature);
         ds1822.setTemp(temperature);
+        Serial.println(temperature);
     }
 }

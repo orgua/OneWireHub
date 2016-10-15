@@ -19,15 +19,15 @@ OneWireHub::OneWireHub(const uint8_t pin, const uint8_t value_ipl)
         slave_list[i] = nullptr;
 
     // prepare pin
+    pinMode(pin, INPUT); // first port-access should by done by this FN, does more than DIRECT_MODE_....
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
-    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     // debug:
 #if USE_GPIO_DEBUG
     debug_bitMask = PIN_TO_BITMASK(GPIO_DEBUG_PIN);
     debug_baseReg = PIN_TO_BASEREG(GPIO_DEBUG_PIN);
+    pinMode(GPIO_DEBUG_PIN, OUTPUT);
     DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-    DIRECT_MODE_OUTPUT(debug_baseReg, debug_bitMask);
 #endif
 
     // prepare timings
@@ -824,7 +824,6 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
         if (time_needed > time_for_reset) time_for_reset = time_needed;
     };
 
-
     timeOW_t loops_for_reset = 0;
     repetitions = 0;
 
@@ -883,7 +882,7 @@ void OneWireHub::waitLoopsConfig(void)
 
 void OneWireHub::waitLoopsDebug(void)
 {
-#if USE_SERIAL_DEBUG
+#if 1 //USE_SERIAL_DEBUG
     Serial.println("DEBUG TIMINGS for the HUB (measured in loops)");
     Serial.print("factor : \t");
     Serial.print(value_nspl);
