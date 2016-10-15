@@ -19,7 +19,7 @@ public:
     bool duty(OneWireHub *hub);
 
     void clearMemory(void);
-    bool writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position = 0);
+    bool writeMemory(const uint8_t* source, const uint16_t length, const uint16_t position = 0);
 };
 
 #endif

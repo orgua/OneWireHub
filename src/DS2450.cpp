@@ -11,7 +11,7 @@ DS2450::DS2450(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 bool DS2450::duty(OneWireHub *hub)
 {
     uint16_t memory_address;
-    uint16_t memory_address_start;
+    //uint16_t memory_address_start; // needed when fully implemented
     uint8_t  b;
     uint16_t crc = 0;
 
@@ -34,7 +34,7 @@ bool DS2450::duty(OneWireHub *hub)
             reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
             crc = crc16(b, crc);
 
-            memory_address_start = memory_address;
+            //memory_address_start = memory_address;
             if (memory_address > (PAGE_COUNT-1)*PAGE_SIZE) memory_address = 0; // prevent read out of bounds
 
             for (uint8_t i = 0; i < PAGE_SIZE; ++i)
@@ -70,7 +70,7 @@ bool DS2450::duty(OneWireHub *hub)
             reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
             crc = crc16(b, crc);
 
-            memory_address_start = memory_address;
+            //memory_address_start = memory_address;
             if (memory_address > (PAGE_COUNT-1)*PAGE_SIZE) memory_address = 0; // prevent read out of bounds
 
             for (uint8_t i = 0; i < PAGE_SIZE; ++i)
