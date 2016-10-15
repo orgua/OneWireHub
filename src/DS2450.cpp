@@ -3,7 +3,8 @@
 DS2450::DS2450(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) :
         OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    uint8_t mem_size = PAGE_COUNT*PAGE_SIZE;
+    constexpr uint32_t mem_size = PAGE_COUNT*PAGE_SIZE;
+    static_assert(mem_size < 256,  "Implementation does not cover the whole address-space");
     memset(&memory[0], static_cast<uint8_t>(0), mem_size);
     if (mem_size > 0x1C) memory[0x1C] = 0x40;
 };

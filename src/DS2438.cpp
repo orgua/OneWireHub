@@ -2,6 +2,8 @@
 
 DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
+    static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
+
     for (uint8_t i = 0; i < (PAGE_EMU_COUNT*8); ++i)
     {
         memory[i] = MemDS2438[i];

@@ -163,7 +163,7 @@ bool DS2433::duty(OneWireHub *hub)
 
 void DS2433::clearMemory(void)
 {
-    for (uint16_t i = 0; i < sizeof(memory); ++i) memory[i] = 0x00;
+    memset(&memory[0], static_cast<uint8_t>(0x00), sizeof(memory));
 };
 
 bool DS2433::writeMemory(const uint8_t* source, const uint16_t length, const uint16_t position)
