@@ -1,6 +1,8 @@
 /*
  *    Test-Code for calibration - this sketch determines the value for "instructions per loop"
  *
+ *      --> activate calibration in /src/OneWireHub_config.h -> CALIBRATION_ENABLE"
+ *
  *      --> read value per serial-com and write it to /src/platform.h to your specific architecture
  *          >>>>  constexpr uint8_t VALUE_IPL {0}; // instructions per loop
  *
