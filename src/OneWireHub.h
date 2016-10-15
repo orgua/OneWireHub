@@ -112,10 +112,10 @@ private:
 
     bool recvAndProcessCmd();
 
-    __attribute__((always_inline))
+    inline __attribute__((always_inline))
     void wait(const uint16_t timeout_us);
 
-    __attribute__((always_inline))
+    inline __attribute__((always_inline))
     bool awaitTimeSlotAndWrite(const bool writeZero = 0);
 
     timeOW_t waitLoopsCalculate(const timeOW_t time_ns);
@@ -149,7 +149,7 @@ public:
     uint8_t recvAndCRC16(uint16_t &crc16);
 
     timeOW_t waitLoopsCalibrate(void); // returns Instructions per loop
-    __attribute__((always_inline))
+    inline __attribute__((always_inline))
     timeOW_t waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false);
     void waitLoopsDebug(void);
 

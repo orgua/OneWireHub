@@ -7,7 +7,7 @@
 
 // INFO: had to go with a define because some compilers use constexpr as simple const --> massive problems
 #define HUB_SLAVE_LIMIT     8 // set the limit of the hub HERE
-#define OVERDRIVE_ENABLE    1 // support overdrive for the slaves
+#define OVERDRIVE_ENABLE    0 // support overdrive for the slaves
 
 #define USE_SERIAL_DEBUG    0 // give debug messages when printError() is called
 #define USE_GPIO_DEBUG      1
