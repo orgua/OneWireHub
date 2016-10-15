@@ -25,6 +25,9 @@ auto ds18b20 = DS18B20(DS18B20::family_code, 0x00, 0x02, 0x0B, 0x08, 0x01, 0x0D)
 void setup()
 {
     Serial.begin(115200);
+    Serial.println("OneWire-Hub calibration by observing the OW-Bus");
+    Serial.flush();
+
     hub.attach(ds18b20);
 };
 

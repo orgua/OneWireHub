@@ -133,9 +133,6 @@ public:
 
     bool poll(void);
 
-    [[deprecated("use the non-blocking poll() instead of waitForRequest()")]]
-    bool waitForRequest(const bool ignore_errors = false);
-
     void extendTimeslot(void);
 
     bool send(const uint8_t dataByte);
