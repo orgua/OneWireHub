@@ -27,7 +27,7 @@ constexpr uint8_t VALUE_IPL {13}; // instructions per loop
 #define DIRECT_WRITE_LOW(base, mask)    (*((base)+256) = 1)
 #define DIRECT_WRITE_HIGH(base, mask)   (*((base)+128) = 1)
 using io_reg_t = uint8_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL {0}; // instructions per loop
+constexpr uint8_t VALUE_IPL {11}; // instructions per loop
 
 #elif defined(__MKL26Z64__)
 #define PIN_TO_BASEREG(pin)             (portOutputRegister(pin))

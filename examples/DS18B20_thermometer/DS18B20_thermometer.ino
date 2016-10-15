@@ -51,9 +51,10 @@ void setup()
     hub.attach(ds1822);
 
     // Set const temperature
-    ds18b20.setTemp(21);
-    ds18s20.setTemp(21);
-    ds1822.setTemp(21);
+    const int16_t temperature = 21;
+    ds18b20.setTemp(temperature);
+    ds18s20.setTemp(temperature);
+    ds1822.setTemp(temperature);
 
     Serial.println("config done");
 };
