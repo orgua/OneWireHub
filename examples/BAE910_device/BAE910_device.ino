@@ -7,11 +7,11 @@
 #include "OneWireHub.h"
 #include "BAE910.h"  // 3rd party OneWire slave device, family code 0xFC
 
-const uint8_t led_PIN       = 13;         // the number of the LED pin
-const uint8_t OneWire_PIN   = 8;
-const uint8_t Analog_PIN    = 0;
+constexpr uint8_t pin_led       { 13 };
+constexpr uint8_t pin_onewire   { 8 };
+constexpr uint8_t pin_analog    { 0 };
 
-auto hub    = OneWireHub(OneWire_PIN);
+auto hub    = OneWireHub(pin_onewire);
 auto bae910 = BAE910(BAE910::family_code, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06);
 
 
@@ -26,7 +26,7 @@ bool blinking()
         static uint8_t ledState = LOW;      // ledState used to set the LED
         if (ledState == LOW)    ledState = HIGH;
         else                    ledState = LOW;
-        digitalWrite(led_PIN, ledState);
+        digitalWrite(pin_led, ledState);
         return 1;
     }
     return 0;
@@ -38,7 +38,7 @@ void setup()
     Serial.begin(115200);
     Serial.println("OneWire-Hub BAE910 emulation ADC example");
 
-    pinMode(led_PIN, OUTPUT);
+    pinMode(pin_led, OUTPUT);
 
     // Setup OneWire
     hub.attach(bae910);
@@ -60,6 +60,6 @@ void loop()
     if (blinking())
     {
         // read ADC and write into BAE register
-        bae910.memory.field.adc10 = analogRead(Analog_PIN);
+        bae910.memory.field.adc10 = analogRead(pin_analog);
     }
 }

@@ -9,10 +9,10 @@
 #include "OneWireHub.h"
 #include "DS2401.h"  // Serial Number
 
-const uint8_t led_PIN       = 13;         // the number of the LED pin
-const uint8_t OneWire_PIN   = 8;
+constexpr uint8_t pin_led       { 13 };
+constexpr uint8_t pin_onewire   { 8 };
 
-auto hub     = OneWireHub(OneWire_PIN);
+auto hub     = OneWireHub(pin_onewire);
 auto ds2401A = DS2401( 0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0A );    // Work - Serial Number
 auto ds2401B = DS2401( 0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0B );    // Work - Serial Number
 auto ds2401C = DS2401( 0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0C );
@@ -28,7 +28,7 @@ bool blinking()
         static uint8_t ledState = LOW;      // ledState used to set the LED
         if (ledState == LOW)    ledState = HIGH;
         else                    ledState = LOW;
-        digitalWrite(led_PIN, ledState);
+        digitalWrite(pin_led, ledState);
         return 1;
     }
     return 0;
@@ -40,7 +40,7 @@ void setup()
     Serial.begin(115200);
     Serial.println("OneWire-Hub DS2401 Serial Number used as iButton");
 
-    pinMode(led_PIN, OUTPUT);
+    pinMode(pin_led, OUTPUT);
 
     // Setup OneWire
     hub.attach(ds2401C); // always online
