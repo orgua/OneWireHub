@@ -13,6 +13,7 @@
  *    4504 // 301 bytes switch to new branch with static calibration
  *    4542 // 301 bytes get rid of wait() and delayMicroseconds()
  *    4430 // 301 bytes get rid of micros()
+ *    4516 // 301 bytes clean awaitTimeSlotAndWrite()
  *
  */
 

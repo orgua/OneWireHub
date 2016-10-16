@@ -660,108 +660,43 @@ void OneWireHub::wait(const uint16_t timeout_us) const
     };
 };
 
-#define NEW_WAIT 0 // TODO: NewWait does not work as expected
-#if NEW_WAIT
 
-// wait for a low to high transition followed by a high to low within the time-out
-bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
-{
-    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
-    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
-
-    //While bus is low, retry until HIGH
-
-    if (!delayLoopsWhilePinIs(LOOPS_SLOT_MAX, false))
-    {
-        if (extend_timeslot_detection == 2)
-        {
-            // this branch can be taken after calling THIS functions the second time in recvBit()
-            extend_timeslot_detection = 0;
-            skip_reset_detection      = 1;
-        }
-        else
-        {
-            _error = Error::READ_TIMESLOT_TIMEOUT_LOW;
-        };
-        return false;
-    }
-
-    // extend the wait-time after reset and presence-detection
-    if (extend_timeslot_detection == 1)
-    {
-        extend_timeslot_detection = 2; // prepare to detect missing timeslot or second reset
-    }
-
-    //Wait for bus to fall form 1 to 0
-    if (delayLoopsWhilePinIs(LOOPS_RESET_TIMEOUT, true))
-    {
-            _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
-            return false;
-    };
-
-    // if extend_timeslot_detection == 2 we could safe millis()
-
-    if (writeZero)
-    {
-        // Low is allready set
-        DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
-    };
-
-    return true;
-}
-
-#else
-
-// TODO: CLEANUP
-#define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135)/8)   /// :11 is a specif value for 8bit-atmega, still to determine
 bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 {
     noInterrupts();
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
-    //While bus is low, retry until HIGH
-    uint16_t retries = TIMESLOT_WAIT_RETRY_COUNT; // TODO: redo this section
-    while (!DIRECT_READ(pin_baseReg, pin_bitMask))
+    //While bus is low, retry until HIGH, if waitLoopsWhilePinIs() is to slow switch to old code
+    if (!waitLoopsWhilePinIs(LOOPS_SLOT_MAX,false))
     {
-        if (--retries == 0)
+        if (extend_timeslot_detection == 2)
         {
-            if (extend_timeslot_detection == 2)
-            {
-                // this branch can be taken after calling THIS functions the second time in recvBit()
-                extend_timeslot_detection = 0;
-                skip_reset_detection      = 1;
-            }
-            else
-            {
-                _error = Error::READ_TIMESLOT_TIMEOUT_LOW;
-            };
-            interrupts();
-            return false;
+            // this branch can be taken after calling THIS functions the second time in recvBit()
+            extend_timeslot_detection = 0;
+            skip_reset_detection = 1;
+        } else
+        {
+            _error = Error::READ_TIMESLOT_TIMEOUT_LOW;
         };
+        interrupts();
+        return false;
     };
+
 
     // extend the wait-time after reset and presence-detection
     if (extend_timeslot_detection == 1)
     {
-        retries = 65535;
         extend_timeslot_detection = 2; // prepare to detect missing timeslot or second reset
-    }
-    else
-    {
-        //retries = TIMESLOT_WAIT_RETRY_COUNT;
-        retries = 65535; // TODO: workaround for better compatibility (will be solved later)
     };
 
-    //Wait for bus to fall form 1 to 0
-    while (DIRECT_READ(pin_baseReg, pin_bitMask))
+
+    //Wait for bus to fall form 1 to 0, if waitLoopsWhilePinIs() is to slow switch to old code
+    if (!waitLoopsWhilePinIs(LOOPS_RESET_TIMEOUT,true))
     {
-        if (--retries == 0)
-        {
-            _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
-            interrupts();
-            return false;
-        };
+        _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
+        interrupts();
+        return false;
     };
 
     // if extend_timeslot_detection == 2 we could safe millis()
@@ -774,7 +709,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
     interrupts();
     return true;
 };
-#endif
+
 
 // returns false if pins stays in the wanted state all the time
 timeOW_t OneWireHub::waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value) const
