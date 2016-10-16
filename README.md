@@ -47,7 +47,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### Recent development (latest at the top):
 - debug-pin shows state by issuing high-states - see explanation in "features"
-- calibration by watching the bus
+- offline calibration by watching the bus (examples/debug/calibrate_by_bus_timing)
 - teensy3.2 tested: cleaned warnings, fixed port access, cleaned examples
 - sensors with emulated memory use memset and static_asserts to secure implementation
 - fix and clean pin access, fix a portability issue (time_t)

@@ -47,7 +47,7 @@ enum class Error : uint8_t {
 };
 
 
-static constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
+constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
 {
     return (time_us * microsecondsToClockCycles(1) / VALUE_IPL);
 };
@@ -60,7 +60,7 @@ class OneWireHub
 private:
 
     static constexpr uint8_t ONEWIRESLAVE_LIMIT                 = HUB_SLAVE_LIMIT;
-    static constexpr uint8_t ONEWIRE_TREE_SIZE                  = 2*ONEWIRESLAVE_LIMIT - 1;
+    static constexpr uint8_t ONEWIRE_TREE_SIZE                  = ( 2 * ONEWIRESLAVE_LIMIT ) - 1;
 
     static constexpr timeOW_t LOOPS_BUS_CHANGE_MAX      = timeUsToLoops(ONEWIRE_TIME_BUS_CHANGE_MAX);
     static constexpr timeOW_t LOOPS_RESET_MIN           = timeUsToLoops(ONEWIRE_TIME_RESET_MIN);
@@ -153,7 +153,7 @@ public:
     uint8_t recvAndCRC16(uint16_t &crc16);
 
     timeOW_t waitLoopsCalibrate(void); // returns Instructions per loop
-    timeOW_t waitLoops1ms(void);
+    void     waitLoops1ms(void);
     void     waitLoopsDebug(void);
 
     void printError(void);
