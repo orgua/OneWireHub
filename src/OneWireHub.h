@@ -135,6 +135,7 @@ private:
     bool recvAndProcessCmd();
 
     void wait(const uint16_t timeout_us) const;
+    inline __attribute__((always_inline))
     void wait(const timeOW_t loops_wait) const;
 
     inline __attribute__((always_inline))
