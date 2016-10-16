@@ -249,6 +249,13 @@ bool OneWireHub::poll(void)
 
 bool OneWireHub::checkReset(void) // there is a specific high-time needed before a reset may occur -->  >120us
 {
+    static_assert(LOOPS_RESET_MIN[0] > (LOOPS_SLOT_MAX[0] - LOOPS_READ_STD[0]), "Timings are wrong");
+    static_assert(LOOPS_RESET_MAX[0] > LOOPS_RESET_MIN[0], "Timings are wrong");
+#if OVERDRIVE_ENABLE
+    static_assert(LOOPS_RESET_MIN[1] > (LOOPS_SLOT_MAX[1] - LOOPS_READ_STD[1]), "Timings are wrong");
+    static_assert(LOOPS_RESET_MAX[0] > LOOPS_RESET_MIN[1], "Timings are wrong");
+#endif
+
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     // is entered if there are two resets within a given time (timeslot-detection can issue this skip)
@@ -271,7 +278,7 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
         return false;
     }
 
-    const timeOW_t loops_remaining = waitLoopsWhilePinIs(LOOPS_RESET_MAX[od_mode], false);
+    const timeOW_t loops_remaining = waitLoopsWhilePinIs(LOOPS_RESET_MAX[0], false);
 
     // wait for bus-release by master
     if (loops_remaining == 0)
@@ -280,22 +287,31 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
         return false;
     }
 
+#if OVERDRIVE_ENABLE
+    if (od_mode && ((LOOPS_RESET_MAX[0] - LOOPS_RESET_MIN[0]) > loops_remaining))
+    {
+        od_mode = false; // normal reset detected, so leave OD-Mode
+    };
+#endif
+
     // If the master pulled low for to short this will trigger an error
-    if ((LOOPS_RESET_MAX[od_mode] - LOOPS_RESET_MIN[od_mode]) < loops_remaining)
+    if ((LOOPS_RESET_MAX[0] - LOOPS_RESET_MIN[od_mode]) < loops_remaining)
     {
         //_error = Error::VERY_SHORT_RESET; // TODO: activate again, like the error above, errorhandling is mature enough now
         return false;
     }
 
-#if OVERDRIVE_ENABLE
-    od_mode = false; // normal reset detected, so leave OD-Mode
-#endif
     return true;
 }
 
 
 bool OneWireHub::showPresence(void)
 {
+    static_assert(LOOPS_PRESENCE_LOW_MAX[0] > LOOPS_PRESENCE_LOW_STD[0], "Timings are wrong");
+#if OVERDRIVE_ENABLE
+    static_assert(LOOPS_PRESENCE_LOW_MAX[1] > LOOPS_PRESENCE_LOW_STD[1], "Timings are wrong");
+#endif
+
 #if USE_GPIO_DEBUG
     DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
 #endif
