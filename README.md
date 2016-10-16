@@ -1,12 +1,8 @@
 OneWireHub
 ==========
 
-NOTE: This branch was abandoned - it works though. For an Atmega328 the program size grew from 6664 to 8434 bytes (+27%) just for a simple ds18b20-sketch. It doesn't seem worth it ATM. 
-===
-
-
 The OneWireHub is an Arduino compatible (and many more platforms) library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously. 
-The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your environment.
+The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your home automation environment.
 
 ### Supported Slaves:
 - **BAE910 (0xFC) multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
@@ -30,25 +26,27 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2890 (0x2C) 0x Single channel digital potentiometer - extended to 1-4 CH**
 - Dell Power Supply (use DS2502 with family code set to 0x28)
 
-Note: **Bold printed devices are feature-complete and were mostly tested with a DS9490 (look into the regarding example-file for more information)**
+Note: **Bold printed devices are feature-complete and were mostly tested with a DS9490 (look into the regarding example-file for more information) and a loxone system (when supported).**
 
 ### Features:
-- supports up to 32 slaves (8 is standard setting), adjust HUB_SLAVE_LIMIT in OneWireHub.h to safe RAM & program space
+- supports up to 32 slaves (8 is standard setting), adjust HUB_SLAVE_LIMIT in src/OneWireHub_config.h to safe RAM & program space
 - hot-plug slaves as needed
 - cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=1.6.10 recommended)**
    - i.e. use of constexpr instead of #define for better compiler-messages
 - hardware-dependencies are combined in "platform.h", synced with [onewire-lib](https://github.com/PaulStoffregen/OneWire)
    - extra supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822 (...)
+   - testest architectures: atmega328, teensy3.2
    - for portability and tests the hub can even be compiled on a PC with the supplied mock-up functions
    - at the moment the lib relies sole on the micros()-fn for timing, no direct access to interrupt or timers
-- Serial debug output can be enabled in OneWireHub.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
-- documentation, numerous examples, easy interface for hub and sensors
-
-### Recent development (latest at the top):
-- debug-pin shows state by issuing high-states: 
+- Serial debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
+- debug-pin output - shows state by issuing high-states (activate in src/OneWireHub_config.h, is a better alternative to serial debug)
    - during presence detection (after reset), 
    - while attached sensor-routines are active (after match-rom)
    - while hub-startup it issues a 1ms long high-state (you can check the instruction-per-loop-value for your architecture with this)
+- documentation, numerous examples, easy interface for hub and sensors
+
+### Recent development (latest at the top):
+- debug-pin shows state by issuing high-states - see explanation in "features"
 - calibration by watching the bus
 - teensy3.2 tested: cleaned warnings, fixed port access, cleaned examples
 - sensors with emulated memory use memset and static_asserts to secure implementation
