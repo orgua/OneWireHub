@@ -862,7 +862,6 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
 
 void OneWireHub::waitLoopsDebug(void) const
 {
-
     Serial.println("DEBUG TIMINGS for the HUB (measured in loops):");
     Serial.println("(be sure to update VALUE_IPL in src/OneWireHub_config.h first!)");
     Serial.print("value : \t");
