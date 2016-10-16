@@ -32,6 +32,8 @@ OneWireHub::OneWireHub(const uint8_t pin)
 #endif
 
     static_assert(VALUE_IPL, "You tried to use fixed timing-values. Your architecture has not been calibrated yet, please run examples/debug/calibrate_by_bus_timing and report instructions per loop (IPL) to https://github.com/orgua/OneWireHub");
+    static_assert(timeUsToLoops(ONEWIRE_TIME_VALUE_MIN)>1,"YOUR ARCHITECTURE IS TO SLOW, THIS MAY RESULT IN TIMING-PROBLEMS");
+    static_assert((ONEWIRE_TIME_VALUE_MAX / VALUE_IPL ) < (TIMEOW_MAX / microsecondsToClockCycles(1)),"YOUR ARCHITECTURE IS TO FAST, OR TIMING VALUES SET TO HIGH --> OVERFLOW DETECTED");
 };
 
 
@@ -789,9 +791,9 @@ timeOW_t OneWireHub::waitLoopsWhilePinIs(volatile timeOW_t retries, const bool p
     return retries;
 };
 
-timeOW_t OneWireHub::waitLoops1ms(void)
+void OneWireHub::waitLoops1ms(void)
 {
-    constexpr timeOW_t loops_1ms = timeUsToLoops(uint16_t(1000000));
+    constexpr timeOW_t loops_1ms = timeUsToLoops(uint16_t(VALUE1k * VALUE1k));
     timeOW_t loops_left = 1;
     while (loops_left)
     {
@@ -808,7 +810,6 @@ timeOW_t OneWireHub::waitLoops1ms(void)
 // after that it measures with a waitLoops()-FN to determine the instructions-per-loop-value for the used architecture
 timeOW_t OneWireHub::waitLoopsCalibrate(void)
 {
-#if 0
     constexpr timeOW_t repetitions_max{5000}; // how many low_states will be measured before assuming that there was a reset in it
     constexpr timeOW_t wait_loops{1000000 * microsecondsToClockCycles(1)}; // loops before cancelling a pin-change-wait, 1s
 
@@ -853,15 +854,14 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
     const timeOW_t value_ipl = ( time_for_reset * microsecondsToClockCycles(1) ) / loops_for_reset;
 
     return value_ipl;
-#endif
 };
 
 
 void OneWireHub::waitLoopsDebug(void)
 {
-#if 0
-    Serial.println("BE SHURE TO UPDATE VALUE_IPL in src/OneWireHub_config.h FIRST!!!!");
-    Serial.println("DEBUG TIMINGS for the HUB (measured in loops)");
+
+    Serial.println("DEBUG TIMINGS for the HUB (measured in loops):");
+    Serial.println("(be sure to update VALUE_IPL in src/OneWireHub_config.h first!)");
     Serial.print("value : \t");
     Serial.print(VALUE_IPL * VALUE1k / microsecondsToClockCycles(1));
     Serial.println(" nanoseconds per loop");
@@ -890,7 +890,6 @@ void OneWireHub::waitLoopsDebug(void)
     Serial.print("write zero : \t");
     Serial.println(LOOPS_WRITE_ZERO_LOW_STD);
     Serial.flush();
-#endif
 };
 
 void OneWireHub::printError(void)

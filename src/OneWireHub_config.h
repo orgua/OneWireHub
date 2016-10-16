@@ -36,6 +36,9 @@ constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MAX     =   60; //
 constexpr uint16_t ONEWIRE_TIME_READ_STD             =   20; // was 30
 constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =   35; //
 
+constexpr uint16_t ONEWIRE_TIME_VALUE_MAX            = ONEWIRE_TIME_PRESENCE_HIGH_MAX;
+constexpr uint16_t ONEWIRE_TIME_VALUE_MIN            = ONEWIRE_TIME_BUS_CHANGE_MAX;
+
 /////////////////////////////////////////////////////
 // END OF CONFIG ////////////////////////////////////
 /////////////////////////////////////////////////////
