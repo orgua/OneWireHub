@@ -307,7 +307,7 @@ bool OneWireHub::showPresence(void)
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);    // drive output low
 
-    wait(LOOPS_PRESENCE_LOW_STD[od_mode]); // stays till the end, because it drives the bus los itself
+    wait(LOOPS_PRESENCE_LOW_STD[od_mode]); // stays till the end, because it drives the bus low itself
 
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);     // allow it to float
 
@@ -505,7 +505,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             return true;
 
         case 0xA5: // RESUME COMMAND
-            // TODO: maybe add function to fully support the ds2432
+            // TODO: add function to fully support the ds2432
 
         default: // Unknown command
             _error = Error::INCORRECT_ONEWIRE_CMD;
@@ -574,7 +574,7 @@ bool OneWireHub::sendBit(const bool value)
     else
     {
         // if we wait for release we could detect faulty writing slots --> pedantic Mode not needed for now
-        waitLoopsWhilePinIs(LOOPS_WRITE_ZERO_LOW_STD[od_mode], false);
+        waitLoopsWhilePinIs(LOOPS_WRITE_ZERO_LOW_STD[od_mode],false);
         DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
     }
 
@@ -694,7 +694,9 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     //While bus is low, retry until HIGH, if waitLoopsWhilePinIs() is to slow switch to old code
-    if (!waitLoopsWhilePinIs(LOOPS_SLOT_MAX[od_mode],false))
+    timeOW_t retries = LOOPS_SLOT_MAX[od_mode];
+    while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
+    if (!retries)
     {
         if (extend_timeslot_detection == 2)
         {
@@ -718,11 +720,15 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 
 
     //Wait for bus to fall form 1 to 0, if waitLoopsWhilePinIs() is to slow switch to old code
-    if (!waitLoopsWhilePinIs(LOOPS_RESET_TIMEOUT,true))
+    retries = LOOPS_RESET_TIMEOUT;
+    while (DIRECT_READ(pin_baseReg, pin_bitMask))
     {
-        _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
-        interrupts();
-        return false;
+        if (--retries == 0)
+        {
+            _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
+            interrupts();
+            return false;
+        };
     };
 
     // if extend_timeslot_detection == 2 we could safe millis()
