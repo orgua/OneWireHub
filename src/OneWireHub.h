@@ -47,6 +47,12 @@ enum class Error : uint8_t {
 };
 
 
+static constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
+{
+    return (time_us * microsecondsToClockCycles(1) / VALUE_IPL);
+};
+
+
 class OneWireItem;
 
 class OneWireHub
@@ -56,19 +62,18 @@ private:
     static constexpr uint8_t ONEWIRESLAVE_LIMIT                 = HUB_SLAVE_LIMIT;
     static constexpr uint8_t ONEWIRE_TREE_SIZE                  = 2*ONEWIRESLAVE_LIMIT - 1;
 
-    timeOW_t value_nspl; // nanoseconds per loop
-    timeOW_t loops_bus_change_max;
-    timeOW_t loops_reset_min;
-    timeOW_t loops_reset_max;
-    timeOW_t loops_reset_timeout;
-    timeOW_t loops_presence_sample_min;
-    timeOW_t loops_presence_low_std;
-    timeOW_t loops_presence_low_max;
-    timeOW_t loops_presence_high_max;
-    timeOW_t loops_slot_max;
-    timeOW_t loops_read_one_low_max;
-    timeOW_t loops_read_std;
-    timeOW_t loops_write_zero_low_std;
+    static constexpr timeOW_t LOOPS_BUS_CHANGE_MAX      = timeUsToLoops(ONEWIRE_TIME_BUS_CHANGE_MAX);
+    static constexpr timeOW_t LOOPS_RESET_MIN           = timeUsToLoops(ONEWIRE_TIME_RESET_MIN);
+    static constexpr timeOW_t LOOPS_RESET_MAX           = timeUsToLoops(ONEWIRE_TIME_RESET_MAX);
+    static constexpr timeOW_t LOOPS_RESET_TIMEOUT       = timeUsToLoops(ONEWIRE_TIME_RESET_TIMEOUT);
+    static constexpr timeOW_t LOOPS_PRESENCE_SAMPLE_MIN = timeUsToLoops(ONEWIRE_TIME_PRESENCE_SAMPLE_MIN);
+    static constexpr timeOW_t LOOPS_PRESENCE_LOW_STD    = timeUsToLoops(ONEWIRE_TIME_PRESENCE_LOW_STD);
+    static constexpr timeOW_t LOOPS_PRESENCE_LOW_MAX    = timeUsToLoops(ONEWIRE_TIME_PRESENCE_LOW_MAX);
+    static constexpr timeOW_t LOOPS_PRESENCE_HIGH_MAX   = timeUsToLoops(ONEWIRE_TIME_PRESENCE_HIGH_MAX);
+    static constexpr timeOW_t LOOPS_SLOT_MAX            = timeUsToLoops(ONEWIRE_TIME_SLOT_MAX);
+    static constexpr timeOW_t LOOPS_READ_ONE_LOW_MAX    = timeUsToLoops(ONEWIRE_TIME_READ_ONE_LOW_MAX);
+    static constexpr timeOW_t LOOPS_READ_STD            = timeUsToLoops(ONEWIRE_TIME_READ_STD);
+    static constexpr timeOW_t LOOPS_WRITE_ZERO_LOW_STD  = timeUsToLoops(ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
 
     Error   _error;
     uint8_t _error_cmd;
@@ -84,7 +89,6 @@ private:
     uint8_t           extend_timeslot_detection;
     uint8_t           skip_reset_detection;
 
-    bool              calibrate_loop_timing;
     bool              overdrive_mode;
 
     uint8_t      slave_count;
@@ -118,12 +122,12 @@ private:
     inline __attribute__((always_inline))
     bool awaitTimeSlotAndWrite(const bool writeZero = 0);
 
-    timeOW_t waitLoopsCalculate(const timeOW_t time_ns);
-    void waitLoopsConfig(void);
+    inline __attribute__((always_inline))
+    timeOW_t waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false);
 
 public:
 
-    explicit OneWireHub(const uint8_t pin, const uint8_t value_ipl = 1); // std: set instructions per loop to 1 to read from platform.h
+    explicit OneWireHub(const uint8_t pin);
 
     uint8_t attach(OneWireItem &sensor);
     bool    detach(const OneWireItem &sensor);
@@ -149,9 +153,8 @@ public:
     uint8_t recvAndCRC16(uint16_t &crc16);
 
     timeOW_t waitLoopsCalibrate(void); // returns Instructions per loop
-    inline __attribute__((always_inline))
-    timeOW_t waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false);
-    void waitLoopsDebug(void);
+    timeOW_t waitLoops1ms(void);
+    void     waitLoopsDebug(void);
 
     void printError(void);
     bool getError(void);
