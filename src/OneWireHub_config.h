@@ -11,7 +11,7 @@
 #define CALIBRATION_ENABLE  1 // support active calibration by observing the onewire-master for some time during startup
 
 #define USE_SERIAL_DEBUG    0 // give debug messages when printError() is called
-#define USE_GPIO_DEBUG      1
+#define USE_GPIO_DEBUG      0
 
 constexpr uint8_t  GPIO_DEBUG_PIN   { 7 }; // digital pin
 constexpr uint32_t REPETITIONS      { 10000 }; // for measuring the loop-delay --> 10000L take ~110ms on atmega328p@16Mhz
