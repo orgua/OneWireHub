@@ -249,8 +249,6 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
 {
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
-    wait(ONEWIRE_TIME_BUS_CHANGE_MAX); // let the input settle
-
     // is entered if there are two resets within a given time (timeslot-detection can issue this skip)
     if (skip_reset_detection)
     {
@@ -302,7 +300,7 @@ bool OneWireHub::showPresence(void)
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);    // drive output low
 
-    wait(ONEWIRE_TIME_PRESENCE_LOW_STD);
+    waitLoopsWhilePinIs(LOOPS_PRESENCE_LOW_STD,false); // stays till the end, because it drives the bus los itself
 
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);     // allow it to float
 
@@ -561,7 +559,7 @@ bool OneWireHub::sendBit(const bool value)
     else
     {
         // if we wait for release we could detect faulty writing slots --> pedantic Mode not needed for now
-        wait(ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
+        waitLoopsWhilePinIs(LOOPS_WRITE_ZERO_LOW_STD, false);
         DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
     }
 
@@ -650,22 +648,6 @@ bool OneWireHub::recvBit(void)
 
     return DIRECT_READ(pin_baseReg, pin_bitMask);
 }
-
-#define USE_DELAY 1
-
-void OneWireHub::wait(const uint16_t timeout_us) const // TODO: can be done better now
-{
-#if USE_DELAY
-    delayMicroseconds(timeout_us);
-#else
-    uint32_t time_trigger = micros() + timeout_us;
-    while (micros() < time_trigger)
-    {
-    }
-#endif
-}
-
-#define USE_MICROS 1
 
 
 #define NEW_WAIT 0 // TODO: NewWait does not work as expected
