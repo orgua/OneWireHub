@@ -1,9 +1,7 @@
 /*
  *    Test-Code for calibration - this sketch determines the value for "instructions per loop"
  *
- *      --> activate calibration in /src/OneWireHub_config.h -> CALIBRATION_ENABLE"
- *
- *      --> read value per serial-com and write it to /src/platform.h to your specific architecture
+ *      --> read value per serial-com and write it to /src/platform.h to YOUR specific architecture
  *          >>>>  constexpr uint8_t VALUE_IPL {0}; // instructions per loop
  *
  *      --> test it with a normal sensor-sketch (like ds18b20_thermometer.ini)
@@ -18,7 +16,7 @@
 constexpr uint8_t pin_led       { 13 };
 constexpr uint8_t pin_onewire   { 8 };
 
-auto hub     = OneWireHub(pin_onewire,0); // do an bus-timing-calibration on first sensor-attachment
+auto hub     = OneWireHub(pin_onewire); // do an bus-timing-calibration on first sensor-attachment
 auto ds18b20 = DS18B20(DS18B20::family_code, 0x00, 0x02, 0x0B, 0x08, 0x01, 0x0D);    // Digital Thermometer
 
 /////////////////////////////////////////////////////////////////////////
