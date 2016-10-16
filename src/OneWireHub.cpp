@@ -748,7 +748,7 @@ timeOW_t OneWireHub::waitLoopsWhilePinIs(volatile timeOW_t retries, const bool p
 void OneWireHub::waitLoops1ms(void)
 {
 #if USE_GPIO_DEBUG
-    constexpr timeOW_t loops_1ms = timeUsToLoops(uint16_t(VALUE1k * VALUE1k));
+    constexpr timeOW_t loops_1ms = timeUsToLoops(uint16_t(VALUE1k));
     timeOW_t loops_left = 1;
     while (loops_left)
     {
