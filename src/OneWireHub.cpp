@@ -269,17 +269,17 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
         return false;
     }
 
-    uint32_t time_start = micros(); // TODO: can be done without using micros, just return left retries
+    const timeOW_t loops_remaining = waitLoopsWhilePinIs(LOOPS_RESET_MAX, false);
 
     // wait for bus-release by master
-    if (!waitLoopsWhilePinIs(LOOPS_RESET_MAX, false))
+    if (loops_remaining == 0)
     {
         _error = Error::VERY_LONG_RESET;
         return false;
     }
 
     // If the master pulled low for to short this will trigger an error
-    if ((time_start + ONEWIRE_TIME_RESET_MIN) > micros())
+    if ((LOOPS_RESET_MAX - LOOPS_RESET_MIN) < loops_remaining)
     {
         //_error = Error::VERY_SHORT_RESET; // TODO: activate again, like the error above, errorhandling is mature enough now
         return false;
@@ -649,6 +649,16 @@ bool OneWireHub::recvBit(void)
     return DIRECT_READ(pin_baseReg, pin_bitMask);
 }
 
+void OneWireHub::wait(const uint16_t timeout_us) const
+{
+    timeOW_t loops = timeUsToLoops(timeout_us);
+    bool state = false;
+    while (loops)
+    {
+        loops = waitLoopsWhilePinIs(loops,state);
+        state = !state;
+    };
+};
 
 #define NEW_WAIT 0 // TODO: NewWait does not work as expected
 #if NEW_WAIT

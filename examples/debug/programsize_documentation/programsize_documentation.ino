@@ -11,7 +11,9 @@
  *    5150 // 181 bytes switch to old branch with automatic timing calibration
  *
  *    4504 // 301 bytes switch to new branch with static calibration
- *    4552 // 301 bytes get rid of wait() and delayMicroseconds()
+ *    4542 // 301 bytes get rid of wait() and delayMicroseconds()
+ *    4430 // 301 bytes get rid of micros()
+ *
  */
 
 #include "OneWireHub.h"

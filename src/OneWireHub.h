@@ -116,6 +116,8 @@ private:
 
     bool recvAndProcessCmd();
 
+    void wait(const uint16_t timeout_us) const;
+
     inline __attribute__((always_inline))
     bool awaitTimeSlotAndWrite(const bool writeZero = 0);
 
