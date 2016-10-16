@@ -110,7 +110,7 @@ bool    OneWireHub::detach(const uint8_t slave_number)
 
 // just look through each bit of each ID and build a tree, so there are n=slaveCount decision-points
 // trade-off: more online calculation, but @4Slave 16byte storage instead of 3*256 byte
-uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask)
+uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask) const
 {
     mask_t _mask = mask;
     for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
@@ -122,7 +122,7 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask)
 };
 
 // return next not empty element in slave-list
-uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start)
+uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start) const
 {
     for (uint8_t i = index_start; i < ONEWIRE_TREE_SIZE; ++i)
     {
@@ -132,7 +132,7 @@ uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start)
 };
 
 // gone through the address, store this result
-uint8_t OneWireHub::getNrOfFirstFreeIDTreeElement(void)
+uint8_t OneWireHub::getNrOfFirstFreeIDTreeElement(void) const
 {
     for (uint8_t i = 0; i < ONEWIRE_TREE_SIZE; ++i)
     {
@@ -653,7 +653,7 @@ bool OneWireHub::recvBit(void)
 
 #define USE_DELAY 1
 
-void OneWireHub::wait(const uint16_t timeout_us)
+void OneWireHub::wait(const uint16_t timeout_us) const
 {
 #if USE_DELAY
     delayMicroseconds(timeout_us);
@@ -784,7 +784,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 #endif
 
 // returns false if pins stays in the wanted state all the time
-timeOW_t OneWireHub::waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value)
+timeOW_t OneWireHub::waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value) const
 {
     if (retries == 0) return 0;
     while ((DIRECT_READ(pin_baseReg, pin_bitMask) == pin_value) && (--retries));
@@ -857,7 +857,7 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
 };
 
 
-void OneWireHub::waitLoopsDebug(void)
+void OneWireHub::waitLoopsDebug(void) const
 {
 
     Serial.println("DEBUG TIMINGS for the HUB (measured in loops):");
@@ -892,7 +892,7 @@ void OneWireHub::waitLoopsDebug(void)
     Serial.flush();
 };
 
-void OneWireHub::printError(void)
+void OneWireHub::printError(void) const
 {
 #if USE_SERIAL_DEBUG
      if (_error == Error::NO_ERROR)                        return;
@@ -924,7 +924,7 @@ void OneWireHub::printError(void)
 #endif
 };
 
-bool OneWireHub::getError(void)
+bool OneWireHub::getError(void) const
 {
     return (_error != Error::NO_ERROR);
 };

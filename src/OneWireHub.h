@@ -105,8 +105,8 @@ private:
     uint8_t buildIDTree(void);
     uint8_t buildIDTree(uint8_t position_IDBit, const mask_t slave_mask);
 
-    uint8_t getNrOfFirstBitSet(const mask_t mask);
-    uint8_t getNrOfFirstFreeIDTreeElement(void);
+    uint8_t getNrOfFirstBitSet(const mask_t mask) const;
+    uint8_t getNrOfFirstFreeIDTreeElement(void) const;
 
     bool checkReset(void);
 
@@ -117,13 +117,13 @@ private:
     bool recvAndProcessCmd();
 
     inline __attribute__((always_inline))
-    void wait(const uint16_t timeout_us);
+    void wait(const uint16_t timeout_us) const;
 
     inline __attribute__((always_inline))
     bool awaitTimeSlotAndWrite(const bool writeZero = 0);
 
     inline __attribute__((always_inline))
-    timeOW_t waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false);
+    timeOW_t waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false) const;
 
 public:
 
@@ -133,7 +133,7 @@ public:
     bool    detach(const OneWireItem &sensor);
     bool    detach(const uint8_t slave_number);
 
-    uint8_t getIndexOfNextSensorInList(const uint8_t index_start = 0);
+    uint8_t getIndexOfNextSensorInList(const uint8_t index_start = 0) const;
 
     bool poll(void);
 
@@ -154,10 +154,10 @@ public:
 
     timeOW_t waitLoopsCalibrate(void); // returns Instructions per loop
     void     waitLoops1ms(void);
-    void     waitLoopsDebug(void);
+    void     waitLoopsDebug(void) const;
 
-    void printError(void);
-    bool getError(void);
+    void printError(void) const;
+    bool getError(void) const;
     void raiseSlaveError(const uint8_t cmd = 0);
     Error clearError(void);
 
