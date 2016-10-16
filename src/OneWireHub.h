@@ -52,6 +52,33 @@ constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
     return (time_us * microsecondsToClockCycles(1) / VALUE_IPL);
 };
 
+#if OVERDRIVE_ENABLE
+static constexpr timeOW_t LOOPS_BUS_CHANGE_MAX         = timeUsToLoops(ONEWIRE_TIME_BUS_CHANGE_MAX);
+static constexpr timeOW_t LOOPS_RESET_MIN[2]           = { timeUsToLoops(ONEWIRE_TIME_RESET_MIN),          timeUsToLoops(OVERDRIVE_TIME_RESET_MIN) };
+static constexpr timeOW_t LOOPS_RESET_MAX[2]           = { timeUsToLoops(ONEWIRE_TIME_RESET_MAX),          timeUsToLoops(OVERDRIVE_TIME_RESET_MAX) };
+static constexpr timeOW_t LOOPS_RESET_TIMEOUT          = timeUsToLoops(ONEWIRE_TIME_RESET_TIMEOUT);
+static constexpr timeOW_t LOOPS_PRESENCE_SAMPLE_MIN[2] = { timeUsToLoops(ONEWIRE_TIME_PRESENCE_SAMPLE_MIN),timeUsToLoops(OVERDRIVE_TIME_PRESENCE_SAMPLE_MIN) };
+static constexpr timeOW_t LOOPS_PRESENCE_LOW_STD[2]    = { timeUsToLoops(ONEWIRE_TIME_PRESENCE_LOW_STD),   timeUsToLoops(OVERDRIVE_TIME_PRESENCE_LOW_STD) };
+static constexpr timeOW_t LOOPS_PRESENCE_LOW_MAX[2]    = { timeUsToLoops(ONEWIRE_TIME_PRESENCE_LOW_MAX),   timeUsToLoops(OVERDRIVE_TIME_PRESENCE_LOW_MAX) };
+static constexpr timeOW_t LOOPS_PRESENCE_HIGH_MAX      = timeUsToLoops(ONEWIRE_TIME_PRESENCE_HIGH_MAX);
+static constexpr timeOW_t LOOPS_SLOT_MAX[2]            = { timeUsToLoops(ONEWIRE_TIME_SLOT_MAX),           timeUsToLoops(OVERDRIVE_TIME_SLOT_MAX) };
+static constexpr timeOW_t LOOPS_READ_ONE_LOW_MAX[2]    = { timeUsToLoops(ONEWIRE_TIME_READ_ONE_LOW_MAX),   timeUsToLoops(OVERDRIVE_TIME_READ_ONE_LOW_MAX) };
+static constexpr timeOW_t LOOPS_READ_STD[2]            = { timeUsToLoops(ONEWIRE_TIME_READ_STD),           timeUsToLoops(OVERDRIVE_TIME_READ_STD) };
+static constexpr timeOW_t LOOPS_WRITE_ZERO_LOW_STD[2]  = { timeUsToLoops(ONEWIRE_TIME_WRITE_ZERO_LOW_STD), timeUsToLoops(OVERDRIVE_TIME_WRITE_ZERO_LOW_STD) };
+#else
+static constexpr timeOW_t LOOPS_BUS_CHANGE_MAX         = timeUsToLoops(ONEWIRE_TIME_BUS_CHANGE_MAX);
+static constexpr timeOW_t LOOPS_RESET_MIN[1]           = { timeUsToLoops(ONEWIRE_TIME_RESET_MIN) };
+static constexpr timeOW_t LOOPS_RESET_MAX[1]           = { timeUsToLoops(ONEWIRE_TIME_RESET_MAX) };
+static constexpr timeOW_t LOOPS_RESET_TIMEOUT          = timeUsToLoops(ONEWIRE_TIME_RESET_TIMEOUT);
+static constexpr timeOW_t LOOPS_PRESENCE_SAMPLE_MIN[1] = { timeUsToLoops(ONEWIRE_TIME_PRESENCE_SAMPLE_MIN) };
+static constexpr timeOW_t LOOPS_PRESENCE_LOW_STD[1]    = { timeUsToLoops(ONEWIRE_TIME_PRESENCE_LOW_STD) };
+static constexpr timeOW_t LOOPS_PRESENCE_LOW_MAX[1]    = { timeUsToLoops(ONEWIRE_TIME_PRESENCE_LOW_MAX) };
+static constexpr timeOW_t LOOPS_PRESENCE_HIGH_MAX      = timeUsToLoops(ONEWIRE_TIME_PRESENCE_HIGH_MAX);
+static constexpr timeOW_t LOOPS_SLOT_MAX[1]            = { timeUsToLoops(ONEWIRE_TIME_SLOT_MAX) };
+static constexpr timeOW_t LOOPS_READ_ONE_LOW_MAX[1]    = { timeUsToLoops(ONEWIRE_TIME_READ_ONE_LOW_MAX) };
+static constexpr timeOW_t LOOPS_READ_STD[1]            = { timeUsToLoops(ONEWIRE_TIME_READ_STD) };
+static constexpr timeOW_t LOOPS_WRITE_ZERO_LOW_STD[1]  = { timeUsToLoops(ONEWIRE_TIME_WRITE_ZERO_LOW_STD) };
+#endif
 
 class OneWireItem;
 
@@ -62,20 +89,12 @@ private:
     static constexpr uint8_t ONEWIRESLAVE_LIMIT                 = HUB_SLAVE_LIMIT;
     static constexpr uint8_t ONEWIRE_TREE_SIZE                  = ( 2 * ONEWIRESLAVE_LIMIT ) - 1;
 
-    static constexpr timeOW_t LOOPS_BUS_CHANGE_MAX      = timeUsToLoops(ONEWIRE_TIME_BUS_CHANGE_MAX);
-    static constexpr timeOW_t LOOPS_RESET_MIN           = timeUsToLoops(ONEWIRE_TIME_RESET_MIN);
-    static constexpr timeOW_t LOOPS_RESET_MAX           = timeUsToLoops(ONEWIRE_TIME_RESET_MAX);
-    static constexpr timeOW_t LOOPS_RESET_TIMEOUT       = timeUsToLoops(ONEWIRE_TIME_RESET_TIMEOUT);
-    static constexpr timeOW_t LOOPS_PRESENCE_SAMPLE_MIN = timeUsToLoops(ONEWIRE_TIME_PRESENCE_SAMPLE_MIN);
-    static constexpr timeOW_t LOOPS_PRESENCE_LOW_STD    = timeUsToLoops(ONEWIRE_TIME_PRESENCE_LOW_STD);
-    static constexpr timeOW_t LOOPS_PRESENCE_LOW_MAX    = timeUsToLoops(ONEWIRE_TIME_PRESENCE_LOW_MAX);
-    static constexpr timeOW_t LOOPS_PRESENCE_HIGH_MAX   = timeUsToLoops(ONEWIRE_TIME_PRESENCE_HIGH_MAX);
-    static constexpr timeOW_t LOOPS_SLOT_MAX            = timeUsToLoops(ONEWIRE_TIME_SLOT_MAX);
-    static constexpr timeOW_t LOOPS_READ_ONE_LOW_MAX    = timeUsToLoops(ONEWIRE_TIME_READ_ONE_LOW_MAX);
-    static constexpr timeOW_t LOOPS_READ_STD            = timeUsToLoops(ONEWIRE_TIME_READ_STD);
-    static constexpr timeOW_t LOOPS_WRITE_ZERO_LOW_STD  = timeUsToLoops(ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
+#if OVERDRIVE_ENABLE
+    bool od_mode;
+#else
+    static constexpr bool od_mode = false;
+#endif
 
-    static constexpr timeOW_t Testee[]      = {5, 9};
     Error   _error;
     uint8_t _error_cmd;
 
@@ -89,8 +108,6 @@ private:
 
     uint8_t           extend_timeslot_detection;
     uint8_t           skip_reset_detection;
-
-    bool              overdrive_mode;
 
     uint8_t      slave_count;
     OneWireItem *slave_list[ONEWIRESLAVE_LIMIT];  // private slave-list (use attach/detach)

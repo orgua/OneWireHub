@@ -39,6 +39,22 @@ constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =   35; //
 constexpr uint16_t ONEWIRE_TIME_VALUE_MAX            = ONEWIRE_TIME_PRESENCE_HIGH_MAX;
 constexpr uint16_t ONEWIRE_TIME_VALUE_MIN            = ONEWIRE_TIME_BUS_CHANGE_MAX;
 
+
+constexpr uint16_t OVERDRIVE_TIME_RESET_MIN          =   48; //
+constexpr uint16_t OVERDRIVE_TIME_RESET_MAX          =   80; //
+//
+
+constexpr uint16_t OVERDRIVE_TIME_PRESENCE_SAMPLE_MIN=   20;
+constexpr uint16_t OVERDRIVE_TIME_PRESENCE_LOW_STD   =    8;
+constexpr uint16_t OVERDRIVE_TIME_PRESENCE_LOW_MAX   =   32;
+//
+
+constexpr uint16_t OVERDRIVE_TIME_SLOT_MAX           =   20; //
+
+constexpr uint16_t OVERDRIVE_TIME_READ_ONE_LOW_MAX   =   16; //
+constexpr uint16_t OVERDRIVE_TIME_READ_STD           =   10; // was 30
+constexpr uint16_t OVERDRIVE_TIME_WRITE_ZERO_LOW_STD =   15; //
+
 /////////////////////////////////////////////////////
 // END OF CONFIG ////////////////////////////////////
 /////////////////////////////////////////////////////

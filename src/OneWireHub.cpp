@@ -12,6 +12,10 @@ OneWireHub::OneWireHub(const uint8_t pin)
     slave_count = 0;
     slave_selected = nullptr;
 
+#if OVERDRIVE_ENABLE
+    od_mode = false;
+#endif
+
     for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
     {
         slave_list[i] = nullptr;
@@ -251,9 +255,9 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
     if (skip_reset_detection)
     {
         skip_reset_detection = 0;
-        if (!waitLoopsWhilePinIs(LOOPS_RESET_MIN - LOOPS_SLOT_MAX - LOOPS_READ_STD, false))
+        if (!waitLoopsWhilePinIs(LOOPS_RESET_MIN[od_mode] - LOOPS_SLOT_MAX[od_mode] - LOOPS_READ_STD[od_mode], false))
         {
-            waitLoopsWhilePinIs(LOOPS_RESET_MAX, false); // showPresence() wants to start at high, so wait for it
+            waitLoopsWhilePinIs(LOOPS_RESET_MAX[od_mode], false); // showPresence() wants to start at high, so wait for it
             return true;
         }
     }
@@ -267,7 +271,7 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
         return false;
     }
 
-    const timeOW_t loops_remaining = waitLoopsWhilePinIs(LOOPS_RESET_MAX, false);
+    const timeOW_t loops_remaining = waitLoopsWhilePinIs(LOOPS_RESET_MAX[od_mode], false);
 
     // wait for bus-release by master
     if (loops_remaining == 0)
@@ -277,14 +281,15 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
     }
 
     // If the master pulled low for to short this will trigger an error
-    if ((LOOPS_RESET_MAX - LOOPS_RESET_MIN) < loops_remaining)
+    if ((LOOPS_RESET_MAX[od_mode] - LOOPS_RESET_MIN[od_mode]) < loops_remaining)
     {
         //_error = Error::VERY_SHORT_RESET; // TODO: activate again, like the error above, errorhandling is mature enough now
         return false;
     }
 
-    overdrive_mode = false; // normal reset detected, so leave OD-Mode
-
+#if OVERDRIVE_ENABLE
+    od_mode = false; // normal reset detected, so leave OD-Mode
+#endif
     return true;
 }
 
@@ -296,18 +301,18 @@ bool OneWireHub::showPresence(void)
 #endif
 
     // Master will delay it's "Presence" check (bus-read)  after the reset
-    waitLoopsWhilePinIs(LOOPS_PRESENCE_SAMPLE_MIN, true); // no pinCheck demanded, but this additional check can cut waitTime
+    waitLoopsWhilePinIs(LOOPS_PRESENCE_SAMPLE_MIN[od_mode], true); // no pinCheck demanded, but this additional check can cut waitTime
 
     // pull the bus low and hold it some time
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);    // drive output low
 
-    wait(LOOPS_PRESENCE_LOW_STD); // stays till the end, because it drives the bus los itself
+    wait(LOOPS_PRESENCE_LOW_STD[od_mode]); // stays till the end, because it drives the bus los itself
 
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);     // allow it to float
 
     // When the master or other slaves release the bus within a given time everything is fine
-    if (!waitLoopsWhilePinIs((LOOPS_PRESENCE_LOW_MAX - LOOPS_PRESENCE_LOW_STD), false))
+    if (!waitLoopsWhilePinIs((LOOPS_PRESENCE_LOW_MAX[od_mode] - LOOPS_PRESENCE_LOW_STD[od_mode]), false))
     {
         _error = Error::PRESENCE_LOW_ON_LINE;
         return false;
@@ -405,7 +410,9 @@ bool OneWireHub::recvAndProcessCmd(void)
             return true; // always trigger a re-init after search
 
         case 0x69: // overdrive MATCH ROM
-            overdrive_mode = true;
+#if OVERDRIVE_ENABLE
+            od_mode = true;
+#endif
         case 0x55: // MATCH ROM - Choose/Select ROM
             recv(address, 8);
             if (_error != Error::NO_ERROR)  return false;
@@ -452,7 +459,9 @@ bool OneWireHub::recvAndProcessCmd(void)
             return !(getError());
 
         case 0x3C: // overdrive SKIP ROM
-            overdrive_mode = true;
+#if OVERDRIVE_ENABLE
+            od_mode = true;
+#endif
         case 0xCC: // SKIP ROM
             // NOTE: If more than one slave is present on the bus,
             // and a read command is issued following the Skip ROM command,
@@ -561,11 +570,11 @@ bool OneWireHub::sendBit(const bool value)
         return false; // timeslot violation
     }
 
-    if (value) waitLoopsWhilePinIs(LOOPS_READ_ONE_LOW_MAX, false); // no pinCheck demanded, but this additional check can cut waitTime
+    if (value) waitLoopsWhilePinIs(LOOPS_READ_ONE_LOW_MAX[od_mode], false); // no pinCheck demanded, but this additional check can cut waitTime
     else
     {
         // if we wait for release we could detect faulty writing slots --> pedantic Mode not needed for now
-        waitLoopsWhilePinIs(LOOPS_WRITE_ZERO_LOW_STD, false);
+        waitLoopsWhilePinIs(LOOPS_WRITE_ZERO_LOW_STD[od_mode], false);
         DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
     }
 
@@ -649,7 +658,7 @@ bool OneWireHub::recvBit(void)
         return 0;
     }
 
-    waitLoopsWhilePinIs(LOOPS_READ_STD, false); // no pinCheck demanded, but this additional check can cut waitTime
+    waitLoopsWhilePinIs(LOOPS_READ_STD[od_mode], false); // no pinCheck demanded, but this additional check can cut waitTime
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask); // TODO: should not be needed
 
     return DIRECT_READ(pin_baseReg, pin_bitMask);
@@ -685,7 +694,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     //While bus is low, retry until HIGH, if waitLoopsWhilePinIs() is to slow switch to old code
-    if (!waitLoopsWhilePinIs(LOOPS_SLOT_MAX,false))
+    if (!waitLoopsWhilePinIs(LOOPS_SLOT_MAX[od_mode],false))
     {
         if (extend_timeslot_detection == 2)
         {
@@ -814,27 +823,27 @@ void OneWireHub::waitLoopsDebug(void) const
     Serial.print("bus change : \t");
     Serial.println(LOOPS_BUS_CHANGE_MAX);
     Serial.print("reset min : \t");
-    Serial.println(LOOPS_RESET_MIN);
+    Serial.println(LOOPS_RESET_MIN[od_mode]);
     Serial.print("reset max : \t");
-    Serial.println(LOOPS_RESET_MAX);
+    Serial.println(LOOPS_RESET_MAX[od_mode]);
     Serial.print("reset tout : \t");
     Serial.println(LOOPS_RESET_TIMEOUT);
     Serial.print("presence min : \t");
-    Serial.println(LOOPS_PRESENCE_SAMPLE_MIN);
+    Serial.println(LOOPS_PRESENCE_SAMPLE_MIN[od_mode]);
     Serial.print("presence low : \t");
-    Serial.println(LOOPS_PRESENCE_LOW_STD);
+    Serial.println(LOOPS_PRESENCE_LOW_STD[od_mode]);
     Serial.print("pres low max : \t");
-    Serial.println(LOOPS_PRESENCE_LOW_MAX);
+    Serial.println(LOOPS_PRESENCE_LOW_MAX[od_mode]);
     Serial.print("pres hi max : \t");
     Serial.println(LOOPS_PRESENCE_HIGH_MAX);
     Serial.print("slot max : \t");
-    Serial.println(LOOPS_SLOT_MAX);
+    Serial.println(LOOPS_SLOT_MAX[od_mode]);
     Serial.print("read1low : \t");
-    Serial.println(LOOPS_READ_ONE_LOW_MAX);
+    Serial.println(LOOPS_READ_ONE_LOW_MAX[od_mode]);
     Serial.print("read std : \t");
-    Serial.println(LOOPS_READ_STD);
+    Serial.println(LOOPS_READ_STD[od_mode]);
     Serial.print("write zero : \t");
-    Serial.println(LOOPS_WRITE_ZERO_LOW_STD);
+    Serial.println(LOOPS_WRITE_ZERO_LOW_STD[od_mode]);
     Serial.flush();
 };
 
