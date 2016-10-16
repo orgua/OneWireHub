@@ -264,7 +264,15 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
         skip_reset_detection = 0;
         if (!waitLoopsWhilePinIs(LOOPS_RESET_MIN[od_mode] - LOOPS_SLOT_MAX[od_mode] - LOOPS_READ_STD[od_mode], false))
         {
-            waitLoopsWhilePinIs(LOOPS_RESET_MAX[od_mode], false); // showPresence() wants to start at high, so wait for it
+#if OVERDRIVE_ENABLE
+            const timeOW_t loops_remaining = waitLoopsWhilePinIs(LOOPS_RESET_MAX[0], false); // showPresence() wants to start at high, so wait for it
+            if (od_mode && ((LOOPS_RESET_MAX[0] - LOOPS_RESET_MIN[od_mode]) > loops_remaining))
+            {
+                od_mode = false; // normal reset detected, so leave OD-Mode
+            };
+#else
+            waitLoopsWhilePinIs(LOOPS_RESET_MAX[0], false); // showPresence() wants to start at high, so wait for it
+#endif
             return true;
         }
     }
@@ -519,6 +527,10 @@ bool OneWireHub::recvAndProcessCmd(void)
                 };
             }
             return true;
+
+        case 0xEC:
+            // TODO: Alarm search command, respond if flag is set
+            // is like search-rom, but only slaves with triggered alarm will appear
 
         case 0xA5: // RESUME COMMAND
             // TODO: add function to fully support the ds2432
