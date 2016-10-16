@@ -233,9 +233,7 @@ bool OneWireHub::poll(void)
         if (!checkReset())     return false;
 
         // Reset is complete, tell the master we are present
-        digitalWrite(GPIO_DEBUG_PIN,HIGH);
         if (!showPresence())        return false;
-        digitalWrite(GPIO_DEBUG_PIN,LOW);
 
         //Now that the master should know we are here, we will get a command from the bus
         if (!recvAndProcessCmd())   return false;
@@ -293,6 +291,10 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
 
 bool OneWireHub::showPresence(void)
 {
+#if USE_GPIO_DEBUG
+    DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+#endif
+
     // Master will delay it's "Presence" check (bus-read)  after the reset
     waitLoopsWhilePinIs(LOOPS_PRESENCE_SAMPLE_MIN, true); // no pinCheck demanded, but this additional check can cut waitTime
 
@@ -300,7 +302,7 @@ bool OneWireHub::showPresence(void)
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);    // drive output low
 
-    waitLoopsWhilePinIs(LOOPS_PRESENCE_LOW_STD,false); // stays till the end, because it drives the bus los itself
+    wait(LOOPS_PRESENCE_LOW_STD); // stays till the end, because it drives the bus los itself
 
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);     // allow it to float
 
@@ -310,6 +312,10 @@ bool OneWireHub::showPresence(void)
         _error = Error::PRESENCE_LOW_ON_LINE;
         return false;
     }
+
+#if USE_GPIO_DEBUG
+    DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+#endif
 
     extend_timeslot_detection = 1; // DS9490R takes 7-9 ms after presence-detection to start with timeslots
     return true;
@@ -652,6 +658,17 @@ bool OneWireHub::recvBit(void)
 void OneWireHub::wait(const uint16_t timeout_us) const
 {
     timeOW_t loops = timeUsToLoops(timeout_us);
+    bool state = false;
+    while (loops)
+    {
+        loops = waitLoopsWhilePinIs(loops,state);
+        state = !state;
+    };
+};
+
+void OneWireHub::wait(const timeOW_t loops_wait) const
+{
+    timeOW_t loops = loops_wait;
     bool state = false;
     while (loops)
     {
