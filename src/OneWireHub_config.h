@@ -1,5 +1,5 @@
-#ifndef ONEWIREHUB_ONEWIREHUB_CONFIG_H_H
-#define ONEWIREHUB_ONEWIREHUB_CONFIG_H_H
+#ifndef ONEWIREHUB_CONFIG_H_H
+#define ONEWIREHUB_CONFIG_H_H
 
 /////////////////////////////////////////////////////
 // CONFIG ///////////////////////////////////////////
@@ -43,4 +43,4 @@ constexpr uint16_t ONEWIRE_TIME_VALUE_MIN            = ONEWIRE_TIME_BUS_CHANGE_M
 // END OF CONFIG ////////////////////////////////////
 /////////////////////////////////////////////////////
 
-#endif //ONEWIREHUB_ONEWIREHUB_CONFIG_H_H
+#endif //ONEWIREHUB_CONFIG_H_H

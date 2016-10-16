@@ -4,6 +4,8 @@
  *      --> read value per serial-com and write it to /src/platform.h to YOUR specific architecture
  *          >>>>  constexpr uint8_t VALUE_IPL {0}; // instructions per loop
  *
+ *      --> alternative: activate gpio-debug and measure 1ms-high-state after calibration, adapt VALUE_IPL accordingly
+ *
  *      --> test it with a normal sensor-sketch (like ds18b20_thermometer.ini)
  *
  *      --> if it works please make a pullrequest or open an issue to report your determined value
