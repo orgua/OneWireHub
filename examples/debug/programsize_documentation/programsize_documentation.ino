@@ -8,9 +8,10 @@
  *    4222 // 212 bytes without serial
  *    3856 // 172 bytes just 1 instead of 3 ds18b20
  *
- *    5150 // 181 bytes switch to branch with automatic timing calibration
+ *    5150 // 181 bytes switch to old branch with automatic timing calibration
  *
- *    4504 // 301 bytes switch to branch with static calibration
+ *    4504 // 301 bytes switch to new branch with static calibration
+ *    4552 // 301 bytes get rid of wait() and delayMicroseconds()
  */
 
 #include "OneWireHub.h"
