@@ -75,6 +75,7 @@ private:
     static constexpr timeOW_t LOOPS_READ_STD            = timeUsToLoops(ONEWIRE_TIME_READ_STD);
     static constexpr timeOW_t LOOPS_WRITE_ZERO_LOW_STD  = timeUsToLoops(ONEWIRE_TIME_WRITE_ZERO_LOW_STD);
 
+    static constexpr timeOW_t Testee[]      = {5, 9};
     Error   _error;
     uint8_t _error_cmd;
 
@@ -117,6 +118,7 @@ private:
     bool recvAndProcessCmd();
 
     void wait(const uint16_t timeout_us) const;
+    void wait(const timeOW_t loops_wait) const;
 
     inline __attribute__((always_inline))
     bool awaitTimeSlotAndWrite(const bool writeZero = 0);
