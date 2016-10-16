@@ -35,7 +35,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
    - i.e. use of constexpr instead of #define for better compiler-messages
 - hardware-dependencies are combined in "platform.h", synced with [onewire-lib](https://github.com/PaulStoffregen/OneWire)
    - extra supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822 (...)
-   - testest architectures: atmega328, teensy3.2
+   - tested architectures: atmega328, teensy3.2
    - for portability and tests the hub can even be compiled on a PC with the supplied mock-up functions
    - at the moment the lib relies sole on the micros()-fn for timing, no direct access to interrupt or timers
 - Serial debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
@@ -46,8 +46,10 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
-- debug-pin shows state by issuing high-states - see explanation in "features"
 - offline calibration by watching the bus (examples/debug/calibrate_by_bus_timing)
+   - branch for online calibration was abandoned because it took to much resources (DS18B20-Sketch compiled to 8434 & 482 bytes instead of 7026 & 426 bytes now) 
+- cleaned up timing-fn (no guessing, no micros(), no delayMicroseconds())
+- debug-pin shows state by issuing high-states - see explanation in "features"
 - teensy3.2 tested: cleaned warnings, fixed port access, cleaned examples
 - sensors with emulated memory use memset and static_asserts to secure implementation
 - fix and clean pin access, fix a portability issue (time_t)
@@ -100,4 +102,4 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - original pieces seem to be adopted from [OneWireSlave](http://robocraft.ru/blog/arduino/302.html)
 - further development was done in [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire) 
 - first implementation of the [OneWireHub](https://github.com/Shagrat2/OneWireHub) by Shagrat2
-- the current state of code has the concepts in common, but the codebase is a total rewrite
+- the current code has just the concepts in common, but the codebase is a total rewrite

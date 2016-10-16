@@ -653,7 +653,7 @@ bool OneWireHub::recvBit(void)
 
 #define USE_DELAY 1
 
-void OneWireHub::wait(const uint16_t timeout_us) const
+void OneWireHub::wait(const uint16_t timeout_us) const // TODO: can be done better now
 {
 #if USE_DELAY
     delayMicroseconds(timeout_us);
@@ -720,6 +720,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 
 #else
 
+// TODO: CLEANUP
 #define TIMESLOT_WAIT_RETRY_COUNT  static_cast<uint16_t>(microsecondsToClockCycles(135)/8)   /// :11 is a specif value for 8bit-atmega, still to determine
 bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 {
