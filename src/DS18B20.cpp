@@ -64,9 +64,6 @@ bool DS18B20::duty(OneWireHub *hub)
             //  read trim1                0x93
             //  copy trim1                0x94
             //  write trim1               0x95
-        case 0xEC:
-            // TODO: Alarm search command, respond if flag is set
-            break;
 
         default:
             hub->raiseSlaveError(cmd);
