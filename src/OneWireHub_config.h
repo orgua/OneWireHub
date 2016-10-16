@@ -7,7 +7,7 @@
 
 // INFO: had to go with a define because some compilers use constexpr as simple const --> massive problems
 #define HUB_SLAVE_LIMIT     8 // set the limit of the hub HERE
-#define OVERDRIVE_ENABLE    0 // support overdrive for the slaves
+#define OVERDRIVE_ENABLE    1 // support overdrive for the slaves
 
 #define USE_SERIAL_DEBUG    0 // give debug messages when printError() is called
 #define USE_GPIO_DEBUG      1
@@ -33,13 +33,10 @@ constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =  135; // should be 120, w
 
 // read and write from the viewpoint of the slave!!!!
 constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MAX     =   60; //
-constexpr uint16_t ONEWIRE_TIME_READ_STD             =   20; // was 30
-constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =   35; //
+constexpr uint16_t ONEWIRE_TIME_READ_STD             =   20; // was 30, should be 15
+constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =   30; //
 
-constexpr uint16_t ONEWIRE_TIME_VALUE_MAX            = ONEWIRE_TIME_PRESENCE_HIGH_MAX;
-constexpr uint16_t ONEWIRE_TIME_VALUE_MIN            = ONEWIRE_TIME_BUS_CHANGE_MAX;
-
-
+// OVERDRIVE
 constexpr uint16_t OVERDRIVE_TIME_RESET_MIN          =   48; //
 constexpr uint16_t OVERDRIVE_TIME_RESET_MAX          =   80; //
 //
@@ -53,7 +50,15 @@ constexpr uint16_t OVERDRIVE_TIME_SLOT_MAX           =   20; //
 
 constexpr uint16_t OVERDRIVE_TIME_READ_ONE_LOW_MAX   =   16; //
 constexpr uint16_t OVERDRIVE_TIME_READ_STD           =   10; // was 30
-constexpr uint16_t OVERDRIVE_TIME_WRITE_ZERO_LOW_STD =   15; //
+constexpr uint16_t OVERDRIVE_TIME_WRITE_ZERO_LOW_STD =   13; //
+
+// VALUES FOR STATIC ASSERTS
+constexpr uint16_t ONEWIRE_TIME_VALUE_MAX            = ONEWIRE_TIME_PRESENCE_HIGH_MAX;
+#if OVERDRIVE_ENABLE
+constexpr uint16_t ONEWIRE_TIME_VALUE_MIN            = OVERDRIVE_TIME_PRESENCE_LOW_STD;
+#else
+constexpr uint16_t ONEWIRE_TIME_VALUE_MIN            = ONEWIRE_TIME_BUS_CHANGE_MAX;
+#endif
 
 /////////////////////////////////////////////////////
 // END OF CONFIG ////////////////////////////////////
