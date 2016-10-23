@@ -794,6 +794,7 @@ void OneWireHub::printError(void)
      else if (_error == Error::INCORRECT_SLAVE_USAGE)      Serial.print("slave was used in incorrect way");
      else if (_error == Error::TRIED_INCORRECT_WRITE)      Serial.print("tried to write in read-slot");
      else if (_error == Error::FIRST_TIMESLOT_TIMEOUT)     Serial.print("found no timeslot after reset / presence (is OK)");
+     else if (_error == Error::FIRST_BIT_OF_BYTE_TIMEOUT)  Serial.print("first bit of byte timeout");
 
     if ((_error == Error::INCORRECT_ONEWIRE_CMD)||(_error == Error::INCORRECT_SLAVE_USAGE))
     {
