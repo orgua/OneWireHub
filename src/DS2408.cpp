@@ -25,11 +25,11 @@ bool DS2408::duty(OneWireHub *hub)
         case 0xF0:      // Read PIO Registers
             targetAddress = hub->recvAndCRC16(crc);
             if (hub->getError())  return false;
-            if(targetAddress != 0x88) return false; //TODO: implement reading from specified address
+            if(targetAddress < 0x88 || targetAddress > 0x8F) return false;
             hub->recvAndCRC16(crc);
             if (hub->getError())  return false;
 
-            for (uint8_t count = 0; count < 8; ++count)
+            for (uint8_t count = targetAddress - 0x88; count < 8; ++count)
             {
                 crc = hub->sendAndCRC16(memory.registers[count], crc);
                 if (hub->getError()) return false;
@@ -48,6 +48,7 @@ bool DS2408::duty(OneWireHub *hub)
             memory.registers[DS2408_PIO_OUTPUT_REG] = data;
             memory.registers[DS2408_PIO_LOGIC_REG] = memory.registers[DS2408_PIO_OUTPUT_REG];
             hub->send(0xAA);
+            if (hub->getError())  return false;
             hub->send(memory.registers[DS2408_PIO_OUTPUT_REG]);
             break;
 
