@@ -9,7 +9,7 @@ DS2450::DS2450(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     if (mem_size > 0x1C) memory[0x1C] = 0x40;
 };
 
-bool DS2450::duty(OneWireHub *hub)
+void DS2450::duty(OneWireHub *hub)
 {
     uint16_t memory_address;
     //uint16_t memory_address_start; // needed when fully implemented
@@ -17,7 +17,7 @@ bool DS2450::duty(OneWireHub *hub)
     uint16_t crc = 0;
 
     uint8_t cmd = hub->recv();
-    if (hub->getError())  return false;
+    if (hub->getError())  return;
 
     switch (cmd)
     {
@@ -26,12 +26,12 @@ bool DS2450::duty(OneWireHub *hub)
             crc = crc16(0xAA, crc); // Cmd
 
             b = hub->recv(); // Adr1
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
             crc = crc16(b, crc);
 
             b = hub->recv(); // Adr2
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
             crc = crc16(b, crc);
 
@@ -41,12 +41,12 @@ bool DS2450::duty(OneWireHub *hub)
             for (uint8_t i = 0; i < PAGE_SIZE; ++i)
             {
                 b = memory[memory_address + i];
-                if (hub->send(b)) return false;
+                if (hub->send(b)) return;
                 crc = crc16(b, crc);
             };
 
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return false;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  return;
             // TODO: not fully implemented
 
             break;
@@ -55,12 +55,12 @@ bool DS2450::duty(OneWireHub *hub)
             crc = crc16(0x55, crc); // Cmd
 
             b = hub->recv(); // Adr1
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
             crc = crc16(b, crc);
 
             b = hub->recv(); // Adr2
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
             crc = crc16(b, crc);
 
@@ -78,8 +78,8 @@ bool DS2450::duty(OneWireHub *hub)
                 crc = crc16(memory[memory_address + i], crc);
             };
 
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return false;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  return;
             // TODO: write back data if wanted, till the end of register
 
             break;
@@ -87,22 +87,20 @@ bool DS2450::duty(OneWireHub *hub)
         case 0x3C: // convert, starts adc
             crc = crc16(0x3C, crc); // Cmd
             crc = crc16(hub->recv(), crc); // input select mask, not important
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             b = hub->recv(); // read out control byte
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             crc = crc16(b, crc);
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return false;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  return;
 
-            if (hub->sendBit(false)) return false; // still converting....
-            if (hub->sendBit(true))  return false; // finished conversion
+            if (hub->sendBit(false)) return; // still converting....
+            if (hub->sendBit(true))  return; // finished conversion
             break;
 
         default:
             hub->raiseSlaveError(cmd);
     };
-
-    return !(hub->getError());
 };
 
 bool DS2450::setPotentiometer(const uint16_t p1, const uint16_t p2, const uint16_t p3, const uint16_t p4)

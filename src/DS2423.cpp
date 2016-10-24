@@ -5,7 +5,7 @@ DS2423::DS2423(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     // empty
 };
 
-bool DS2423::duty(OneWireHub *hub)
+void DS2423::duty(OneWireHub *hub)
 {
     uint16_t memory_address;
     //uint16_t memory_address_start; // not used atm, but maybe later
@@ -13,7 +13,7 @@ bool DS2423::duty(OneWireHub *hub)
     uint16_t crc = 0;
 
     uint8_t cmd = hub->recvAndCRC16(crc);
-    if (hub->getError())  return false;
+    if (hub->getError())  return;
 
     switch (cmd)
     {
@@ -21,35 +21,33 @@ bool DS2423::duty(OneWireHub *hub)
         case 0xA5:
 
             reinterpret_cast<uint8_t *>(&memory_address)[0] = hub->recvAndCRC16(crc); // Adr1
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             reinterpret_cast<uint8_t *>(&memory_address)[1] = hub->recvAndCRC16(crc);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             //memory_address_start = memory_address;
 
             // data
             for (int8_t i = 0; i < 32; ++i) // TODO: check for (memory_address + 32) < sizeof() before running out of allowed range
             {
                 crc = hub->sendAndCRC16(0xff,crc);
-                if (hub->getError())  return false; // directly quit when master stops, omit following data
+                if (hub->getError())  return; // directly quit when master stops, omit following data
             }
 
             // 4x cnt & 4x zero
             for (uint8_t i = 0; i < 8; ++i)
             {
                 crc = hub->sendAndCRC16(0x00, crc);
-                if (hub->getError())  return false; // directly quit when master stops, omit following data
+                if (hub->getError())  return; // directly quit when master stops, omit following data
             }
 
             // crc
             crc = ~crc;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) break;
             hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
             break;
 
         default:
             hub->raiseSlaveError(cmd);
     };
-
-    return !(hub->getError());
 };
 

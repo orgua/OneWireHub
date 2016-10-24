@@ -22,10 +22,10 @@ void DS18B20::updateCRC()
     scratchpad[8] = crc8(scratchpad, 8);
 };
 
-bool DS18B20::duty(OneWireHub *hub)
+void DS18B20::duty(OneWireHub *hub)
 {
     const uint8_t cmd = hub->recv();
-    if (hub->getError())  return false;
+    if (hub->getError())  return;
 
     switch (cmd)
     {
@@ -36,7 +36,7 @@ bool DS18B20::duty(OneWireHub *hub)
         case 0x4E: // WRITE SCRATCHPAD
             // write 3 byte of data to scratchpad[1:3]
             hub->recv(&scratchpad[2], 3);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             updateCRC();
             break;
 
@@ -68,8 +68,6 @@ bool DS18B20::duty(OneWireHub *hub)
         default:
             hub->raiseSlaveError(cmd);
     };
-
-    return !(hub->getError());
 };
 
 
@@ -82,7 +80,6 @@ void DS18B20::setTemp(const int16_t temperature_degC) // could be int8_t, [-55;+
 {
     setTempRaw(temperature_degC * static_cast<int8_t>(16));
 };
-
 
 void DS18B20::setTempRaw(const int16_t value_raw)
 {

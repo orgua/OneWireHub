@@ -13,7 +13,7 @@ DS2431::DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     checkMemory();
 };
 
-bool DS2431::duty(OneWireHub *hub)
+void DS2431::duty(OneWireHub *hub)
 {
     static uint16_t reg_TA = 0; // contains TA1, TA2
     static uint8_t  reg_ES = 0;  // E/S register
@@ -22,7 +22,7 @@ bool DS2431::duty(OneWireHub *hub)
     uint8_t  page_offset = 0;
 
     uint8_t cmd = hub->recv();
-    if (hub->getError())  return false;
+    if (hub->getError())  return;
     uint8_t  b;
     switch (cmd)
     {
@@ -31,14 +31,14 @@ bool DS2431::duty(OneWireHub *hub)
             crc = crc16(0x0F, 0x00);
             // Adr1
             b = hub->recv();
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
             reg_ES = b & uint8_t(0x00000111); // TODO: when not zero we should issue reg_ES |= 0b00100000; (datasheet not clear)
             crc = crc16(b, crc);
 
             // Adr2
             b = hub->recv();
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
             crc = crc16(b, crc);
 
@@ -78,11 +78,11 @@ bool DS2431::duty(OneWireHub *hub)
                 };
             };
 
-            if (reg_ES & 0b00100000) return false; // only partial filling of bytes
+            if (reg_ES & 0b00100000) return; // only partial filling of bytes
 
             // CRC-16
             crc = ~crc; // normally crc16 is sent ~inverted
-            if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0])))  return false;
+            if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0])))  return;
             hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[1]));
 
             break;
@@ -91,27 +91,27 @@ bool DS2431::duty(OneWireHub *hub)
         case 0xAA:
             crc = crc16(0xAA, 0);
             // Write-to address
-            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[0])) return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[0])) return;
             crc = crc16(reinterpret_cast<uint8_t *>(&reg_TA)[0], crc);
 
-            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[1])) return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[1])) return;
             crc = crc16(reinterpret_cast<uint8_t *>(&reg_TA)[1], crc);
 
-            if (hub->send(reg_ES)) return false;
+            if (hub->send(reg_ES)) return;
             crc = crc16(reg_ES, crc);
 
             //Scratchpad content
             page_offset = reinterpret_cast<uint8_t *>(&reg_TA)[0] & uint8_t(0x03);
             for (uint8_t i = page_offset; i < (reg_ES & 0x03)+1; ++i)
             {
-                if (hub->send(scratchpad[i])) return false; // master can break, but gets no crc afterwards
+                if (hub->send(scratchpad[i])) return; // master can break, but gets no crc afterwards
                 crc = crc16(scratchpad[i], crc);
             };
             
             // CRC-16
             crc = ~crc;
-            if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0])))  return false;
-            if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[1])))  return false;
+            if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0])))  return;
+            if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[1])))  return;
 
             // send 1s when read is complete, is passive, so do nothing
             break;
@@ -120,17 +120,17 @@ bool DS2431::duty(OneWireHub *hub)
         case 0x55:
             // Adr1
             b = hub->recv();
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             if (b != reinterpret_cast<uint8_t *>(&reg_TA)[0]) break;
 
             // Adr2
             b = hub->recv();
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             if (b != reinterpret_cast<uint8_t *>(&reg_TA)[1]) break; // Write-to addresses must match
             
             // Auth code must match
             b = hub->recv();
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             if (b != reg_ES) break;
 
             if (reg_ES & 0b00100000) break; // writing failed before
@@ -158,17 +158,17 @@ bool DS2431::duty(OneWireHub *hub)
         case 0xF0:
             // Adr1
             b = hub->recv();
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
 
             // Adr2
             b = hub->recv();
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
  
             for (uint16_t index_byte = reg_TA; index_byte < sizeof(memory); ++index_byte)
             {
-                if (hub->send(memory[index_byte])) return false;
+                if (hub->send(memory[index_byte])) return;
             };
 
             // send 1s when read is complete, is passive, so do nothing here
@@ -178,7 +178,6 @@ bool DS2431::duty(OneWireHub *hub)
             hub->raiseSlaveError(cmd);
 
     };
-    return !(hub->getError());
 };
 
 bool DS2431::checkProtection(const uint8_t position)

@@ -17,33 +17,33 @@ DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     setTemp(static_cast<int8_t>(20));
 };
 
-bool DS2438::duty(OneWireHub *hub)
+void DS2438::duty(OneWireHub *hub)
 {
     uint8_t page;
 
     uint8_t cmd = hub->recv();
-    if (hub->getError())  return false;
+    if (hub->getError())  return;
 
     switch (cmd)
     {
         // reordered for better timing
         case 0xBE: // Read Scratchpad
             page = hub->recv();
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT;
 
-            if (hub->send(&memory[page * 8], 8)) return false;
-            if (hub->send(crc[page])) return false;
+            if (hub->send(&memory[page * 8], 8)) return;
+            if (hub->send(crc[page])) return;
             break;
 
         case 0x4E: // Write Scratchpad
             page = hub->recv();
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
 
             if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT; // when page out of limits --> switch to garbage-page
 
             hub->recv(&memory[page * 8], 8);
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             calcCRC(page);
 
             break;
@@ -53,7 +53,7 @@ bool DS2438::duty(OneWireHub *hub)
 
         case 0xB8: // Recall Memory
             page = hub->recv();
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT; // when page out of limits --> switch to garbage-page
             break;
 
@@ -68,8 +68,6 @@ bool DS2438::duty(OneWireHub *hub)
         default:
             hub->raiseSlaveError(cmd);
     };
-
-    return !(hub->getError());
 };
 
 void DS2438::calcCRC(const uint8_t page)
