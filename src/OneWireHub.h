@@ -84,21 +84,7 @@ private:
     // read and write from the viewpoint of the slave!!!!
     static constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MAX     =   60; //
     static constexpr uint16_t ONEWIRE_TIME_READ_STD             =   20; // was 30
-    static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =   35; //
-    // TODO: use #define to switch to overdrive mode
-
-    timeOW_t LOOPS_BUS_CHANGE_MAX;
-    timeOW_t LOOPS_RESET_MIN;
-    timeOW_t LOOPS_RESET_MAX;
-    timeOW_t LOOPS_PRESENCE_SAMPLE_MIN;
-    timeOW_t LOOPS_PRESENCE_LOW_STD;
-    timeOW_t LOOPS_PRESENCE_LOW_MAX;
-    timeOW_t LOOPS_PRESENCE_HIGH_MAX;
-    timeOW_t LOOPS_SLOT_MAX;
-    timeOW_t LOOPS_READ_ONE_LOW_MAX;
-    timeOW_t LOOPS_READ_STD;
-    timeOW_t LOOPS_WRITE_ZERO_LOW_STD;
-
+    static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =   30; //
 
     Error   _error;
     uint8_t _error_cmd;
