@@ -42,8 +42,7 @@ void DS2438::duty(OneWireHub *hub)
 
             if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT; // when page out of limits --> switch to garbage-page
 
-            hub->recv(&memory[page * 8], 8);
-            if (hub->getError())  return;
+            if (hub->recv(&memory[page * 8], 8)) return;
             calcCRC(page);
             break;
 

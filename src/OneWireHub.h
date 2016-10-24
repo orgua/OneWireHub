@@ -126,20 +126,20 @@ private:
     uint8_t getNrOfFirstBitSet(const mask_t mask) const;
     uint8_t getNrOfFirstFreeIDTreeElement(void) const;
 
-    bool checkReset(void);
+    bool checkReset(void);      // returns 1 if error occured
 
-    bool showPresence(void);
+    bool showPresence(void);    // returns 1 if error occured
 
     bool search(void);
 
-    bool recvAndProcessCmd();
+    bool recvAndProcessCmd();  // returns 1 if error occured
 
     void wait(const uint16_t timeout_us) const;
     inline __attribute__((always_inline))
     void wait(const timeOW_t loops_wait) const;
 
     inline __attribute__((always_inline))
-    bool awaitTimeSlotAndWrite(const bool writeZero = 0);
+    bool awaitTimeSlotAndWrite(const bool writeZero = 0); // returns 1 if error occured
 
     inline __attribute__((always_inline))
     timeOW_t waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false) const;
@@ -158,16 +158,16 @@ public:
 
     void extendTimeslot(void);
 
-    bool send(const uint8_t dataByte);
-    bool send(const uint8_t address[], const uint8_t data_length);
-    bool sendBit(const bool value);
+    bool send(const uint8_t dataByte);                              // returns 1 if error occured
+    bool send(const uint8_t address[], const uint8_t data_length);  // returns 1 if error occured
+    bool sendBit(const bool value);                                 // returns 1 if error occured
 
     // CRC takes ~7.4µs/byte (Atmega328P@16MHz) but is distributing the load between each bit-send to 0.9 µs/bit (see debug-crc-comparison.ino)
     // important: the final crc is expected to be inverted (crc=~crc) !!!
     uint16_t sendAndCRC16(uint8_t dataByte, uint16_t crc16);
 
     uint8_t recv(void);
-    bool    recv(uint8_t address[], const uint8_t data_length); // TODO: change send/recv to return bool TRUE on success, recv returns data per reference
+    bool    recv(uint8_t address[], const uint8_t data_length); // returns 1 if error occured
     bool    recvBit(void);
     uint8_t recvAndCRC16(uint16_t &crc16);
 
@@ -176,7 +176,7 @@ public:
     void     waitLoopsDebug(void) const;
 
     void printError(void) const;
-    bool getError(void) const;
+    bool getError(void) const; // returns 1 if error occured
     void raiseSlaveError(const uint8_t cmd = 0);
     Error clearError(void);
 

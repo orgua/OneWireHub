@@ -436,8 +436,7 @@ bool OneWireHub::recvAndProcessCmd(void)
         case 0x55: // MATCH ROM - Choose/Select ROM
             slave_selected = nullptr;
 
-            recv(address, 8);
-            if (_error != Error::NO_ERROR)  return true;
+            if (recv(address, 8))  return true;
 
             for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
             {
@@ -624,7 +623,7 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
             break;
         }
     }
-    return (bytes_received == data_length);
+    return (bytes_received != data_length);
 }
 
 uint8_t OneWireHub::recv(void)

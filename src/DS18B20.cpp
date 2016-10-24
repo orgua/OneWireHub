@@ -31,8 +31,7 @@ void DS18B20::duty(OneWireHub *hub)
     {
         case 0x4E: // WRITE SCRATCHPAD
             // write 3 byte of data to scratchpad[1:3]
-            hub->recv(&scratchpad[2], 3);
-            if (hub->getError())  return;
+            if (hub->recv(&scratchpad[2], 3)) return;
             updateCRC();
             break;
 
