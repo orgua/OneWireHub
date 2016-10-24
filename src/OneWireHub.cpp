@@ -231,16 +231,16 @@ bool OneWireHub::poll(void)
     while (1)
     {
         // this additional check prevents an infinite loop when calling this FN without sensors attached
-        if (!slave_count)           return true;
+        if (slave_count == 0)       return true;
 
         //Once reset is done, go to next step
-        if (!checkReset())     return false;
+        if (checkReset())           return false;
 
         // Reset is complete, tell the master we are present
-        if (!showPresence())        return false;
+        if (showPresence())         return false;
 
         //Now that the master should know we are here, we will get a command from the bus
-        if (!recvAndProcessCmd())   return false;
+        if (recvAndProcessCmd())    return false;
 
         // on total success we want to start again, because the next reset could only be ~125 us away
     }
@@ -273,17 +273,17 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
 #else
             waitLoopsWhilePinIs(LOOPS_RESET_MAX[0], false); // showPresence() wants to start at high, so wait for it
 #endif
-            return true;
+            return false;
         }
     }
 
-    if (!DIRECT_READ(pin_baseReg, pin_bitMask)) return false; // just leave if pin is Low, don't bother to wait, TODO: really needed?
+    if (!DIRECT_READ(pin_baseReg, pin_bitMask)) return true; // just leave if pin is Low, don't bother to wait, TODO: really needed?
 
     // wait for the bus to become low (master-controlled), since we are polling we don't know for how long it was zero
     if (!waitLoopsWhilePinIs(LOOPS_RESET_TIMEOUT, true))
     {
         //_error = Error::WAIT_RESET_TIMEOUT;
-        return false;
+        return true;
     }
 
     const timeOW_t loops_remaining = waitLoopsWhilePinIs(LOOPS_RESET_MAX[0], false);
@@ -292,7 +292,7 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
     if (loops_remaining == 0)
     {
         _error = Error::VERY_LONG_RESET;
-        return false;
+        return true;
     }
 
 #if OVERDRIVE_ENABLE
@@ -306,10 +306,10 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
     if ((LOOPS_RESET_MAX[0] - LOOPS_RESET_MIN[od_mode]) < loops_remaining)
     {
         //_error = Error::VERY_SHORT_RESET; // TODO: activate again, like the error above, errorhandling is mature enough now
-        return false;
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 
@@ -339,7 +339,7 @@ bool OneWireHub::showPresence(void)
     if (!waitLoopsWhilePinIs((LOOPS_PRESENCE_LOW_MAX[od_mode] - LOOPS_PRESENCE_LOW_STD[od_mode]), false))
     {
         _error = Error::PRESENCE_LOW_ON_LINE;
-        return false;
+        return true;
     }
 
 #if USE_GPIO_DEBUG
@@ -347,7 +347,7 @@ bool OneWireHub::showPresence(void)
 #endif
 
     extend_timeslot_detection = 1; // DS9490R takes 7-9 ms after presence-detection to start with timeslots
-    return true;
+    return false;
 }
 
 void OneWireHub::extendTimeslot(void)
@@ -419,15 +419,15 @@ bool OneWireHub::recvAndProcessCmd(void)
 
     uint8_t cmd = recv();
 
-    if (skip_reset_detection)       return true; // stay in poll()-loop and trigger another datastream-detection
-    if (_error != Error::NO_ERROR)  return false;
+    if (skip_reset_detection)       return false; // stay in poll()-loop and trigger another datastream-detection
+    if (_error != Error::NO_ERROR)  return true;
 
     switch (cmd)
     {
         case 0xF0: // Search rom
             slave_selected = nullptr;
             search();
-            return true; // always trigger a re-init after search
+            return false; // always trigger a re-init after search
 
         case 0x69: // overdrive MATCH ROM
 #if OVERDRIVE_ENABLE
@@ -437,7 +437,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             slave_selected = nullptr;
 
             recv(address, 8);
-            if (_error != Error::NO_ERROR)  return false;
+            if (_error != Error::NO_ERROR)  return true;
 
             for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
             {
@@ -462,7 +462,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 
             if (!flag)
             {
-                return false;
+                return true;
             };
 
             if (slave_selected != nullptr)
@@ -476,7 +476,7 @@ bool OneWireHub::recvAndProcessCmd(void)
                 slave_selected->duty(this);
 #endif
             };
-            return !(getError());
+            return (getError());
 
         case 0x3C: // overdrive SKIP ROM
 #if OVERDRIVE_ENABLE
@@ -508,29 +508,29 @@ bool OneWireHub::recvAndProcessCmd(void)
                 slave_selected->duty(this);
 #endif
             };
-            return !(getError());
+            return (getError());
 
         case 0x0F: // OLD READ ROM
             // only usable when there is ONE slave on the bus --> continue to current readRom
 
         case 0x33: // READ ROM
             // only usable when there is ONE slave on the bus
-            if (slave_count == 1) {
+            if (slave_count == 1)
+            {
                 slave_selected = slave_list[getIndexOfNextSensorInList()];
                 if (slave_selected != nullptr)
                 {
                     slave_selected->sendID(this);
                 };
             }
-            return true;
+            return false;
 
         case 0xEC:
             // TODO: Alarm search command, respond if flag is set
             // is like search-rom, but only slaves with triggered alarm will appear
 
         case 0xA5: // RESUME COMMAND
-            if (slave_selected == nullptr)
-                return false;
+            if (slave_selected == nullptr) return true;
 
 #if USE_GPIO_DEBUG
             digitalWrite(GPIO_DEBUG_PIN,HIGH);
@@ -539,12 +539,12 @@ bool OneWireHub::recvAndProcessCmd(void)
 #else
             slave_selected->duty(this);
 #endif
-            return !(getError());
+            return (getError());
         default: // Unknown command
             _error = Error::INCORRECT_ONEWIRE_CMD;
             _error_cmd = cmd;
     };
-    return false;
+    return true;
 };
 
 // info: check for errors after calling and break/return if possible, returns true if error is detected
