@@ -82,8 +82,7 @@ bool DS2431::duty(OneWireHub *hub)
 
             // CRC-16
             crc = ~crc; // normally crc16 is sent ~inverted
-            hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0]));
-            if (hub->getError())  return false;
+            if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0])))  return false;
             hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[1]));
 
             break;
@@ -92,39 +91,29 @@ bool DS2431::duty(OneWireHub *hub)
         case 0xAA:
             crc = crc16(0xAA, 0);
             // Write-to address
-            hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[0]);
+            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[0])) return false;
             crc = crc16(reinterpret_cast<uint8_t *>(&reg_TA)[0], crc);
-            if (hub->getError())  return false;
 
-            hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[1]);
+            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[1])) return false;
             crc = crc16(reinterpret_cast<uint8_t *>(&reg_TA)[1], crc);
-            if (hub->getError())  return false;
 
-            hub->send(reg_ES);
+            if (hub->send(reg_ES)) return false;
             crc = crc16(reg_ES, crc);
-            if (hub->getError())  return false;
 
             //Scratchpad content
             page_offset = reinterpret_cast<uint8_t *>(&reg_TA)[0] & uint8_t(0x03);
-            for (uint8_t i = page_offset; i < (reg_ES & 0x03)+1; ++i) {
-                hub->send(scratchpad[i]);
-                if (hub->getError()) return false; // master can break, but gets no crc afterwards
+            for (uint8_t i = page_offset; i < (reg_ES & 0x03)+1; ++i)
+            {
+                if (hub->send(scratchpad[i])) return false; // master can break, but gets no crc afterwards
                 crc = crc16(scratchpad[i], crc);
             };
             
             // CRC-16
             crc = ~crc;
-            hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0]));
-            if (hub->getError())  return false;
-            hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[1]));
-            if (hub->getError())  return false;
+            if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0])))  return false;
+            if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[1])))  return false;
 
-            while (1) // send 1s when read is complete
-            {
-                hub->send(255);
-                if (hub->getError()) return false;
-            };
-
+            // send 1s when read is complete, is passive, so do nothing
             break;
         
         // COPY SCRATCHPAD COMMAND
@@ -155,16 +144,12 @@ bool DS2431::duty(OneWireHub *hub)
             reg_ES |= 0b10000000;
             delayMicroseconds(10000); // writing takes so long
             hub->extendTimeslot();
-            hub->sendBit(1);
+            hub->sendBit(true);
             hub->clearError();
             hub->extendTimeslot();
-            while (1) // send 1s when alternating 1 & 0 after copy is complete
+            while (true) // send 1s when alternating 1 & 0 after copy is complete
             {
-                hub->send(0b10101010);
-                if (hub->getError())
-                {
-                    break;
-                };
+                if (hub->send(0b10101010)) break;
             };
 
             break;
@@ -183,21 +168,10 @@ bool DS2431::duty(OneWireHub *hub)
  
             for (uint16_t index_byte = reg_TA; index_byte < sizeof(memory); ++index_byte)
             {
-                hub->send(memory[index_byte]);
-                if (hub->getError())  break;
-            }
-
-            if (hub->getError())  break;
-
-            while (1) // send 1s when read is complete
-            {
-                hub->send(255);
-                if (hub->getError())
-                {
-                    break;
-                };
+                if (hub->send(memory[index_byte])) return false;
             };
 
+            // send 1s when read is complete, is passive, so do nothing here
             break;
 
         default:

@@ -36,32 +36,24 @@ bool DS2502::duty(OneWireHub *hub)
     switch (cmd)
     {
         case 0xF0: // READ MEMORY
-            hub->send(crc);
-            if (hub->getError()) break;
+            if (hub->send(crc)) break;
 
             crc = 0; // reInit CRC and send data
             for (uint16_t i = reg_TA; i < sizeof_memory; ++i)
             {
                 uint8_t j = translateRedirection(i);
-                hub->send(memory[j]);
-                if (hub->getError()) break;
+                if (hub->send(memory[j])) break; // todo: i think we can return here now
                 crc = crc8(&memory[j],1,crc);
             };
             if (hub->getError()) break;
 
-            hub->send(crc);
-            if (hub->getError()) break;
+            if (hub->send(crc)) return false;
 
-            while (1) // datasheed says we should return all 1s, send(255), till reset
-            {
-                hub->send(255);
-                if (hub->getError()) break;
-            };
+            // datasheed says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
             break;
 
         case 0xC3: // READ DATA (like 0xF0, but repeatedly till the end of page with following CRC)
-            hub->send(crc);
-            if (hub->getError()) break;
+            if (hub->send(crc)) break;
 
             while (reg_address < sizeof_memory)
             {
@@ -70,47 +62,33 @@ bool DS2502::duty(OneWireHub *hub)
                 for (uint16_t i = reg_TA; i < reg_address; ++i)
                 {
                     uint8_t j = translateRedirection(i);
-                    hub->send(memory[j]);
-                    if (hub->getError()) break;
+                    if (hub->send(memory[j])) break; // TODO: i think we can return here
                     crc = crc8(&memory[j], 1, crc);
                 };
                 if (hub->getError()) break;
 
-                hub->send(crc);
-                if (hub->getError()) break;
+                if (hub->send(crc)) break;
                 reg_TA = reg_address;
             };
 
-            while (1) // datasheed says we should return all 1s, send(255), till reset
-            {
-                hub->send(255);
-                if (hub->getError()) break;
-            };
+            // datasheed says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
             break;
 
-
         case 0xAA: // READ STATUS // TODO: nearly same code as 0xF0, but with status[] instead of memory[]
-            hub->send(crc);
-            if (hub->getError()) break;
+            if (hub->send(crc)) break;
 
             crc = 0; // reInit CRC and send data
             for (uint16_t i = reg_TA; i < sizeof(status); ++i)
             {
                 // TODO: redirection
-                hub->send(status[i]);
-                if (hub->getError()) break;
+                if (hub->send(status[i])) break;
                 crc = crc8(&status[i],1,crc);
             };
             if (hub->getError()) break;
 
-            hub->send(crc);
-            if (hub->getError()) break;
+            if (hub->send(crc))  break;
 
-            while (1) // datasheed says we should return all 1s, send(255), till reset
-            {
-                hub->send(255);
-                if (hub->getError()) break;
-            };
+            // datasheed says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
             break;
 
         case 0x0F: // WRITE MEMORY
@@ -120,8 +98,7 @@ bool DS2502::duty(OneWireHub *hub)
             if (hub->getError())  return false;
             crc = crc8(&b,1,crc);
 
-            hub->send(crc);
-            if (hub->getError())  return false;
+            if (hub->send(crc))   return false;
             hub->extendTimeslot();
 
             if (checkProtection(reg_TA)) return false;
@@ -129,8 +106,7 @@ bool DS2502::duty(OneWireHub *hub)
             reg_address = translateRedirection(reg_TA);
             memory[reg_address] &= b; // like EPROM-Mode
 
-            hub->send(memory[reg_address]);
-            if (hub->getError())  return false;
+            if (hub->send(memory[reg_address])) return false;
 
             reg_TA++;
             while (reg_TA < sizeof_memory)
@@ -139,8 +115,7 @@ bool DS2502::duty(OneWireHub *hub)
                 if (hub->getError())  return false;
                 crc = crc8(&b,1,reinterpret_cast<uint8_t *>(&reg_TA)[0]);
 
-                hub->send(crc);
-                if (hub->getError())  return false;
+                if (hub->send(crc))     return false;
                 hub->extendTimeslot();
 
                 reg_address = translateRedirection(reg_TA);
@@ -148,8 +123,7 @@ bool DS2502::duty(OneWireHub *hub)
                 {
                     memory[reg_address] &= b; // like EPROM-Mode
 
-                    hub->send(memory[reg_address]);
-                    if (hub->getError()) return false;
+                    if (hub->send(memory[reg_address])) return false;
                 };
                 reg_TA++;
             };
@@ -162,14 +136,12 @@ bool DS2502::duty(OneWireHub *hub)
             if (hub->getError())  return false;
             crc = crc8(&b,1,crc);
 
-            hub->send(crc);
-            if (hub->getError())  return false;
+            if (hub->send(crc))  return false;
             hub->extendTimeslot();
 
             status[reg_TA] &= b; // like EPROM-Mode
 
-            hub->send(status[reg_TA]);
-            if (hub->getError())  return false;
+            if (hub->send(status[reg_TA]))  return false;
 
             reg_TA++;
             while (reg_TA < sizeof(status))
@@ -178,13 +150,11 @@ bool DS2502::duty(OneWireHub *hub)
                 if (hub->getError())  return false;
                 crc = crc8(&b,1,reinterpret_cast<uint8_t *>(&reg_TA)[0]);
 
-                hub->send(crc);
-                if (hub->getError())  return false;
+                if (hub->send(crc))  return false;
                 hub->extendTimeslot();
 
                 status[reg_TA] &= b; // like EPROM-Mode
-                hub->send(status[reg_TA]);
-                if (hub->getError()) return false;
+                if (hub->send(status[reg_TA])) return false;
 
                 reg_TA++;
             };

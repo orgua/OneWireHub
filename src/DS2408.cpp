@@ -35,10 +35,8 @@ bool DS2408::duty(OneWireHub *hub)
                 if (hub->getError()) return false;
             }
             crc = ~crc; // most important step, easy to miss....
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
-            if (hub->getError())  return false;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-            if (hub->getError())  return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return false;
             // after memory readout this chip sends logic 1s, which is the same as staying passive
             break;
 
@@ -53,12 +51,10 @@ bool DS2408::duty(OneWireHub *hub)
                 memory[DS2408_PIO_ACTIVITY_REG] |= data ^ memory[DS2408_PIO_LOGIC_REG];
                 memory[DS2408_PIO_OUTPUT_REG]   = data;
                 memory[DS2408_PIO_LOGIC_REG]    = data;
-                hub->send(0xAA);
-                if (hub->getError()) return false;
+                if (hub->send(0xAA)) return false;
                 for (uint8_t count = 0; count < 4; ++count) // TODO: i think this is right, datasheet says: DS2408 samples the status of the PIO pins, as shown in Figure 9, and sends it to the master
                 {
-                    hub->send(memory[count]);
-                    if (hub->getError()) return false;
+                    if (hub->send(memory[count])) return false;
                 }
             }
 
@@ -73,18 +69,15 @@ bool DS2408::duty(OneWireHub *hub)
                     if (hub->getError()) return false;
                 }
                 crc = ~crc; // most important step, easy to miss....
-                hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
-                if (hub->getError()) return false;
-                hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-                if (hub->getError()) return false;
+                if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return false;
+                if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return false;
             };
 
         case 0xC3:      // reset activity latches
             memory[DS2408_PIO_ACTIVITY_REG] = 0x00;
             while(1)
             {
-                hub->send(0xAA);
-                if (hub->getError()) return false;
+                if (hub->send(0xAA)) return false;
             };
 
         case 0xCC:      // write conditional search register

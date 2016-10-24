@@ -14,6 +14,8 @@
  *    4542 // 301 bytes get rid of wait() and delayMicroseconds()
  *    4430 // 301 bytes get rid of micros()
  *    4388 // 301 bytes clean awaitTimeSlotAndWrite() and debug-pin-access
+ *    4404 // 300 bytes add resume-cmd
+ *    4364 // 300 bytes return true on error for send(), awaitTS(), sendBit()
  *
  */
 
