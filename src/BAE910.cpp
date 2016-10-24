@@ -47,8 +47,8 @@ void BAE910::duty(OneWireHub *hub)
             // crc
             crc = ~crc;
             if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-            return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
+            break;
 
         case 0x12: // READ TYPE
             crc = hub->sendAndCRC16(BAE910_DEVICE_TYPE,   crc);
@@ -58,8 +58,8 @@ void BAE910::duty(OneWireHub *hub)
             // crc
             crc = ~crc;
             if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-            return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
+            break;
 
         case 0x13: // EXTENDED COMMAND
             ecmd = hub->recvAndCRC16(crc);
@@ -82,7 +82,7 @@ void BAE910::duty(OneWireHub *hub)
             if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
             // verify answer from master, then execute command
             if (hub->recv() == 0xBC)    extCommand(ecmd, len);
-            return;
+            break;
 
         case 0x14: // READ MEMORY
             ta1 = hub->recvAndCRC16(crc);
@@ -106,8 +106,8 @@ void BAE910::duty(OneWireHub *hub)
             // crc
             crc = ~crc;
             if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-            return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
+            break;
 
         case 0x15: // WRITE MEMORY
             ta1 = hub->recvAndCRC16(crc);
@@ -140,7 +140,7 @@ void BAE910::duty(OneWireHub *hub)
                     memory.bytes[0x7F - ta1 - len] = scratchpad[len];
                 };
             };
-            return;
+            break;
 
         case 0x16: // ERASE EEPROM PAGE (not needed/implemented yet)
 

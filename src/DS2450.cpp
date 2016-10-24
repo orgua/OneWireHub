@@ -45,10 +45,9 @@ void DS2450::duty(OneWireHub *hub)
                 crc = crc16(b, crc);
             };
 
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
             // TODO: not fully implemented
-
             break;
 
         case 0x55: // write memory (only page 1&2 allowed)
@@ -81,7 +80,6 @@ void DS2450::duty(OneWireHub *hub)
             if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return;
             if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  return;
             // TODO: write back data if wanted, till the end of register
-
             break;
 
         case 0x3C: // convert, starts adc
