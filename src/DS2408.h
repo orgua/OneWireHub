@@ -1,22 +1,19 @@
 // 0x29  8-Channel Addressable Switch @@@
-// Not finished
+// basic operation works
 
 #ifndef ONEWIRE_DS2408_H
 #define ONEWIRE_DS2408_H
 
 #include "OneWireItem.h"
 
-
-typedef union {
-    uint8_t registers[8];
-} mDS2408; // overlay with memory_array
-
-
 class DS2408 : public OneWireItem
 {
 private:
 
     // Register Indexes
+    static constexpr uint8_t  DS2408_OFFSET                 = 0x88;
+    static constexpr uint8_t  DS2408_MEMSIZE                = 8;
+
     static constexpr uint8_t  DS2408_PIO_LOGIC_REG          = 0; // 0x88 - Current state
     static constexpr uint8_t  DS2408_PIO_OUTPUT_REG         = 1; // 0x89 - Last write, latch state register
     static constexpr uint8_t  DS2408_PIO_ACTIVITY_REG       = 2; // 0x8A - State Change Activity
@@ -26,7 +23,7 @@ private:
     static constexpr uint8_t  DS2408_RD_ABOVE_ALWAYS_FF_8E  = 6; // 0x8E - these bytes give always 0xFF
     static constexpr uint8_t  DS2408_RD_ABOVE_ALWAYS_FF_8F  = 7; // 0x8F - these bytes give always 0xFF
 
-    mDS2408 memory;
+    uint8_t memory[DS2408_MEMSIZE];
 
 public:
     static constexpr uint8_t family_code = 0x29;
@@ -36,6 +33,7 @@ public:
     bool duty(OneWireHub *hub);
 
     bool getPinState(uint8_t pinNumber);
+    uint8_t getPinStates(void);
     void setPinState(uint8_t pinNumber, bool value);
 };
 

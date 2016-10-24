@@ -3,6 +3,15 @@
  *
  *    Tested with:
  *    - https://github.com/PaulStoffregen/OneWire on the other side as Master
+ *    - DS9490R-Master, atmega328@16MHz as Slave
+ *    - BeagleBoneBlack running Linux 4.4.19. 1wire slave was accessed via original drivers:
+ *
+ *         #set all pins to 1 (xFF)
+ *         echo -e '\xFF' |dd of=/sys/bus/w1/devices/29-010000000000/output bs=1 count=1
+ *
+ *         #get values for all pins
+ *         dd if=/sys/bus/w1/devices/29-010000000000/state bs=1 count=1 | hexdump
+ *
  */
 
 #include "OneWireHub.h"
@@ -16,7 +25,7 @@ auto ds2408 = DS2408( 0x29, 0x0D, 0x02, 0x04, 0x00, 0x08, 0x0A );
 
 bool blinking()
 {
-    const  uint32_t interval    = 500;          // interval at which to blink (milliseconds)
+    const  uint32_t interval    = 1000;          // interval at which to blink (milliseconds)
     static uint32_t nextMillis  = millis();     // will store next time LED will updated
 
     if (millis() > nextMillis)
@@ -66,5 +75,7 @@ void loop()
     {
         // this could be used to report up to eight states to 1wire master
         //ds2408.setPinState(0, digitalRead(10));
+        Serial.print("0x");
+        Serial.println(ds2408.getPinStates(),BIN);
     }
 }
