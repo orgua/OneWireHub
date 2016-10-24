@@ -12,7 +12,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS1990 (0x01) iButton** (DS2401 with same family code)
 - **DS2401 (0x01) Serial Number**
 - **DS2405 (0x05) Single address switch**
-- DS2408 (0x29) 8-Channel Addressable Switch, GPIO Port-expander
+- **DS2408 (0x29) 8-Channel Addressable Switch**, GPIO Port-expander
 - **DS2411 (0x01) Serial Number** (use DS2401 with same family code)
 - **DS2413 (0x3A) Dual channel addressable switch with input-sensing**
 - DS2423 (0x1D) 4kbit 1-Wire RAM with Counter
@@ -41,6 +41,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
+- basic support for ds2408, thanks to vytautassurvila
 - teensy3.2 tested: cleaned warnings, fixed port access, cleaned examples
 - sensors with emulated memory use memset and static_asserts to secure implementation
 - fix and clean pin access, fix a portability issue (time_t)
