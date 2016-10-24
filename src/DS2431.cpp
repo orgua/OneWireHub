@@ -26,12 +26,12 @@ void DS2431::duty(OneWireHub *hub)
     uint8_t  b;
     switch (cmd)
     {
-        // WRITE SCRATCHPAD COMMAND
-        case 0x0F:
+
+        case 0x0F:      // WRITE SCRATCHPAD COMMAND
             crc = crc16(0x0F, 0x00);
             // Adr1
             b = hub->recv();
-            if (hub->getError())  break;
+            if (hub->getError())  return;
             reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
             reg_ES = b & uint8_t(0x00000111); // TODO: when not zero we should issue reg_ES |= 0b00100000; (datasheet not clear)
             crc = crc16(b, crc);
@@ -44,7 +44,8 @@ void DS2431::duty(OneWireHub *hub)
 
             // up to 8 bytes of data
             page_offset = reg_ES;
-            for (uint8_t i = reg_ES; i < 8; ++i) { // address can point directly to offset-byte in scratchpad
+            for (uint8_t i = reg_ES; i < 8; ++i)
+            { // address can point directly to offset-byte in scratchpad
                 b = hub->recv();
                 if (hub->getError())
                 {
@@ -68,7 +69,8 @@ void DS2431::duty(OneWireHub *hub)
                     {
                         scratchpad[i] = memory[position + i];
                     }
-                } else if (checkEpromMode(reinterpret_cast<uint8_t *>(&reg_TA)[0]))
+                }
+                else if (checkEpromMode(reinterpret_cast<uint8_t *>(&reg_TA)[0]))
                 {
                     // eprom: logical AND of memory and data, TODO: there is somehow a bug here, protection works but EPROM-Mode not (CRC-Error)
                     for (uint8_t i = page_offset; i < 8; ++i)
@@ -84,11 +86,9 @@ void DS2431::duty(OneWireHub *hub)
             crc = ~crc; // normally crc16 is sent ~inverted
             if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0])))  return;
             hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[1]));
+            return;
 
-            break;
-
-        // READ SCRATCHPAD COMMAND
-        case 0xAA:
+        case 0xAA:      // READ SCRATCHPAD COMMAND
             crc = crc16(0xAA, 0);
             // Write-to address
             if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[0])) return;
@@ -111,29 +111,27 @@ void DS2431::duty(OneWireHub *hub)
             // CRC-16
             crc = ~crc;
             if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0])))  return;
-            if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[1])))  return;
-
+            hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[1]));
             // send 1s when read is complete, is passive, so do nothing
-            break;
-        
-        // COPY SCRATCHPAD COMMAND
-        case 0x55:
+            return;
+
+        case 0x55:      // COPY SCRATCHPAD COMMAND
             // Adr1
             b = hub->recv();
             if (hub->getError())  return;
-            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[0]) break;
+            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[0]) return;
 
             // Adr2
             b = hub->recv();
             if (hub->getError())  return;
-            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[1]) break; // Write-to addresses must match
+            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[1]) return; // Write-to addresses must match
             
             // Auth code must match
             b = hub->recv();
             if (hub->getError())  return;
-            if (b != reg_ES) break;
+            if (b != reg_ES) return;
 
-            if (reg_ES & 0b00100000) break; // writing failed before
+            if (reg_ES & 0b00100000) return; // writing failed before
 
             reg_TA &= ~uint16_t(0b00000111);
 
@@ -149,13 +147,10 @@ void DS2431::duty(OneWireHub *hub)
             hub->extendTimeslot();
             while (true) // send 1s when alternating 1 & 0 after copy is complete
             {
-                if (hub->send(0b10101010)) break;
+                if (hub->send(0b10101010)) return;
             };
 
-            break;
-        
-        // READ MEMORY COMMAND
-        case 0xF0:
+        case 0xF0:      // READ MEMORY COMMAND
             // Adr1
             b = hub->recv();
             if (hub->getError())  return;
@@ -172,7 +167,7 @@ void DS2431::duty(OneWireHub *hub)
             };
 
             // send 1s when read is complete, is passive, so do nothing here
-            break;
+            return;
 
         default:
             hub->raiseSlaveError(cmd);

@@ -24,10 +24,10 @@ void DS2408::duty(OneWireHub *hub)
     {
         case 0xF0:      // Read PIO Registers
             targetAddress = hub->recvAndCRC16(crc);
-            if (hub->getError())  break;
-            if((targetAddress < DS2408_OFFSET) || (targetAddress >= DS2408_OFFSET + DS2408_MEMSIZE)) break;
-            if (hub->recvAndCRC16(crc) != 0) break;
-            if (hub->getError())  break;
+            if (hub->getError())  return;
+            if((targetAddress < DS2408_OFFSET) || (targetAddress >= DS2408_OFFSET + DS2408_MEMSIZE)) return;
+            if (hub->recvAndCRC16(crc) != 0) return;
+            if (hub->getError())  return;
 
             for (uint8_t count = (targetAddress - DS2408_OFFSET); count < DS2408_MEMSIZE; ++count)
             {
@@ -35,10 +35,10 @@ void DS2408::duty(OneWireHub *hub)
                 if (hub->getError()) return;
             }
             crc = ~crc; // most important step, easy to miss....
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) break;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) break;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
+            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
             // after memory readout this chip sends logic 1s, which is the same as staying passive
-            break;
+            return;
 
         case 0x5A:      // Channel-Access Write
             while(1)
@@ -82,7 +82,7 @@ void DS2408::duty(OneWireHub *hub)
 
         case 0xCC:      // write conditional search register
             // TODO: page 18 datasheet
-            break;
+            return;
 
         default:
             hub->raiseSlaveError(cmd);

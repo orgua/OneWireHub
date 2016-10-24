@@ -17,7 +17,7 @@ void DS2413::duty(OneWireHub *hub)
 
     switch (cmd)
     {
-        case 0x5A: // PIO ACCESS WRITE
+        case 0x5A:      // PIO ACCESS WRITE
             data = ~hub->recv(); // Write inverse
             if (hub->getError())  return;
             hub->send(data); // send inverted form for safety
@@ -26,9 +26,9 @@ void DS2413::duty(OneWireHub *hub)
             setLatch(1, data & static_cast<uint8_t>(0x02)); // B
             setState(0, ~(data & static_cast<uint8_t>(0x01)));
             setState(1, ~(data & static_cast<uint8_t>(0x01)));
-            break;
+            return;
 
-        case 0xF5: // PIO ACCESS READ
+        case 0xF5:      // PIO ACCESS READ
             data = 0;
 
             if (pin_state[0])  data = data | static_cast<uint8_t>(0x01);
@@ -38,7 +38,7 @@ void DS2413::duty(OneWireHub *hub)
 
             data = data | (~data << 4);
             hub->send(data);
-            break;
+            return;
 
         default:
             hub->raiseSlaveError(cmd);

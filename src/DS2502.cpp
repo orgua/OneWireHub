@@ -35,25 +35,23 @@ void DS2502::duty(OneWireHub *hub)
     
     switch (cmd)
     {
-        case 0xF0: // READ MEMORY
-            if (hub->send(crc)) break;
+        case 0xF0:      // READ MEMORY
+            if (hub->send(crc)) return;
 
             crc = 0; // reInit CRC and send data
             for (uint16_t i = reg_TA; i < sizeof_memory; ++i)
             {
                 uint8_t j = translateRedirection(i);
-                if (hub->send(memory[j])) break; // todo: i think we can return here now
+                if (hub->send(memory[j])) return;
                 crc = crc8(&memory[j],1,crc);
             };
-            if (hub->getError()) break;
 
-            if (hub->send(crc)) return;
-
+            hub->send(crc);
             // datasheed says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
-            break;
+            return;
 
-        case 0xC3: // READ DATA (like 0xF0, but repeatedly till the end of page with following CRC)
-            if (hub->send(crc)) break;
+        case 0xC3:      // READ DATA (like 0xF0, but repeatedly till the end of page with following CRC)
+            if (hub->send(crc)) return;
 
             while (reg_address < sizeof_memory)
             {
@@ -62,36 +60,33 @@ void DS2502::duty(OneWireHub *hub)
                 for (uint16_t i = reg_TA; i < reg_address; ++i)
                 {
                     uint8_t j = translateRedirection(i);
-                    if (hub->send(memory[j])) break; // TODO: i think we can return here
+                    if (hub->send(memory[j])) return;
                     crc = crc8(&memory[j], 1, crc);
                 };
-                if (hub->getError()) break;
 
-                if (hub->send(crc)) break;
+                if (hub->send(crc)) return;
                 reg_TA = reg_address;
             };
 
             // datasheed says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
-            break;
+            return;
 
-        case 0xAA: // READ STATUS // TODO: nearly same code as 0xF0, but with status[] instead of memory[]
-            if (hub->send(crc)) break;
+        case 0xAA:      // READ STATUS // TODO: nearly same code as 0xF0, but with status[] instead of memory[]
+            if (hub->send(crc)) return;
 
             crc = 0; // reInit CRC and send data
             for (uint16_t i = reg_TA; i < sizeof(status); ++i)
             {
                 // TODO: redirection
-                if (hub->send(status[i])) break;
+                if (hub->send(status[i])) return;
                 crc = crc8(&status[i],1,crc);
             };
-            if (hub->getError()) break;
 
-            if (hub->send(crc))  break;
-
+            hub->send(crc);
             // datasheed says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
-            break;
+            return;
 
-        case 0x0F: // WRITE MEMORY
+        case 0x0F:      // WRITE MEMORY
             if (reg_TA > sizeof_memory) return; // check for valid address
 
             b = hub->recv(); // data
@@ -127,9 +122,9 @@ void DS2502::duty(OneWireHub *hub)
                 };
                 reg_TA++;
             };
-            break;
+            return;
 
-        case 0x55: // WRITE STATUS
+        case 0x55:      // WRITE STATUS
             if (reg_TA > sizeof(status)) return; // check for valid address
 
             b = hub->recv(); // data
@@ -158,7 +153,7 @@ void DS2502::duty(OneWireHub *hub)
 
                 reg_TA++;
             };
-            break;
+            return;
 
         default:
             hub->raiseSlaveError(cmd);
