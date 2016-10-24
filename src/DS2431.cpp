@@ -84,9 +84,9 @@ void DS2431::duty(OneWireHub *hub)
 
             // CRC-16
             crc = ~crc; // normally crc16 is sent ~inverted
-            if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0])))  return;
-            hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[1]));
-            return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
+            break;
 
         case 0xAA:      // READ SCRATCHPAD COMMAND
             crc = crc16(0xAA, 0);
@@ -110,10 +110,11 @@ void DS2431::duty(OneWireHub *hub)
             
             // CRC-16
             crc = ~crc;
-            if (hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0])))  return;
-            hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[1]));
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
+            break;
             // send 1s when read is complete, is passive, so do nothing
-            return;
+
 
         case 0x55:      // COPY SCRATCHPAD COMMAND
             // Adr1

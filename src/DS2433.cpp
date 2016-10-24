@@ -55,8 +55,8 @@ void DS2433::duty(OneWireHub *hub)
 
             crc = ~crc; // normally crc16 is sent ~inverted
             if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-            return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
+            break;
 
         case 0x55:      // COPY SCRATCHPAD
             b = hub->recv(); // TA1

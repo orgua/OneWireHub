@@ -36,9 +36,9 @@ void DS2408::duty(OneWireHub *hub)
             }
             crc = ~crc; // most important step, easy to miss....
             if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
+            break;
             // after memory readout this chip sends logic 1s, which is the same as staying passive
-            return;
 
         case 0x5A:      // Channel-Access Write
             while(1)
@@ -82,7 +82,7 @@ void DS2408::duty(OneWireHub *hub)
 
         case 0xCC:      // write conditional search register
             // TODO: page 18 datasheet
-            return;
+            break;
 
         default:
             hub->raiseSlaveError(cmd);

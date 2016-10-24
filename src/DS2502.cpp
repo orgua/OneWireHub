@@ -69,7 +69,7 @@ void DS2502::duty(OneWireHub *hub)
             };
 
             // datasheed says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
-            return;
+            break;
 
         case 0xAA:      // READ STATUS // TODO: nearly same code as 0xF0, but with status[] instead of memory[]
             if (hub->send(crc)) return;
@@ -84,7 +84,7 @@ void DS2502::duty(OneWireHub *hub)
 
             hub->send(crc);
             // datasheed says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
-            return;
+            break;
 
         case 0x0F:      // WRITE MEMORY
             if (reg_TA > sizeof_memory) return; // check for valid address
@@ -122,7 +122,7 @@ void DS2502::duty(OneWireHub *hub)
                 };
                 reg_TA++;
             };
-            return;
+            break;
 
         case 0x55:      // WRITE STATUS
             if (reg_TA > sizeof(status)) return; // check for valid address
@@ -153,7 +153,7 @@ void DS2502::duty(OneWireHub *hub)
 
                 reg_TA++;
             };
-            return;
+            break;
 
         default:
             hub->raiseSlaveError(cmd);
