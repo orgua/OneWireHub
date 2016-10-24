@@ -22,7 +22,7 @@ constexpr uint16_t ONEWIRE_TIME_BUS_CHANGE_MAX       =    5; //
 
 constexpr uint16_t ONEWIRE_TIME_RESET_MIN            =  430; // should be 480, and was 470
 constexpr uint16_t ONEWIRE_TIME_RESET_MAX            =  960; // from ds2413
-constexpr uint16_t ONEWIRE_TIME_RESET_TIMEOUT        =10000; // for not hanging indef in reset-detection,  // TODO: should optimize, lower value is better
+constexpr uint16_t ONEWIRE_TIME_RESET_TIMEOUT        =12000; // for not hanging indef in reset-detection,  // TODO: should optimize, lower value is better
 
 constexpr uint16_t ONEWIRE_TIME_PRESENCE_SAMPLE_MIN  =   20; // probe measures 40us
 constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     =  160; // was 125
