@@ -18,8 +18,7 @@ void DS2890::duty(OneWireHub *hub)
 
     switch (cmd)
     {
-
-        case 0x0F: // WRITE POSITION
+        case 0x0F:      // WRITE POSITION
             temp = hub->recv();
             if (hub->getError())  return;
             if (hub->send(temp))  return;
@@ -28,11 +27,9 @@ void DS2890::duty(OneWireHub *hub)
 
             // release code received
             if (cmd == 0x96)      register_poti[register_ctrl&0x03] = temp;
+            return;
 
-            break;
-
-
-        case 0x55: // WRITE CONTROL REGISTER
+        case 0x55:      // WRITE CONTROL REGISTER
             temp = hub->recv();
             if (hub->getError())  return;
 
@@ -48,29 +45,27 @@ void DS2890::duty(OneWireHub *hub)
 
             // release code received
             if (cmd == 0x96)      register_ctrl = temp;
+            return;
 
-            break;
-
-
-        case 0xAA: // READ CONTROL REGISTER
+        case 0xAA:      // READ CONTROL REGISTER
             if (hub->send(register_ctrl))  return;
             hub->send(register_feat);
-            break;
+            return;
 
-        case 0xF0: // READ POSITION
+        case 0xF0:      // READ POSITION
             if (hub->send(register_ctrl))  return;
             hub->send(register_poti[register_ctrl&0x03]);
-            break;
+            return;
 
-        case 0xC3: // INCREMENT
+        case 0xC3:      // INCREMENT
             if (register_poti[register_ctrl&0x03] < 0xFF) register_poti[register_ctrl&0x03]++;
             hub->send(register_poti[register_ctrl&0x03]);
-            break;
+            return;
 
-        case 0x99: // DECREMENT
+        case 0x99:      // DECREMENT
             if (register_poti[register_ctrl&0x03]) register_poti[register_ctrl&0x03]--;
             hub->send(register_poti[register_ctrl&0x03]);
-            break;
+            return;
 
         default:
             hub->raiseSlaveError(cmd);

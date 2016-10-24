@@ -24,14 +24,14 @@ void DS2433::duty(OneWireHub *hub)
             crc = crc16(0x0F,0);
             // Adr1
             b = hub->recv();
-            if (hub->getError())  break;
+            if (hub->getError())  return;
             reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
             reg_ES = b & uint8_t(0b00011111); // register-offset
             crc = crc16(b,crc);
 
             // Adr2
             b = hub->recv();
-            if (hub->getError())  break;
+            if (hub->getError())  return;
             reinterpret_cast<uint8_t *>(&reg_TA)[1] = b & uint8_t(0b1);
             crc = crc16(b,crc);
 
@@ -51,26 +51,25 @@ void DS2433::duty(OneWireHub *hub)
             if ((reg_ES + mem_counter) > 31) mem_counter = uint8_t(31) - reg_ES;
             reg_ES += mem_counter; // store current pointer
 
-            if (reg_ES != 0b00011111) break;
+            if (reg_ES != 0b00011111) return;
 
             crc = ~crc; // normally crc16 is sent ~inverted
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  break;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  break;
-
-            break;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return;
+            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
+            return;
 
         case 0x55:      // COPY SCRATCHPAD
             b = hub->recv(); // TA1
-            if (hub->getError())  break;
-            //if (b != reinterpret_cast<uint8_t *>(&reg_TA)[0]) break;
+            if (hub->getError())  return;
+            //if (b != reinterpret_cast<uint8_t *>(&reg_TA)[0]) return;
 
             b = hub->recv(); // TA2
-            if (hub->getError())  break;
-            //if (b != reinterpret_cast<uint8_t *>(&reg_TA)[1]) break;
+            if (hub->getError())  return;
+            //if (b != reinterpret_cast<uint8_t *>(&reg_TA)[1]) return;
 
             b = hub->recv(); // ES
-            if (hub->getError())  break;
-            //if (b != reg_ES) break;
+            if (hub->getError())  return;
+            //if (b != reg_ES) return;
 
             reg_ES |= 0b10000000;
 
@@ -81,16 +80,15 @@ void DS2433::duty(OneWireHub *hub)
             hub->extendTimeslot();
             while (true) // send alternating 1 & 0 after copy is complete
             {
-                if (hub->send(0b10101010)) break;
+                if (hub->send(0b10101010)) return;
             };
-            break;
 
         case 0xAA:      // READ SCRATCHPAD COMMAND
 
-            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[0]))  break; // Adr1
-            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[1]))  break; // Adr2
+            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[0]))  return; // Adr1
+            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[1]))  return; // Adr2
 
-            if (hub->send(reg_ES)) break; // ES
+            if (hub->send(reg_ES)) return; // ES
 
             hub->extendTimeslot();
             // TODO: maybe implement a real scratchpad, would need 32byte extra ram
@@ -99,31 +97,31 @@ void DS2433::duty(OneWireHub *hub)
             for (uint8_t i = 0; i < 32; ++i) // model of the 32byte scratchpad, always aligned with blocks
             {
                 const uint16_t mem_start = (reg_TA & ~uint16_t(0b00011111));
-                if (hub->send(memory[mem_start + i])) break;
+                if (hub->send(memory[mem_start + i])) return;
             };
 
             // datasheed says we should send all 1s, till reset (1s are passive... so nothing to do here)
-            break;
+            return;
 
         case 0xF0:      // READ MEMORY
             // Adr1
             b = hub->recv();
-            if (hub->getError())  break;
+            if (hub->getError())  return;
             reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
 
             // Adr2
             b = hub->recv();
-            if (hub->getError())  break;
+            if (hub->getError())  return;
             reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
 
             // data
             for (uint16_t i = reg_TA; i < 512; ++i) // model of the 32byte scratchpad
             {
-                if (hub->send(memory[i])) break;
+                if (hub->send(memory[i])) return;
             };
 
             // datasheed says we should send all 1s, till reset (1s are passive... so nothing to do here)
-            break;
+            return;
 
         default:
             hub->raiseSlaveError(cmd);

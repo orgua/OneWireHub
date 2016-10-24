@@ -27,16 +27,16 @@ void DS2438::duty(OneWireHub *hub)
     switch (cmd)
     {
         // reordered for better timing
-        case 0xBE: // Read Scratchpad
+        case 0xBE:      // Read Scratchpad
             page = hub->recv();
             if (hub->getError())  return;
             if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT;
 
             if (hub->send(&memory[page * 8], 8)) return;
-            if (hub->send(crc[page])) return;
-            break;
+            hub->send(crc[page]);
+            return;
 
-        case 0x4E: // Write Scratchpad
+        case 0x4E:      // Write Scratchpad
             page = hub->recv();
             if (hub->getError())  return;
 
@@ -45,25 +45,24 @@ void DS2438::duty(OneWireHub *hub)
             hub->recv(&memory[page * 8], 8);
             if (hub->getError())  return;
             calcCRC(page);
+            return;
 
-            break;
-
-        case 0x48: // copy scratchpad
+        case 0x48:      // copy scratchpad
             // do nother special, goto recall for now
 
-        case 0xB8: // Recall Memory
+        case 0xB8:      // Recall Memory
             page = hub->recv();
             if (hub->getError())  return;
             if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT; // when page out of limits --> switch to garbage-page
-            break;
+            return;
 
-        case 0x44: // Convert T
+        case 0x44:      // Convert T
             //hub->sendBit(1); // 1 is passive, so ommit it ...
-            break;
+            return;
 
-        case 0xB4: // Convert V
+        case 0xB4:      // Convert V
             //hub->sendBit(1); // 1 is passive, so ommit it ...
-            break;
+            return;
 
         default:
             hub->raiseSlaveError(cmd);

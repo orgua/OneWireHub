@@ -29,32 +29,32 @@ void DS18B20::duty(OneWireHub *hub)
 
     switch (cmd)
     {
-        case 0x44: // CONVERT T --> start a new measurement conversion
-            //hub->sendBit(1); // 1 is passive ...
-            break;
-
         case 0x4E: // WRITE SCRATCHPAD
             // write 3 byte of data to scratchpad[1:3]
             hub->recv(&scratchpad[2], 3);
-            if (hub->getError())  break;
+            if (hub->getError())  return;
             updateCRC();
-            break;
+            return;
 
         case 0xBE: // READ SCRATCHPAD
             hub->send(scratchpad, 9);
-            break;
+            return;
 
         case 0x48: // COPY SCRATCHPAD to EEPROM
             // send1 if parasite power is used
-            break;
+            return;
 
         case 0xB8: // RECALL E2 (EEPROM to 3byte from Scratchpad)
             //hub->sendBit(1); // signal that OP is done // 1 is passive ...
-            break;
+            return;
 
         case 0xB4: // READ POWER SUPPLY
             //hub->sendBit(1); // 1: say i am external powered, 0: uses parasite power, // 1 is passive, so omit it ...
-            break;
+            return;
+
+        case 0x44: // CONVERT T --> start a new measurement conversion
+            //hub->sendBit(1); // 1 is passive ...
+            return;
 
             // READ TIME SLOTS, respond with 1 if conversion is done, not usable with parasite power
 

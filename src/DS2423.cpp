@@ -17,13 +17,11 @@ void DS2423::duty(OneWireHub *hub)
 
     switch (cmd)
     {
-        // Read Memory + Counter
-        case 0xA5:
-
+        case 0xA5:      // Read Memory + Counter
             reinterpret_cast<uint8_t *>(&memory_address)[0] = hub->recvAndCRC16(crc); // Adr1
-            if (hub->getError())  break;
+            if (hub->getError())  return;
             reinterpret_cast<uint8_t *>(&memory_address)[1] = hub->recvAndCRC16(crc);
-            if (hub->getError())  break;
+            if (hub->getError())  return;
             //memory_address_start = memory_address;
 
             // data
@@ -42,9 +40,9 @@ void DS2423::duty(OneWireHub *hub)
 
             // crc
             crc = ~crc;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) break;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
             hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-            break;
+            return;
 
         default:
             hub->raiseSlaveError(cmd);
