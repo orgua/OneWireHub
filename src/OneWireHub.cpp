@@ -368,10 +368,9 @@ bool OneWireHub::search(void)
         // if junction is reached, act different
         if (position_IDBit == trigger_bit)
         {
-            sendBit(false);
-            if (_error != Error::NO_ERROR)  return false;
-            sendBit(false);
-            if (_error != Error::NO_ERROR)  return false;
+            if (sendBit(false)) return false;
+            if (sendBit(false)) return false;
+
             const bool bit_recv = recvBit();
             if (_error != Error::NO_ERROR)  return false;
 
@@ -390,19 +389,15 @@ bool OneWireHub::search(void)
 
             if (slave_list[active_slave]->ID[pos_byte] & mask_bit)
             {
-                bit_send = 1;
-                sendBit(true);
-                if (_error != Error::NO_ERROR)  return false;
-                sendBit(false);
-                if (_error != Error::NO_ERROR)  return false;
+                bit_send = true;
+                if (sendBit(true))  return false;
+                if (sendBit(false)) return false;
             }
             else
             {
-                bit_send = 0;
-                sendBit(false);
-                if (_error != Error::NO_ERROR)  return false;
-                sendBit(true);
-                if (_error != Error::NO_ERROR)  return false;
+                bit_send = false;
+                if (sendBit(false)) return false;
+                if (sendBit(true))  return false;
             }
 
             const bool bit_recv = recvBit();
@@ -552,33 +547,31 @@ bool OneWireHub::recvAndProcessCmd(void)
     return false;
 };
 
-// info: check for errors after calling and break/return if possible
+// info: check for errors after calling and break/return if possible, returns true if error is detected
 bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
 {
     uint8_t bytes_sent = 0;
 
     for ( ; bytes_sent < data_length; ++bytes_sent)
     {
-        send(address[bytes_sent]);
-        if (_error != Error::NO_ERROR)  break;
+        if (send(address[bytes_sent])) break;
     };
-    return (bytes_sent == data_length);
+    return (bytes_sent != data_length);
 };
 
-// info: check for errors after calling and break/return if possible, or check for return==false
+// info: check for errors after calling and break/return if possible, returns true if error is detected
 bool OneWireHub::send(const uint8_t dataByte)
 {
     for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
     {
-        sendBit((bitMask & dataByte) ? bool(1) : bool(0));
-        if (_error != Error::NO_ERROR)
+        if (sendBit((bitMask & dataByte) != 0))
         {
             if (bitMask == 0x01)      _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
-            return false;
+            return true;
         }
     };
     // TODO: was there an extend timeslot before? should be needed for loxone
-    return true;
+    return false;
 };
 
 // info: check for errors after calling and break/return if possible, TODO: why return crc both ways, detect first bit break
@@ -586,26 +579,24 @@ uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
 {
     for (uint8_t counter = 0; counter < 8; ++counter)
     {
-        sendBit((0x01 & dataByte) ? bool(1) : bool(0));
+        if (sendBit((0x01 & dataByte) != 0)) break; // CRC is not valid if sending breaks
 
         uint8_t mix = ((uint8_t) crc16 ^ dataByte) & static_cast<uint8_t>(0x01);
         crc16 >>= 1;
         if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
         dataByte >>= 1;
-
-        if (_error != Error::NO_ERROR) return 0; // CRC is not important if sending fails
-    }
+    };
     return crc16;
 }
 
-// info: check for errors after calling and break/return if possible, or check for return==false
+// info: check for errors after calling and break/return if possible, returns true if error is detected
 bool OneWireHub::sendBit(const bool value)
 {
     // wait for a low to high transition followed by a high to low within the time-out
-    if (!awaitTimeSlotAndWrite(!value))
+    if (awaitTimeSlotAndWrite(!value))
     {
         _error = Error::WRITE_TIMESLOT_TIMEOUT;
-        return false; // timeslot violation
+        return true; // timeslot violation
     }
 
     if (value) waitLoopsWhilePinIs(LOOPS_READ_ONE_LOW_MAX[od_mode], false); // no pinCheck demanded, but this additional check can cut waitTime
@@ -616,7 +607,7 @@ bool OneWireHub::sendBit(const bool value)
         DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
     }
 
-    return true;
+    return false;
 }
 
 
@@ -682,7 +673,7 @@ bool OneWireHub::recvBit(void)
 {
 
     // wait for a low to high transition followed by a high to low within the time-out
-    if (!awaitTimeSlotAndWrite())
+    if (awaitTimeSlotAndWrite())
     {
         if (skip_reset_detection)
         {
@@ -724,7 +715,7 @@ void OneWireHub::wait(const timeOW_t loops_wait) const
     };
 };
 
-
+// returns true if error is detected
 bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
 {
     noInterrupts();
@@ -746,7 +737,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
             _error = Error::READ_TIMESLOT_TIMEOUT_LOW;
         };
         interrupts();
-        return false;
+        return true;
     };
 
 
@@ -765,7 +756,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
         {
             _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
             interrupts();
-            return false;
+            return true;
         };
     };
 
@@ -777,7 +768,7 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
         DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
     };
     interrupts();
-    return true;
+    return false;
 };
 
 

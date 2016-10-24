@@ -41,19 +41,12 @@ bool DS2450::duty(OneWireHub *hub)
             for (uint8_t i = 0; i < PAGE_SIZE; ++i)
             {
                 b = memory[memory_address + i];
-                hub->send(b);
-                if (hub->getError()) // possibility to break loop if send fails
-                {
-                    hub->clearError();
-                    break;
-                }
+                if (hub->send(b)) return false;
                 crc = crc16(b, crc);
             };
 
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
-            if (hub->getError())  return false;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-            if (hub->getError())  return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  return false;
             // TODO: not fully implemented
 
             break;
@@ -85,12 +78,10 @@ bool DS2450::duty(OneWireHub *hub)
                 crc = crc16(memory[memory_address + i], crc);
             };
 
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
-            if (hub->getError())  return false;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-            if (hub->getError())  return false;
-
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  return false;
             // TODO: write back data if wanted, till the end of register
+
             break;
 
         case 0x3C: // convert, starts adc
@@ -100,13 +91,11 @@ bool DS2450::duty(OneWireHub *hub)
             b = hub->recv(); // read out control byte
             if (hub->getError())  return false;
             crc = crc16(b, crc);
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
-            if (hub->getError())  return false;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-            if (hub->getError())  return false;
-            hub->sendBit(0); // still converting....
-            if (hub->getError())  return false;
-            hub->sendBit(1); // finished conversion
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  return false;
+
+            if (hub->sendBit(false)) return false; // still converting....
+            if (hub->sendBit(true))  return false; // finished conversion
             break;
 
         default:

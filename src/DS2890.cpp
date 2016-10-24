@@ -22,8 +22,7 @@ bool DS2890::duty(OneWireHub *hub)
         case 0x0F: // WRITE POSITION
             temp = hub->recv();
             if (hub->getError())  return false;
-            hub->send(temp);
-            if (hub->getError())  return false;
+            if (hub->send(temp))  return false;
             cmd = hub->recv();
             if (hub->getError())  return false;
 
@@ -42,8 +41,7 @@ bool DS2890::duty(OneWireHub *hub)
             if (temp&0x02) temp |= 0x08;
             else temp &= ~0x08;
 
-            hub->send(temp);
-            if (hub->getError())  return false;
+            if (hub->send(temp))  return false;
 
             cmd = hub->recv();
             if (hub->getError())  return false;
@@ -55,14 +53,12 @@ bool DS2890::duty(OneWireHub *hub)
 
 
         case 0xAA: // READ CONTROL REGISTER
-            hub->send(register_ctrl);
-            if (hub->getError())  return false;
+            if (hub->send(register_ctrl))  return false;
             hub->send(register_feat);
             break;
 
         case 0xF0: // READ POSITION
-            hub->send(register_ctrl);
-            if (hub->getError())  return false;
+            if (hub->send(register_ctrl))  return false;
             hub->send(register_poti[register_ctrl&0x03]);
             break;
 

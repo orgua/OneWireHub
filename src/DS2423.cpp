@@ -42,8 +42,7 @@ bool DS2423::duty(OneWireHub *hub)
 
             // crc
             crc = ~crc;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
-            if (hub->getError())  return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return false;
             hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
             break;
 

@@ -32,9 +32,8 @@ bool DS2438::duty(OneWireHub *hub)
             if (hub->getError())  return false;
             if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT;
 
-            hub->send(&memory[page * 8], 8);
-            if (hub->getError())  return false;
-            hub->send(crc[page]);
+            if (hub->send(&memory[page * 8], 8)) return false;
+            if (hub->send(crc[page])) return false;
             break;
 
         case 0x4E: // Write Scratchpad
