@@ -430,6 +430,7 @@ bool OneWireHub::recvAndProcessCmd(void)
     switch (cmd)
     {
         case 0xF0: // Search rom
+            slave_selected = nullptr;
             search();
             return true; // always trigger a re-init after search
 
@@ -438,10 +439,10 @@ bool OneWireHub::recvAndProcessCmd(void)
             od_mode = true;
 #endif
         case 0x55: // MATCH ROM - Choose/Select ROM
+            slave_selected = nullptr;
+
             recv(address, 8);
             if (_error != Error::NO_ERROR)  return false;
-
-            slave_selected = nullptr;
 
             for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
             {
@@ -533,8 +534,17 @@ bool OneWireHub::recvAndProcessCmd(void)
             // is like search-rom, but only slaves with triggered alarm will appear
 
         case 0xA5: // RESUME COMMAND
-            // TODO: add function to fully support the ds2432
+            if (slave_selected == nullptr)
+                return false;
 
+#if USE_GPIO_DEBUG
+            digitalWrite(GPIO_DEBUG_PIN,HIGH);
+            slave_selected->duty(this);
+            digitalWrite(GPIO_DEBUG_PIN,LOW);
+#else
+            slave_selected->duty(this);
+#endif
+            return !(getError());
         default: // Unknown command
             _error = Error::INCORRECT_ONEWIRE_CMD;
             _error_cmd = cmd;
@@ -899,6 +909,7 @@ void OneWireHub::printError(void) const
      else if (_error == Error::INCORRECT_SLAVE_USAGE)      Serial.print("slave was used in incorrect way");
      else if (_error == Error::TRIED_INCORRECT_WRITE)      Serial.print("tried to write in read-slot");
      else if (_error == Error::FIRST_TIMESLOT_TIMEOUT)     Serial.print("found no timeslot after reset / presence (is OK)");
+     else if (_error == Error::FIRST_BIT_OF_BYTE_TIMEOUT)  Serial.print("first bit of byte timeout");
 
     if ((_error == Error::INCORRECT_ONEWIRE_CMD)||(_error == Error::INCORRECT_SLAVE_USAGE))
     {
