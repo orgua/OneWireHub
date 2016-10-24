@@ -52,9 +52,19 @@ void loop()
     // this part is just for debugging (USE_SERIAL_DEBUG in OneWire.h must be enabled for output)
     if (hub.getError()) hub.printError();
 
+    digitalWrite(10, ds2408.getPinState(0));
+    digitalWrite(11, ds2408.getPinState(1));
+    digitalWrite(2, ds2408.getPinState(2));
+    digitalWrite(3, ds2408.getPinState(3));
+    digitalWrite(4, ds2408.getPinState(4));
+    digitalWrite(5, ds2408.getPinState(5));
+    digitalWrite(6, ds2408.getPinState(6));
+    digitalWrite(7, ds2408.getPinState(7));
+
     // Blink triggers the state-change
     if (blinking())
     {
-
+        // this could be used to report up to eight states to 1wire master
+        //ds2408.setPinState(0, digitalRead(10));
     }
 }
