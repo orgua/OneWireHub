@@ -236,24 +236,12 @@ bool OneWireHub::poll(void)
         //Once reset is done, go to next step
         if (checkReset())           return false;
 
-#if USE_GPIO_DEBUG
-        DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-        DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-#endif
-
         // Reset is complete, tell the master we are present
         if (showPresence())         return false;
-
-#if USE_GPIO_DEBUG
-        DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-#endif
 
         //Now that the master should know we are here, we will get a command from the master
         if (recvAndProcessCmd())    return false;
 
-#if USE_GPIO_DEBUG
-        DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-#endif
         // on total success we want to start again, because the next reset could only be ~125 us away
     }
 }
@@ -335,6 +323,10 @@ bool OneWireHub::showPresence(void)
     // Master will delay it's "Presence" check (bus-read)  after the reset
     waitLoopsWhilePinIs(LOOPS_PRESENCE_SAMPLE_MIN[od_mode], true); // no pinCheck demanded, but this additional check can cut waitTime
 
+    #if USE_GPIO_DEBUG
+    DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+#endif
+
     // pull the bus low and hold it some time
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);    // drive output low
@@ -342,6 +334,10 @@ bool OneWireHub::showPresence(void)
     wait(LOOPS_PRESENCE_LOW_STD[od_mode]); // stays till the end, because it drives the bus low itself
 
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);     // allow it to float
+
+#if USE_GPIO_DEBUG
+    DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+#endif
 
     // When the master or other slaves release the bus within a given time everything is fine
     if (!waitLoopsWhilePinIs((LOOPS_PRESENCE_LOW_MAX[od_mode] - LOOPS_PRESENCE_LOW_STD[od_mode]), false))
@@ -470,7 +466,13 @@ bool OneWireHub::recvAndProcessCmd(void)
             if (slave_selected != nullptr)
             {
                 extend_timeslot_detection = 1;
+#if USE_GPIO_DEBUG
+                DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
                 slave_selected->duty(this);
+                DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+#else
+                slave_selected->duty(this);
+#endif
             };
             return (getError());
 
@@ -489,7 +491,13 @@ bool OneWireHub::recvAndProcessCmd(void)
             if (slave_selected != nullptr)
             {
                 extend_timeslot_detection = 1;
+#if USE_GPIO_DEBUG
+                DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
                 slave_selected->duty(this);
+                DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+#else
+                slave_selected->duty(this);
+#endif
             };
             return (getError());
 
@@ -514,7 +522,13 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         case 0xA5: // RESUME COMMAND
             if (slave_selected == nullptr) return true;
+#if USE_GPIO_DEBUG
+            DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
             slave_selected->duty(this);
+            DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+#else
+            slave_selected->duty(this);
+#endif
 
             return (getError());
         default: // Unknown command
