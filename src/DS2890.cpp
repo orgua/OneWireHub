@@ -10,21 +10,21 @@ DS2890::DS2890(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     register_ctrl    = 0b00001100;
 };
 
-bool DS2890::duty(OneWireHub *hub)
+void DS2890::duty(OneWireHub *hub)
 {
     uint8_t temp = 0;
     uint8_t cmd = hub->recv();
-    if (hub->getError())  return false;
+    if (hub->getError())  return;
 
     switch (cmd)
     {
 
         case 0x0F: // WRITE POSITION
             temp = hub->recv();
-            if (hub->getError())  return false;
-            if (hub->send(temp))  return false;
+            if (hub->getError())  return;
+            if (hub->send(temp))  return;
             cmd = hub->recv();
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
 
             // release code received
             if (cmd == 0x96)      register_poti[register_ctrl&0x03] = temp;
@@ -34,17 +34,17 @@ bool DS2890::duty(OneWireHub *hub)
 
         case 0x55: // WRITE CONTROL REGISTER
             temp = hub->recv();
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
 
             if (temp&0x01) temp |= 0x04;
             else temp &= ~0x04;
             if (temp&0x02) temp |= 0x08;
             else temp &= ~0x08;
 
-            if (hub->send(temp))  return false;
+            if (hub->send(temp))  return;
 
             cmd = hub->recv();
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
 
             // release code received
             if (cmd == 0x96)      register_ctrl = temp;
@@ -53,12 +53,12 @@ bool DS2890::duty(OneWireHub *hub)
 
 
         case 0xAA: // READ CONTROL REGISTER
-            if (hub->send(register_ctrl))  return false;
+            if (hub->send(register_ctrl))  return;
             hub->send(register_feat);
             break;
 
         case 0xF0: // READ POSITION
-            if (hub->send(register_ctrl))  return false;
+            if (hub->send(register_ctrl))  return;
             hub->send(register_poti[register_ctrl&0x03]);
             break;
 
@@ -75,6 +75,4 @@ bool DS2890::duty(OneWireHub *hub)
         default:
             hub->raiseSlaveError(cmd);
     };
-
-    return !(hub->getError());
 };

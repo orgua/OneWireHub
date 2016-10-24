@@ -12,7 +12,7 @@ DS2502::DS2502(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     clearStatus();
 };
 
-bool DS2502::duty(OneWireHub *hub)
+void DS2502::duty(OneWireHub *hub)
 {
     uint16_t reg_TA; // address
     uint8_t  reg_address = 0;
@@ -20,16 +20,16 @@ bool DS2502::duty(OneWireHub *hub)
     uint8_t  crc = 0;
 
     uint8_t cmd = hub->recv();
-    if (hub->getError())  return false;
+    if (hub->getError())  return;
     crc = crc8(&cmd,1,crc);
 
     b = hub->recv(); // Adr1
-    if (hub->getError())  return false;
+    if (hub->getError())  return;
     reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
     crc = crc8(&b,1,crc);
 
     b = hub->recv(); // Adr2
-    if (hub->getError())  return false;
+    if (hub->getError())  return;
     reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
     crc = crc8(&b,1,crc);
     
@@ -47,7 +47,7 @@ bool DS2502::duty(OneWireHub *hub)
             };
             if (hub->getError()) break;
 
-            if (hub->send(crc)) return false;
+            if (hub->send(crc)) return;
 
             // datasheed says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
             break;
@@ -92,30 +92,30 @@ bool DS2502::duty(OneWireHub *hub)
             break;
 
         case 0x0F: // WRITE MEMORY
-            if (reg_TA > sizeof_memory) return false; // check for valid address
+            if (reg_TA > sizeof_memory) return; // check for valid address
 
             b = hub->recv(); // data
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             crc = crc8(&b,1,crc);
 
-            if (hub->send(crc))   return false;
+            if (hub->send(crc))   return;
             hub->extendTimeslot();
 
-            if (checkProtection(reg_TA)) return false;
+            if (checkProtection(reg_TA)) return;
 
             reg_address = translateRedirection(reg_TA);
             memory[reg_address] &= b; // like EPROM-Mode
 
-            if (hub->send(memory[reg_address])) return false;
+            if (hub->send(memory[reg_address])) return;
 
             reg_TA++;
             while (reg_TA < sizeof_memory)
             {
                 b = hub->recv(); // data
-                if (hub->getError())  return false;
+                if (hub->getError())  return;
                 crc = crc8(&b,1,reinterpret_cast<uint8_t *>(&reg_TA)[0]);
 
-                if (hub->send(crc))     return false;
+                if (hub->send(crc))     return;
                 hub->extendTimeslot();
 
                 reg_address = translateRedirection(reg_TA);
@@ -123,38 +123,38 @@ bool DS2502::duty(OneWireHub *hub)
                 {
                     memory[reg_address] &= b; // like EPROM-Mode
 
-                    if (hub->send(memory[reg_address])) return false;
+                    if (hub->send(memory[reg_address])) return;
                 };
                 reg_TA++;
             };
             break;
 
         case 0x55: // WRITE STATUS
-            if (reg_TA > sizeof(status)) return false; // check for valid address
+            if (reg_TA > sizeof(status)) return; // check for valid address
 
             b = hub->recv(); // data
-            if (hub->getError())  return false;
+            if (hub->getError())  return;
             crc = crc8(&b,1,crc);
 
-            if (hub->send(crc))  return false;
+            if (hub->send(crc))  return;
             hub->extendTimeslot();
 
             status[reg_TA] &= b; // like EPROM-Mode
 
-            if (hub->send(status[reg_TA]))  return false;
+            if (hub->send(status[reg_TA]))  return;
 
             reg_TA++;
             while (reg_TA < sizeof(status))
             {
                 b = hub->recv(); // data
-                if (hub->getError())  return false;
+                if (hub->getError())  return;
                 crc = crc8(&b,1,reinterpret_cast<uint8_t *>(&reg_TA)[0]);
 
-                if (hub->send(crc))  return false;
+                if (hub->send(crc))  return;
                 hub->extendTimeslot();
 
                 status[reg_TA] &= b; // like EPROM-Mode
-                if (hub->send(status[reg_TA])) return false;
+                if (hub->send(status[reg_TA])) return;
 
                 reg_TA++;
             };
@@ -163,7 +163,6 @@ bool DS2502::duty(OneWireHub *hub)
         default:
             hub->raiseSlaveError(cmd);
     };
-    return !(hub->getError());
 };
 
 void DS2502::clearMemory(void)

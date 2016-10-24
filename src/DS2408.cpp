@@ -12,31 +12,31 @@ DS2408::DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     memory[DS2408_RD_ABOVE_ALWAYS_FF_8F]    = 0xFF;
 };
 
-bool DS2408::duty(OneWireHub *hub)
+void DS2408::duty(OneWireHub *hub)
 {
     uint8_t targetAddress;
     uint16_t crc = 0, crc2;
     uint8_t cmd = hub->recvAndCRC16(crc);
     uint8_t data;
-    if (hub->getError())  return false;
+    if (hub->getError())  return;
 
     switch (cmd)
     {
         case 0xF0:      // Read PIO Registers
             targetAddress = hub->recvAndCRC16(crc);
-            if (hub->getError())  return false;
-            if((targetAddress < DS2408_OFFSET) || (targetAddress >= DS2408_OFFSET + DS2408_MEMSIZE)) return false;
-            if (hub->recvAndCRC16(crc) != 0) return false;
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
+            if((targetAddress < DS2408_OFFSET) || (targetAddress >= DS2408_OFFSET + DS2408_MEMSIZE)) break;
+            if (hub->recvAndCRC16(crc) != 0) break;
+            if (hub->getError())  break;
 
             for (uint8_t count = (targetAddress - DS2408_OFFSET); count < DS2408_MEMSIZE; ++count)
             {
                 crc = hub->sendAndCRC16(memory[count], crc);
-                if (hub->getError()) return false;
+                if (hub->getError()) return;
             }
             crc = ~crc; // most important step, easy to miss....
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return false;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) break;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) break;
             // after memory readout this chip sends logic 1s, which is the same as staying passive
             break;
 
@@ -44,17 +44,17 @@ bool DS2408::duty(OneWireHub *hub)
             while(1)
             {
                 data = hub->recv();
-                if (hub->getError()) return false;
+                if (hub->getError()) return;
                 //if (hub->recv() != ~data) return false; //inverted data, not working properly
                 hub->recv();
-                if (hub->getError()) return false;
+                if (hub->getError()) return;
                 memory[DS2408_PIO_ACTIVITY_REG] |= data ^ memory[DS2408_PIO_LOGIC_REG];
                 memory[DS2408_PIO_OUTPUT_REG]   = data;
                 memory[DS2408_PIO_LOGIC_REG]    = data;
-                if (hub->send(0xAA)) return false;
+                if (hub->send(0xAA)) return;
                 for (uint8_t count = 0; count < 4; ++count) // TODO: i think this is right, datasheet says: DS2408 samples the status of the PIO pins, as shown in Figure 9, and sends it to the master
                 {
-                    if (hub->send(memory[count])) return false;
+                    if (hub->send(memory[count])) return;
                 }
             }
 
@@ -66,18 +66,18 @@ bool DS2408::duty(OneWireHub *hub)
                 for (uint8_t count = 0; count < 4; ++count)
                 {
                     crc = hub->sendAndCRC16(memory[count], crc);
-                    if (hub->getError()) return false;
+                    if (hub->getError()) return;
                 }
                 crc = ~crc; // most important step, easy to miss....
-                if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return false;
-                if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return false;
+                if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
+                if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
             };
 
         case 0xC3:      // reset activity latches
             memory[DS2408_PIO_ACTIVITY_REG] = 0x00;
             while(1)
             {
-                if (hub->send(0xAA)) return false;
+                if (hub->send(0xAA)) return;
             };
 
         case 0xCC:      // write conditional search register
@@ -87,8 +87,6 @@ bool DS2408::duty(OneWireHub *hub)
         default:
             hub->raiseSlaveError(cmd);
     };
-
-    return !(hub->getError());
 };
 
 bool DS2408::getPinState(uint8_t pinNumber)

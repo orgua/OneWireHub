@@ -54,7 +54,7 @@ public:
 
     DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    bool duty(OneWireHub *hub);
+    void duty(OneWireHub *hub);
 
     void setTemp(const float   temp_degC);
     void setTemp(const int8_t temp_degC);

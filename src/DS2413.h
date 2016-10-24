@@ -18,7 +18,7 @@ public:
 
     DS2413(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    bool duty(OneWireHub *hub);
+    void duty(OneWireHub *hub);
 
     bool readState(const uint8_t a_or_b)
     {

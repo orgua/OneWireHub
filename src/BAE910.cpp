@@ -26,7 +26,7 @@ void BAE910::extCommand(const uint8_t ecmd, const uint8_t payload_len)
     }
 };
 
-bool BAE910::duty(OneWireHub *hub)
+void BAE910::duty(OneWireHub *hub)
 {
     uint8_t ta1;
     uint8_t ta2;
@@ -35,102 +35,102 @@ bool BAE910::duty(OneWireHub *hub)
     uint16_t crc = 0;
 
     uint8_t cmd  = hub->recvAndCRC16(crc);
-    if (hub->getError())  return false;
+    if (hub->getError())  return;
 
     switch (cmd)
     {
         case 0x11: // READ VERSION
             crc = hub->sendAndCRC16(BAE910_SW_VER,        crc);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             crc = hub->sendAndCRC16(BAE910_BOOTSTRAP_VER, crc);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             // crc
             crc = ~crc;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return false;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) break;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) break;
             break;
 
         case 0x12: // READ TYPE
             crc = hub->sendAndCRC16(BAE910_DEVICE_TYPE,   crc);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             crc = hub->sendAndCRC16(BAE910_CHIP_TYPE,     crc);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             // crc
             crc = ~crc;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return false;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) break;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) break;
             break;
 
         case 0x13: // EXTENDED COMMAND
             ecmd = hub->recvAndCRC16(crc);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             len  = hub->recvAndCRC16(crc);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             if (len > BAE910_SCRATCHPAD_SIZE)
             {
                 hub->raiseSlaveError(cmd);
-                return false;
+                break;
             }
             for( uint8_t i = 0; i < len; ++i )
             {
                 scratchpad[i] = hub->recvAndCRC16(crc);
-                if (hub->getError())  return false;
+                if (hub->getError())  return;
             }
             // crc
             crc = ~crc;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return false;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) break;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) break;
             // verify answer from master, then execute command
             if (hub->recv() == 0xBC)    extCommand(ecmd, len);
             break;
 
         case 0x14: // READ MEMORY
             ta1 = hub->recvAndCRC16(crc);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             ta2 = hub->recvAndCRC16(crc);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             len = hub->recvAndCRC16(crc);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
 
             if ((ta1 + len > 0x80) || (ta2 > 0))
             {
                 hub->raiseSlaveError(cmd);
-                return false;
+                break;
             }
             // reverse byte order
             for (uint8_t i = 0; i < len; ++i)
             {
                 crc = hub->sendAndCRC16(memory.bytes[0x7F - ta1 - i], crc);
-                if (hub->getError())  return false;
+                if (hub->getError())  return;
             }
             // crc
             crc = ~crc;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return false;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) break;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) break;
             break;
 
         case 0x15: // WRITE MEMORY
             ta1 = hub->recvAndCRC16(crc);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             ta2 = hub->recvAndCRC16(crc);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
             len = hub->recvAndCRC16(crc);
-            if (hub->getError())  return false;
+            if (hub->getError())  break;
 
             if ((len > BAE910_SCRATCHPAD_SIZE) || (ta1 + len > 0x80) || (ta2 > 0))
             {
                 hub->raiseSlaveError(cmd);
-                return false;
+                break;
             }
             for (uint8_t i = 0; i < len; ++i)
             {
                 scratchpad[i] = hub->recvAndCRC16(crc);
-                if (hub->getError())  return false;
+                if (hub->getError())  return;
             }
             // crc
             crc = ~crc;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return false;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return false;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) break;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) break;
             // verify answer from master, then copy memory
             if (hub->recv() == 0xBC)
             {
@@ -146,8 +146,5 @@ bool BAE910::duty(OneWireHub *hub)
 
         default:
             hub->raiseSlaveError(cmd);
-            return false;
-    }
-
-    return true;
-}
+    };
+};
