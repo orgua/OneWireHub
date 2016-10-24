@@ -236,12 +236,24 @@ bool OneWireHub::poll(void)
         //Once reset is done, go to next step
         if (checkReset())           return false;
 
+#if USE_GPIO_DEBUG
+        DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+        DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+#endif
+
         // Reset is complete, tell the master we are present
         if (showPresence())         return false;
 
-        //Now that the master should know we are here, we will get a command from the bus
+#if USE_GPIO_DEBUG
+        DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+#endif
+
+        //Now that the master should know we are here, we will get a command from the master
         if (recvAndProcessCmd())    return false;
 
+#if USE_GPIO_DEBUG
+        DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+#endif
         // on total success we want to start again, because the next reset could only be ~125 us away
     }
 }
@@ -320,10 +332,6 @@ bool OneWireHub::showPresence(void)
     static_assert(LOOPS_PRESENCE_LOW_MAX[1] > LOOPS_PRESENCE_LOW_STD[1], "Timings are wrong");
 #endif
 
-#if USE_GPIO_DEBUG
-    DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-#endif
-
     // Master will delay it's "Presence" check (bus-read)  after the reset
     waitLoopsWhilePinIs(LOOPS_PRESENCE_SAMPLE_MIN[od_mode], true); // no pinCheck demanded, but this additional check can cut waitTime
 
@@ -342,10 +350,6 @@ bool OneWireHub::showPresence(void)
         return true;
     }
 
-#if USE_GPIO_DEBUG
-    DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-#endif
-
     extend_timeslot_detection = 1; // DS9490R takes 7-9 ms after presence-detection to start with timeslots
     return false;
 }
@@ -356,7 +360,7 @@ void OneWireHub::extendTimeslot(void)
 }
 
 
-bool OneWireHub::search(void)
+void OneWireHub::search(void)
 {
     uint8_t position_IDBit  = 0;
     uint8_t trigger_pos     = 0;
@@ -368,11 +372,11 @@ bool OneWireHub::search(void)
         // if junction is reached, act different
         if (position_IDBit == trigger_bit)
         {
-            if (sendBit(false)) return false;
-            if (sendBit(false)) return false;
+            if (sendBit(false)) return;
+            if (sendBit(false)) return;
 
             const bool bit_recv = recvBit();
-            if (_error != Error::NO_ERROR)  return false;
+            if (_error != Error::NO_ERROR)  return;
 
             // switch to next junction
             trigger_pos = bit_recv ? idTree[trigger_pos].got_one : idTree[trigger_pos].got_zero;
@@ -390,27 +394,26 @@ bool OneWireHub::search(void)
             if (slave_list[active_slave]->ID[pos_byte] & mask_bit)
             {
                 bit_send = true;
-                if (sendBit(true))  return false;
-                if (sendBit(false)) return false;
+                if (sendBit(true))  return;
+                if (sendBit(false)) return;
             }
             else
             {
                 bit_send = false;
-                if (sendBit(false)) return false;
-                if (sendBit(true))  return false;
+                if (sendBit(false)) return;
+                if (sendBit(true))  return;
             }
 
             const bool bit_recv = recvBit();
-            if (_error != Error::NO_ERROR)  return false;
+            if (_error != Error::NO_ERROR)  return;
 
-            if (bit_send != bit_recv)  return false;
+            if (bit_send != bit_recv)  return;
         }
         position_IDBit++;
     }
 
     slave_selected = slave_list[active_slave];
-    return true;
-}
+};
 
 bool OneWireHub::recvAndProcessCmd(void)
 {
@@ -467,13 +470,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             if (slave_selected != nullptr)
             {
                 extend_timeslot_detection = 1;
-#if USE_GPIO_DEBUG
-                DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
                 slave_selected->duty(this);
-                DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-#else
-                slave_selected->duty(this);
-#endif
             };
             return (getError());
 
@@ -485,27 +482,14 @@ bool OneWireHub::recvAndProcessCmd(void)
             // NOTE: If more than one slave is present on the bus,
             // and a read command is issued following the Skip ROM command,
             // data collision will occur on the bus as multiple slaves transmit simultaneously
-            slave_selected = nullptr;
-
-            for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
+            if ((slave_selected == nullptr) && (slave_count == 1))
             {
-                if (slave_list[i] != nullptr)
-                {
-                    slave_selected = slave_list[i];
-                    break;
-                };
-            };
-
+                slave_selected = slave_list[getIndexOfNextSensorInList()];
+            }
             if (slave_selected != nullptr)
             {
                 extend_timeslot_detection = 1;
-#if USE_GPIO_DEBUG
-                DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
                 slave_selected->duty(this);
-                DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-#else
-                slave_selected->duty(this);
-#endif
             };
             return (getError());
 
@@ -514,14 +498,14 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         case 0x33: // READ ROM
             // only usable when there is ONE slave on the bus
-            if (slave_count == 1)
+            if ((slave_selected == nullptr) && (slave_count == 1))
             {
                 slave_selected = slave_list[getIndexOfNextSensorInList()];
-                if (slave_selected != nullptr)
-                {
-                    slave_selected->sendID(this);
-                };
             }
+            if (slave_selected != nullptr)
+            {
+                slave_selected->sendID(this);
+            };
             return false;
 
         case 0xEC:
@@ -530,14 +514,8 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         case 0xA5: // RESUME COMMAND
             if (slave_selected == nullptr) return true;
+            slave_selected->duty(this);
 
-#if USE_GPIO_DEBUG
-            digitalWrite(GPIO_DEBUG_PIN,HIGH);
-            slave_selected->duty(this);
-            digitalWrite(GPIO_DEBUG_PIN,LOW);
-#else
-            slave_selected->duty(this);
-#endif
             return (getError());
         default: // Unknown command
             _error = Error::INCORRECT_ONEWIRE_CMD;

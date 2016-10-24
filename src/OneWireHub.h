@@ -130,7 +130,7 @@ private:
 
     bool showPresence(void);    // returns 1 if error occured
 
-    bool search(void);
+    void search(void);
 
     bool recvAndProcessCmd();  // returns 1 if error occured
 
