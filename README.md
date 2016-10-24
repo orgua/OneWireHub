@@ -31,21 +31,24 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 ### Features:
 - supports up to 32 slaves (8 is standard setting), adjust HUB_SLAVE_LIMIT in src/OneWireHub_config.h to safe RAM & program space
 - hot-plug slaves as needed
-- cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=1.6.10 recommended)**
-   - i.e. use of constexpr instead of #define for better compiler-messages
-- hardware-dependencies are combined in "platform.h", synced with [onewire-lib](https://github.com/PaulStoffregen/OneWire)
+- cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=1.6.10 recommended)** i.e.:
+   - use of constexpr instead of #define for better compiler-messages
+   - use static-assertions for plausibility checks
+- hardware-dependencies are combined in "platform.h", synced with [Onewire-Lib](https://github.com/PaulStoffregen/OneWire)
    - extra supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822 (...)
    - tested architectures: atmega328, teensy3.2
    - for portability and tests the hub can even be compiled on a PC with the supplied mock-up functions
    - at the moment the lib relies sole on the micros()-fn for timing, no direct access to interrupt or timers
 - Serial debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
 - debug-pin output - shows state by issuing high-states (activate in src/OneWireHub_config.h, is a better alternative to serial debug)
-   - during presence detection (after reset), 
-   - while attached sensor-routines are active (after match-rom)
+   - right before presence detection (after reset), 
+   - while attached sensor-routines are active (during recvAndProzessCmd())
    - while hub-startup it issues a 1ms long high-state (you can check the instruction-per-loop-value for your architecture with this)
 - documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
+- no return value for hub.search() or item.duty() needed anymore
+- returns 1 if error occured in the following functions: recv(buf[]), send(), awaitTimeslot(), sendBit(), checkReset(), showPrescence(), recvAndProzessCmd()
 - basic support for ds2408, thanks to vytautassurvila
 - offline calibration by watching the bus (examples/debug/calibrate_by_bus_timing)
    - branch for online calibration was abandoned because it took to much resources (DS18B20-Sketch compiled to 8434 & 482 bytes instead of 7026 & 426 bytes now) 
