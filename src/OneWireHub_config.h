@@ -18,46 +18,44 @@ constexpr uint32_t REPETITIONS      { 10000 }; // for measuring the loop-delay -
 /// the following TIME-values are in microseconds and are taken from the ds2408 datasheet
 // should be --> datasheet
 // was       --> shagrat-legacy
-constexpr uint16_t ONEWIRE_TIME_BUS_CHANGE_MAX       =    5; //
-
+constexpr uint16_t ONEWIRE_TIME_RESET_TIMEOUT        = 5000; // for not hanging indef in reset-detection, lower value is better for more responsive applications, but can miss resets
 constexpr uint16_t ONEWIRE_TIME_RESET_MIN            =  430; // should be 480, and was 470
 constexpr uint16_t ONEWIRE_TIME_RESET_MAX            =  960; // from ds2413
-constexpr uint16_t ONEWIRE_TIME_RESET_TIMEOUT        =12000; // for not hanging indef in reset-detection,  // TODO: should optimize, lower value is better
 
-constexpr uint16_t ONEWIRE_TIME_PRESENCE_SAMPLE_MIN  =   20; // probe measures 40us
-constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     =  160; // was 125
-constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     =  480; // should be 280, was 480 !!!! why
-constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =20000; // TODO: length of high-side not really relevant, so we should switch to a fn that detects the length of the most recent low-phase
+constexpr uint16_t ONEWIRE_TIME_PRESENCE_TIMEOUT     =   20; // probe measures 40us
+constexpr uint16_t ONEWIRE_TIME_PRESENCE_MIN         =  160; // was 125
+constexpr uint16_t ONEWIRE_TIME_PRESENCE_MAX         =  480; // should be 280, was 480 !!!! why
 
+constexpr uint16_t ONEWIRE_TIME_MSG_HIGH_TIMEOUT     =15000; // there can be inactive / high timeperiods after reset / presence, this value defines the timeout for these
 constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =  135; // should be 120, was ~1050
 
 // read and write from the viewpoint of the slave!!!!
-constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MAX     =   60; //
-constexpr uint16_t ONEWIRE_TIME_READ_STD             =   20; // was 30, should be 15
-constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =   30; //
+constexpr uint16_t ONEWIRE_TIME_READ_MIN             =   20; // was 30, should be 15
+constexpr uint16_t ONEWIRE_TIME_READ_MAX             =   60; //
+constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO           =   30; //
 
 // OVERDRIVE
 constexpr uint16_t OVERDRIVE_TIME_RESET_MIN          =   48; //
 constexpr uint16_t OVERDRIVE_TIME_RESET_MAX          =   80; //
 //
 
-constexpr uint16_t OVERDRIVE_TIME_PRESENCE_SAMPLE_MIN=   20;
-constexpr uint16_t OVERDRIVE_TIME_PRESENCE_LOW_STD   =    8;
-constexpr uint16_t OVERDRIVE_TIME_PRESENCE_LOW_MAX   =   32;
+constexpr uint16_t OVERDRIVE_TIME_PRESENCE_TIMEOUT   =   20;
+constexpr uint16_t OVERDRIVE_TIME_PRESENCE_MIN       =    8;
+constexpr uint16_t OVERDRIVE_TIME_PRESENCE_MAX       =   32;
 //
 
 constexpr uint16_t OVERDRIVE_TIME_SLOT_MAX           =   20; //
 
-constexpr uint16_t OVERDRIVE_TIME_READ_ONE_LOW_MAX   =   16; //
-constexpr uint16_t OVERDRIVE_TIME_READ_STD           =   10; // was 30
-constexpr uint16_t OVERDRIVE_TIME_WRITE_ZERO_LOW_STD =   13; //
+constexpr uint16_t OVERDRIVE_TIME_READ_MIN           =   10; // was 30
+constexpr uint16_t OVERDRIVE_TIME_READ_MAX           =   16; //
+constexpr uint16_t OVERDRIVE_TIME_WRITE_ZERO         =   13; //
 
 // VALUES FOR STATIC ASSERTS
-constexpr uint16_t ONEWIRE_TIME_VALUE_MAX            = ONEWIRE_TIME_PRESENCE_HIGH_MAX;
+constexpr uint16_t ONEWIRE_TIME_VALUE_MAX            = ONEWIRE_TIME_MSG_HIGH_TIMEOUT;
 #if OVERDRIVE_ENABLE
-constexpr uint16_t ONEWIRE_TIME_VALUE_MIN            = OVERDRIVE_TIME_PRESENCE_LOW_STD;
+constexpr uint16_t ONEWIRE_TIME_VALUE_MIN            = OVERDRIVE_TIME_PRESENCE_MIN;
 #else
-constexpr uint16_t ONEWIRE_TIME_VALUE_MIN            = ONEWIRE_TIME_BUS_CHANGE_MAX;
+constexpr uint16_t ONEWIRE_TIME_VALUE_MIN            = ONEWIRE_TIME_PRESENCE_TIMEOUT;
 #endif
 
 /////////////////////////////////////////////////////
