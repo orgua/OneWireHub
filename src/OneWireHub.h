@@ -120,21 +120,18 @@ private:
 
     uint8_t buildIDTree(void);
     uint8_t buildIDTree(uint8_t position_IDBit, const mask_t slave_mask);
+    void    searchIDTree(void);
 
     uint8_t getNrOfFirstBitSet(const mask_t mask) const;
     uint8_t getNrOfFirstFreeIDTreeElement(void) const;
 
     bool checkReset(void);      // returns 1 if error occured
-
     bool showPresence(void);    // returns 1 if error occured
+    bool recvAndProcessCmd();   // returns 1 if error occured
 
-    void search(void);
-
-    bool recvAndProcessCmd();  // returns 1 if error occured
-
-    void wait(const uint16_t timeout_us) const;
     inline __attribute__((always_inline))
     void wait(const timeOW_t loops_wait) const;
+    void wait(const uint16_t timeout_us) const;
 
     inline __attribute__((always_inline))
     bool awaitTimeSlotAndWrite(const bool writeZero = 0); // returns 1 if error occured
@@ -173,6 +170,7 @@ public:
     void     waitLoops1ms(void);
     void     waitLoopsDebug(void) const;
 
+    // mostly for debug, partly for state-machine handling
     void printError(void) const;
     bool getError(void) const; // returns 1 if error occured
     void raiseSlaveError(const uint8_t cmd = 0);

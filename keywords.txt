@@ -31,7 +31,7 @@ buildIDTree	KEYWORD2
 waitForRequest	KEYWORD2
 checkReset	KEYWORD2
 showPresence	KEYWORD2
-search	KEYWORD2
+searchIDTree	KEYWORD2
 send	KEYWORD2
 recv	KEYWORD2
 send	KEYWORD2
