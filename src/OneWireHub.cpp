@@ -792,7 +792,6 @@ void OneWireHub::waitLoops1ms(void)
 // after that it measures with a waitLoops()-FN to determine the instructions-per-loop-value for the used architecture
 timeOW_t OneWireHub::waitLoopsCalibrate(void)
 {
-    constexpr timeOW_t repetitions_max{5000}; // how many low_states will be measured before assuming that there was a reset in it
     constexpr timeOW_t wait_loops{1000000 * microsecondsToClockCycles(1)}; // loops before cancelling a pin-change-wait, 1s
 
     timeOW_t time_for_reset = 0;
@@ -822,7 +821,7 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
     repetitions = 0;
 
     noInterrupts();
-    while (repetitions++ < repetitions_max)
+    while (repetitions++ < REPETITIONS)
     {
         if (!waitLoopsWhilePinIs(wait_loops, true)) continue;
         const timeOW_t loops_left = waitLoopsWhilePinIs(TIMEOW_MAX, false);
