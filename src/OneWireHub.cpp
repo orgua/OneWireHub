@@ -35,7 +35,7 @@ OneWireHub::OneWireHub(const uint8_t pin)
     DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
 #endif
 
-    static_assert(VALUE_IPL, "You tried to use fixed timing-values. Your architecture has not been calibrated yet, please run examples/debug/calibrate_by_bus_timing and report instructions per loop (IPL) to https://github.com/orgua/OneWireHub");
+    static_assert(VALUE_IPL, "Your architecture has not been calibrated yet, please run examples/debug/calibrate_by_bus_timing and report instructions per loop (IPL) to https://github.com/orgua/OneWireHub");
     static_assert(timeUsToLoops(ONEWIRE_TIME_VALUE_MIN)>1,"YOUR ARCHITECTURE IS TO SLOW, THIS MAY RESULT IN TIMING-PROBLEMS");
     static_assert((ONEWIRE_TIME_VALUE_MAX / VALUE_IPL ) < (TIMEOW_MAX / microsecondsToClockCycles(1)),"YOUR ARCHITECTURE IS TO FAST, OR TIMING VALUES SET TO HIGH --> OVERFLOW DETECTED");
 };
@@ -182,7 +182,7 @@ uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const mask_t mask_slaves
         const uint8_t mask_bit = (static_cast<uint8_t>(1) << (position_IDBit & (7)));
         mask_t mask_id = 1;
 
-        // search through all active slaves
+        // searchIDTree through all active slaves
         for (uint8_t id = 0; id < ONEWIRESLAVE_LIMIT; ++id)
         {
             if (mask_slaves & mask_id)
@@ -305,7 +305,7 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
     // If the master pulled low for to short this will trigger an error
     if ((LOOPS_RESET_MAX[0] - LOOPS_RESET_MIN[od_mode]) < loops_remaining)
     {
-        //_error = Error::VERY_SHORT_RESET; // TODO: activate again, like the error above, errorhandling is mature enough now
+        //_error = Error::VERY_SHORT_RESET; // could be activated again, like the error above, errorhandling is mature enough now
         return true;
     }
 
@@ -356,7 +356,7 @@ void OneWireHub::extendTimeslot(void)
 }
 
 
-void OneWireHub::search(void)
+void OneWireHub::searchIDTree(void)
 {
     uint8_t position_IDBit  = 0;
     uint8_t trigger_pos     = 0;
@@ -425,8 +425,8 @@ bool OneWireHub::recvAndProcessCmd(void)
     {
         case 0xF0: // Search rom
             slave_selected = nullptr;
-            search();
-            return false; // always trigger a re-init after search
+            searchIDTree();
+            return false; // always trigger a re-init after searchIDTree
 
         case 0x69: // overdrive MATCH ROM
 #if OVERDRIVE_ENABLE
@@ -517,8 +517,8 @@ bool OneWireHub::recvAndProcessCmd(void)
             return false;
 
         case 0xEC:
-            // TODO: Alarm search command, respond if flag is set
-            // is like search-rom, but only slaves with triggered alarm will appear
+            // TODO: Alarm searchIDTree command, respond if flag is set
+            // is like searchIDTree-rom, but only slaves with triggered alarm will appear
 
         case 0xA5: // RESUME COMMAND
             if (slave_selected == nullptr) return true;

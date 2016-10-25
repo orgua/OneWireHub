@@ -47,7 +47,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
-- no return value for hub.search() or item.duty() needed anymore
+- no return value for hub.searchIDTree() or item.duty() needed anymore
 - returns 1 if error occured in the following functions: recv(buf[]), send(), awaitTimeslot(), sendBit(), checkReset(), showPrescence(), recvAndProzessCmd()
 - basic support for ds2408, thanks to vytautassurvila
 - offline calibration by watching the bus (examples/debug/calibrate_by_bus_timing)
@@ -78,7 +78,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - refactored the interface: hub.poll() replaces hub.waitForRequest()
 - extended ds2890 to up to 4CH (datasheet has it covered), ds2413, ds2413 --> feature-complete
 - implement and test ds2438
-- replace search() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
+- replace searchIDTree() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
 
 ### Plans for the future:
 - implementation of ds2450
