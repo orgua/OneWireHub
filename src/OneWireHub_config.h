@@ -13,7 +13,7 @@
 #define USE_GPIO_DEBUG      0 // is a better alternative to serial debug (see readme.md for info)
 
 constexpr uint8_t  GPIO_DEBUG_PIN   { 7 }; // digital pin
-constexpr uint32_t REPETITIONS      { 10000 }; // for measuring the loop-delay --> 10000L take ~110ms on atmega328p@16Mhz
+constexpr uint32_t REPETITIONS      { 5000 }; // for measuring the loop-delay --> 10000L takes ~110ms on atmega328p@16Mhz
 
 /// the following TIME-values are in microseconds and are taken from the ds2408 datasheet
 // should be --> datasheet
