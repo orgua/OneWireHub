@@ -249,10 +249,10 @@ bool OneWireHub::poll(void)
 
 bool OneWireHub::checkReset(void) // there is a specific high-time needed before a reset may occur -->  >120us
 {
-    static_assert(LOOPS_RESET_MIN[0] > (LOOPS_SLOT_MAX[0] - LOOPS_READ_MIN[0]), "Timings are wrong");
+    static_assert(LOOPS_RESET_MIN[0] > (LOOPS_SLOT_MAX[0] - LOOPS_READ_MAX[0]), "Timings are wrong");
     static_assert(LOOPS_RESET_MAX[0] > LOOPS_RESET_MIN[0], "Timings are wrong");
 #if OVERDRIVE_ENABLE
-    static_assert(LOOPS_RESET_MIN[1] > (LOOPS_SLOT_MAX[1] - LOOPS_READ_MIN[1]), "Timings are wrong");
+    static_assert(LOOPS_RESET_MIN[1] > (LOOPS_SLOT_MAX[1] - LOOPS_READ_MAX[1]), "Timings are wrong");
     static_assert(LOOPS_RESET_MAX[0] > LOOPS_RESET_MIN[1], "Timings are wrong");
 #endif
 
@@ -262,7 +262,7 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
     if (skip_reset_detection)
     {
         skip_reset_detection = 0;
-        if (!waitLoopsWhilePinIs(LOOPS_RESET_MIN[od_mode] - LOOPS_SLOT_MAX[od_mode] - LOOPS_READ_MIN[od_mode], false)) // TODO: not very accurate
+        if (!waitLoopsWhilePinIs(LOOPS_RESET_MIN[od_mode] - LOOPS_SLOT_MAX[od_mode] - LOOPS_READ_MAX[od_mode], false)) // TODO: not very accurate
         {
 #if OVERDRIVE_ENABLE
             const timeOW_t loops_remaining = waitLoopsWhilePinIs(LOOPS_RESET_MAX[0], false); // showPresence() wants to start at high, so wait for it
@@ -437,14 +437,10 @@ bool OneWireHub::recvAndProcessCmd(void)
         case 0x55: // MATCH ROM - Choose/Select ROM
             slave_selected = nullptr;
 
-            DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
             if (recv(address, 8))
             {
-                DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-                return true;
+                return (getError());;
             }
-
-            DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
 
             for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
             {
@@ -477,11 +473,8 @@ bool OneWireHub::recvAndProcessCmd(void)
                 extend_timeslot_detection = 1;
 #if USE_GPIO_DEBUG
                 DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-                slave_selected->duty(this);
-                DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-#else
-                slave_selected->duty(this);
 #endif
+                slave_selected->duty(this);
             };
             return (getError());
 
@@ -503,11 +496,8 @@ bool OneWireHub::recvAndProcessCmd(void)
                 extend_timeslot_detection = 1;
 #if USE_GPIO_DEBUG
                 DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-                slave_selected->duty(this);
-                DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-#else
-                slave_selected->duty(this);
 #endif
+                slave_selected->duty(this);
             };
             return (getError());
 
@@ -526,7 +516,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             };
             return false;
 
-        case 0xEC:
+        case 0xEC: // ALARM SEARCH
             // TODO: Alarm searchIDTree command, respond if flag is set
             // is like searchIDTree-rom, but only slaves with triggered alarm will appear
 
@@ -534,13 +524,10 @@ bool OneWireHub::recvAndProcessCmd(void)
             if (slave_selected == nullptr) return true;
 #if USE_GPIO_DEBUG
             DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-            slave_selected->duty(this);
-            DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-#else
-            slave_selected->duty(this);
 #endif
+            slave_selected->duty(this);
 
-            return (getError());
+            return (getError());    // TODO: switch for normal break and do the getError at the end if possible
         default: // Unknown command
             _error = Error::INCORRECT_ONEWIRE_CMD;
             _error_cmd = cmd;
@@ -921,24 +908,9 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
             while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
             if (!retries)
             {
-                if (extend_timeslot_detection == 2) // TODO: simplify this, one error-code is enough, switch to reset-detection if this is maxed
-                {
-                    // this branch can be taken after calling THIS functions the second time in recvBit()
-                    extend_timeslot_detection = 0;
-                    skip_reset_detection = 1;
-                    _error = Error::FIRST_TIMESLOT_TIMEOUT;
-                } else
-                {
-                    _error = (bitMask == 0x01) ? Error::FIRST_BIT_OF_BYTE_TIMEOUT : Error::READ_TIMESLOT_TIMEOUT;
-                };
+                skip_reset_detection = 1;
                 interrupts();
                 return true;
-            };
-
-            // extend the wait-time after reset and presence-detection
-            if (extend_timeslot_detection == 1) // TODO: seems senseless now
-            {
-                extend_timeslot_detection = 2; // prepare to detect missing timeslot or second reset
             };
 
             // Wait for bus to fall LOW, start of new timeslot
@@ -959,12 +931,12 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
         };
 
         address[bytes_received] = value;
-        DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
         DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+        DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
     };
 
     interrupts();
-    return (bytes_received != data_length); // todo: redo error-system
+    return (bytes_received != data_length);
 };
 
 uint8_t OneWireHub::recv(void)
@@ -1030,24 +1002,9 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
             while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
             if (!retries)
             {
-                if (extend_timeslot_detection == 2) // TODO: simplify this, one error-code is enough, switch to reset-detection if this is maxed
-                {
-                    // this branch can be taken after calling THIS functions the second time in recvBit()
-                    extend_timeslot_detection = 0;
-                    skip_reset_detection = 1;
-                    _error = Error::FIRST_TIMESLOT_TIMEOUT;
-                } else
-                {
-                    _error = (bitMask == 0x01) ? Error::FIRST_BIT_OF_BYTE_TIMEOUT : Error::WRITE_TIMESLOT_TIMEOUT;
-                };
+                skip_reset_detection = 1;
                 interrupts();
                 return true;
-            };
-
-            // extend the wait-time after reset and presence-detection
-            if (extend_timeslot_detection == 1) // TODO: seems senseless now
-            {
-                extend_timeslot_detection = 2; // prepare to detect missing timeslot or second reset
             };
 
             // Wait for bus to fall LOW, start of new timeslot
@@ -1074,6 +1031,8 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
             while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
             DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
         };
+        DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+        DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
     };
     interrupts();
     return (bytes_sent != data_length);
