@@ -156,7 +156,6 @@ public:
     bool send(const uint8_t dataByte);                              // returns 1 if error occured
     bool send(const uint8_t address[], const uint8_t data_length);  // returns 1 if error occured
     bool sendBit(const bool value);                                 // returns 1 if error occured
-
     // CRC takes ~7.4µs/byte (Atmega328P@16MHz) but is distributing the load between each bit-send to 0.9 µs/bit (see debug-crc-comparison.ino)
     // important: the final crc is expected to be inverted (crc=~crc) !!!
     uint16_t sendAndCRC16(uint8_t dataByte, uint16_t crc16);
