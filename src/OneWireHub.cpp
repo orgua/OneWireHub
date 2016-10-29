@@ -562,12 +562,6 @@ bool OneWireHub::sendBit(const bool value)
     return false;
 };
 
-// info: check for errors after calling and break/return if possible, TODO: why return crc both ways, detect first bit break
-uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
-{
-    send(&dataByte, 1, crc16);
-    return crc16;
-};
 
 // should be the prefered function for writes, returns true if error occured
 bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
@@ -618,7 +612,7 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length, uint16
                 return true;
             };
 
-            uint8_t mix = ((uint8_t) crc16 ^ dataByte) & static_cast<uint8_t>(0x01);
+            const uint8_t mix = ((uint8_t) crc16 ^ dataByte) & static_cast<uint8_t>(0x01);
             crc16 >>= 1;
             if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
             dataByte >>= 1;
@@ -636,6 +630,13 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length, uint16
 bool OneWireHub::send(const uint8_t dataByte)
 {
     return send(&dataByte,1);
+};
+
+// info: check for errors after calling and break/return if possible, TODO: why return crc both ways, detect first bit break
+uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
+{
+    send(&dataByte, 1, crc16);
+    return crc16;
 };
 
 
