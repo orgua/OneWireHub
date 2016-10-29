@@ -26,12 +26,13 @@ OneWireHub::OneWireHub(const uint8_t pin)
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
 
     // prepare debug:
-#if USE_GPIO_DEBUG
-    debug_bitMask = PIN_TO_BITMASK(GPIO_DEBUG_PIN);
-    debug_baseReg = PIN_TO_BASEREG(GPIO_DEBUG_PIN);
-    pinMode(GPIO_DEBUG_PIN, OUTPUT);
-    DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-#endif
+    if (USE_GPIO_DEBUG)
+    {
+        debug_bitMask = PIN_TO_BITMASK(GPIO_DEBUG_PIN);
+        debug_baseReg = PIN_TO_BASEREG(GPIO_DEBUG_PIN);
+        pinMode(GPIO_DEBUG_PIN, OUTPUT);
+        DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+    }
 
     static_assert(VALUE_IPL, "Your architecture has not been calibrated yet, please run examples/debug/calibrate_by_bus_timing and report instructions per loop (IPL) to https://github.com/orgua/OneWireHub");
     static_assert(timeUsToLoops(ONEWIRE_TIME_VALUE_MIN)>1,"YOUR ARCHITECTURE IS TO SLOW, THIS MAY RESULT IN TIMING-PROBLEMS");
@@ -46,14 +47,15 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
 
     // demonstrate an 1ms-Low-State on the debug pin (only if bus stays high during this time)
     // done here because this FN is always called before hub is used
-#if USE_GPIO_DEBUG
+    if (USE_GPIO_DEBUG)
+    {
         static bool calibrate_loop_timing = true;
         if (calibrate_loop_timing)
         {
             calibrate_loop_timing = false;
             waitLoops1ms();
         }
-#endif
+    };
 
     // find position of next free storage-position
     uint8_t position = 255;
@@ -321,9 +323,7 @@ bool OneWireHub::showPresence(void)
     // Master will delay it's "Presence" check (bus-read)  after the reset
     waitLoopsWhilePinIs(LOOPS_PRESENCE_TIMEOUT[od_mode], true); // no pinCheck demanded, but this additional check can cut waitTime
 
-#if USE_GPIO_DEBUG
-    DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-#endif
+    if (USE_GPIO_DEBUG) DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
 
     // pull the bus low and hold it some time
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
@@ -333,9 +333,7 @@ bool OneWireHub::showPresence(void)
 
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);     // allow it to float
 
-#if USE_GPIO_DEBUG
-    DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-#endif
+    if (USE_GPIO_DEBUG) DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
 
     // When the master or other slaves release the bus within a given time everything is fine
     if (!waitLoopsWhilePinIs((LOOPS_PRESENCE_MAX[od_mode] - LOOPS_PRESENCE_MIN[od_mode]), false))
@@ -461,9 +459,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 
             if (slave_selected != nullptr)
             {
-#if USE_GPIO_DEBUG
-                DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-#endif
+                if (USE_GPIO_DEBUG) DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
                 slave_selected->duty(this);
             };
             break;
@@ -483,9 +479,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             }
             if (slave_selected != nullptr)
             {
-#if USE_GPIO_DEBUG
-                DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-#endif
+                if (USE_GPIO_DEBUG) DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
                 slave_selected->duty(this);
             };
             break;
@@ -511,9 +505,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         case 0xA5: // RESUME COMMAND
             if (slave_selected == nullptr) return true;
-#if USE_GPIO_DEBUG
-            DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-#endif
+            if (USE_GPIO_DEBUG) DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
             slave_selected->duty(this);
             break;
 
@@ -667,18 +659,19 @@ timeOW_t OneWireHub::waitLoopsWhilePinIs(volatile timeOW_t retries, const bool p
 
 void OneWireHub::waitLoops1ms(void)
 {
-#if USE_GPIO_DEBUG
-    constexpr timeOW_t loops_1ms = timeUsToLoops(uint16_t(VALUE1k));
-    timeOW_t loops_left = 1;
-    while (loops_left)
+    if (USE_GPIO_DEBUG)
     {
-        waitLoopsWhilePinIs(loops_1ms, false);
-        DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
-        DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-        loops_left = waitLoopsWhilePinIs(loops_1ms, true);
-        DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+        constexpr timeOW_t loops_1ms = timeUsToLoops(uint16_t(VALUE1k));
+        timeOW_t loops_left = 1;
+        while (loops_left)
+        {
+            waitLoopsWhilePinIs(loops_1ms, false);
+            DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
+            DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+            loops_left = waitLoopsWhilePinIs(loops_1ms, true);
+            DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+        };
     };
-#endif
 };
 
 // this calibration calibrates timing with the longest low-state on the OW-Bus.
@@ -734,69 +727,70 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
 
 void OneWireHub::waitLoopsDebug(void) const
 {
-#if USE_SERIAL_DEBUG
-    Serial.println("DEBUG TIMINGS for the HUB (measured in loops):");
-    Serial.println("(be sure to update VALUE_IPL in src/OneWireHub_config.h first!)");
-    Serial.print("value : \t");
-    Serial.print(VALUE_IPL * VALUE1k / microsecondsToClockCycles(1));
-    Serial.println(" nanoseconds per loop");
-    Serial.print("reset min : \t");
-    Serial.println(LOOPS_RESET_MIN[od_mode]);
-    Serial.print("reset max : \t");
-    Serial.println(LOOPS_RESET_MAX[od_mode]);
-    Serial.print("reset tout : \t");
-    Serial.println(LOOPS_RESET_TIMEOUT);
-    Serial.print("presence min : \t");
-    Serial.println(LOOPS_PRESENCE_TIMEOUT[od_mode]);
-    Serial.print("presence low : \t");
-    Serial.println(LOOPS_PRESENCE_MIN[od_mode]);
-    Serial.print("pres low max : \t");
-    Serial.println(LOOPS_PRESENCE_MAX[od_mode]);
-    Serial.print("msg hi timeout : \t");
-    Serial.println(LOOPS_MSG_HIGH_TIMEOUT);
-    Serial.print("slot max : \t");
-    Serial.println(LOOPS_SLOT_MAX[od_mode]);
-    Serial.print("read1low : \t");
-    Serial.println(LOOPS_READ_MAX[od_mode]);
-    Serial.print("read std : \t");
-    Serial.println(LOOPS_READ_MIN[od_mode]);
-    Serial.print("write zero : \t");
-    Serial.println(LOOPS_WRITE_ZERO[od_mode]);
-    Serial.flush();
-#endif
+    if (USE_SERIAL_DEBUG)
+    {
+        Serial.println("DEBUG TIMINGS for the HUB (measured in loops):");
+        Serial.println("(be sure to update VALUE_IPL in src/OneWireHub_config.h first!)");
+        Serial.print("value : \t");
+        Serial.print(VALUE_IPL * VALUE1k / microsecondsToClockCycles(1));
+        Serial.println(" nanoseconds per loop");
+        Serial.print("reset min : \t");
+        Serial.println(LOOPS_RESET_MIN[od_mode]);
+        Serial.print("reset max : \t");
+        Serial.println(LOOPS_RESET_MAX[od_mode]);
+        Serial.print("reset tout : \t");
+        Serial.println(LOOPS_RESET_TIMEOUT);
+        Serial.print("presence min : \t");
+        Serial.println(LOOPS_PRESENCE_TIMEOUT[od_mode]);
+        Serial.print("presence low : \t");
+        Serial.println(LOOPS_PRESENCE_MIN[od_mode]);
+        Serial.print("pres low max : \t");
+        Serial.println(LOOPS_PRESENCE_MAX[od_mode]);
+        Serial.print("msg hi timeout : \t");
+        Serial.println(LOOPS_MSG_HIGH_TIMEOUT);
+        Serial.print("slot max : \t");
+        Serial.println(LOOPS_SLOT_MAX[od_mode]);
+        Serial.print("read1low : \t");
+        Serial.println(LOOPS_READ_MAX[od_mode]);
+        Serial.print("read std : \t");
+        Serial.println(LOOPS_READ_MIN[od_mode]);
+        Serial.print("write zero : \t");
+        Serial.println(LOOPS_WRITE_ZERO[od_mode]);
+        Serial.flush();
+    };
 };
 
 void OneWireHub::printError(void) const
 {
-#if USE_SERIAL_DEBUG
-     if (_error == Error::NO_ERROR)                        return;
-     Serial.print("Error: ");
-     if      (_error == Error::READ_TIMESLOT_TIMEOUT)      Serial.print("read timeslot timeout");
-     else if (_error == Error::WRITE_TIMESLOT_TIMEOUT)     Serial.print("write timeslot timeout");
-     else if (_error == Error::WAIT_RESET_TIMEOUT)         Serial.print("reset wait timeout");
-     else if (_error == Error::VERY_LONG_RESET)            Serial.print("very long reset");
-     else if (_error == Error::VERY_SHORT_RESET)           Serial.print("very short reset");
-     else if (_error == Error::PRESENCE_LOW_ON_LINE)       Serial.print("presence low on line");
-     else if (_error == Error::READ_TIMESLOT_TIMEOUT_LOW)  Serial.print("read timeout low");
-     else if (_error == Error::READ_TIMESLOT_TIMEOUT_HIGH) Serial.print("read timeout high");
-     else if (_error == Error::PRESENCE_HIGH_ON_LINE)      Serial.print("presence high on line");
-     else if (_error == Error::INCORRECT_ONEWIRE_CMD)      Serial.print("incorrect onewire command");
-     else if (_error == Error::INCORRECT_SLAVE_USAGE)      Serial.print("slave was used in incorrect way");
-     else if (_error == Error::TRIED_INCORRECT_WRITE)      Serial.print("tried to write in read-slot");
-     else if (_error == Error::FIRST_TIMESLOT_TIMEOUT)     Serial.print("found no timeslot after reset / presence (is OK)");
-     else if (_error == Error::FIRST_BIT_OF_BYTE_TIMEOUT)  Serial.print("first bit of byte timeout");
+    if (USE_SERIAL_DEBUG)
+    {
+        if (_error == Error::NO_ERROR) return;
+        Serial.print("Error: ");
+        if (_error == Error::READ_TIMESLOT_TIMEOUT) Serial.print("read timeslot timeout");
+        else if (_error == Error::WRITE_TIMESLOT_TIMEOUT) Serial.print("write timeslot timeout");
+        else if (_error == Error::WAIT_RESET_TIMEOUT) Serial.print("reset wait timeout");
+        else if (_error == Error::VERY_LONG_RESET) Serial.print("very long reset");
+        else if (_error == Error::VERY_SHORT_RESET) Serial.print("very short reset");
+        else if (_error == Error::PRESENCE_LOW_ON_LINE) Serial.print("presence low on line");
+        else if (_error == Error::READ_TIMESLOT_TIMEOUT_LOW) Serial.print("read timeout low");
+        else if (_error == Error::READ_TIMESLOT_TIMEOUT_HIGH) Serial.print("read timeout high");
+        else if (_error == Error::PRESENCE_HIGH_ON_LINE) Serial.print("presence high on line");
+        else if (_error == Error::INCORRECT_ONEWIRE_CMD) Serial.print("incorrect onewire command");
+        else if (_error == Error::INCORRECT_SLAVE_USAGE) Serial.print("slave was used in incorrect way");
+        else if (_error == Error::TRIED_INCORRECT_WRITE) Serial.print("tried to write in read-slot");
+        else if (_error == Error::FIRST_TIMESLOT_TIMEOUT) Serial.print("found no timeslot after reset / presence (is OK)");
+        else if (_error == Error::FIRST_BIT_OF_BYTE_TIMEOUT) Serial.print("first bit of byte timeout");
 
-    if ((_error == Error::INCORRECT_ONEWIRE_CMD)||(_error == Error::INCORRECT_SLAVE_USAGE))
-    {
-        Serial.print(" [0x");
-        Serial.print(_error_cmd,HEX);
-        Serial.println("]");
-    }
-    else
-    {
-        Serial.println("");
-    }
-#endif
+        if ((_error == Error::INCORRECT_ONEWIRE_CMD) || (_error == Error::INCORRECT_SLAVE_USAGE))
+        {
+            Serial.print(" [0x");
+            Serial.print(_error_cmd, HEX);
+            Serial.println("]");
+        } else
+        {
+            Serial.println("");
+        };
+    };
 };
 
 bool OneWireHub::getError(void) const
@@ -854,13 +848,18 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
             // wait a specific time to do a read (data is valid by then), // first difference to inner-loop of write()
             retries = LOOPS_READ_MIN[od_mode];
             while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
-
-            if (DIRECT_READ(pin_baseReg, pin_bitMask))  value |= bitMask;
+            if (retries)
+            {
+                value |= bitMask;
+            };
         };
 
         address[bytes_received] = value;
-        DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-        DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+        if (USE_GPIO_DEBUG)
+        {
+            DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+            DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+        };
     };
 
     interrupts();
@@ -925,8 +924,11 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
             while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
             DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
         };
-        DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-        DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+        if (USE_GPIO_DEBUG)
+        {
+            DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+            DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+        };
     };
     interrupts();
     return (bytes_sent != data_length);
