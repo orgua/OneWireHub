@@ -249,10 +249,12 @@ bool OneWireHub::poll(void)
 
 bool OneWireHub::checkReset(void) // there is a specific high-time needed before a reset may occur -->  >120us
 {
-    static_assert(LOOPS_RESET_MIN[0] > (LOOPS_SLOT_MAX[0] - LOOPS_READ_MAX[0]), "Timings are wrong");
+    static_assert(LOOPS_RESET_MIN[0] > (LOOPS_SLOT_MAX[0] + LOOPS_READ_MAX[0]), "Timings are wrong"); // last number should read: max(LOOPS_WRITE_ZERO,LOOPS_READ_MAX)
+    static_assert(LOOPS_READ_MAX[0] > LOOPS_WRITE_ZERO[0] , "switch LOOPS_WRITE_ZERO with LOOPS_READ_MAX in checkReset(), because it is bigger (worst case)");
     static_assert(LOOPS_RESET_MAX[0] > LOOPS_RESET_MIN[0], "Timings are wrong");
 #if OVERDRIVE_ENABLE
-    static_assert(LOOPS_RESET_MIN[1] > (LOOPS_SLOT_MAX[1] - LOOPS_READ_MAX[1]), "Timings are wrong");
+    static_assert(LOOPS_RESET_MIN[1] > (LOOPS_SLOT_MAX[1] + LOOPS_READ_MAX[1]), "Timings are wrong");
+    static_assert(LOOPS_READ_MAX[1]  > LOOPS_WRITE_ZERO[1], "switch LOOPS_WRITE_ZERO with LOOPS_READ_MAX in checkReset(), because it is bigger (worst case)");
     static_assert(LOOPS_RESET_MAX[0] > LOOPS_RESET_MIN[1], "Timings are wrong");
 #endif
 
@@ -262,7 +264,7 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
     if (_error == Error::RESET_IN_PROGRESS)
     {
         _error = Error::NO_ERROR;
-        if (!waitLoopsWhilePinIs(LOOPS_RESET_MIN[od_mode] - LOOPS_SLOT_MAX[od_mode] - LOOPS_READ_MAX[od_mode], false)) // TODO: not very accurate
+        if (!waitLoopsWhilePinIs(LOOPS_RESET_MIN[od_mode] - LOOPS_SLOT_MAX[od_mode] - LOOPS_READ_MAX[od_mode], false)) // last number should read: max(LOOPS_WRITE_ZERO,LOOPS_READ_MAX)
         {
 #if OVERDRIVE_ENABLE
             const timeOW_t loops_remaining = waitLoopsWhilePinIs(LOOPS_RESET_MAX[0], false); // showPresence() wants to start at high, so wait for it
