@@ -24,8 +24,8 @@ void DS18B20::updateCRC()
 
 void DS18B20::duty(OneWireHub *hub)
 {
-    const uint8_t cmd = hub->recv();
-    if (hub->getError())  return;
+    uint8_t cmd;
+    if (hub->recv(&cmd,1)) return;
 
     switch (cmd)
     {
