@@ -333,7 +333,7 @@ bool OneWireHub::showPresence(void)
 
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);     // allow it to float
 
-    if (USE_GPIO_DEBUG) DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+    if (USE_GPIO_DEBUG) DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
 
     // When the master or other slaves release the bus within a given time everything is fine
     if (!waitLoopsWhilePinIs((LOOPS_PRESENCE_MAX[od_mode] - LOOPS_PRESENCE_MIN[od_mode]), false))
@@ -521,76 +521,90 @@ bool OneWireHub::recvAndProcessCmd(void)
 // info: check for errors after calling and break/return if possible, TODO: why return crc both ways, detect first bit break
 uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
 {
-    for (uint8_t counter = 0; counter < 8; ++counter)
-    {
-        if (sendBit((0x01 & dataByte) != 0)) break; // CRC is not valid if sending breaks
-
-        uint8_t mix = ((uint8_t) crc16 ^ dataByte) & static_cast<uint8_t>(0x01);
-        crc16 >>= 1;
-        if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
-        dataByte >>= 1;
-    };
+    send(&dataByte, 1, crc16);
     return crc16;
 }
 
 // info: check for errors after calling and break/return if possible, returns true if error is detected
 bool OneWireHub::sendBit(const bool value)
 {
-    // wait for a low to high transition followed by a high to low within the time-out
-    if (awaitTimeSlotAndWrite(!value))
-    {
-        _error = Error::WRITE_TIMESLOT_TIMEOUT;
-        return true; // timeslot violation
-    }
+    noInterrupts();
+    const bool writeZero = !value;
 
-    if (value) waitLoopsWhilePinIs(LOOPS_READ_MAX[od_mode], false); // no pinCheck demanded, but this additional check can cut waitTime
+    // Wait for bus to rise HIGH, signaling end of last timeslot
+    timeOW_t retries = LOOPS_SLOT_MAX[od_mode];
+    while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
+    if (!retries)
+    {
+        _error = Error::RESET_IN_PROGRESS;
+        interrupts();
+        return true;
+    };
+
+    // Wait for bus to fall LOW, start of new timeslot
+    retries = LOOPS_MSG_HIGH_TIMEOUT;
+    while ((DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
+    if (!retries)
+    {
+        _error = Error::READ_TIMESLOT_TIMEOUT_HIGH; // TODO: rename AWAIT TIMESLOT
+        interrupts();
+        return true;
+    };
+
+    // first difference to inner-loop of read()
+    if (writeZero)
+    {
+        DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
+        retries = LOOPS_WRITE_ZERO[od_mode];
+    }
     else
     {
-        // if we wait for release we could detect faulty writing slots --> pedantic Mode not needed for now
-        waitLoopsWhilePinIs(LOOPS_WRITE_ZERO[od_mode],false);
-        DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
+        retries = LOOPS_READ_MAX[od_mode];
     }
 
+    while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
+    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
+
     return false;
-}
+};
 
 // TODO: not happy with the interface - call by ref is slow here. maybe use a crc in class and expand with crc-reset and get?, TODO: detect first bit break
 uint8_t OneWireHub::recvAndCRC16(uint16_t &crc16)
 {
     uint8_t value = 0;
-    uint8_t mix = 0;
-
-    for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
-    {
-        if (recvBit())
-        {
-            value |= bitMask;
-            mix = 1;
-        }
-        else mix = 0;
-
-        mix ^= static_cast<uint8_t>(crc16) & static_cast<uint8_t>(0x01);
-        crc16 >>= 1;
-        if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
-
-        if (_error != Error::NO_ERROR) return 0;
-    }
+    recv(&value,1,crc16);
     return value;
-}
+};
 
 bool OneWireHub::recvBit(void)
 {
-    // wait for a low to high transition followed by a high to low within the time-out
-    if (awaitTimeSlotAndWrite())
+    noInterrupts();
+    // Wait for bus to rise HIGH, signaling end of last timeslot
+    timeOW_t retries = LOOPS_SLOT_MAX[od_mode];
+    while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
+    if (!retries)
     {
-        return 0;
-    }
+        _error = Error::RESET_IN_PROGRESS;
+        interrupts();
+        return true;
+    };
 
-    waitLoopsWhilePinIs(LOOPS_READ_MIN[od_mode], false); // no pinCheck demanded, but this additional check can cut waitTime
-    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask); // TODO: should not be needed
+    // Wait for bus to fall LOW, start of new timeslot
+    retries = LOOPS_MSG_HIGH_TIMEOUT;
+    while ((DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
+    if (!retries)
+    {
+        _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
+        interrupts();
+        return true;
+    };
 
-    return DIRECT_READ(pin_baseReg, pin_bitMask);
-}
+    // wait a specific time to do a read (data is valid by then), // first difference to inner-loop of write()
+    retries = LOOPS_READ_MIN[od_mode];
+    while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
+
+    return (retries > 0);
+};
 
 void OneWireHub::wait(const uint16_t timeout_us) const
 {
@@ -614,40 +628,6 @@ void OneWireHub::wait(const timeOW_t loops_wait) const
     };
 };
 
-// returns true if error is detected
-bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
-{
-    noInterrupts();
-    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
-    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
-
-    //While bus is low, retry until HIGH, if waitLoopsWhilePinIs() is to slow switch to old code
-    timeOW_t retries = LOOPS_SLOT_MAX[od_mode];
-    while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
-    if (!retries)
-    {
-        _error = Error::RESET_IN_PROGRESS;
-        interrupts();
-        return true;
-    };
-
-    //Wait for bus to fall form 1 to 0, if waitLoopsWhilePinIs() is to slow switch to old code
-    retries = LOOPS_MSG_HIGH_TIMEOUT;
-    while ((DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
-    if (!retries)
-    {
-        _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
-        interrupts();
-        return true;
-    };
-
-    if (writeZero)
-    {
-        DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask); // Low is allready set
-    };
-    interrupts();
-    return false;
-};
 
 // returns false if pins stays in the wanted state all the time
 timeOW_t OneWireHub::waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value) const
@@ -812,7 +792,9 @@ Error OneWireHub::clearError(void) // and return it if needed
 };
 
 
-// should be the prefered function for reads, returns true if error occured
+
+
+
 bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
 {
     noInterrupts();
@@ -823,35 +805,50 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
     for ( ; bytes_received < data_length; ++bytes_received)
     {
         uint8_t value = 0;
+
         for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
         {
-            // Wait for bus to rise HIGH, signaling end of last timeslot
-            timeOW_t retries = LOOPS_SLOT_MAX[od_mode];
-            while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
-            if (!retries)
-            {
-                _error = Error::RESET_IN_PROGRESS;
-                interrupts();
-                return true;
-            };
+            if (recvBit())                 value |= bitMask;
+            if (_error != Error::NO_ERROR) return 0;
+        };
 
-            // Wait for bus to fall LOW, start of new timeslot
-            retries = LOOPS_MSG_HIGH_TIMEOUT;
-            while ((DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
-            if (!retries)
-            {
-                _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
-                interrupts();
-                return true;
-            };
+        address[bytes_received] = value;
 
-            // wait a specific time to do a read (data is valid by then), // first difference to inner-loop of write()
-            retries = LOOPS_READ_MIN[od_mode];
-            while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
-            if (retries)
+        if (USE_GPIO_DEBUG)
+        {
+            DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+            DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+        };
+    };
+
+    interrupts();
+    return (bytes_received != data_length);
+};
+
+// should be the prefered function for reads, returns true if error occured
+bool OneWireHub::recv(uint8_t address[], const uint8_t data_length, uint16_t &crc16)
+{
+    noInterrupts();
+    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
+    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
+
+    uint8_t bytes_received = 0;
+    for ( ; bytes_received < data_length; ++bytes_received)
+    {
+        uint8_t value = 0;
+        uint8_t mix = 0;
+        for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
+        {
+            if (recvBit())
             {
                 value |= bitMask;
-            };
+                mix = 1;
+            }
+            else mix = 0;
+
+            mix ^= static_cast<uint8_t>(crc16) & static_cast<uint8_t>(0x01);
+            crc16 >>= 1;
+            if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
         };
 
         address[bytes_received] = value;
@@ -888,41 +885,45 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
 
         for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)    // loop for sending bits
         {
-            const bool writeZero = !(bitMask & dataByte);
-
-            // Wait for bus to rise HIGH, signaling end of last timeslot
-            timeOW_t retries = LOOPS_SLOT_MAX[od_mode];
-            while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
-            if (!retries)
+            if (sendBit(static_cast<bool>(bitMask & dataByte)))
             {
-                _error = Error::RESET_IN_PROGRESS;
+                interrupts();
+                return true;
+            }
+        };
+        if (USE_GPIO_DEBUG)
+        {
+            DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
+            DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+        };
+    };
+    interrupts();
+    return (bytes_sent != data_length);
+};
+
+bool OneWireHub::send(const uint8_t address[], const uint8_t data_length, uint16_t &crc16)
+{
+    noInterrupts();
+    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
+    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
+    uint8_t bytes_sent = 0;
+
+    for ( ; bytes_sent < data_length; ++bytes_sent)             // loop for sending bytes
+    {
+        uint8_t dataByte = address[bytes_sent];
+
+        for (uint8_t counter = 0; counter < 8; ++counter)       // loop for sending bits
+        {
+            if (sendBit(static_cast<bool>(0x01 & dataByte)))
+            {
                 interrupts();
                 return true;
             };
 
-            // Wait for bus to fall LOW, start of new timeslot
-            retries = LOOPS_MSG_HIGH_TIMEOUT;
-            while ((DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
-            if (!retries)
-            {
-                _error = Error::READ_TIMESLOT_TIMEOUT_HIGH; // TODO: rename AWAIT TIMESLOT
-                interrupts();
-                return true;
-            };
-
-            // first difference to inner-loop of read()
-            if (writeZero)
-            {
-                DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
-                retries = LOOPS_WRITE_ZERO[od_mode];
-            }
-            else
-            {
-                retries = LOOPS_READ_MAX[od_mode];
-            }
-
-            while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
-            DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
+            uint8_t mix = ((uint8_t) crc16 ^ dataByte) & static_cast<uint8_t>(0x01);
+            crc16 >>= 1;
+            if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
+            dataByte >>= 1;
         };
         if (USE_GPIO_DEBUG)
         {
