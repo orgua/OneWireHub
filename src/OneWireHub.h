@@ -50,7 +50,7 @@ enum class Error : uint8_t {
 
 constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
 {
-    return (time_us * microsecondsToClockCycles(1) / VALUE_IPL);
+    return (time_us * microsecondsToClockCycles(1) / VALUE_IPL); // note: microsecondsToClockCycles is speed in MHz....
 };
 
 #if OVERDRIVE_ENABLE
@@ -100,7 +100,7 @@ private:
     io_reg_t          pin_bitMask;
     volatile io_reg_t *pin_baseReg;
 
-#if USE_GPIO_DEBUG
+#if 1 //USE_GPIO_DEBUG
     io_reg_t          debug_bitMask;
     volatile io_reg_t *debug_baseReg;
 #endif

@@ -241,7 +241,6 @@ void interrupts(void) {};
 #ifdef ARDUINO_attiny // Test to make it work on aTtiny85, 8MHz
 /// README: use pin2 or pin3 for Attiny, source: https://github.com/gioblu/PJON/wiki/ATtiny-interfacing
 
-
 #include "inttypes.h" // why here?
 
 #define HEX 1

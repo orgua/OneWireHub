@@ -7,11 +7,10 @@
 
 // INFO: had to go with a define because some compilers use constexpr as simple const --> massive problems
 #define HUB_SLAVE_LIMIT     8 // set the limit of the hub HERE, max is 32 devices
-#define OVERDRIVE_ENABLE    1 // support overdrive for the slaves
+#define OVERDRIVE_ENABLE    0 // support overdrive for the slaves
 
-#define USE_SERIAL_DEBUG    0 // give debug messages when printError() is called (be aware! it may produce heisenbugs, timing is critical)
-#define USE_GPIO_DEBUG      1 // is a better alternative to serial debug (see readme.md for info)
-
+constexpr bool     USE_SERIAL_DEBUG { 0 }; // give debug messages when printError() is called (be aware! it may produce heisenbugs, timing is critical)
+constexpr bool     USE_GPIO_DEBUG   { 0 }; // is a better alternative to serial debug (see readme.md for info)
 constexpr uint8_t  GPIO_DEBUG_PIN   { 7 }; // digital pin
 constexpr uint32_t REPETITIONS      { 5000 }; // for measuring the loop-delay --> 10000L takes ~110ms on atmega328p@16Mhz
 
