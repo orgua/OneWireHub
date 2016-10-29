@@ -105,9 +105,6 @@ private:
     volatile io_reg_t *debug_baseReg;
 #endif
 
-    uint8_t           extend_timeslot_detection;
-    uint8_t           skip_reset_detection;
-
     uint8_t      slave_count;
     OneWireItem *slave_list[ONEWIRESLAVE_LIMIT];  // private slave-list (use attach/detach)
     OneWireItem *slave_selected;
@@ -151,8 +148,6 @@ public:
     uint8_t getIndexOfNextSensorInList(const uint8_t index_start = 0) const;
 
     bool poll(void);
-
-    void extendTimeslot(void);
 
     bool send(const uint8_t dataByte);                              // returns 1 if error occured
     bool send(const uint8_t address[], const uint8_t data_length);  // returns 1 if error occured

@@ -7,8 +7,6 @@ OneWireHub::OneWireHub(const uint8_t pin)
 {
     _error = Error::NO_ERROR;
 
-    extend_timeslot_detection = 0;
-
     slave_count = 0;
     slave_selected = nullptr;
 
@@ -259,9 +257,9 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     // is entered if there are two resets within a given time (timeslot-detection can issue this skip)
-    if (skip_reset_detection)
+    if (_error == Error::RESET_IN_PROGRESS)
     {
-        skip_reset_detection = 0;
+        _error = Error::NO_ERROR;
         if (!waitLoopsWhilePinIs(LOOPS_RESET_MIN[od_mode] - LOOPS_SLOT_MAX[od_mode] - LOOPS_READ_MAX[od_mode], false)) // TODO: not very accurate
         {
 #if OVERDRIVE_ENABLE
@@ -323,7 +321,7 @@ bool OneWireHub::showPresence(void)
     // Master will delay it's "Presence" check (bus-read)  after the reset
     waitLoopsWhilePinIs(LOOPS_PRESENCE_TIMEOUT[od_mode], true); // no pinCheck demanded, but this additional check can cut waitTime
 
-    #if USE_GPIO_DEBUG
+#if USE_GPIO_DEBUG
     DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
 #endif
 
@@ -346,15 +344,8 @@ bool OneWireHub::showPresence(void)
         return true;
     }
 
-    extend_timeslot_detection = 1; // DS9490R takes 7-9 ms after presence-detection to start with timeslots
     return false;
 }
-
-void OneWireHub::extendTimeslot(void)
-{
-    extend_timeslot_detection = 1;
-}
-
 
 void OneWireHub::searchIDTree(void)
 {
@@ -470,7 +461,6 @@ bool OneWireHub::recvAndProcessCmd(void)
 
             if (slave_selected != nullptr)
             {
-                extend_timeslot_detection = 1;
 #if USE_GPIO_DEBUG
                 DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
 #endif
@@ -493,7 +483,6 @@ bool OneWireHub::recvAndProcessCmd(void)
             }
             if (slave_selected != nullptr)
             {
-                extend_timeslot_detection = 1;
 #if USE_GPIO_DEBUG
                 DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
 #endif
@@ -602,15 +591,6 @@ bool OneWireHub::recvBit(void)
     // wait for a low to high transition followed by a high to low within the time-out
     if (awaitTimeSlotAndWrite())
     {
-        if (skip_reset_detection)
-        {
-            // after running through awaitTimeSlotAndWrite() for the second time and still getting a low this branch raises a pseudo-error to leave the caller recv()
-            _error = Error::FIRST_TIMESLOT_TIMEOUT;
-        }
-        else
-        {
-            _error = Error::READ_TIMESLOT_TIMEOUT;
-        }
         return 0;
     }
 
@@ -654,23 +634,9 @@ bool OneWireHub::awaitTimeSlotAndWrite(const bool writeZero)
     while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
     if (!retries)
     {
-        if (extend_timeslot_detection == 2)
-        {
-            // this branch can be taken after calling THIS functions the second time in recvBit()
-            extend_timeslot_detection = 0;
-            skip_reset_detection = 1;
-        } else
-        {
-            _error = Error::READ_TIMESLOT_TIMEOUT_LOW;
-        };
+        _error = Error::RESET_IN_PROGRESS;
         interrupts();
         return true;
-    };
-
-    // extend the wait-time after reset and presence-detection
-    if (extend_timeslot_detection == 1)
-    {
-        extend_timeslot_detection = 2; // prepare to detect missing timeslot or second reset
     };
 
     //Wait for bus to fall form 1 to 0, if waitLoopsWhilePinIs() is to slow switch to old code
@@ -846,51 +812,11 @@ void OneWireHub::raiseSlaveError(const uint8_t cmd)
 
 Error OneWireHub::clearError(void) // and return it if needed
 {
-    Error _tmp = _error;
+    const Error _tmp = _error;
     _error = Error::NO_ERROR;
     return _tmp;
 };
 
-#define RECEIVE_OLD 0
-
-#if RECEIVE_OLD
-
-bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
-{
-    uint8_t bytes_received = 0;
-
-    for ( ; bytes_received < data_length; ++bytes_received)
-    {
-        address[bytes_received] = recv();
-        if (_error != Error::NO_ERROR)
-        {
-            if (skip_reset_detection) _error = Error::NO_ERROR; // remove the pseudo error to leave recv() early,
-            break;
-        }
-    }
-    return (bytes_received != data_length);
-}
-
-uint8_t OneWireHub::recv(void)
-{
-    uint8_t value = 0;
-
-    for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
-    {
-
-        if (recvBit())  value |= bitMask;
-        if (_error != Error::NO_ERROR)
-        {
-            if (skip_reset_detection) _error = Error::NO_ERROR; // remove the pseudo error to leave recv() early
-            if (bitMask == 0x01)      _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
-            break;
-        }
-    }
-    // TODO: was there an extend timeslot before? should be needed for loxone
-    return value;
-}
-
-#else
 
 // should be the prefered function for reads, returns true if error occured
 bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
@@ -910,7 +836,6 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
             while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
             if (!retries)
             {
-                skip_reset_detection = 1;
                 _error = Error::RESET_IN_PROGRESS;
                 interrupts();
                 return true;
@@ -949,40 +874,6 @@ uint8_t OneWireHub::recv(void)
     return value;
 }
 
-#endif
-
-#define SEND_OLD 0
-
-#if SEND_OLD
-
-// info: check for errors after calling and break/return if possible, returns true if error is detected
-bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
-{
-    uint8_t bytes_sent = 0;
-
-    for ( ; bytes_sent < data_length; ++bytes_sent)
-    {
-        if (send(address[bytes_sent])) break;
-    };
-    return (bytes_sent != data_length);
-};
-
-// info: check for errors after calling and break/return if possible, returns true if error is detected
-bool OneWireHub::send(const uint8_t dataByte)
-{
-    for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
-    {
-        if (sendBit((bitMask & dataByte) != 0))
-        {
-            if (bitMask == 0x01)      _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
-            return true;
-        }
-    };
-    // TODO: was there an extend timeslot before? should be needed for loxone
-    return false;
-};
-
-#else
 
 // should be the prefered function for writes, returns true if error occured
 bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
@@ -1005,7 +896,6 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
             while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
             if (!retries)
             {
-                skip_reset_detection = 1; // TODO: not needed anymore
                 _error = Error::RESET_IN_PROGRESS;
                 interrupts();
                 return true;
@@ -1046,5 +936,3 @@ bool OneWireHub::send(const uint8_t dataByte)
 {
     return send(&dataByte,1);
 };
-
-#endif

@@ -94,7 +94,6 @@ void DS2502::duty(OneWireHub *hub)
             crc = crc8(&b,1,crc);
 
             if (hub->send(crc))   return;
-            hub->extendTimeslot();
 
             if (checkProtection(reg_TA)) return;
 
@@ -111,7 +110,6 @@ void DS2502::duty(OneWireHub *hub)
                 crc = crc8(&b,1,reinterpret_cast<uint8_t *>(&reg_TA)[0]);
 
                 if (hub->send(crc))     return;
-                hub->extendTimeslot();
 
                 reg_address = translateRedirection(reg_TA);
                 if (!checkProtection(reg_address))
@@ -132,7 +130,6 @@ void DS2502::duty(OneWireHub *hub)
             crc = crc8(&b,1,crc);
 
             if (hub->send(crc))  return;
-            hub->extendTimeslot();
 
             status[reg_TA] &= b; // like EPROM-Mode
 
@@ -146,7 +143,6 @@ void DS2502::duty(OneWireHub *hub)
                 crc = crc8(&b,1,reinterpret_cast<uint8_t *>(&reg_TA)[0]);
 
                 if (hub->send(crc))  return;
-                hub->extendTimeslot();
 
                 status[reg_TA] &= b; // like EPROM-Mode
                 if (hub->send(status[reg_TA])) return;

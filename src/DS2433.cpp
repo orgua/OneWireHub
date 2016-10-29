@@ -74,10 +74,10 @@ void DS2433::duty(OneWireHub *hub)
             reg_ES |= 0b10000000;
 
             delayMicroseconds(5000); // simulate writing
-            hub->extendTimeslot();
+
             hub->sendBit(true);
             hub->clearError();
-            hub->extendTimeslot();
+
             while (true) // send alternating 1 & 0 after copy is complete
             {
                 if (hub->send(0b10101010)) return;
@@ -90,7 +90,6 @@ void DS2433::duty(OneWireHub *hub)
 
             if (hub->send(reg_ES)) return; // ES
 
-            hub->extendTimeslot();
             // TODO: maybe implement a real scratchpad, would need 32byte extra ram
 
             // data

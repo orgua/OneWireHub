@@ -142,10 +142,10 @@ void DS2431::duty(OneWireHub *hub)
             // set the auth code uppermost bit, AA
             reg_ES |= 0b10000000;
             delayMicroseconds(10000); // writing takes so long
-            hub->extendTimeslot();
+
             hub->sendBit(true);
             hub->clearError();
-            hub->extendTimeslot();
+
             while (true) // send 1s when alternating 1 & 0 after copy is complete
             {
                 if (hub->send(0b10101010)) return;
