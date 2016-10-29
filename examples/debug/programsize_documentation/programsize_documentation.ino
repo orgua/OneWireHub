@@ -17,7 +17,7 @@
  *    4404 // 300 bytes add resume-cmd
  *    4362 // 300 bytes return true on error for send(), awaitTS(), sendBit(), recv([])
  *    4388 // 300 bytes make skipRom and readRom more safe
- *
+ *    3442 // 128 bytes rework error-handling and send/recv-routines
  */
 
 #include "OneWireHub.h"
