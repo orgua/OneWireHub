@@ -418,8 +418,8 @@ bool OneWireHub::recvAndProcessCmd(void)
 
     uint8_t cmd = recv();
 
-    if (skip_reset_detection)       return false; // stay in poll()-loop and trigger another datastream-detection
-    if (_error != Error::NO_ERROR)  return true;
+    if (_error == Error::RESET_IN_PROGRESS) return false; // stay in poll()-loop and trigger another datastream-detection
+    if (_error != Error::NO_ERROR)          return true;
 
     switch (cmd)
     {
@@ -439,7 +439,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 
             if (recv(address, 8))
             {
-                return (getError());;
+                break;
             }
 
             for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
@@ -476,7 +476,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 #endif
                 slave_selected->duty(this);
             };
-            return (getError());
+            break;
 
         case 0x3C: // overdrive SKIP ROM
 #if OVERDRIVE_ENABLE
@@ -499,7 +499,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 #endif
                 slave_selected->duty(this);
             };
-            return (getError());
+            break;
 
         case 0x0F: // OLD READ ROM
             // only usable when there is ONE slave on the bus --> continue to current readRom
@@ -526,13 +526,15 @@ bool OneWireHub::recvAndProcessCmd(void)
             DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
 #endif
             slave_selected->duty(this);
+            break;
 
-            return (getError());    // TODO: switch for normal break and do the getError at the end if possible
         default: // Unknown command
             _error = Error::INCORRECT_ONEWIRE_CMD;
             _error_cmd = cmd;
     };
-    return true;
+
+    if (_error == Error::RESET_IN_PROGRESS) return false;
+    else                                    return (getError());
 };
 
 // info: check for errors after calling and break/return if possible, TODO: why return crc both ways, detect first bit break
@@ -909,6 +911,7 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
             if (!retries)
             {
                 skip_reset_detection = 1;
+                _error = Error::RESET_IN_PROGRESS;
                 interrupts();
                 return true;
             };
@@ -1002,7 +1005,8 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
             while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
             if (!retries)
             {
-                skip_reset_detection = 1;
+                skip_reset_detection = 1; // TODO: not needed anymore
+                _error = Error::RESET_IN_PROGRESS;
                 interrupts();
                 return true;
             };

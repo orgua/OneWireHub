@@ -43,7 +43,8 @@ enum class Error : uint8_t {
     INCORRECT_SLAVE_USAGE      = 11,
     TRIED_INCORRECT_WRITE      = 12,
     FIRST_TIMESLOT_TIMEOUT     = 13,
-    FIRST_BIT_OF_BYTE_TIMEOUT  = 14
+    FIRST_BIT_OF_BYTE_TIMEOUT  = 14,
+    RESET_IN_PROGRESS          = 15
 };
 
 
