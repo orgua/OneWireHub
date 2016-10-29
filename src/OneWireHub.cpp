@@ -685,7 +685,7 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
         for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
         {
             if (recvBit())                 value |= bitMask;
-            if (_error != Error::NO_ERROR) return 0;
+            if (_error != Error::NO_ERROR) return true;
         };
 
         address[bytes_received] = value;
@@ -726,6 +726,8 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length, uint16_t &cr
             mix ^= static_cast<uint8_t>(crc16) & static_cast<uint8_t>(0x01);
             crc16 >>= 1;
             if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
+
+            if (_error != Error::NO_ERROR) return 1;
         };
 
         address[bytes_received] = value;
