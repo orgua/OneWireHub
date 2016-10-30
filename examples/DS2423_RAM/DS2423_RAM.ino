@@ -1,6 +1,8 @@
 /*
 *    Example-Code that emulates a DS2423 4096 bits RAM with Counter
 *
+*   THIS DEVICE IS ONLY A MOCKUP FOR NOW - NO REAL FUNCTION
+*
 *   Tested with
 *    - DS9490R-Master, atmega328@16MHz as Slave
 */
