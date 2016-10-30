@@ -11,10 +11,9 @@ DS2450::DS2450(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 void DS2450::duty(OneWireHub *hub)
 {
-    uint16_t reg_TA; // target address
+    uint16_t reg_TA, crc = 0; // target address
     //uint16_t memory_address_start; // needed when fully implemented
     uint8_t  b, cmd;
-    uint16_t crc = 0;
 
     if (hub->recv(&cmd,1,crc))  return;
 

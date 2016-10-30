@@ -402,10 +402,10 @@ void OneWireHub::searchIDTree(void)
 
 bool OneWireHub::recvAndProcessCmd(void)
 {
-    uint8_t address[8];
+    uint8_t address[8], cmd;
     bool    flag = false;
 
-    uint8_t cmd = recv();
+    recv(&cmd);
 
     if (_error == Error::RESET_IN_PROGRESS) return false; // stay in poll()-loop and trigger another datastream-detection
     if (_error != Error::NO_ERROR)          return true;
@@ -632,13 +632,6 @@ bool OneWireHub::send(const uint8_t dataByte)
     return send(&dataByte,1);
 };
 
-// info: check for errors after calling and break/return if possible, TODO: why return crc both ways, detect first bit break
-uint16_t OneWireHub::sendAndCRC16(uint8_t dataByte, uint16_t crc16)
-{
-    send(&dataByte, 1, crc16);
-    return crc16;
-};
-
 
 bool OneWireHub::recvBit(void)
 {
@@ -740,23 +733,6 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length, uint16_t &cr
 
     interrupts();
     return (bytes_received != data_length);
-};
-
-
-uint8_t OneWireHub::recv(void)
-{
-    uint8_t value = 0;
-    recv(&value,1);
-    return value;
-};
-
-
-// TODO: not happy with the interface - call by ref is slow here. maybe use a crc in class and expand with crc-reset and get?, TODO: detect first bit break
-uint8_t OneWireHub::recvAndCRC16(uint16_t &crc16)
-{
-    uint8_t value = 0;
-    recv(&value,1,crc16);
-    return value;
 };
 
 

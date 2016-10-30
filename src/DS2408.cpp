@@ -17,6 +17,7 @@ void DS2408::duty(OneWireHub *hub)
     constexpr uint8_t DATA_xAA = 0xAA;
     uint8_t cmd, reg_TA, data; // command, targetAdress and databytes
     uint16_t crc = 0, crc2;
+
     if (hub->recv(&cmd,1,crc)) return;
 
     switch (cmd)

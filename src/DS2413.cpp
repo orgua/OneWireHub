@@ -11,6 +11,7 @@ DS2413::DS2413(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 void DS2413::duty(OneWireHub *hub)
 {
     uint8_t cmd, data;
+
     if (hub->recv(&cmd)) return;
 
     switch (cmd)

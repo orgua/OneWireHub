@@ -151,16 +151,10 @@ public:
     bool send(const uint8_t address[], const uint8_t data_length, uint16_t &crc16); // returns 1 if error occured
     // CRC takes ~7.4µs/byte (Atmega328P@16MHz) but is distributing the load between each bit-send to 0.9 µs/bit (see debug-crc-comparison.ino)
     // important: the final crc is expected to be inverted (crc=~crc) !!!
-    [[deprecated("Replaced by send(const uint8_t address[], const uint8_t data_length, uint16_t &crc16)")]]
-    uint16_t sendAndCRC16(uint8_t dataByte, uint16_t crc16);
 
     bool    recvBit(void);
     bool    recv(uint8_t address[], const uint8_t data_length = 1);                 // returns 1 if error occured
     bool    recv(uint8_t address[], const uint8_t data_length, uint16_t &crc16);    // returns 1 if error occured
-    [[deprecated("Replaced by recv(uint8_t address[], const uint8_t data_length)")]]
-    uint8_t recv(void);
-    [[deprecated("Replaced by recv(uint8_t address[], const uint8_t data_length, uint16_t &crc16))")]]
-    uint8_t recvAndCRC16(uint16_t &crc16);
 
     timeOW_t waitLoopsCalibrate(void); // returns Instructions per loop
     void     waitLoops1ms(void);
