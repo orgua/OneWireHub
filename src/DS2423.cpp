@@ -48,4 +48,3 @@ void DS2423::duty(OneWireHub *hub)
             hub->raiseSlaveError(cmd);
     };
 };
-
