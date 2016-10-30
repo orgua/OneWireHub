@@ -15,164 +15,101 @@ DS2431::DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 void DS2431::duty(OneWireHub *hub)
 {
+    constexpr uint8_t ALTERNATING_10 = 0xAA;
     static uint16_t reg_TA = 0; // contains TA1, TA2
-    static uint8_t  reg_ES = 0;  // E/S register
-    static uint16_t crc = 0;
+    static uint8_t  reg_ES = 0; // E/S register
+    uint16_t crc = 0;
 
-    uint8_t  page_offset = 0;
+    uint8_t  page_offset = 0, cmd, b;
+    if (hub->recv(&cmd,1,crc))  return;
 
-    uint8_t cmd = hub->recv();
-    if (hub->getError())  return;
-    uint8_t  b;
     switch (cmd)
     {
-
         case 0x0F:      // WRITE SCRATCHPAD COMMAND
-            crc = crc16(0x0F, 0x00);
-            // Adr1
-            b = hub->recv();
-            if (hub->getError())  return;
-            reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
-            reg_ES = b & uint8_t(0x00000111); // TODO: when not zero we should issue reg_ES |= 0b00100000; (datasheet not clear)
-            crc = crc16(b, crc);
-
-            // Adr2
-            b = hub->recv();
-            if (hub->getError())  return;
-            reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
-            crc = crc16(b, crc);
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc))  return;
+            reg_ES = reinterpret_cast<uint8_t *>(&reg_TA)[0] & uint8_t(0b00000111); // TODO: when not zero we should issue reg_ES |= 0b00100000; (datasheet not clear)
 
             // up to 8 bytes of data
             page_offset = reg_ES;
-            for (uint8_t i = reg_ES; i < 8; ++i)
-            { // address can point directly to offset-byte in scratchpad
-                b = hub->recv();
-                if (hub->getError())
-                {
-                    // set the PF-Flag if error occured in the middle of the byte
-                    if (hub->clearError() != Error::FIRST_BIT_OF_BYTE_TIMEOUT) reg_ES |= 0b00100000;
-                    break;
-                }
+            for (uint8_t i = page_offset; i < SCRATCHPAD_SIZE; ++i)
+            {
+                if (hub->recv(&scratchpad[i], 1, crc)) break; // can not return here, have to write data
                 if (reg_ES < 7) reg_ES++;
-                scratchpad[i] = b;
-                crc = crc16(b, crc);
             };
 
-            // check if page is protected or in eprom-mode
-            if (reg_TA < 128)
+            if (!hub->getError())  // try to send crc if wanted
+            {
+                crc = ~crc; // normally crc16 is sent ~inverted
+                hub->send(reinterpret_cast<uint8_t *>(&crc), 2);
+            };
+
+            if (reg_TA < 128) // check if page is protected or in eprom-mode
             {
                 const uint8_t position = uint8_t(reg_TA) & uint8_t(0b11111000);
-                if (checkProtection(reinterpret_cast<uint8_t *>(&reg_TA)[0]))
+                if (checkProtection(reinterpret_cast<uint8_t *>(&reg_TA)[0]))       // protected: load memory-segment to scratchpad
                 {
-                    // protected: load memory-segment to scratchpad
-                    for (uint8_t i = 0; i < 8; ++i)
-                    {
-                        scratchpad[i] = memory[position + i];
-                    }
+                    for (uint8_t i = 0; i < SCRATCHPAD_SIZE; ++i) scratchpad[i] = memory[position + i];
                 }
-                else if (checkEpromMode(reinterpret_cast<uint8_t *>(&reg_TA)[0]))
+                else if (checkEpromMode(reinterpret_cast<uint8_t *>(&reg_TA)[0]))   // eprom: logical AND of memory and data, TODO: there is somehow a bug here, protection works but EPROM-Mode not (CRC-Error)
                 {
-                    // eprom: logical AND of memory and data, TODO: there is somehow a bug here, protection works but EPROM-Mode not (CRC-Error)
-                    for (uint8_t i = page_offset; i < 8; ++i)
-                    {
-                        scratchpad[i] &= memory[position + i];
-                    }
+                    for (uint8_t i = page_offset; i < SCRATCHPAD_SIZE; ++i) scratchpad[i] &= memory[position + i];
                 };
             };
-
-            if (reg_ES & 0b00100000) return; // only partial filling of bytes
-
-            // CRC-16
-            crc = ~crc; // normally crc16 is sent ~inverted
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
             break;
 
         case 0xAA:      // READ SCRATCHPAD COMMAND
-            crc = crc16(0xAA, 0);
-            // Write-to address
-            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[0])) return;
-            crc = crc16(reinterpret_cast<uint8_t *>(&reg_TA)[0], crc);
+            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2,crc))  return;
+            if (hub->send(&reg_ES,1,crc)) return;
 
-            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[1])) return;
-            crc = crc16(reinterpret_cast<uint8_t *>(&reg_TA)[1], crc);
 
-            if (hub->send(reg_ES)) return;
-            crc = crc16(reg_ES, crc);
+            {   // send Scratchpad content
+                const uint8_t start  = reinterpret_cast<uint8_t *>(&reg_TA)[0] & uint8_t(0x03);
+                const uint8_t length = (reg_ES & uint8_t(0x03))+ uint8_t(1) - start;
+                if (hub->send(&scratchpad[start],length,crc)) return;
+            }
 
-            //Scratchpad content
-            page_offset = reinterpret_cast<uint8_t *>(&reg_TA)[0] & uint8_t(0x03);
-            for (uint8_t i = page_offset; i < (reg_ES & 0x03)+1; ++i)
-            {
-                if (hub->send(scratchpad[i])) return; // master can break, but gets no crc afterwards
-                crc = crc16(scratchpad[i], crc);
-            };
-            
-            // CRC-16
             crc = ~crc;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
-            break;
-            // send 1s when read is complete, is passive, so do nothing
-
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
+            break; // send 1s when read is complete, is passive, so do nothing
 
         case 0x55:      // COPY SCRATCHPAD COMMAND
-            // Adr1
-            b = hub->recv();
-            if (hub->getError())  return;
-            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[0]) return;
+            if (hub->recv(&b))                                  return;
+            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[0])   break;
+            if (hub->recv(&b))                                  return;
+            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[1])   break;
+            if (hub->recv(&b))                                  return;
+            if (b != reg_ES)                                    return; // Auth code must match
 
-            // Adr2
-            b = hub->recv();
-            if (hub->getError())  return;
-            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[1]) return; // Write-to addresses must match
-            
-            // Auth code must match
-            b = hub->recv();
-            if (hub->getError())  return;
-            if (b != reg_ES) return;
-
-            if (reg_ES & 0b00100000) return; // writing failed before
+            if (reg_ES & 0b00100000)    return; // writing failed before
 
             reg_TA &= ~uint16_t(0b00000111);
 
             // Write Scratchpad
-            writeMemory(scratchpad, 8, reinterpret_cast<uint8_t *>(&reg_TA)[0]); // checks if copy protected
+            writeMemory(scratchpad, SCRATCHPAD_SIZE, reinterpret_cast<uint8_t *>(&reg_TA)[0]); // checks if copy protected
 
             // set the auth code uppermost bit, AA
             reg_ES |= 0b10000000;
             delayMicroseconds(10000); // writing takes so long
 
-            hub->sendBit(true);
-            hub->clearError();
+            do
+            {
+                hub->sendBit(true);
+            }
+            while (hub->clearError() == Error::READ_TIMESLOT_TIMEOUT_HIGH);
 
             while (true) // send 1s when alternating 1 & 0 after copy is complete
             {
-                if (hub->send(0b10101010)) return;
+                if (hub->send(&ALTERNATING_10)) return;
             };
 
         case 0xF0:      // READ MEMORY COMMAND
-            // Adr1
-            b = hub->recv();
-            if (hub->getError())  return;
-            reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
-
-            // Adr2
-            b = hub->recv();
-            if (hub->getError())  return;
-            reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
- 
-            for (uint16_t index_byte = reg_TA; index_byte < sizeof(memory); ++index_byte)
-            {
-                if (hub->send(memory[index_byte])) return;
-            };
-
-            // send 1s when read is complete, is passive, so do nothing here
-            return;
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2))  return;
+            if (reg_TA >= sizeof(memory)) return;
+            if (hub->send(&memory[reg_TA],sizeof(memory) - reg_TA,crc)) return;
+            break; // send 1s when read is complete, is passive, so do nothing here
 
         default:
             hub->raiseSlaveError(cmd);
-
     };
 };
 

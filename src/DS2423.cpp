@@ -7,41 +7,35 @@ DS2423::DS2423(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 void DS2423::duty(OneWireHub *hub)
 {
-    uint16_t memory_address;
+    constexpr uint8_t DUMMY_xFF = 0xFF;
+    constexpr uint8_t DUMMY_x00 = 0x00;
+    uint16_t ta, crc = 0;  // target_address
     //uint16_t memory_address_start; // not used atm, but maybe later
     //uint8_t b;
-    uint16_t crc = 0;
 
-    uint8_t cmd = hub->recvAndCRC16(crc);
-    if (hub->getError())  return;
+    uint8_t cmd;
+    if (hub->recv(&cmd,1,crc))  return;
 
     switch (cmd)
     {
         case 0xA5:      // Read Memory + Counter
-            reinterpret_cast<uint8_t *>(&memory_address)[0] = hub->recvAndCRC16(crc); // Adr1
-            if (hub->getError())  return;
-            reinterpret_cast<uint8_t *>(&memory_address)[1] = hub->recvAndCRC16(crc);
-            if (hub->getError())  return;
-            //memory_address_start = memory_address;
+            if (hub->recv(reinterpret_cast<uint8_t *>(&ta),2,crc)) return;
+            //memory_address_start = ta;
 
             // data
-            for (int8_t i = 0; i < 32; ++i) // TODO: check for (memory_address + 32) < sizeof() before running out of allowed range
+            for (int8_t i = 0; i < 32; ++i) // TODO: check for (ta + 32) < sizeof() before running out of allowed range
             {
-                crc = hub->sendAndCRC16(0xff,crc);
-                if (hub->getError())  return; // directly quit when master stops, omit following data
+                if (hub->send(&DUMMY_xFF,1,crc)) return;
             }
 
             // 4x cnt & 4x zero
             for (uint8_t i = 0; i < 8; ++i)
             {
-                crc = hub->sendAndCRC16(0x00, crc);
-                if (hub->getError())  return; // directly quit when master stops, omit following data
+                if (hub->send(&DUMMY_x00,1,crc)) return;
             }
 
-            // crc
             crc = ~crc;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
             break;
 
         default:
