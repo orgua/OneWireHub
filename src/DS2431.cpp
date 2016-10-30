@@ -29,7 +29,7 @@ void DS2431::duty(OneWireHub *hub)
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc))  return;
             reg_ES = reinterpret_cast<uint8_t *>(&reg_TA)[0] & uint8_t(0b00000111); // TODO: when not zero we should issue reg_ES |= 0b00100000; (datasheet not clear)
 
-            // up to 8 bytes of data
+            // receive up to 8 bytes of data
             page_offset = reg_ES;
             for (uint8_t i = page_offset; i < SCRATCHPAD_SIZE; ++i)
             {
@@ -61,11 +61,10 @@ void DS2431::duty(OneWireHub *hub)
             if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2,crc))  return;
             if (hub->send(&reg_ES,1,crc)) return;
 
-
             {   // send Scratchpad content
                 const uint8_t start  = reinterpret_cast<uint8_t *>(&reg_TA)[0] & uint8_t(0x03);
                 const uint8_t length = (reg_ES & uint8_t(0x03))+ uint8_t(1) - start;
-                if (hub->send(&scratchpad[start],length,crc)) return;
+                if (hub->send(&scratchpad[start],length,crc))   return;
             }
 
             crc = ~crc;
@@ -91,11 +90,8 @@ void DS2431::duty(OneWireHub *hub)
             reg_ES |= 0b10000000;
             delayMicroseconds(10000); // writing takes so long
 
-            do
-            {
-                hub->sendBit(true);
-            }
-            while (hub->clearError() == Error::READ_TIMESLOT_TIMEOUT_HIGH);
+            do      hub->sendBit(true);
+            while   (hub->clearError() == Error::READ_TIMESLOT_TIMEOUT_HIGH);
 
             while (true) // send 1s when alternating 1 & 0 after copy is complete
             {

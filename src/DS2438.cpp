@@ -4,64 +4,51 @@ DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 {
     static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
 
-    for (uint8_t i = 0; i < (PAGE_EMU_COUNT*8); ++i)
-    {
-        memory[i] = MemDS2438[i];
-    }
+    memcpy(memory,MemDS2438,(PAGE_EMU_COUNT*8));
 
     for (uint8_t page = 0; page <= PAGE_EMU_COUNT; ++page)
     {
         calcCRC(page);
-    }
+    };
 
     setTemp(static_cast<int8_t>(20));
 };
 
 void DS2438::duty(OneWireHub *hub)
 {
-    uint8_t page;
-
-    uint8_t cmd = hub->recv();
-    if (hub->getError())  return;
+    uint8_t page, cmd;
+    if (hub->recv(&cmd))  return;
 
     switch (cmd)
     {
         // reordered for better timing
         case 0xBE:      // Read Scratchpad
-            page = hub->recv();
-            if (hub->getError())  return;
+            if (hub->recv(&page))  return;
             if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT;
-
             if (hub->send(&memory[page * 8], 8)) return;
             if (hub->send(crc[page])) return;
             break;
 
         case 0x4E:      // Write Scratchpad
-            page = hub->recv();
-            if (hub->getError())  return;
-
+            if (hub->recv(&page))  return;
             if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT; // when page out of limits --> switch to garbage-page
-
             if (hub->recv(&memory[page * 8], 8)) return;
             calcCRC(page);
             break;
 
         case 0x48:      // copy scratchpad
-            // do nother special, goto recall for now
+            // do nothing special, goto recall for now
 
         case 0xB8:      // Recall Memory
-            page = hub->recv();
-            if (hub->getError())  return;
+            if (hub->recv(&page))  return;
             if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT; // when page out of limits --> switch to garbage-page
             break;
 
         case 0x44:      // Convert T
-            //hub->sendBit(1); // 1 is passive, so ommit it ...
-            break;
+            break; //hub->sendBit(1); // 1 is passive, so ommit it ...
 
         case 0xB4:      // Convert V
-            //hub->sendBit(1); // 1 is passive, so ommit it ...
-            break;
+            break; //hub->sendBit(1); // 1 is passive, so ommit it ...
 
         default:
             hub->raiseSlaveError(cmd);
@@ -89,6 +76,7 @@ void DS2438::setTemp(const float temp_degC)
 void DS2438::setTemp(const int8_t temp_degC) // can vary from -55 to 125deg
 {
     int8_t value = temp_degC;
+
     if (value > 125) value = 125;
     if (value < -55) value = -55;
 

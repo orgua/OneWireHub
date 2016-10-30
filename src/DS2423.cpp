@@ -9,7 +9,7 @@ void DS2423::duty(OneWireHub *hub)
 {
     constexpr uint8_t DUMMY_xFF = 0xFF;
     constexpr uint8_t DUMMY_x00 = 0x00;
-    uint16_t ta, crc = 0;  // target_address
+    uint16_t reg_TA, crc = 0;  // target_address
     //uint16_t memory_address_start; // not used atm, but maybe later
     //uint8_t b;
 
@@ -19,7 +19,7 @@ void DS2423::duty(OneWireHub *hub)
     switch (cmd)
     {
         case 0xA5:      // Read Memory + Counter
-            if (hub->recv(reinterpret_cast<uint8_t *>(&ta),2,crc)) return;
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) return;
             //memory_address_start = ta;
 
             // data

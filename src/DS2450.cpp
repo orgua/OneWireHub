@@ -11,86 +11,45 @@ DS2450::DS2450(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 void DS2450::duty(OneWireHub *hub)
 {
-    uint16_t memory_address;
+    uint16_t reg_TA; // target address
     //uint16_t memory_address_start; // needed when fully implemented
-    uint8_t  b;
+    uint8_t  b, cmd;
     uint16_t crc = 0;
 
-    uint8_t cmd = hub->recv();
-    if (hub->getError())  return;
+    if (hub->recv(&cmd,1,crc))  return;
 
     switch (cmd)
     {
         case 0xAA: // READ MEMORY
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) return;
 
-            crc = crc16(0xAA, crc); // Cmd
+            //memory_address_start = ta;
+            if (reg_TA > (PAGE_COUNT-1)*PAGE_SIZE) reg_TA = 0; // prevent read out of bounds
+            if (hub->send(&memory[reg_TA], PAGE_SIZE, crc)) return;
 
-            b = hub->recv(); // Adr1
-            if (hub->getError())  return;
-            reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
-            crc = crc16(b, crc);
-
-            b = hub->recv(); // Adr2
-            if (hub->getError())  return;
-            reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
-            crc = crc16(b, crc);
-
-            //memory_address_start = memory_address;
-            if (memory_address > (PAGE_COUNT-1)*PAGE_SIZE) memory_address = 0; // prevent read out of bounds
-
-            for (uint8_t i = 0; i < PAGE_SIZE; ++i)
-            {
-                b = memory[memory_address + i];
-                if (hub->send(b)) return;
-                crc = crc16(b, crc);
-            };
-
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0])) return;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1])) return;
+            crc = ~crc; // normally crc16 is sent ~inverted
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
             // TODO: not fully implemented
             break;
 
         case 0x55: // write memory (only page 1&2 allowed)
-            crc = crc16(0x55, crc); // Cmd
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) return;
 
-            b = hub->recv(); // Adr1
-            if (hub->getError())  return;
-            reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
-            crc = crc16(b, crc);
+            //memory_address_start = ta;
+            if (reg_TA > (PAGE_COUNT-1)*PAGE_SIZE) reg_TA = 0; // prevent read out of bounds
+            if (hub->recv(&memory[reg_TA], PAGE_SIZE, crc)) return;
 
-            b = hub->recv(); // Adr2
-            if (hub->getError())  return;
-            reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
-            crc = crc16(b, crc);
-
-            //memory_address_start = memory_address;
-            if (memory_address > (PAGE_COUNT-1)*PAGE_SIZE) memory_address = 0; // prevent read out of bounds
-
-            for (uint8_t i = 0; i < PAGE_SIZE; ++i)
-            {
-                memory[memory_address + i] = hub->recv();
-                if (hub->getError()) // possibility to break loop if recv fails
-                {
-                    hub->clearError();
-                    break;
-                }
-                crc = crc16(memory[memory_address + i], crc);
-            };
-
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  return;
+            crc = ~crc; // normally crc16 is sent ~inverted
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
             // TODO: write back data if wanted, till the end of register
             break;
 
         case 0x3C: // convert, starts adc
-            crc = crc16(0x3C, crc); // Cmd
-            crc = crc16(hub->recv(), crc); // input select mask, not important
-            if (hub->getError())  return;
-            b = hub->recv(); // read out control byte
-            if (hub->getError())  return;
-            crc = crc16(b, crc);
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[0]))  return;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc)[1]))  return;
+            if (hub->recv(reinterpret_cast<uint8_t *>(&b),1,crc)) return; // input select mask, not important
+            if (hub->recv(reinterpret_cast<uint8_t *>(&b),1,crc)) return; // read out control byte
+
+            crc = ~crc; // normally crc16 is sent ~inverted
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
 
             if (hub->sendBit(false)) return; // still converting....
             if (hub->sendBit(true))  return; // finished conversion

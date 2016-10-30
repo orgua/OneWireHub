@@ -268,6 +268,15 @@ void memset(T1 address[], T1 initValue, T2 size)
     }
 };
 
+template <typename T1, typename T2>
+void memcpy(T1 destination[], T1 source, T2 bytes)
+{
+    for (T2 counter = 0; counter < bytes; ++counter)
+    {
+        destination[counter] = source[counter];
+    };
+};
+
 #endif
 
 #endif //ONEWIREHUB_PLATFORM_H

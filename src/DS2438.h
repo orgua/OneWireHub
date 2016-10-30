@@ -6,7 +6,7 @@
 
 #include "OneWireItem.h"
 
-static constexpr uint8_t MemDS2438[64] =
+constexpr uint8_t MemDS2438[64] =
         {
                 //  memory[0] = DS2438_IAD | DS2438_CA | DS2438_EE | DS2438_AD;
                 0x09, 0x20, 0x14, 0xAC, 0x00, 0x40, 0x01, 0x00,
