@@ -1,5 +1,3 @@
-// large parts are derived from https://github.com/MarkusLange/OneWireSlave/blob/master/OneWireSlave.cpp
-
 #include "OneWireHub.h"
 #include "OneWireItem.h"
 
