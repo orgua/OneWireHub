@@ -12,59 +12,52 @@ DS2890::DS2890(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 void DS2890::duty(OneWireHub *hub)
 {
-    uint8_t temp = 0;
-    uint8_t cmd = hub->recv();
-    if (hub->getError())  return;
+    uint8_t data, cmd;
+    if (hub->recv(&cmd))  return;
 
     switch (cmd)
     {
         case 0x0F:      // WRITE POSITION
-            temp = hub->recv();
-            if (hub->getError())  return;
-            if (hub->send(temp))  return;
-            cmd = hub->recv();
-            if (hub->getError())  return;
-
+            if (hub->recv(&data))           break;
+            if (hub->send(&data))           break;
+            if (hub->recv(&cmd))            break;
             // release code received
-            if (cmd == 0x96)      register_poti[register_ctrl&0x03] = temp;
+            if (cmd == 0x96)      register_poti[register_ctrl&0x03] = data;
             break;
 
         case 0x55:      // WRITE CONTROL REGISTER
-            temp = hub->recv();
-            if (hub->getError())  return;
+            if (hub->recv(&data))           break;
 
-            if (temp&0x01) temp |= 0x04;
-            else temp &= ~0x04;
-            if (temp&0x02) temp |= 0x08;
-            else temp &= ~0x08;
+            if (data&0x01) data |= 0x04;
+            else data &= ~0x04;
+            if (data&0x02) data |= 0x08;
+            else data &= ~0x08;
 
-            if (hub->send(temp))  return;
-
-            cmd = hub->recv();
-            if (hub->getError())  return;
+            if (hub->send(&data))           break;
+            if (hub->recv(&cmd))            break;
 
             // release code received
-            if (cmd == 0x96)      register_ctrl = temp;
+            if (cmd == 0x96)      register_ctrl = data;
             break;
 
         case 0xAA:      // READ CONTROL REGISTER
-            if (hub->send(register_ctrl))  return;
-            if (hub->send(register_feat)) return;
+            if (hub->send(&register_ctrl))  break;
+            if (hub->send(&register_feat))  break;
             break;
 
         case 0xF0:      // READ POSITION
-            if (hub->send(register_ctrl))  return;
-            if (hub->send(register_poti[register_ctrl&0x03])) return;
+            if (hub->send(&register_ctrl))  break;
+            if (hub->send(&register_poti[register_ctrl&0x03])) break;
             break;
 
         case 0xC3:      // INCREMENT
             if (register_poti[register_ctrl&0x03] < 0xFF) register_poti[register_ctrl&0x03]++;
-            if (hub->send(register_poti[register_ctrl&0x03])) return;
+            if (hub->send(&register_poti[register_ctrl&0x03])) break;
             break;
 
         case 0x99:      // DECREMENT
             if (register_poti[register_ctrl&0x03]) register_poti[register_ctrl&0x03]--;
-            if (hub->send(register_poti[register_ctrl&0x03])) return;
+            if (hub->send(&register_poti[register_ctrl&0x03])) break;
             break;
 
         default:
