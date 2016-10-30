@@ -6,6 +6,16 @@
 
 #include "OneWireItem.h"
 
+//// CONFIG /////////////////////////////////////////////
+static constexpr uint8_t  BAE910_DEVICE_TYPE      = 0x02;  // Type 2 for BAE0910. Type 3 for BAE0911 (planned)
+static constexpr uint8_t  BAE910_CHIP_TYPE        = 0x01;  // Chip type= 0x01 for the MC9S08SH8, 8 pin package soic8
+
+static constexpr uint8_t  BAE910_BOOTSTRAP_VER    = 0x01;  // undefined data
+static constexpr uint8_t  BAE910_SW_VER           = 0x01;  // undefined data (0x00 = corrupted)
+
+static constexpr uint8_t  BAE910_SCRATCHPAD_SIZE  = 32;
+//// END OF CONFIG //////////////////////////////////////
+
 typedef struct
 {
 //  --> reversed fields and write/read in reverse order to achieve swapped byte order
@@ -80,21 +90,15 @@ typedef union {
     sBAE910 field;
 } mBAE910; // overlay with memory_array
 
-
 class BAE910 : public OneWireItem
 {
 private:
-    static constexpr uint8_t  BAE910_DEVICE_TYPE      = 0x02;  // Type 2 for BAE0910. Type 3 for BAE0911 (planned)
-    static constexpr uint8_t  BAE910_CHIP_TYPE        = 0x01;  // Chip type= 0x01 for the MC9S08SH8, 8 pin package soic8
-    static constexpr uint8_t  BAE910_SCRATCHPAD_SIZE  = 32;
 
 protected:
     uint8_t scratchpad[BAE910_SCRATCHPAD_SIZE];
     virtual void extCommand(const uint8_t ecmd, const uint8_t payload_len = 0); // read payload from scratchpad
 
 public:
-    static constexpr uint8_t  BAE910_SW_VER           = 0x01;  // undefined data (0x00 = corrupted)
-    static constexpr uint8_t  BAE910_BOOTSTRAP_VER    = 0x01;  // undefined data
 
     mBAE910 memory;
 
