@@ -33,7 +33,7 @@ bool DS2431::duty(OneWireHub *hub)
             b = hub->recv();
             if (hub->getError())  return false;
             reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
-            reg_ES = b & uint8_t(0x00000111); // TODO: when not zero we should issue reg_ES |= 0b00100000; (datasheet not clear)
+            reg_ES = b & uint8_t(0b00000111); // TODO: when not zero we should issue reg_ES |= 0b00100000; (datasheet not clear)
             crc = crc16(b, crc);
 
             // Adr2
