@@ -15,20 +15,20 @@ DS2408::DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 void DS2408::duty(OneWireHub *hub)
 {
     constexpr uint8_t DATA_xAA = 0xAA;
-    uint8_t cmd, ta1, data; // command, targetAdress and databytes
+    uint8_t cmd, reg_TA, data; // command, targetAdress and databytes
     uint16_t crc = 0, crc2;
     if (hub->recv(&cmd,1,crc)) return;
 
     switch (cmd)
     {
         case 0xF0:      // Read PIO Registers
-            if (hub->recv(&ta1,1,crc)) return;
-            if((ta1 < DS2408_OFFSET) || (ta1 >= DS2408_OFFSET + DS2408_MEMSIZE)) return;
+            if (hub->recv(&reg_TA,1,crc)) return;
+            if((reg_TA < DS2408_OFFSET) || (reg_TA >= DS2408_OFFSET + DS2408_MEMSIZE)) return;
             if (hub->recv(&data,1,crc)) return;
             if (data != 0) return;
 
             {
-                const uint8_t start  = (ta1 - DS2408_OFFSET);
+                const uint8_t start  = (reg_TA - DS2408_OFFSET);
                 const uint8_t length = DS2408_MEMSIZE - start;
                 if (hub->send(&memory[start],length,crc)) return;
             }

@@ -13,7 +13,7 @@
 constexpr uint8_t pin_onewire   { 8 };
 
 auto hub = OneWireHub(pin_onewire);
-auto ds2423 = DS2423(DS2423::family_code, 0x01, 0x01, 0x33, 0x24, 0xD0, 0x00);
+auto ds2423 = DS2423(DS2423::family_code, 0x01, 0x01, 0x23, 0x24, 0xD0, 0x00);
 
 void setup()
 {
