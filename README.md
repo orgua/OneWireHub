@@ -48,7 +48,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
-- rework send() and recv(), much more efficient -> atmega328@16MHz is suited for overdrive! AND code is more compact (ds2433.cpp shrinks from 176 to 110 LOC)
+- rework send() and recv(), much more efficient -> atmega328@16MHz is suited for overdrive! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
 - rework Error-Handling-System (reduced a lot of overhead)
 - no return value for hub.searchIDTree() or item.duty() needed anymore
 - returns 1 if error occured in the following functions: recv(buf[]), send(), awaitTimeslot(), sendBit(), checkReset(), showPrescence(), recvAndProzessCmd()
@@ -101,9 +101,21 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### Parasite Power with two wires
 
+Note: this will certainly not work with an emulated device. Powering a µController via GPIO is sometimes possible, but needs preparation and tests.
 ![Parasite-Power-Schematic](http://i.stack.imgur.com/0MeGL.jpg)
 
 [read more](http://electronics.stackexchange.com/questions/193300/digital-ic-that-draws-power-from-data-pins)
+
+### What to do if nothing works?
+- is your arduino software up to date (>v1.6.8)
+- update this lib to the latest release (v1.2.0)
+- check if clock-speed of the µC is correctly set (if possible) - test with simple blinking example, 1sec ON should really need 1sec. timing is critical
+- begin with a simple example like the ds18b20. the ds18b20 doesn't support overdrive, so the master won't switch to higher datarates
+- check if your setup is right: you need at least external power for your µC and a dataline with groundline to your Onewire-Master
+- is there more than one master on the bus?
+- does any other sensor has ever worked with with master?
+- is serial-debugging disabled (see src/OneWireHub_config.h)?
+- if you can provide a recording via logic-analyzer (logic 8 or similar) there should be chance we can help you 
 
 ### Ancestors of this Lib:
 - original pieces seem to be adopted from [OneWireSlave](http://robocraft.ru/blog/arduino/302.html)
