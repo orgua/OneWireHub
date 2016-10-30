@@ -48,13 +48,13 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
-- rework send() and recv(), much more efficient -> atmega328@16MHz is suited for overdrive! 
+- rework send() and recv(), much more efficient -> atmega328@16MHz is suited for overdrive! AND code is more compact (ds2433.cpp shrinks from 176 to 110 LOC)
 - rework Error-Handling-System (reduced a lot of overhead)
 - no return value for hub.searchIDTree() or item.duty() needed anymore
 - returns 1 if error occured in the following functions: recv(buf[]), send(), awaitTimeslot(), sendBit(), checkReset(), showPrescence(), recvAndProzessCmd()
 - basic support for ds2408, thanks to vytautassurvila
 - offline calibration by watching the bus (examples/debug/calibrate_by_bus_timing)
-   - branch for online calibration was abandoned because it took to much resources (DS18B20-Sketch compiled to 8434 & 482 bytes instead of 7026 & 426 bytes now) 
+   - branch for online calibration was abandoned because it took to much resources (DS18B20-Sketch compiled to 8434 // 482 bytes instead of 7026 // 426 bytes now) 
 - cleaned up timing-fn (no guessing, no micros(), no delayMicroseconds())
 - debug-pin shows state by issuing high-states - see explanation in "features"
 - teensy3.2 tested: cleaned warnings, fixed port access, cleaned examples
@@ -73,7 +73,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - rework of the whole timings, if needed you can configure overdrive speed (arduino uno would probably be to slow)
 - bug fix: non conformal behaviour as a onewire-slave (hopefully)
 - raise the maximal slave limit from 8 to 32, code adapts via variable dataTypes
-- open up for a lot more platforms with "platform.h" (taken from onewire-lib)
+- open up for a lot more platforms with "platform.h" (taken from [Onewire-Lib](https://github.com/PaulStoffregen/OneWire))
 - per-bit-CRC16 with sendAndCRC16() and sendAndCRC16() for load-balancing, 900ns/bit instead of 7µs/byte on Atmega328@16MHz
 - add examples for onewire-master, for testing the bus
 - rework of checkReset(), showPresence(), send(), recv() - Hub is much more reliable now and it saves ~120 byte program-space
