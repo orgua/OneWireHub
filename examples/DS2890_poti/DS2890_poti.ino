@@ -2,7 +2,7 @@
  *    Example-Code that emulates a DS2890 Single channel digital potentiometer (datasheet has it covered for up to 4 CH)
  *
  *    Tested with
- *    - https://github.com/PaulStoffregen/OneWire --> still untested
+ *    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
  */
 
 #include "OneWireHub.h"
@@ -53,13 +53,13 @@ void loop()
     if (blinking())
     {
         Serial.print("Potentiometer: ");
-        Serial.print(ds2890.readPoti(0));
+        Serial.print(ds2890.getPotentiometer(0));
         Serial.print(" ");
-        Serial.print(ds2890.readPoti(1));
+        Serial.print(ds2890.getPotentiometer(1));
         Serial.print(" ");
-        Serial.print(ds2890.readPoti(2));
+        Serial.print(ds2890.getPotentiometer(2));
         Serial.print(" ");
-        Serial.print(ds2890.readPoti(3));
+        Serial.print(ds2890.getPotentiometer(3));
         Serial.print(" of 255 with config: ");
         Serial.println(ds2890.readCtrl());
 
