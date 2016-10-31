@@ -31,6 +31,7 @@ public:
 
     bool setPotentiometer(const uint16_t p1, const uint16_t p2, const uint16_t p3, const uint16_t p4);
     bool setPotentiometer(const uint8_t channel, const uint16_t value);
+    uint16_t getPotentiometer(const uint8_t channel);
 };
 
 #endif
