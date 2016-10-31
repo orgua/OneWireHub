@@ -23,6 +23,9 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2450 (0x20) 4 channel A/D**
 - **DS2501 (0x11, 0x91) 512bit EEPROM** (use DS2502 with different family code)
 - **DS2502 (0x09, 0x89) 1kbit EEPROM, Add Only Memory** (also known as DS1982, same FC)
+- DS2503 (0x13) 4kbit EEPROM, Add Only Memory (also known as DS1983, same FC)
+- DS2505 (0x0B) 16kbit EEPROM, Add Only Memory (also known as DS1985, same FC)
+- DS2506 (0x0F) 64kbit EEPROM, Add Only Memory (also known as DS1986, same FC)
 - **DS2890 (0x2C) Single channel digital potentiometer - extended to 1-4 CH**
 - Dell Power Supply (use DS2502 with family code set to 0x28)
 
@@ -72,8 +75,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - replace searchIDTree() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
 
 ### Plans for the future:
-- implementation of ds2423 (2505/6)
-- fix or rework ds2890, potis only work as one atm
+- implementation of ds2423 (2503/5/6)
 - alarm / conditional search
 - irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
