@@ -1,5 +1,5 @@
 /*
- *    Example-Code that emulates a dell power supply
+ *    Example-Code that emulates a DS2502 - 1kbit EEPROM, Add Only Memory and a dell power supply
  *
  *    Tested with
  *    - dell notebook https://forum.pjrc.com/threads/33640-Teensy-2-OneWire-Slave
