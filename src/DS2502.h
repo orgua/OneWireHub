@@ -12,11 +12,15 @@
 class DS2502 : public OneWireItem
 {
 private:
-    static constexpr uint8_t page_mask = 0b00011111;
 
-    uint8_t memory[128]; // 4 pages of 32 bytes
-    uint8_t sizeof_memory;
-    uint8_t status[8]; // eprom status bytes
+    static constexpr uint8_t PAGE_COUNT  = 4;
+    static constexpr uint8_t PAGE_SIZE   = 32;
+    static constexpr uint8_t PAGE_MASK   = 0b00011111;
+    static constexpr uint8_t SIZE_MEM    = PAGE_COUNT * PAGE_SIZE;
+
+    uint8_t     memory[SIZE_MEM]; // 4 pages of 32 bytes
+    uint16_t    sizeof_memory;
+    uint8_t     status[8]; // eprom status bytes
 
     void    clearStatus(void);
     bool    checkProtection(const uint16_t reg_address = 0);
