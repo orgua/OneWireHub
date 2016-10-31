@@ -1,10 +1,9 @@
 /*
 *   Example-Code that emulates a DS2450 4 channel A/D
 *	
-*	not fully implemented yet! Only basic Memory-Reading
 *
 *   Tested with
-*    - DS9490R-Master, atmega328@16MHz as Slave
+*    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
 */
 
 #include "OneWireHub.h"
@@ -55,7 +54,7 @@ void loop()
     if (blinking())
     {
         static uint16_t poti_value = 512;
-        poti_value += 8;
+        poti_value += 32;
         ds2450.setPotentiometer(poti_value, poti_value + 512, poti_value + 1024, poti_value + 2048);
     }
 } 
