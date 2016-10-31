@@ -10,15 +10,20 @@ class DS2890 : public OneWireItem
 {
 private:
 
-    static constexpr uint8_t REGISTER_MASK_POTI_CHAR = 0x01;
-    static constexpr uint8_t REGISTER_MASK_WIPER_SET = 0x02;
-    static constexpr uint8_t REGISTER_MASK_POTI_NUMB = 0x0C;
-    static constexpr uint8_t REGISTER_MASK_WIPER_POS = 0x30;
-    static constexpr uint8_t REGISTER_MASK_POTI_RESI = 0xC0;
+    static constexpr uint8_t POTI_SIZE               = 4; // number of potis emulated
+    static constexpr uint8_t POTI_MASK               = 0b00000011;
+
+    static constexpr uint8_t REGISTER_MASK_POTI_CHAR = 0b00000001; // 0: log, 1: linear
+    static constexpr uint8_t REGISTER_MASK_WIPER_SET = 0b00000010; // 0: non, 1: volatile
+    static constexpr uint8_t REGISTER_MASK_POTI_NUMB = 0b00001100; // 0..4 potis
+    static constexpr uint8_t REGISTER_MASK_WIPER_POS = 0b00110000; // 32, 64, 128, 256 positions
+    static constexpr uint8_t REGISTER_MASK_POTI_RESI = 0b11000000; // 5k, 10k, 50k, 100k Ohm Resistence
+
+    static constexpr uint8_t RELEASE_CODE            = 0x96;
 
     uint8_t register_feat;
     uint8_t register_ctrl;
-    uint8_t register_poti[4];
+    uint8_t register_poti[POTI_SIZE];
 
 public:
     static constexpr uint8_t family_code = 0x2C;
@@ -27,10 +32,14 @@ public:
 
     void duty(OneWireHub *hub);
 
-    uint8_t readPoti(uint8_t number)
+    uint8_t getPotentiometer(const uint8_t channel)
     {
-        return register_poti[number&0x03];
+        return register_poti[channel&POTI_MASK];
     };
+    void setPotentiometer(const uint8_t channel, const uint8_t value)
+    {
+        register_poti[channel&POTI_MASK] = value;
+    }
     uint8_t readCtrl(void)
     {
         return register_ctrl;
