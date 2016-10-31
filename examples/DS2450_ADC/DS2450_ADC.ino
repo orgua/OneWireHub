@@ -1,6 +1,5 @@
 /*
 *   Example-Code that emulates a DS2450 4 channel A/D
-*	
 *
 *   Tested with
 *    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave

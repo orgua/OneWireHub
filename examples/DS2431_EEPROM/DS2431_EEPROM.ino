@@ -2,7 +2,7 @@
 *    Example-Code that emulates a DS2431 1024 bits EEPROM
 *
 *   Tested with
-*    - DS9490R-Master, atmega328@16MHz as Slave
+*    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
 */
 
 #include "OneWireHub.h"

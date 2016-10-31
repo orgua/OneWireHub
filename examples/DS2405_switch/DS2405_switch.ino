@@ -2,7 +2,7 @@
  *    Example-Code that emulates a DS2405 - One Channel addressable switch
  *
  *    Tested with
- *    - DS9490R-Master, atmega328@16MHz as Slave
+ *    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
  *    - Note: feedback to master is unclear, ds9490 does not read after matchRom
  */
 
