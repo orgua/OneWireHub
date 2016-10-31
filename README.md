@@ -20,10 +20,10 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - DS2432 (0x33) 1kbit protected EEPROM (basically a ds2431 with extra sha-engine)
 - **DS2433 (0x23) 4Kbit 1-Wire EEPROM**
 - **DS2438 (0x26) Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
-- DS2450 (0x20) 4 channel A/D
+- **DS2450 (0x20) 4 channel A/D**
 - **DS2501 (0x11, 0x91) 512bit EEPROM** (use DS2502 with different family code)
 - **DS2502 (0x09, 0x89) 1kbit EEPROM, Add Only Memory** (also known as DS1982, same FC)
-- **DS2890 (0x2C) 0x Single channel digital potentiometer - extended to 1-4 CH**
+- **DS2890 (0x2C) Single channel digital potentiometer - extended to 1-4 CH**
 - Dell Power Supply (use DS2502 with family code set to 0x28)
 
 Note: **Bold printed devices are feature-complete and were mostly tested with a DS9490 (look into the regarding example-file for more information) and a loxone system (when supported).**
@@ -31,6 +31,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 ### Features:
 - supports up to 32 slaves (8 is standard setting), adjust HUB_SLAVE_LIMIT in src/OneWireHub_config.h to safe RAM & program space
 - hot-plug slaves as needed
+- support for most onewire-features: MATCH ROM, SKIP ROM, READ ROM, RESUME COMMAND, **OVERDRIVE-Mode** (must be activated)
 - cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=1.6.10 recommended)** i.e.:
    - use of constexpr instead of #define for better compiler-messages and cleaner code
    - use static-assertions for plausibility checks
@@ -48,11 +49,12 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
+- overdrive!
 - rework send() and recv(), much more efficient -> atmega328@16MHz is suited for overdrive! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
 - rework Error-Handling-System (reduced a lot of overhead)
 - no return value for hub.searchIDTree() or item.duty() needed anymore
 - returns 1 if error occured in the following functions: recv(buf[]), send(), awaitTimeslot(), sendBit(), checkReset(), showPrescence(), recvAndProzessCmd()
-- basic support for ds2408, thanks to vytautassurvila
+- support for ds2408 (thanks to vytautassurvila) and ds2450
 - offline calibration by watching the bus (examples/debug/calibrate_by_bus_timing)
    - branch for online calibration was abandoned because it took to much resources (DS18B20-Sketch compiled to 8434 // 482 bytes instead of 7026 // 426 bytes now) 
 - cleaned up timing-fn (no guessing, no micros(), no delayMicroseconds())
@@ -70,7 +72,9 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - replace searchIDTree() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
 
 ### Plans for the future:
-- implementation of ds2450
+- implementation of ds2423 (2505/6)
+- fix or rework ds2890, potis only work as one atm
+- alarm / conditional search
 - irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
 - [List of all Family-Codes](http://owfs.sourceforge.net/family.html)
@@ -84,13 +88,13 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### Parasite Power with two wires
 
-- **Note:** this will certainly not work with an emulated device. Powering a µController via GPIO is sometimes possible, but needs preparation and tests.
-
 ![Parasite-Power-Schematic](http://i.stack.imgur.com/0MeGL.jpg)
+
+**Note:** this will certainly not work with an emulated device. Powering a µController via GPIO is sometimes possible, but needs preparation and tests.
 
 [read more](http://electronics.stackexchange.com/questions/193300/digital-ic-that-draws-power-from-data-pins)
 
-### What to do if nothing works?
+### HELP - What to do if things don't work as expected?
 - is your arduino software up to date (>v1.6.8)
 - update this lib to the latest release (v1.2.0)
 - if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
