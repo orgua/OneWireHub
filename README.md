@@ -38,7 +38,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
    - extra supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822 (...)
    - tested architectures: atmega328, teensy3.2
    - for portability and tests the hub can even be compiled on a PC with the supplied mock-up functions
-   - at the moment the lib relies sole on the micros()-fn for timing, no direct access to interrupt or timers
+   - at the moment the lib relies sole on loop-counting for timing, no direct access to interrupt or timers, **NOTE:** if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
 - Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
 - GPIO-Debug output - shows status by issuing high-states (activate in src/OneWireHub_config.h, is a better alternative to serial debug)
    - during presence detection (after reset), 
@@ -58,38 +58,21 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - cleaned up timing-fn (no guessing, no micros(), no delayMicroseconds())
 - debug-pin shows state by issuing high-states - see explanation in "features"
 - teensy3.2 tested: cleaned warnings, fixed port access, cleaned examples
-- sensors with emulated memory use memset and static_asserts to secure implementation
-- fix and clean pin access, fix a portability issue (time_t)
-- prepare hub for overdrive-mode
 - added or extended the ds2431, ds2431, ds2501, ds2502 (also tested)
-- hub is more resilient to odd master-behaviour (lazy timings and subsequent resets are handled now), extended in 0.9.3 and 0.9.4
 - added ds2431 (thanks to j-langlois) and BAE910 (thanks to Giermann), Dell Power Supply (thanks to Kondi)
 - prepare new timing-method which will replace the old one in the next couple of weeks (a 6µs millis() call at 8MHz is not suitable for OW) 
-- cleanup send / receive / waitForTimeslot to react faster to bus (better for µC with less than 16 MHz)
 - support for skipROM-cmd if only one slave is present (thanks to Giermann)
 - speed up atmel-crc-functions
-- tested with DS9490R: ds28b20, ds2401, ds2405, ds2413, more will follow
 - rework of error system, switch to enum, slaves can raise errors now & and Serial interferes less with OW-timings
-- rework of the whole timings, if needed you can configure overdrive speed (arduino uno would probably be to slow)
-- bug fix: non conformal behaviour as a onewire-slave (hopefully)
 - raise the maximal slave limit from 8 to 32, code adapts via variable dataTypes
-- open up for a lot more platforms with "platform.h" (taken from [Onewire-Lib](https://github.com/PaulStoffregen/OneWire))
 - per-bit-CRC16 with sendAndCRC16() and sendAndCRC16() for load-balancing, 900ns/bit instead of 7µs/byte on Atmega328@16MHz
-- add examples for onewire-master, for testing the bus
-- rework of checkReset(), showPresence(), send(), recv() - Hub is much more reliable now and it saves ~120 byte program-space
 - faster CRC16 (ds2450 and ds2408 and ds2423), takes 5-7µs/byte instead of 10µs
-- refactored the interface: hub.poll() replaces hub.waitForRequest()
-- extended ds2890 to up to 4CH (datasheet has it covered), ds2413, ds2413 --> feature-complete
-- implement and test ds2438
 - replace searchIDTree() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
 
 ### Plans for the future:
 - implementation of ds2450
-- ~~add table of tested and working sensors~~ (documented in the examples of the device)
-- introduce unittests
 - irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
-- ~~DS1963S 0x18 iButton, datasheet under NDA~~
 - [List of all Family-Codes](http://owfs.sourceforge.net/family.html)
 - [List of Maxim Sensors](https://www.maximintegrated.com/en/app-notes/index.mvp/id/3989) (at the bottom)
 
@@ -101,7 +84,8 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### Parasite Power with two wires
 
-Note: this will certainly not work with an emulated device. Powering a µController via GPIO is sometimes possible, but needs preparation and tests.
+- **Note:** this will certainly not work with an emulated device. Powering a µController via GPIO is sometimes possible, but needs preparation and tests.
+
 ![Parasite-Power-Schematic](http://i.stack.imgur.com/0MeGL.jpg)
 
 [read more](http://electronics.stackexchange.com/questions/193300/digital-ic-that-draws-power-from-data-pins)
@@ -109,6 +93,8 @@ Note: this will certainly not work with an emulated device. Powering a µControl
 ### What to do if nothing works?
 - is your arduino software up to date (>v1.6.8)
 - update this lib to the latest release (v1.2.0)
+- if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
+- Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
 - check if clock-speed of the µC is correctly set (if possible) - test with simple blinking example, 1sec ON should really need 1sec. timing is critical
 - begin with a simple example like the ds18b20. the ds18b20 doesn't support overdrive, so the master won't switch to higher datarates
 - check if your setup is right: you need at least external power for your µC and a dataline with groundline to your Onewire-Master

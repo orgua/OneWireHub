@@ -1,10 +1,10 @@
 /*
- *    Test-Code for calibration - this sketch determines the value for "instructions per loop"
+ *    Test-Code for calibration - this sketch determines the value for "instructions per loop" for your µC/CPU-architecture
  *
  *      --> read value per serial-com and write it to /src/platform.h to YOUR specific architecture
  *          >>>>  constexpr uint8_t VALUE_IPL {0}; // instructions per loop
  *
- *      --> alternative: activate gpio-debug and measure 1ms-high-state after calibration, adapt VALUE_IPL accordingly
+ *      --> alternative: activate gpio-debug and measure 1ms-high-state after calibration, adapt VALUE_IPL accordingly to match 1ms
  *
  *      --> test it with a normal sensor-sketch (like ds18b20_thermometer.ini)
  *
@@ -51,4 +51,54 @@ void loop()
     hub.waitLoopsDebug();
 
     hub.poll();
+
+
+    // advanced calibration loop --> try to track and measure it with a logic analyzer
+    if (0)
+    {
+        io_reg_t debug_bitMask = PIN_TO_BITMASK(GPIO_DEBUG_PIN);
+        volatile io_reg_t *debug_baseReg = PIN_TO_BASEREG(GPIO_DEBUG_PIN);
+        pinMode(GPIO_DEBUG_PIN, OUTPUT);
+        DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+
+        constexpr timeOW_t loops_1ms = timeUsToLoops(uint16_t(VALUE1k));
+        timeOW_t loops_left = 1;
+        while (loops_left)
+        {
+            DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask); // Fast high low flank
+            DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+
+            uint32_t retries = loops_1ms; // volatile needs ~2.5ms for the 1ms-loop .... but in a separate function it works as expected
+            while ((!DIRECT_READ(debug_baseReg, debug_bitMask)) && (--retries)); // try to wait 1ms while LOW
+
+            DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask); // switch to HIGH
+
+            retries += loops_1ms;
+            while ((DIRECT_READ(debug_baseReg, debug_bitMask)) && (--retries)); // try to wait 1ms while HIGH
+            loops_left = retries;
+
+            DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+        };
+
+        loops_left = 1;
+        while (loops_left)
+        {
+            DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask); // switch to HIGH
+
+            uint32_t retries = loops_1ms;
+            while ((DIRECT_READ(debug_baseReg, debug_bitMask)) && (--retries)); // try to wait 1ms while HIGH
+
+            DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+
+            retries += loops_1ms;
+            while (!(DIRECT_READ(debug_baseReg, debug_bitMask)) && (--retries)); // try to wait 1ms while LOW
+            loops_left = retries;
+
+            DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask); // Fast high low flank
+            DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
+        };
+    }
 }
+
+
+
