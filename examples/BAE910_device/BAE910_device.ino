@@ -2,6 +2,7 @@
  *    Example-Code that emulates a BAE910
  *    ( http://www.brain4home.eu/node/4 )
  *
+ *    Tested with:
  */
 
 #include "OneWireHub.h"

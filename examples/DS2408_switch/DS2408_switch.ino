@@ -3,7 +3,7 @@
  *
  *    Tested with:
  *    - https://github.com/PaulStoffregen/OneWire on the other side as Master
- *    - DS9490R-Master, atmega328@16MHz as Slave
+ *    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
  *    - BeagleBoneBlack running Linux 4.4.19. 1wire slave was accessed via original drivers:
  *
  *         #set all pins to 1 (xFF)
