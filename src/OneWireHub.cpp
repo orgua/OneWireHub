@@ -716,11 +716,11 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length, uint16_t &cr
             }
             else mix = 0;
 
+            if (_error != Error::NO_ERROR) return 1;
+
             mix ^= static_cast<uint8_t>(crc16) & static_cast<uint8_t>(0x01);
             crc16 >>= 1;
             if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
-
-            if (_error != Error::NO_ERROR) return 1;
         };
 
         address[bytes_received] = value;
