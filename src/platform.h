@@ -4,7 +4,6 @@
 #define ONEWIREHUB_PLATFORM_H
 
 // NOTE: added io_reg_t, don't use IO_REG_TYPE and IO_REG_ASM anymore
-// TODO: sync with onewireLib
 // Platform specific I/O definitions
 
 #if defined(__AVR__)
