@@ -33,26 +33,29 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### Features:
 - supports up to 32 slaves (8 is standard setting), adjust HUB_SLAVE_LIMIT in src/OneWireHub_config.h to safe RAM & program space
-- hot-plug slaves as needed
-- support for most onewire-features: MATCH ROM, SKIP ROM, READ ROM, RESUME COMMAND, **OVERDRIVE-Mode** (must be activated)
-- cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=1.6.10 recommended)** i.e.:
+- hot-plug: add and remove slaves as needed
+- support for most onewire-features: MATCH ROM (0x55), SKIP ROM (0xCC), READ ROM (0x0F,0x33), RESUME COMMAND (0xA5)
+   - **OVERDRIVE-Mode**: Master can issue OD SKIP ROM (0x13) or OD MATCH ROM (0x69) and slave stays in this mode till it sees a long reset -> OD-feature must be activated in config
+   - ALARM SEARCH (0xEC) is NOT implemented yet!
+- cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=1.6.10 recommended)**
    - use of constexpr instead of #define for better compiler-messages and cleaner code
    - use static-assertions for plausibility checks
 - hardware-dependencies are combined in "platform.h", synced with [Onewire-Lib](https://github.com/PaulStoffregen/OneWire)
-   - extra supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822 (...)
+   - supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822 (...)
    - tested architectures: atmega328, teensy3.2
-   - for portability and tests the hub can even be compiled on a PC with the supplied mock-up functions
+   - for portability and tests the hub can be compiled on a PC with the supplied mock-up functions
    - at the moment the lib relies sole on loop-counting for timing, no direct access to interrupt or timers, **NOTE:** if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
 - Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
 - GPIO-Debug output - shows status by issuing high-states (activate in src/OneWireHub_config.h, is a better alternative to serial debug)
    - during presence detection (after reset), 
    - after receiving / sending a whole byte (not during SEARCH ROM)
    - when duty()-subroutines of an attached slave get called 
-   - while hub-startup it issues a 1ms long high-state (you can check the instruction-per-loop-value for your architecture with this)
-- documentation, numerous examples, easy interface for hub and sensors
+   - during hub-startup it issues a 1ms long high-state (you can check the instruction-per-loop-value for your architecture with this)
+- provide documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
-- overdrive!
+- fully support for ds2450, also fix ds2890, partly implemented ds2503/5/6
+- overdrive! must be enabled in config file
 - rework send() and recv(), much more efficient -> atmega328@16MHz is suited for overdrive! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
 - rework Error-Handling-System (reduced a lot of overhead)
 - no return value for hub.searchIDTree() or item.duty() needed anymore
@@ -75,7 +78,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - replace searchIDTree() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
 
 ### Plans for the future:
-- implementation of ds2423 (2503/5/6)
+- implementation of ds2423 and 2503/5/6
 - alarm / conditional search
 - irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
