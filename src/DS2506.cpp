@@ -1,12 +1,12 @@
-#include "DS2503.h"
+#include "DS2506.h"
 
-DS2503::DS2503(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
+DS2506::DS2506(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
     static_assert(sizeof(memory) < 256, "Implementation does not cover the whole address-space");
 
     switch (ID1)
     {
-        case 0x13:  // DS2503 // TODO: this and the following can be removed. these are similar but different (CRC16)
+        case 0x13:  // DS2503
             sizeof_memory = 512;
             break;
 
@@ -26,7 +26,7 @@ DS2503::DS2503(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     clearStatus();
 };
 
-void DS2503::duty(OneWireHub *hub)
+void DS2506::duty(OneWireHub *hub)
 {
     uint16_t reg_TA, reg_RA = 0; // Target address
     uint8_t  cmd, data, crc = 0; // redirected address, command, data, crc
@@ -151,31 +151,31 @@ void DS2503::duty(OneWireHub *hub)
     };
 };
 
-void DS2503::clearMemory(void)
+void DS2506::clearMemory(void)
 {
     memset(&memory[0], static_cast<uint8_t>(0xFF), SIZE_MEM);
 };
 
-void DS2503::clearStatus(void)
+void DS2506::clearStatus(void)
 {
     for (uint8_t i = 0; i < sizeof(status); ++i)  status[i] = 0xFF;
     status[sizeof(status)-1] = 0x00; // last byte should be always zero
 };
 
-bool DS2503::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)
+bool DS2506::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)
 {
     const uint16_t _length = (position + length >= SIZE_MEM) ? (SIZE_MEM - position) : length; // TODO: dirty hack, just changed sizeofmem to SIZE_MEM
     memcpy(&memory[position],source,_length);
     return (_length==length);
 };
 
-bool DS2503::checkProtection(const uint16_t reg_address)
+bool DS2506::checkProtection(const uint16_t reg_address)
 {
     uint8_t reg_index = uint8_t(reg_address >> 5);
     return ((status[0] & (1<<reg_index)) == 0);
 };
 
-uint8_t DS2503::translateRedirection(const uint16_t reg_address)
+uint8_t DS2506::translateRedirection(const uint16_t reg_address)
 {
     if (reg_address >= SIZE_MEM) return (SIZE_MEM-1); // out of bound is translated to last byte
     uint8_t reg_index = uint8_t(1) + uint8_t(reg_address >> 5);
@@ -183,7 +183,7 @@ uint8_t DS2503::translateRedirection(const uint16_t reg_address)
     return ((reg_offset & ~PAGE_MASK) | uint8_t(reg_address & PAGE_MASK));
 };
 
-bool DS2503::redirectPage(const uint8_t page_source, const uint8_t page_dest)
+bool DS2506::redirectPage(const uint8_t page_source, const uint8_t page_dest)
 {
     if (page_source > 3) return false;
     if (page_dest > 3) return false;
@@ -192,7 +192,7 @@ bool DS2503::redirectPage(const uint8_t page_source, const uint8_t page_dest)
     return true;
 };
 
-bool DS2503::protectPage(const uint8_t page, const bool status_protected)
+bool DS2506::protectPage(const uint8_t page, const bool status_protected)
 {
     if (page > 3) return false;
 

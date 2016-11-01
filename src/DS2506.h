@@ -1,11 +1,11 @@
-// 0x13  4Kbit 1-Wire EEPROM, Add Only Memory
+// (0x0F) 64kbit EEPROM, Add Only Memory
 
-#ifndef ONEWIRE_DS2503_H
-#define ONEWIRE_DS2503_H
+#ifndef ONEWIRE_DS2506_H
+#define ONEWIRE_DS2506_H
 
 #include "OneWireItem.h"
 
-class DS2503 : public OneWireItem
+class DS2506 : public OneWireItem
 {
 private:
 
@@ -26,7 +26,7 @@ public:
     static constexpr uint8_t family_code = 0x13;
 
     // Initializer will get stuck in an infinite loop when you choose a sensor
-    DS2503(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
+    DS2506(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
     void duty(OneWireHub *hub);
 
