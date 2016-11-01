@@ -162,7 +162,7 @@ void DS2502::clearStatus(void)
 
 bool DS2502::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)
 {
-    const uint16_t _length = (position + length >= SIZE_MEM) ? (SIZE_MEM - position) : length; // TODO: dirty hack, just changed sizeofmem to SIZE_MEM
+    const uint16_t _length = (position + length >= SIZE_MEM) ? (SIZE_MEM - position) : length; // TODO: dirty hack, just changed sizeofmem to MEM_SIZE
     memcpy(&memory[position],source,_length);
     return (_length==length);
 };
