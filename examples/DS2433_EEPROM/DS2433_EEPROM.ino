@@ -21,6 +21,9 @@ void setup()
     // Setup OneWire
     hub.attach(ds2433);
 
+    char memory[] = "abcdefg-test-data directly from a texteditor - full ASCII:-?+";
+    ds2433.writeMemory(memory,sizeof(memory),0x00);
+
     Serial.println("config done");
 }
 
