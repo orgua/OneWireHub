@@ -156,8 +156,8 @@ void DS2502::clearMemory(void)
 
 void DS2502::clearStatus(void)
 {
-    for (uint8_t i = 0; i < sizeof(status); ++i)  status[i] = 0xFF;
-    status[sizeof(status)-1] = 0x00; // last byte should be always zero
+    memset(&status[0], static_cast<uint8_t>(0xFF), SIZE_STATUS);
+    status[SIZE_STATUS-1] = 0x00; // last byte should be always zero
 };
 
 bool DS2502::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)

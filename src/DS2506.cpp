@@ -19,8 +19,12 @@ DS2506::DS2506(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
             break;
 
         default:
-            sizeof_memory = 128;
-    }
+            sizeof_memory = 256;
+    };
+
+    page_count      = sizeof_memory / PAGE_SIZE;                // DS2506: 256
+    status_segment  = page_count / uint8_t(8);                  // DS2506:  32
+    sizeof_status   = page_count + (uint8_t(3)*status_segment); // DS2506: 352
 
     clearMemory();
     clearStatus();
@@ -31,6 +35,7 @@ void DS2506::duty(OneWireHub *hub)
     uint16_t reg_TA, reg_RA = 0, crc = 0; // Target address
     uint8_t  cmd, data; // redirected address, command, data, crc
 
+    // always receives cmd and TA
     if (hub->recv(&cmd,1,crc))  return;
     if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc))  return;
 
@@ -48,7 +53,7 @@ void DS2506::duty(OneWireHub *hub)
             hub->send(reinterpret_cast<uint8_t *>(&crc),2);
             break; // datasheed says we should return 1s, till reset, nothing to do here
 
-        case 0xA5:      // EXTENDED READ MEMORY (with redirection)
+        case 0xA5:      // EXTENDED READ MEMORY (with redirection-information)
             while (reg_TA <= sizeof_memory)
             {
                 const uint8_t  redir   = getRedirection(reg_TA);
@@ -66,92 +71,81 @@ void DS2506::duty(OneWireHub *hub)
             };
             break; // datasheed says we should return 1s, till reset, nothing to do here
 
-        case 0xC3:      // READ DATA (like 0xF0, but repeatedly till the end of page with following CRC) // TODO
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) break;
-
-            while (reg_RA < sizeof_memory)
+        case 0xAA:      // READ STATUS
+            while (reg_TA < sizeof_status) // check for valid address
             {
-                crc = 0; // reInit CRC and send data
-                reg_RA = uint16_t((reg_TA & ~PAGE_MASK) + (1 << 5));
-                for (uint16_t i = reg_TA; i < reg_RA; ++i)
-                {
-                    uint16_t j = translateRedirection(i);
-                    if (hub->send(&memory[j])) return;
-                    //crc = crc8(&memory[j], 1, crc);
-                };
+                reg_RA = reg_TA&uint8_t(7);
+                //if (reg_RA >= STATUS_SIZE - 8) reg_RA = STATUS_SIZE - uint8_t(8) + (reg_RA & uint8_t(7)); // TODO: redirect
+                const uint8_t  length  = uint8_t(8 - (reg_RA & 7));
+                if (hub->send(&status[reg_RA],length,crc)) return;
                 crc = ~crc; // normally crc16 is sent ~inverted
-                if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) break;
-                reg_TA = reg_RA;
-            };
-            break; // datasheed says we should return 1s, till reset, nothing to do here
-
-        case 0xAA:      // READ STATUS // TODO
-            {
-                const uint16_t real_TA = reg_TA & uint16_t(STATUS_SIZE-1);
-                const uint8_t  length  = uint8_t(8 - (reg_TA & 7));
-                if (hub->send(&status[real_TA],length,crc)) return;
-            };
-            crc = ~crc; // normally crc16 is sent ~inverted
-            hub->send(reinterpret_cast<uint8_t *>(&crc),2);
-            break; // datasheed says we should return 1s, till reset, nothing to do here
-
-        case 0x0F:      // WRITE MEMORY // TODO
-            if (reg_TA > sizeof_memory)     break; // check for valid address
-
-            if (hub->recv(&data))           break;
-            //crc = crc8(&data,1,crc);
-            crc = ~crc; // normally crc16 is sent ~inverted
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2))            break;
-
-            if (checkProtection(reg_TA))    break;
-
-            reg_RA = translateRedirection(reg_TA);
-            memory[reg_RA] &= data; // like EPROM-Mode
-
-            if (hub->send(&memory[reg_RA])) break;
-
-            reg_TA++;
-            while (reg_TA < sizeof_memory)
-            {
-                if (hub->recv(&data))       break;
-                crc = crc8(&data,1,reinterpret_cast<uint8_t *>(&reg_TA)[0]);
-                crc = ~crc; // normally crc16 is sent ~inverted
-                if (hub->send(reinterpret_cast<uint8_t *>(&crc),2))        break;
-
-                reg_RA = translateRedirection(reg_TA);
-                if (!checkProtection(reg_RA))
-                {
-                    memory[reg_RA] &= data; // like EPROM-Mode
-                    if (hub->send(&memory[reg_RA])) break;
-                };
-                reg_TA++;
+                hub->send(reinterpret_cast<uint8_t *>(&crc),2);
+                reg_TA += length;
+                crc = 0;
             };
             break;
 
-        case 0x55:      // WRITE STATUS // TODO
-            if (reg_TA > sizeof(status))    break; // check for valid address
-
-            if (hub->recv(&data))           break;
-            //crc = crc8(&data,1,crc);
-            crc = ~crc; // normally crc16 is sent ~inverted
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2))            break;
-
-            status[reg_TA] &= data; // like EPROM-Mode
-
-            if (hub->send(&status[reg_TA])) break;
-
-            reg_TA++;
-            while (reg_TA < sizeof(status))
+        case 0x0F:      // WRITE MEMORY
+            while (reg_TA < sizeof_memory) // check for valid address
             {
-                if (hub->recv(&data))       break;
-                //crc = crc8(&data,1,reinterpret_cast<uint8_t *>(&reg_TA)[0]);
+                if (hub->recv(&data,1,crc)) break;
+
                 crc = ~crc; // normally crc16 is sent ~inverted
-                if (hub->send(reinterpret_cast<uint8_t *>(&crc),2))        break;
+                if (hub->send(reinterpret_cast<uint8_t *>(&crc), 2)) break;
+                // master issues now a 480us 12V-Programming Pulse
 
-                status[reg_TA] &= data; // like EPROM-Mode
-                if (hub->send(&status[reg_TA])) break;
+                if (checkProtection(reg_TA)) break;
+                reg_RA = translateRedirection(reg_TA);
+                memory[reg_RA] &= data; // like EEPROM-Mode, TODO: mark page as used
 
-                reg_TA++;
+                if (hub->send(&memory[reg_RA])) break;
+                crc = ++reg_TA; // prepare new loop
+            };
+            break;
+
+        case 0xF3:      // SPEED WRITE MEMORY, omit CRC
+            while (reg_TA < sizeof_memory) // check for valid address
+            {
+                if (hub->recv(&data,1,crc)) break;
+                // master issues now a 480us 12V-Programming Pulse
+
+                if (checkProtection(reg_TA)) break;
+                reg_RA = translateRedirection(reg_TA);
+                memory[reg_RA] &= data; // like EEPROM-Mode, TODO: mark page as used
+
+                if (hub->send(&memory[reg_RA])) break;
+                ++reg_TA; // prepare new loop
+            };
+            break;
+
+        case 0x55:      // WRITE STATUS
+            while (reg_TA < sizeof_status) // check for valid address
+            {
+                if (hub->recv(&data,1,crc)) break;
+
+                crc = ~crc; // normally crc16 is sent ~inverted
+                if (hub->send(reinterpret_cast<uint8_t *>(&crc), 2)) break;
+                // master issues now a 480us 12V-Programming Pulse
+
+                reg_RA = translateStatusAddress(reg_TA);
+                status[reg_RA] &= data; // like EEPROM-Mode, TODO: mark page as used
+
+                if (hub->send(&status[reg_RA])) break;
+                crc = ++reg_TA; // prepare new loop
+            };
+            break;
+
+        case 0xF5:      // SPEED WRITE STATUS, omit CRC
+            while (reg_TA < sizeof_status) // check for valid address
+            {
+                if (hub->recv(&data,1,crc)) break;
+                // master issues now a 480us 12V-Programming Pulse
+
+                reg_RA = translateStatusAddress(reg_TA);
+                status[reg_RA] &= data; // like EEPROM-Mode, TODO: mark page as used
+
+                if (hub->send(&status[reg_RA])) break;
+                ++reg_TA; // prepare new loop
             };
             break;
 
@@ -167,8 +161,8 @@ void DS2506::clearMemory(void)
 
 void DS2506::clearStatus(void)
 {
-    for (uint8_t i = 0; i < sizeof(status); ++i)  status[i] = 0xFF;
-    status[sizeof(status)-1] = 0x00; // last byte should be always zero
+    memset(&status[0], static_cast<uint8_t>(0xFF), STATUS_SIZE);
+    status[STATUS_SIZE-1] = 0x00; // last byte should be always zero, TODO: right for 2506?
 };
 
 bool DS2506::writeMemory(const uint8_t* source, const uint16_t length, const uint16_t position)
@@ -178,7 +172,7 @@ bool DS2506::writeMemory(const uint8_t* source, const uint16_t length, const uin
     return (_length==length);
 };
 
-bool DS2506::readMemory(const uint8_t* destination, const uint16_t length, const uint16_t position)
+bool DS2506::readMemory(uint8_t* destination, const uint16_t length, const uint16_t position)
 {
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
     memcpy(destination,&memory[position],_length);
@@ -204,6 +198,12 @@ uint16_t DS2506::translateRedirection(const uint16_t reg_address) // TODO: exten
     const uint16_t reg_index  = uint8_t(1) + (reg_address >> 5);
     const uint16_t reg_offset = (status[reg_index] == 0xFF) ? (reg_address) : ((~status[reg_index])<<5);
     return ((reg_offset & ~PAGE_MASK) | uint8_t(reg_address & PAGE_MASK));
+};
+
+
+uint16_t DS2506::translateStatusAddress(const uint16_t reg_address)
+{
+    return (0);
 };
 
 bool DS2506::redirectPage(const uint8_t page_source, const uint8_t page_dest)
