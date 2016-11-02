@@ -13,14 +13,16 @@ class DS2502 : public OneWireItem
 {
 private:
 
-    static constexpr uint8_t PAGE_COUNT  = 4;
+    static constexpr uint8_t PAGE_COUNT  = 4;       // TODO: improve this device with the knowledge of the ds2506
     static constexpr uint8_t PAGE_SIZE   = 32;
     static constexpr uint8_t PAGE_MASK   = 0b00011111;
     static constexpr uint8_t SIZE_MEM    = PAGE_COUNT * PAGE_SIZE;
 
+    static constexpr uint8_t SIZE_STATUS = 8;
+
     uint8_t     memory[SIZE_MEM]; // 4 pages of 32 bytes
     uint16_t    sizeof_memory;
-    uint8_t     status[8]; // eprom status bytes
+    uint8_t     status[SIZE_STATUS]; // eprom status bytes
 
     void    clearStatus(void);
     bool    checkProtection(const uint16_t reg_address = 0);
