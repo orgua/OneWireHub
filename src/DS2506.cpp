@@ -4,6 +4,7 @@ DS2506::DS2506(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 {
     static_assert(sizeof(memory) <= 0xFFFF, "Implementation does not cover the whole address-space");
 
+    // set device specific "real" sizes
     switch (ID1)
     {
         case 0x13:  // DS2503
@@ -24,7 +25,6 @@ DS2506::DS2506(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
     page_count      = sizeof_memory / PAGE_SIZE;                // DS2506: 256
     status_segment  = page_count / uint8_t(8);                  // DS2506:  32
-    sizeof_status   = page_count + (uint8_t(3)*status_segment); // DS2506: 352
 
     clearMemory();
     clearStatus();
@@ -72,7 +72,7 @@ void DS2506::duty(OneWireHub *hub)
             break; // datasheed says we should return 1s, till reset, nothing to do here
 
         case 0xAA:      // READ STATUS
-            while (reg_TA < sizeof_status) // check for valid address
+            while (reg_TA < STATUS_SIZE_DEV) // check for valid address
             {
                 reg_RA = reg_TA&uint8_t(7);
                 while (reg_RA < 8)
@@ -122,7 +122,7 @@ void DS2506::duty(OneWireHub *hub)
             break;
 
         case 0x55:      // WRITE STATUS
-            while (reg_TA < sizeof_status) // check for valid address
+            while (reg_TA < STATUS_SIZE_DEV) // check for valid address
             {
                 if (hub->recv(&data,1,crc)) break;
 
@@ -139,7 +139,7 @@ void DS2506::duty(OneWireHub *hub)
             break;
 
         case 0xF5:      // SPEED WRITE STATUS, omit CRC
-            while (reg_TA < sizeof_status) // check for valid address
+            while (reg_TA < STATUS_SIZE_DEV) // check for valid address
             {
                 if (hub->recv(&data,1,crc)) break;
                 // master issues now a 480us 12V-Programming Pulse
@@ -191,13 +191,6 @@ uint16_t DS2506::translateRedirection(const uint16_t reg_address) // TODO: exten
 
 /// START OF REIMPLEMENTATION
 
-constexpr uint8_t   STATUS_WP_PAGES_BEG   {0x00};
-constexpr uint8_t   STATUS_WP_REDIR_BEG   {0x20};
-constexpr uint8_t   STATUS_PG_WRITN_BEG   {0x40};
-constexpr uint8_t   STATUS_UNDEF_BA_BEG   {0x60};
-constexpr uint16_t  STATUS_PG_REDIR_BEG   {0x100};
-constexpr uint16_t  STATUS_UNDEF_BB_BEG   {0x200};
-
 uint8_t DS2506::readStatus(const uint16_t address)
 {
     uint16_t SA = address;
@@ -213,7 +206,7 @@ uint8_t DS2506::readStatus(const uint16_t address)
         if (SA >= STATUS_SEGMENT) return 0x00;      // emulate protection
         else                      return status[SA+STATUS_SEGMENT];
     }
-    else if (address < STATUS_UNDEF_BA_BEG)         // is PG_WRITTEN
+    else if (address < STATUS_UNDEF_B1_BEG)         // is PG_WRITTEN
     {
         SA -= STATUS_PG_WRITN_BEG;
         if (SA >= STATUS_SEGMENT) return 0x00;      // emulate written
@@ -223,10 +216,10 @@ uint8_t DS2506::readStatus(const uint16_t address)
     {
         return 0xFF;                                // emulate undefined read
     }
-    else if (address < STATUS_UNDEF_BB_BEG)         // is PG_WRITTEN
+    else if (address < STATUS_UNDEF_B2_BEG)         // is PG_REDIRECTION
     {
         SA -= STATUS_PG_REDIR_BEG;
-        if (SA >= page_count)    return 0xFF;       // emulate no redirection
+        if (SA >= PAGE_COUNT)    return 0xFF;       // emulate no redirection
         else                     return status[SA+3*STATUS_SEGMENT];
     }
     else return 0xFF;                               // is undefined
@@ -294,5 +287,5 @@ bool DS2506::setPageRedirection(const uint8_t page_source, const uint8_t page_de
 uint8_t DS2506::getPageRedirection(const uint8_t page)
 {
     if (page >= page_count) return 0x00;
-    return ~(status[3*STATUS_SEGMENT + page]);
+    return ~(status[3*STATUS_SEGMENT + page]); // TODO: maybe invert this in ReadStatus and safe some Operations? Redirection is critical and often done
 };

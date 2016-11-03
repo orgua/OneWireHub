@@ -22,20 +22,25 @@ private:
 
     static constexpr uint8_t  STATUS_SEGMENT    = (PAGE_COUNT/8);
     static constexpr uint16_t STATUS_SIZE       = PAGE_COUNT + (3*STATUS_SEGMENT);
+    static constexpr uint16_t STATUS_SIZE_DEV   = 0x200; // device specific "real" size
+
+    static constexpr uint8_t  STATUS_WP_PAGES_BEG   {0x00};  // 32  bytes -> Page write protection
+    static constexpr uint8_t  STATUS_WP_REDIR_BEG   {0x20};  // 32  bytes -> Redirection write protection
+    static constexpr uint8_t  STATUS_PG_WRITN_BEG   {0x40};  // 32  bytes -> Page used status (written ones)
+    static constexpr uint8_t  STATUS_UNDEF_B1_BEG   {0x60};
+    static constexpr uint16_t STATUS_PG_REDIR_BEG   {0x100}; // 256 bytes -> Redirection to page, 0xFF if valid, ones complement (xFD is page 2)
+    static constexpr uint16_t STATUS_UNDEF_B2_BEG   {0x200};
 
     static_assert(MEM_SIZE > 255,       "REAL MEM SIZE IS TOO SMALL");
     static_assert(STATUS_SEGMENT > 0,   "REAL MEM SIZE IS TOO SMALL");
     static_assert(MEM_SIZE <= 8192,     "REAL MEM SIZE IS TOO BIG, MAX IS 8291 bytes");
 
-    uint8_t     memory[MEM_SIZE]; // 4 pages of 32 bytes
-    uint16_t    sizeof_memory;
-    uint16_t    sizeof_status;
-    uint16_t    page_count, status_segment;
+    uint8_t     memory[MEM_SIZE];    // 4 pages of 32 bytes
     uint8_t     status[STATUS_SIZE]; // eprom status bytes
-    // 32  bytes -> Page write protection
-    // 32  bytes -> Redirection write protection
-    // 32  bytes -> Page used status (written one)
-    // 256 bytes -> Redirection to page, 0xFF if valid, ones complement (xFD is page 2)
+
+    uint16_t    sizeof_memory;              // device specific "real" size
+    uint16_t    page_count, status_segment; // device specific "real" size
+
 
     uint16_t translateRedirection(const uint16_t reg_address = 0); // react to redirection in status and not available memory
 
