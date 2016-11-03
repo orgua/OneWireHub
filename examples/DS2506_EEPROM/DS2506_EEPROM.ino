@@ -29,6 +29,18 @@ void setup()
     hub.attach(ds2505);
     hub.attach(ds2506);
 
+    Serial.println("Test Redirection Protection");
+    Serial.println(ds2506.getRedirectionProtection(2));
+    ds2506.setRedirectionProtection(2);
+    Serial.println(ds2506.getRedirectionProtection(1));
+    Serial.println(ds2506.getRedirectionProtection(2));
+    Serial.println(ds2506.getRedirectionProtection(3));
+
+    Serial.println("Test Page Redirection");
+    Serial.println(ds2506.getPageRedirection(3));
+    ds2506.setPageRedirection(3,4);
+    Serial.println(ds2506.getPageRedirection(3));
+
     Serial.println("config done");
 }
 
