@@ -42,7 +42,7 @@ private:
     uint16_t    page_count, status_segment; // device specific "real" size
 
 
-    uint16_t translateRedirection(const uint16_t reg_address = 0); // react to redirection in status and not available memory
+    uint16_t translateRedirection(const uint16_t source_address); // react to redirection in status and not available memory
 
 public:
     static constexpr uint8_t family_code = 0x0F;
@@ -57,6 +57,7 @@ public:
     bool    writeMemory(const uint8_t* source, const uint16_t length, const uint16_t position = 0);
     bool    readMemory(uint8_t* destination, const uint16_t length, const uint16_t position);
     uint8_t readStatus(const uint16_t address);
+    uint8_t writeStatus(const uint16_t address, const uint8_t value);
 
     void    setPageProtection(const uint8_t page);
     bool    getPageProtection(const uint8_t page);
@@ -67,7 +68,7 @@ public:
     void    setPageUsed(const uint8_t page);
     bool    getPageUsed(const uint8_t page);
 
-    bool    setPageRedirection(const uint8_t page_source, const uint8_t page_dest);
+    bool    setPageRedirection(const uint8_t page_source, const uint8_t page_destin);
     uint8_t getPageRedirection(const uint8_t page);
 };
 
