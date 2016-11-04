@@ -6,14 +6,14 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 
 ### Supported Slaves:
 - **BAE910 (0xFC) multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
-- **DS1822 (0x22) Digital Thermometer, 12bit** (use DS18B20 with different family code)
+- **DS1822 (0x22) Digital Thermometer, 12bit** -> use DS18B20 with different family code
 - **DS18B20 (0x28) Digital Thermometer, 12bit** (also known as DS1820) 
 - **DS18S20 (0x10) Digital Thermometer, 12bit** (also known as DS1920, use DS18B20 with different family code)
 - **DS1990 (0x01) iButton** (DS2401 with same family code)
 - **DS2401 (0x01) Serial Number**
 - **DS2405 (0x05) Single address switch**
 - **DS2408 (0x29) 8-Channel Addressable Switch**, GPIO Port-expander
-- **DS2411 (0x01) Serial Number** (use DS2401 with same family code)
+- **DS2411 (0x01) Serial Number** -> use DS2401 with same family code
 - **DS2413 (0x3A) Dual channel addressable switch with input-sensing**
 - DS2423 (0x1D) 4kbit 1-Wire RAM with Counter
 - **DS2431 (0x2D) 1kbit protected EEPROM** (also known as DS1972 or DS28E07, same FC)
@@ -21,11 +21,11 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2433 (0x23) 4Kbit 1-Wire EEPROM**
 - **DS2438 (0x26) Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
 - **DS2450 (0x20) 4 channel A/D**
-- **DS2501 (0x11, 0x91) 512bit EEPROM** (use DS2502 with different family code)
+- **DS2501 (0x11, 0x91) 512bit EEPROM** -> use DS2502 with different family code
 - **DS2502 (0x09, 0x89) 1kbit EEPROM, Add Only Memory** (also known as DS1982, same FC)
-- DS2503 (0x13) 4kbit EEPROM, Add Only Memory (also known as DS1983, same FC)
-- DS2505 (0x0B) 16kbit EEPROM, Add Only Memory (also known as DS1985, same FC)
-- DS2506 (0x0F) 64kbit EEPROM, Add Only Memory (also known as DS1986, same FC)
+- **DS2503 (0x13) 4kbit EEPROM, Add Only Memory** (also known as DS1983, same FC) -> use DS2502 with different family code
+- **DS2505 (0x0B) 16kbit EEPROM, Add Only Memory** (also known as DS1985, same FC) -> use DS2502 with different family code
+- **DS2506 (0x0F) 64kbit EEPROM, Add Only Memory** (also known as DS1986, same FC)
 - **DS2890 (0x2C) Single channel digital potentiometer - extended to 1-4 CH**
 - Dell Power Supply (use DS2502 with family code set to 0x28)
 
@@ -54,7 +54,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - provide documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
-- fully support for ds2450, also fix ds2890, partly implemented ds2503/5/6
+- fully support for ds2450 and ds2503/5/6, also fix ds2890 
 - overdrive! must be enabled in config file
 - rework send() and recv(), much more efficient -> atmega328@16MHz is suited for overdrive! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
 - rework Error-Handling-System (reduced a lot of overhead)
