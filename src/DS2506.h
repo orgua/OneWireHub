@@ -42,7 +42,7 @@ private:
     uint16_t    page_count, status_segment; // device specific "real" size
 
 
-    uint16_t translateRedirection(const uint16_t source_address); // react to redirection in status and not available memory
+    uint16_t translateRedirection(const uint16_t source_address) const; // react to redirection in status and not available memory
 
 public:
     static constexpr uint8_t family_code = 0x0F; // the ds2506
@@ -55,21 +55,22 @@ public:
     void clearStatus(void);
 
     bool    writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position = 0);
-    bool    readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position = 0);
-    uint8_t readStatus(const uint16_t address);
+    bool    readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position = 0) const;
+
     uint8_t writeStatus(const uint16_t address, const uint8_t value);
+    uint8_t readStatus(const uint16_t address) const;
 
     void    setPageProtection(const uint8_t page);
-    bool    getPageProtection(const uint8_t page);
+    bool    getPageProtection(const uint8_t page) const;
 
     void    setRedirectionProtection(const uint8_t page);
-    bool    getRedirectionProtection(const uint8_t page);
+    bool    getRedirectionProtection(const uint8_t page) const;
 
     void    setPageUsed(const uint8_t page);
-    bool    getPageUsed(const uint8_t page);
+    bool    getPageUsed(const uint8_t page) const;
 
     bool    setPageRedirection(const uint8_t page_source, const uint8_t page_destin);
-    uint8_t getPageRedirection(const uint8_t page);
+    uint8_t getPageRedirection(const uint8_t page) const;
 };
 
 #endif

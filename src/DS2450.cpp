@@ -100,7 +100,7 @@ bool DS2450::setPotentiometer(const uint8_t channel, const uint16_t value)
     return true;
 };
 
-uint16_t DS2450::getPotentiometer(const uint8_t channel)
+uint16_t DS2450::getPotentiometer(const uint8_t channel) const
 {
     if (channel > 3) return 0;
     uint16_t value;
@@ -123,8 +123,6 @@ void DS2450::initializeMemory(void)
         memory[(2*PAGE_SIZE) + (adc*2) + 1] = 0xFF;
     };
 };
-
-
 
 void DS2450::correctMemory(void)
 {

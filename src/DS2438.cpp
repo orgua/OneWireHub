@@ -11,7 +11,7 @@ DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
         calcCRC(page);
     };
 
-    setTemp(static_cast<int8_t>(20));
+    setTemperature(static_cast<int8_t>(20));
 };
 
 void DS2438::duty(OneWireHub *hub)
@@ -60,7 +60,7 @@ void DS2438::calcCRC(const uint8_t page)
     crc[page] = crc8(&memory[page * 8], 8);
 }
 
-void DS2438::setTemp(const float temp_degC)
+void DS2438::setTemperature(const float temp_degC)
 {
     int16_t value = static_cast<int16_t>(temp_degC * 256.0);
 
@@ -73,7 +73,7 @@ void DS2438::setTemp(const float temp_degC)
     calcCRC(0);
 };
 
-void DS2438::setTemp(const int8_t temp_degC) // can vary from -55 to 125deg
+void DS2438::setTemperature(const int8_t temp_degC) // can vary from -55 to 125deg
 {
     int8_t value = temp_degC;
 
@@ -86,18 +86,33 @@ void DS2438::setTemp(const int8_t temp_degC) // can vary from -55 to 125deg
     calcCRC(0);
 };
 
+int8_t DS2438::getTemperature() const
+{
+    return memory[2];
+};
 
-void DS2438::setVolt(const uint16_t voltage_10mV)
+
+void DS2438::setVoltage(const uint16_t voltage_10mV) // 10 bit
 {
     memory[3] = uint8_t(voltage_10mV & 0xFF);
     memory[4] = uint8_t((voltage_10mV >> 8) & static_cast<uint8_t>(0x03));
     calcCRC(0);
 };
 
-void DS2438::setCurr(const int16_t value) // signed 11 bit
+uint16_t DS2438::getVoltage(void) const
+{
+    return ((memory[4]<<8) | memory[3]);
+};
+
+void DS2438::setCurrent(const int16_t value) // signed 11 bit
 {
     memory[5] = uint8_t(value & 0xFF);
     memory[6] = uint8_t((value >> 8) & static_cast<uint8_t>(0x03));
     if (value<0) memory[6] |= 0xFC; // all upper bits (7:2) are the signum
     calcCRC(0);
+};
+
+int16_t DS2438::getCurrent(void) const
+{
+    return ((memory[6]<<8) | memory[5]);
 };

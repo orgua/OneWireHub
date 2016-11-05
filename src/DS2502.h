@@ -31,7 +31,7 @@ private:
     uint8_t  status[STATUS_SIZE]; // eprom status bytes:
     uint8_t  sizeof_memory;       // device specific "real" size
 
-    uint8_t  translateRedirection(const uint8_t source_address);
+    uint8_t  translateRedirection(const uint8_t source_address) const;
 
 public:
 
@@ -45,19 +45,19 @@ public:
     void    clearStatus(void);
 
     bool    writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position = 0);
-    bool    readMemory(uint8_t * const destination, const uint8_t length, const uint8_t position = 0);
+    bool    readMemory(uint8_t * const destination, const uint8_t length, const uint8_t position = 0) const;
 
-    uint8_t readStatus(const uint8_t address);
     uint8_t writeStatus(const uint8_t address, const uint8_t value);
+    uint8_t readStatus(const uint8_t address) const;
 
     void    setPageProtection(const uint8_t page);
-    bool    getPageProtection(const uint8_t page);
+    bool    getPageProtection(const uint8_t page) const;
 
     void    setPageUsed(const uint8_t page);
-    bool    getPageUsed(const uint8_t page);
+    bool    getPageUsed(const uint8_t page) const;
 
     bool    setPageRedirection(const uint8_t page_source, const uint8_t page_destin);
-    uint8_t getPageRedirection(const uint8_t page);
+    uint8_t getPageRedirection(const uint8_t page) const;
 };
 
 #endif

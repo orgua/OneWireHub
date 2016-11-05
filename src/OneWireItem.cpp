@@ -12,7 +12,7 @@ OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uin
     ID[7] = crc8(ID, 7);
 };
 
-void OneWireItem::sendID(OneWireHub *hub) {
+void OneWireItem::sendID(OneWireHub *hub) const {
     hub->send(ID, 8);
 }
 

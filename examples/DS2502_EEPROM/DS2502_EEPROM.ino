@@ -34,7 +34,7 @@ void setup()
     hub.attach(dellCHa);
     hub.attach(dellCHb);
 
-    // the following code is just to show basic functions, can be removed any time
+    // Test-Cases: the following code is just to show basic functions, can be removed any time
     dellCHa.writeMemory(chargerData, sizeof(chargerData), 0x20); // write to bank 1
     dellCHa.setPageRedirection(0,1); // set memorybanks to all read from bank 1
     dellCHa.setPageRedirection(1,1);

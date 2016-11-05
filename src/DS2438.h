@@ -33,6 +33,7 @@ struct DS2438_page0 // overlay with memory if needed (like done in ds2408)
 class DS2438 : public OneWireItem
 {
 private:
+
     static constexpr uint8_t PAGE_EMU_COUNT = 8; // how much of the real 8 pages should be emulated, use at least 1, max 8
 
     // Register Addresses
@@ -50,18 +51,22 @@ private:
     void calcCRC(const uint8_t page);
 
 public:
+
     static constexpr uint8_t family_code = 0x26;
 
     DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    void duty(OneWireHub *hub);
+    void     duty(OneWireHub *hub);
 
-    void setTemp(const float   temp_degC);
-    void setTemp(const int8_t temp_degC);
+    void     setTemperature(const float temp_degC);
+    void     setTemperature(const int8_t temp_degC);
+    int8_t   getTemperature(void) const;
 
-    void setVolt(const uint16_t voltage_10mV);
+    void     setVoltage(const uint16_t voltage_10mV);
+    uint16_t getVoltage(void) const;
 
-    void setCurr(const int16_t value);
+    void     setCurrent(const int16_t value);
+    int16_t  getCurrent(void) const;
 };
 
 #endif

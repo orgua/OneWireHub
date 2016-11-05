@@ -127,7 +127,7 @@ void DS2502::duty(OneWireHub *hub)
     };
 };
 
-uint8_t DS2502::translateRedirection(const uint8_t source_address)
+uint8_t DS2502::translateRedirection(const uint8_t source_address) const
 {
     const uint8_t  source_page    = static_cast<uint8_t >(source_address >> 5);
     const uint8_t  destin_page    = getPageRedirection(source_page);
@@ -160,7 +160,7 @@ bool DS2502::writeMemory(const uint8_t* source, const uint8_t length, const uint
     return (_length==length);
 };
 
-bool DS2502::readMemory(uint8_t* const destination, const uint8_t length, const uint8_t position)
+bool DS2502::readMemory(uint8_t* const destination, const uint8_t length, const uint8_t position) const
 {
     if (position >= MEM_SIZE) return 0;
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
@@ -169,24 +169,25 @@ bool DS2502::readMemory(uint8_t* const destination, const uint8_t length, const 
 };
 
 
-uint8_t DS2502::readStatus(const uint8_t address)
-{
-    if (address >= STATUS_SIZE)     return 0xFF;
-    return status[address];
-};
-
 uint8_t DS2502::writeStatus(const uint8_t address, const uint8_t value)
 {
     if (address < STATUS_UNDEF_B1)  status[address] &= value; // writing is allowed only here
     return status[address];
 };
 
+uint8_t DS2502::readStatus(const uint8_t address) const
+{
+    if (address >= STATUS_SIZE)     return 0xFF;
+    return status[address];
+};
+
+
 void DS2502::setPageProtection(const uint8_t page)
 {
     if (page < PAGE_COUNT)          status[STATUS_WP_PAGES] &= ~(uint8_t(1<<page));
 };
 
-bool DS2502::getPageProtection(const uint8_t page)
+bool DS2502::getPageProtection(const uint8_t page) const
 {
     if (page >= PAGE_COUNT) return true;
     return !(status[STATUS_WP_PAGES] & uint8_t(1<<page));
@@ -197,7 +198,7 @@ void DS2502::setPageUsed(const uint8_t page)
     if (page < PAGE_COUNT)  status[STATUS_WP_PAGES] &= ~(uint8_t(1<<(page+4)));
 };
 
-bool DS2502::getPageUsed(const uint8_t page)
+bool DS2502::getPageUsed(const uint8_t page) const
 {
     if (page >= PAGE_COUNT) return true;
     return !(status[STATUS_WP_PAGES] & uint8_t(1<<(page+4)));
@@ -213,7 +214,7 @@ bool DS2502::setPageRedirection(const uint8_t page_source, const uint8_t page_de
     return true;
 };
 
-uint8_t DS2502::getPageRedirection(const uint8_t page)
+uint8_t DS2502::getPageRedirection(const uint8_t page) const
 {
     if (page >= PAGE_COUNT) return 0x00;
     return ~(status[page + STATUS_PG_REDIR]); // TODO: maybe invert this in ReadStatus and safe some Operations? Redirection is critical and often done

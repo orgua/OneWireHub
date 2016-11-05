@@ -26,25 +26,26 @@ private:
     uint8_t register_poti[POTI_SIZE];
 
 public:
+
     static constexpr uint8_t family_code = 0x2C;
 
     DS2890(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
     void duty(OneWireHub *hub);
 
-    uint8_t getPotentiometer(const uint8_t channel)
-    {
-        return register_poti[channel&POTI_MASK];
-    };
     void setPotentiometer(const uint8_t channel, const uint8_t value)
     {
         register_poti[channel&POTI_MASK] = value;
     }
-    uint8_t readCtrl(void)
+    uint8_t getPotentiometer(const uint8_t channel) const
+    {
+        return register_poti[channel&POTI_MASK];
+    };
+    uint8_t readCtrl(void) const
     {
         return register_ctrl;
     };
-    uint8_t readFeat(void)
+    uint8_t readFeat(void) const
     {
         return register_feat;
     };
