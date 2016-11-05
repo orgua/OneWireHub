@@ -29,7 +29,7 @@ void setup()
     hub.attach(ds2505);
     hub.attach(ds2506);
 
-    // the following code is just to show basic functions, can be removed any time
+    // Test-Cases: the following code is just to show basic functions, can be removed any time
     Serial.println("Test Redirection Protection");
     Serial.println(ds2506.getRedirectionProtection(2)); // Zero
     ds2506.setRedirectionProtection(2);

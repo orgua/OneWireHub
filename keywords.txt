@@ -49,16 +49,16 @@ crc8	KEYWORD2
 crc16	KEYWORD2
 
 updateCRC	KEYWORD2
-setTemp	KEYWORD2
+setTemperature	KEYWORD2
 
 readState	KEYWORD2
 setState	KEYWORD2
 readLatch	KEYWORD2
 setLatch	KEYWORD2
 
-setTemp	KEYWORD2
-setVolt	KEYWORD2
-setCurr	KEYWORD2
+setTemperature	KEYWORD2
+setVoltage	KEYWORD2
+setCurrent	KEYWORD2
 
 setPotentiometer	KEYWORD2
 

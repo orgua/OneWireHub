@@ -42,6 +42,19 @@ void setup()
     // Setup OneWire
     hub.attach(ds2438);
 
+    // Test-Cases: the following code is just to show basic functions, can be removed any time
+    Serial.print("Test: set Temperature in float 38 deg C: ");
+    ds2438.setTemperature(38.0f);
+    Serial.println(ds2438.getTemperature());
+
+    Serial.print("Test: set Voltage to 8.70 V: ");
+    ds2438.setVoltage(870);
+    Serial.println(ds2438.getVoltage());
+
+    Serial.print("Test: set Current to 700 n: ");
+    ds2438.setCurrent(700);
+    Serial.println(ds2438.getCurrent());
+
     Serial.println("config done");
 }
 
@@ -61,9 +74,9 @@ void loop()
         if ((volt_10mV++) > 200 ) volt_10mV = 10;
         if ((current++)   > 200 ) current = 10;
 
-        ds2438.setTemp(temp);
-        ds2438.setVolt(volt_10mV);
-        ds2438.setCurr(current);
+        ds2438.setTemperature(temp);
+        ds2438.setVoltage(volt_10mV);
+        ds2438.setCurrent(current);
 
         Serial.println(temp);
     };

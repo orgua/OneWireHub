@@ -221,7 +221,7 @@ bool DS2506::writeMemory(const uint8_t* const source, const uint16_t length, con
     return (_length==length);
 };
 
-bool DS2506::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position)
+bool DS2506::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const
 {
     if (position >= MEM_SIZE) return 0;
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
@@ -229,7 +229,7 @@ bool DS2506::readMemory(uint8_t* const destination, const uint16_t length, const
     return (_length==length);
 };
 
-uint16_t DS2506::translateRedirection(const uint16_t source_address) // TODO: extended read mem description implies that redirection is recursive
+uint16_t DS2506::translateRedirection(const uint16_t source_address) const// TODO: extended read mem description implies that redirection is recursive
 {
     const uint8_t  source_page    = static_cast<uint8_t >(source_address >> 5);
     const uint8_t  destin_page    = getPageRedirection(source_page);
@@ -239,7 +239,7 @@ uint16_t DS2506::translateRedirection(const uint16_t source_address) // TODO: ex
 };
 
 
-uint8_t DS2506::readStatus(const uint16_t address)
+uint8_t DS2506::readStatus(const uint16_t address) const
 {
     uint16_t SA = address;
 
@@ -318,7 +318,7 @@ void DS2506::setPageProtection(const uint8_t page)
     status[segment_pos] &= page_mask;
 };
 
-bool DS2506::getPageProtection(const uint8_t page)
+bool DS2506::getPageProtection(const uint8_t page) const
 {
     const uint8_t segment_pos = (page>>3);
     if (segment_pos >= STATUS_SEGMENT) return true;
@@ -334,7 +334,7 @@ void DS2506::setRedirectionProtection(const uint8_t page)
     status[STATUS_SEGMENT + segment_pos] &= page_mask;
 };
 
-bool DS2506::getRedirectionProtection(const uint8_t page)
+bool DS2506::getRedirectionProtection(const uint8_t page) const
 {
     const uint8_t segment_pos = (page>>3);
     if (segment_pos >= STATUS_SEGMENT) return true;
@@ -350,7 +350,7 @@ void DS2506::setPageUsed(const uint8_t page)
     status[2*STATUS_SEGMENT + segment_pos] &= page_mask;
 };
 
-bool DS2506::getPageUsed(const uint8_t page)
+bool DS2506::getPageUsed(const uint8_t page) const
 {
     const uint8_t segment_pos = (page>>3);
     if (segment_pos >= STATUS_SEGMENT) return true;
@@ -368,7 +368,7 @@ bool DS2506::setPageRedirection(const uint8_t page_source, const uint8_t page_de
     return true;
 };
 
-uint8_t DS2506::getPageRedirection(const uint8_t page)
+uint8_t DS2506::getPageRedirection(const uint8_t page) const
 {
     if (page >= PAGE_COUNT) return 0x00;
     return ~(status[3*STATUS_SEGMENT + page]); // TODO: maybe invert this in ReadStatus and safe some Operations? Redirection is critical and often done
