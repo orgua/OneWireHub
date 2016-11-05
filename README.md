@@ -54,8 +54,8 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - provide documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
-- fully support for ds2450 and ds2503/5/6, also fix ds2890 
-- overdrive! must be enabled in config file
+- fully support for ds2450 and ds2503/5/6, also fix ds2890 and ds2502
+- overdrive-support! must be enabled in config file
 - rework send() and recv(), much more efficient -> atmega328@16MHz is suited for overdrive! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
 - rework Error-Handling-System (reduced a lot of overhead)
 - no return value for hub.searchIDTree() or item.duty() needed anymore
@@ -78,7 +78,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - replace searchIDTree() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
 
 ### Plans for the future:
-- implementation of ds2423 and 2503/5/6
+- implementation of ds2423
 - alarm / conditional search
 - irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)

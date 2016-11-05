@@ -45,7 +45,7 @@ private:
     uint16_t translateRedirection(const uint16_t source_address); // react to redirection in status and not available memory
 
 public:
-    static constexpr uint8_t family_code = 0x0F;
+    static constexpr uint8_t family_code = 0x0F; // the ds2506
 
     DS2506(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
@@ -54,8 +54,8 @@ public:
     void clearMemory(void);
     void clearStatus(void);
 
-    bool    writeMemory(const uint8_t* source, const uint16_t length, const uint16_t position = 0);
-    bool    readMemory(uint8_t* destination, const uint16_t length, const uint16_t position);
+    bool    writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position = 0);
+    bool    readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position = 0);
     uint8_t readStatus(const uint16_t address);
     uint8_t writeStatus(const uint16_t address, const uint8_t value);
 

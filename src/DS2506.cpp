@@ -65,7 +65,7 @@ void DS2506::duty(OneWireHub *hub)
             };
             crc = ~crc; // normally crc16 is sent ~inverted
             hub->send(reinterpret_cast<uint8_t *>(&crc),2);
-            break; // datasheed says we should return 1s, till reset, nothing to do here
+            break; // datasheet says we should return 1s, till reset, nothing to do here
 
         case 0xA5:      // EXTENDED READ MEMORY (with redirection-information)
             while (reg_TA <= sizeof_memory)
@@ -98,7 +98,7 @@ void DS2506::duty(OneWireHub *hub)
                 reg_TA += length;
                 crc=0;
             };
-            break; // datasheed says we should return 1s, till reset, nothing to do here
+            break; // datasheet says we should return 1s, till reset, nothing to do here
 
         case 0xAA:      // READ STATUS
             while (reg_TA < STATUS_SIZE_DEV) // check for valid address
@@ -200,28 +200,28 @@ void DS2506::duty(OneWireHub *hub)
 
 void DS2506::clearMemory(void)
 {
-    memset(&memory[0], static_cast<uint8_t>(0xFF), MEM_SIZE);
+    memset(memory, static_cast<uint8_t>(0xFF), MEM_SIZE);
 };
 
 void DS2506::clearStatus(void)
 {
-    memset(&status[0], static_cast<uint8_t>(0xFF), STATUS_SIZE);
+    memset(status, static_cast<uint8_t>(0xFF), STATUS_SIZE);
 };
 
-bool DS2506::writeMemory(const uint8_t* source, const uint16_t length, const uint16_t position)
+bool DS2506::writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position)
 {
-    if (position >= MEM_SIZE) return 0;
+    if (position >= MEM_SIZE) return false;
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
     memcpy(&memory[position],source,_length);
 
     const uint8_t page_start = static_cast<uint8_t>(position >> 5);
-    const uint8_t page_stop  = page_start + static_cast<uint8_t>(_length >> 5);
-    for (uint8_t page = page_start; page <= page_stop; page++)  setPageUsed(page);
+    const uint8_t page_stop  = static_cast<uint8_t>((position + _length) >> 5);
+    for (uint8_t page = page_start; page <= page_stop; page++) setPageUsed(page);
 
     return (_length==length);
 };
 
-bool DS2506::readMemory(uint8_t* destination, const uint16_t length, const uint16_t position)
+bool DS2506::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position)
 {
     if (position >= MEM_SIZE) return 0;
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
@@ -233,7 +233,7 @@ uint16_t DS2506::translateRedirection(const uint16_t source_address) // TODO: ex
 {
     const uint8_t  source_page    = static_cast<uint8_t >(source_address >> 5);
     const uint8_t  destin_page    = getPageRedirection(source_page);
-    if (destin_page == 0x00) return source_address;
+    if (destin_page == 0x00)        return source_address;
     const uint16_t destin_address = (source_address & PAGE_MASK) | (destin_page << 5);
     return destin_address;
 };
