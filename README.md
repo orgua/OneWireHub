@@ -54,6 +54,8 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - provide documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
+- extend constness to all onewire-slaves and unify naming of functions across similar devices
+- include tests into each device-example and add a lot of get()/set() for internal device-states
 - fully support for ds2450 and ds2503/5/6, also fix ds2890 and ds2502
 - overdrive-support! must be enabled in config file
 - rework send() and recv(), much more efficient -> atmega328@16MHz is suited for overdrive! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
