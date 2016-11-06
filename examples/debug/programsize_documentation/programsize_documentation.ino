@@ -36,8 +36,8 @@ void setup()
     hub.attach(ds18b20);
 
     // Set const temperature
-    const int16_t temperature = 21;
-    ds18b20.setTemp(temperature);
+    const int8_t temperature = 21;
+    ds18b20.setTemperature(temperature);
 };
 
 void loop()

@@ -4,9 +4,9 @@ DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 {
     static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
 
-    memcpy(memory,MemDS2438,(PAGE_EMU_COUNT*8));
+    memcpy(memory,MemDS2438,(PAGE_COUNT*PAGE_SIZE));
 
-    for (uint8_t page = 0; page <= PAGE_EMU_COUNT; ++page)
+    for (uint8_t page = 0; page <= PAGE_COUNT; ++page)
     {
         calcCRC(page);
     };
@@ -14,7 +14,7 @@ DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     setTemperature(static_cast<int8_t>(20));
 };
 
-void DS2438::duty(OneWireHub *hub)
+void DS2438::duty(OneWireHub * const hub)
 {
     uint8_t page, cmd;
     if (hub->recv(&cmd))  return;
@@ -24,14 +24,14 @@ void DS2438::duty(OneWireHub *hub)
         // reordered for better timing
         case 0xBE:      // Read Scratchpad
             if (hub->recv(&page))  return;
-            if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT;
+            if (page >= PAGE_COUNT) page = PAGE_COUNT;
             if (hub->send(&memory[page * 8], 8)) return;
             if (hub->send(crc[page])) return;
             break;
 
         case 0x4E:      // Write Scratchpad
             if (hub->recv(&page))  return;
-            if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT; // when page out of limits --> switch to garbage-page
+            if (page >= PAGE_COUNT) page = PAGE_COUNT; // when page out of limits --> switch to garbage-page
             if (hub->recv(&memory[page * 8], 8)) return;
             calcCRC(page);
             break;
@@ -41,7 +41,7 @@ void DS2438::duty(OneWireHub *hub)
 
         case 0xB8:      // Recall Memory
             if (hub->recv(&page))  return;
-            if (page >= PAGE_EMU_COUNT) page = PAGE_EMU_COUNT; // when page out of limits --> switch to garbage-page
+            if (page >= PAGE_COUNT) page = PAGE_COUNT; // when page out of limits --> switch to garbage-page
             break;
 
         case 0x44:      // Convert T

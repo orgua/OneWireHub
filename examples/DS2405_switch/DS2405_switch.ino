@@ -13,7 +13,7 @@ constexpr uint8_t pin_led       { 13 };
 constexpr uint8_t pin_onewire   { 8 };
 
 auto hub    = OneWireHub(pin_onewire);
-auto ds2405 = DS2405( DS2405::family_code, 0x00, 0x0D, 0x02, 0x04, 0x00, 0x05 );    // Work - Dual channel addressable switch
+auto ds2405 = DS2405( DS2405::family_code, 0x00, 0x00, 0x05, 0x24, 0xDA, 0x00 );    // Work - Dual channel addressable switch
 
 void setup()
 {
@@ -24,7 +24,12 @@ void setup()
 
     // Setup OneWire
     hub.attach(ds2405);
-    ds2405.setState(0);
+
+    // Test-Cases: the following code is just to show basic functions, can be removed any time
+    Serial.println("Test - clear State of GPIO 3");
+    Serial.println(ds2405.getPinState());
+    ds2405.setPinState(1);
+    Serial.println(ds2405.getPinState());
 
     Serial.println("config done");
 }
@@ -36,9 +41,9 @@ void loop()
     // following function must be called periodically
     hub.poll();
 
-    if (switch_state != ds2405.readState())
+    if (switch_state != ds2405.getPinState())
     {
-        switch_state = ds2405.readState();
+        switch_state = ds2405.getPinState();
 
         // visual feedback and printF
         Serial.print(" PinState: ");

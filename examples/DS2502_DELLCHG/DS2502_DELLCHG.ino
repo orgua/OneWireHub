@@ -42,6 +42,8 @@ void setup()
     dellCHb.setPageRedirection(2,1);
     dellCHb.setPageRedirection(3,1);
 
+    // dellCHb.clearMemory(); // begin fresh after doing some work
+
     Serial.println("config done");
 }
 

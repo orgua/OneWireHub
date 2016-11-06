@@ -41,7 +41,6 @@ private:
     uint16_t    sizeof_memory;              // device specific "real" size
     uint16_t    page_count, status_segment; // device specific "real" size
 
-
     uint16_t translateRedirection(const uint16_t source_address) const; // react to redirection in status and not available memory
 
 public:

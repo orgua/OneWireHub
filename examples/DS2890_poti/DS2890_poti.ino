@@ -12,7 +12,7 @@ constexpr uint8_t pin_led       { 13 };
 constexpr uint8_t pin_onewire   { 8 };
 
 auto hub    = OneWireHub(pin_onewire);
-auto ds2890 = DS2890( 0x2C, 0x00, 0x0D, 0x02, 0x08, 0x09, 0x00 );    // Work - Single channel digital potentiometer
+auto ds2890 = DS2890( 0x2C, 0x00, 0x00, 0x90, 0x28, 0xDA, 0x00 );    // Work - Single channel digital potentiometer
 
 bool blinking(void);
 

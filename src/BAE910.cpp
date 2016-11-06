@@ -26,7 +26,7 @@ void BAE910::extCommand(const uint8_t ecmd, const uint8_t payload_len)
     }
 };
 
-void BAE910::duty(OneWireHub *hub)
+void BAE910::duty(OneWireHub * const hub)
 {
     uint8_t  cmd, ta1, ta2, len, ecmd; // command, targetAdress, length and extended command
     uint16_t crc = 0;

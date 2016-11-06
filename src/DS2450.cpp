@@ -4,10 +4,10 @@ DS2450::DS2450(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
         OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
     static_assert((PAGE_COUNT*PAGE_SIZE) < 256,  "Implementation does not cover the whole address-space");
-    initializeMemory();
+    clearMemory();
 };
 
-void DS2450::duty(OneWireHub *hub)
+void DS2450::duty(OneWireHub * const hub)
 {
     uint16_t reg_TA, crc = 0; // target address
     uint8_t  data, cmd, length;
@@ -56,17 +56,7 @@ void DS2450::duty(OneWireHub *hub)
             if (hub->recv(reinterpret_cast<uint8_t *>(&cmd),1,crc)) return; // input select mask, not important
             if (hub->recv(reinterpret_cast<uint8_t *>(&data),1,crc)) return; // read out control byte
 
-            if (0) // code is not useful for emulation, but it is there now ... if someone needs it
-            {
-                for (uint8_t adc = 0; adc < 4; ++adc)                            // react to control byte
-                {
-                    if (!(cmd & (1 < adc))) continue; // has no effect if channel not selected
-                    length = data & uint8_t(3);
-                    if (length == 1) setPotentiometer(adc, 0x0000); // clear ADC
-                    if (length == 2) setPotentiometer(adc, 0xFFFF); // clear ADC
-                    data = data >> 2;
-                };
-            }
+            // in reality master can now set registers of potentiometers to 0x0000 or 0xFFFF to track changes
 
             crc = ~crc; // normally crc16 is sent ~inverted
             if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
@@ -80,41 +70,12 @@ void DS2450::duty(OneWireHub *hub)
     };
 };
 
-bool DS2450::setPotentiometer(const uint16_t p1, const uint16_t p2, const uint16_t p3, const uint16_t p4)
-{
-    setPotentiometer(0, p1);
-    setPotentiometer(1, p2);
-    setPotentiometer(2, p3);
-    setPotentiometer(3, p4);
-    return true;
-};
-
-bool DS2450::setPotentiometer(const uint8_t channel, const uint16_t value)
-{
-    if (channel > 3) return false;
-    uint8_t LByte = static_cast<uint8_t>(value>>0) & static_cast<uint8_t>(0xFF);
-    uint8_t HByte = static_cast<uint8_t>(value>>8) & static_cast<uint8_t>(0xFF);
-    memory[(2*channel)  ] = LByte;
-    memory[(2*channel)+1] = HByte;
-    correctMemory();
-    return true;
-};
-
-uint16_t DS2450::getPotentiometer(const uint8_t channel) const
-{
-    if (channel > 3) return 0;
-    uint16_t value;
-    value  = memory[(2*channel)+1]<<8;
-    value |= memory[(2*channel)  ];
-    return value;
-}
-
-void DS2450::initializeMemory(void)
+void DS2450::clearMemory(void)
 {
     memset(&memory[0], static_cast<uint8_t>(0), MEM_SIZE);
 
     // set power on defaults
-    for (uint8_t adc = 0; adc < 4; ++adc)
+    for (uint8_t adc = 0; adc < POTI_COUNT; ++adc)
     {
         // CONTROL/STATUS DATA
         memory[(1*PAGE_SIZE) + (adc*2) + 0] = 0x08;
@@ -126,7 +87,7 @@ void DS2450::initializeMemory(void)
 
 void DS2450::correctMemory(void)
 {
-    for (uint8_t adc = 0; adc < 4; ++adc)
+    for (uint8_t adc = 0; adc < POTI_COUNT; ++adc)
     {
         //// control / status data
         /// byte 0,2,4,6
@@ -142,3 +103,34 @@ void DS2450::correctMemory(void)
         // bit 7 -> power on reset, must be written 0 by master
     };
 };
+
+bool DS2450::setPotentiometer(const uint16_t p1, const uint16_t p2, const uint16_t p3, const uint16_t p4)
+{
+    setPotentiometer(0, p1);
+    setPotentiometer(1, p2);
+    setPotentiometer(2, p3);
+    setPotentiometer(3, p4);
+    return true;
+};
+
+bool DS2450::setPotentiometer(const uint8_t channel, const uint16_t value)
+{
+    if (channel >= POTI_COUNT) return false;
+    uint8_t LByte = static_cast<uint8_t>(value>>0) & static_cast<uint8_t>(0xFF);
+    uint8_t HByte = static_cast<uint8_t>(value>>8) & static_cast<uint8_t>(0xFF);
+    memory[(2*channel)  ] = LByte;
+    memory[(2*channel)+1] = HByte;
+    correctMemory();
+    return true;
+};
+
+uint16_t DS2450::getPotentiometer(const uint8_t channel) const
+{
+    if (channel >= POTI_COUNT) return 0;
+    uint16_t value;
+    value  = memory[(2*channel)+1]<<8;
+    value |= memory[(2*channel)  ];
+    return value;
+}
+
+

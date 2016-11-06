@@ -95,6 +95,7 @@ class BAE910 : public OneWireItem
 private:
 
 protected:
+
     uint8_t scratchpad[BAE910_SCRATCHPAD_SIZE];
     virtual void extCommand(const uint8_t ecmd, const uint8_t payload_len = 0); // read payload from scratchpad
 
@@ -106,7 +107,9 @@ public:
 
     BAE910(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    void duty(OneWireHub *hub);
+    void duty(OneWireHub * const hub);
+
+    // TODO: can be extended with clearMemory(), writeMemory(), readMemory() similar to ds2506
 };
 
 #endif

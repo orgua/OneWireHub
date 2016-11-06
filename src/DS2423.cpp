@@ -5,7 +5,7 @@ DS2423::DS2423(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     // empty
 };
 
-void DS2423::duty(OneWireHub *hub)
+void DS2423::duty(OneWireHub * const hub)
 {
     constexpr uint8_t DUMMY_xFF = 0xFF;
     constexpr uint8_t DUMMY_x00 = 0x00;

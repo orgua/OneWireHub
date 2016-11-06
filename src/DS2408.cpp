@@ -2,17 +2,10 @@
 
 DS2408::DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    memory[DS2408_PIO_LOGIC_REG]            = 0xFF;
-    memory[DS2408_PIO_OUTPUT_REG]           = 0xFF;
-    memory[DS2408_PIO_ACTIVITY_REG]         = 0xFF;
-    memory[DS2408_SEARCH_MASK_REG]          = 0;
-    memory[DS2408_SEARCH_SELECT_REG]        = 0;
-    memory[DS2408_CONTROL_STATUS_REG]       = 0x88;
-    memory[DS2408_RD_ABOVE_ALWAYS_FF_8E]    = 0xFF;
-    memory[DS2408_RD_ABOVE_ALWAYS_FF_8F]    = 0xFF;
+    clearMemory();
 };
 
-void DS2408::duty(OneWireHub *hub)
+void DS2408::duty(OneWireHub * const hub)
 {
     constexpr uint8_t DATA_xAA = 0xAA;
     uint8_t cmd, reg_TA, data; // command, targetAdress and databytes
@@ -24,13 +17,13 @@ void DS2408::duty(OneWireHub *hub)
     {
         case 0xF0:      // Read PIO Registers
             if (hub->recv(&reg_TA,1,crc)) return;
-            if((reg_TA < DS2408_OFFSET) || (reg_TA >= DS2408_OFFSET + DS2408_MEMSIZE)) return;
+            if((reg_TA < REG_OFFSET) || (reg_TA >= REG_OFFSET + MEM_SIZE)) return;
             if (hub->recv(&data,1,crc)) return;
             if (data != 0) return;
 
             {
-                const uint8_t start  = (reg_TA - DS2408_OFFSET);
-                const uint8_t length = DS2408_MEMSIZE - start;
+                const uint8_t start  = (reg_TA - REG_OFFSET);
+                const uint8_t length = MEM_SIZE - start;
                 if (hub->send(&memory[start],length,crc)) return;
             }
 
@@ -46,9 +39,9 @@ void DS2408::duty(OneWireHub *hub)
                 if (hub->recv(&cmd ,1,crc)) return; // just because we have to receive somethin
                 //if (cmd != ~data) return false; //inverted data, not working properly
 
-                memory[DS2408_PIO_ACTIVITY_REG] |= data ^ memory[DS2408_PIO_LOGIC_REG];
-                memory[DS2408_PIO_OUTPUT_REG]   = data;
-                memory[DS2408_PIO_LOGIC_REG]    = data;
+                memory[REG_PIO_ACTIVITY] |= data ^ memory[REG_PIO_LOGIC];
+                memory[REG_PIO_OUTPUT]   = data;
+                memory[REG_PIO_LOGIC]    = data;
                 if (hub->send(&DATA_xAA)) return;
                 if (hub->send(memory,4)) return; // TODO: i think this is right, datasheet says: DS2408 samples the status of the PIO pins, as shown in Figure 9, and sends it to the master
             }
@@ -64,7 +57,7 @@ void DS2408::duty(OneWireHub *hub)
             };
 
         case 0xC3:      // reset activity latches
-            memory[DS2408_PIO_ACTIVITY_REG] = 0x00;
+            memory[REG_PIO_ACTIVITY] = 0x00;
             while(1)
             {
                 if (hub->send(&DATA_xAA)) return;
@@ -79,24 +72,38 @@ void DS2408::duty(OneWireHub *hub)
     };
 };
 
-bool DS2408::getPinState(uint8_t pinNumber)
+void DS2408::clearMemory(void)
 {
-    return static_cast<bool>(memory[DS2408_PIO_LOGIC_REG] & ( 1 << pinNumber ));
-};
+    memory[REG_PIO_LOGIC]               = 0xFF;
+    memory[REG_PIO_OUTPUT]              = 0xFF;
+    memory[REG_PIO_ACTIVITY]            = 0xFF;
+    memory[REG_SEARCH_MASK]             = 0;
+    memory[REG_SEARCH_SELECT]           = 0;
+    memory[REG_CONTROL_STATUS]          = 0x88;
+    memory[REG_RD_ABOVE_ALWAYS_FF_8E]   = 0xFF;
+    memory[REG_RD_ABOVE_ALWAYS_FF_8F]   = 0xFF;
+}
 
-uint8_t DS2408::getPinStates(void)
+void DS2408::setPinState(const uint8_t pinNumber, const bool value)
 {
-    return memory[DS2408_PIO_LOGIC_REG];
-};
-
-void DS2408::setPinState(uint8_t pinNumber, bool value)
-{
-    uint8_t pio_state = memory[DS2408_PIO_LOGIC_REG];
+    uint8_t pio_state = memory[REG_PIO_LOGIC];
     if(value)   pio_state |= 1 << pinNumber;
     else        pio_state &= ~(1 << pinNumber);
 
     // look for changes in the activity latches
-    memory[DS2408_PIO_ACTIVITY_REG] |= pio_state ^ memory[DS2408_PIO_LOGIC_REG];
-    memory[DS2408_PIO_LOGIC_REG]    = pio_state;
-    memory[DS2408_PIO_OUTPUT_REG]   = pio_state;
+    memory[REG_PIO_ACTIVITY] |= pio_state ^ memory[REG_PIO_LOGIC];
+    memory[REG_PIO_LOGIC]    = pio_state;
+    memory[REG_PIO_OUTPUT]   = pio_state;
 };
+
+bool DS2408::getPinState(const uint8_t pinNumber) const
+{
+    return static_cast<bool>(memory[REG_PIO_LOGIC] & ( 1 << pinNumber ));
+};
+
+uint8_t DS2408::getPinState(void) const
+{
+    return memory[REG_PIO_LOGIC];
+};
+
+

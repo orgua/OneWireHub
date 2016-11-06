@@ -59,8 +59,8 @@ crc16	KEYWORD2
 updateCRC	KEYWORD2
 setTemperature	KEYWORD2
 
-getState	KEYWORD2
-setState	KEYWORD2
+getPinState	KEYWORD2
+setPinState	KEYWORD2
 getLatch	KEYWORD2
 setLatch	KEYWORD2
 

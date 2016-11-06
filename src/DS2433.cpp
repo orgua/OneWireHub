@@ -6,7 +6,7 @@ DS2433::DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     clearMemory();
 };
 
-void DS2433::duty(OneWireHub *hub)
+void DS2433::duty(OneWireHub * const hub)
 {
     constexpr uint8_t ALTERNATE_01 = 0b10101010;
 
@@ -23,9 +23,9 @@ void DS2433::duty(OneWireHub *hub)
         case 0x0F:      // WRITE SCRATCHPAD COMMAND
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) return;
             reinterpret_cast<uint8_t *>(&reg_TA)[1] &= uint8_t(0b1); // make sure to stay in boundry
-            reg_ES = reinterpret_cast<uint8_t *>(&reg_TA)[0] & uint8_t(0b00011111); // register-offset
+            reg_ES = reinterpret_cast<uint8_t *>(&reg_TA)[0] & PAGE_MASK; // register-offset
 
-            length = static_cast<uint8_t>(32-reg_ES);
+            length = static_cast<uint8_t>(PAGE_SIZE-reg_ES);
             if (hub->recv(&memory[reg_TA],length,crc)) return; // TODO: should iterate like done in ds2431
 
             reg_ES = 0b00011111;
@@ -59,15 +59,15 @@ void DS2433::duty(OneWireHub *hub)
             if (hub->send(&reg_ES)) return; // ES
 
             // TODO: maybe implement a real scratchpad, would need 32byte extra ram
-            if (hub->send(&memory[(reg_TA & ~uint16_t(0b00011111))],32)) return; // data
+            if (hub->send(&memory[(reg_TA & ~uint16_t(PAGE_MASK))],PAGE_SIZE)) return; // data
             return; // datasheed says we should send all 1s, till reset (1s are passive... so nothing to do here)
 
         case 0xF0:      // READ MEMORY
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2)) return;
 
-            for (uint16_t i = reg_TA; i < 512; i+=32) // model of the 32byte scratchpad
+            for (uint16_t i = reg_TA; i < MEM_SIZE; i+=PAGE_SIZE) // model of the 32byte scratchpad
             {
-                if (hub->send(&memory[i],32)) return;
+                if (hub->send(&memory[i],PAGE_SIZE)) return;
             };
             return; // datasheed says we should send all 1s, till reset (1s are passive... so nothing to do here)
 
@@ -78,15 +78,22 @@ void DS2433::duty(OneWireHub *hub)
 
 void DS2433::clearMemory(void)
 {
-    memset(&memory[0], static_cast<uint8_t>(0x00), sizeof(memory));
+    memset(&memory[0], static_cast<uint8_t>(0x00), MEM_SIZE);
 };
 
-bool DS2433::writeMemory(const uint8_t* source, const uint16_t length, const uint16_t position)
+bool DS2433::writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position)
 {
-    for (uint16_t i = 0; i < length; ++i)
-    {
-        if ((position + i) >= sizeof(memory)) return false;
-        memory[position + i] = source[i];
-    };
+    if (position >= MEM_SIZE) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    memcpy(&memory[position],source,_length);
+
     return true;
+};
+
+bool DS2433::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const
+{
+    if (position >= MEM_SIZE) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    memcpy(destination,&memory[position],_length);
+    return (_length==length);
 };

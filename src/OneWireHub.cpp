@@ -502,6 +502,7 @@ bool OneWireHub::recvAndProcessCmd(void)
         case 0xEC: // ALARM SEARCH
             // TODO: Alarm searchIDTree command, respond if flag is set
             // is like searchIDTree-rom, but only slaves with triggered alarm will appear
+            break;
 
         case 0xA5: // RESUME COMMAND
             if (slave_selected == nullptr) return true;
