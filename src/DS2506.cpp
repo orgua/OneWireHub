@@ -30,7 +30,7 @@ DS2506::DS2506(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     clearStatus();
 };
 
-void DS2506::duty(OneWireHub *hub)
+void DS2506::duty(OneWireHub * const hub)
 {
     uint16_t reg_TA, reg_RA = 0, crc = 0; // Target address
     uint8_t  cmd, data; // redirected address, command, data, crc
@@ -223,7 +223,7 @@ bool DS2506::writeMemory(const uint8_t* const source, const uint16_t length, con
 
 bool DS2506::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const
 {
-    if (position >= MEM_SIZE) return 0;
+    if (position >= MEM_SIZE) return false;
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
     memcpy(destination,&memory[position],_length);
     return (_length==length);
