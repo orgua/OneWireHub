@@ -21,10 +21,10 @@ void DS2413::duty(OneWireHub * const hub)
             data = ~data; // Write inverse
             if (hub->send(&data)) return; // send inverted form for safety
 
-            setLatch(0,   data & static_cast<uint8_t>(0x01)); // A
-            setLatch(1,   data & static_cast<uint8_t>(0x02)); // B
-            setState(0, ~(data & static_cast<uint8_t>(0x01)));
-            setState(1, ~(data & static_cast<uint8_t>(0x01)));
+            setPinLatch(0, data & static_cast<uint8_t>(0x01)); // A
+            setPinLatch(1, data & static_cast<uint8_t>(0x02)); // B
+            setPinState(0, ~(data & static_cast<uint8_t>(0x01)));
+            setPinState(1, ~(data & static_cast<uint8_t>(0x01)));
             break;
 
         case 0xF5:      // PIO ACCESS READ

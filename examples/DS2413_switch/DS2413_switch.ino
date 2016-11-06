@@ -28,14 +28,14 @@ void setup()
 
     // Test-Cases: the following code is just to show basic functions, can be removed any time
     Serial.println("Test - set State of switch 0");
-    Serial.println(ds2413.getState(0));
-    ds2413.setState(0,1);
-    Serial.println(ds2413.getState(0));
+    Serial.println(ds2413.getPinState(0));
+    ds2413.setPinState(0,1);
+    Serial.println(ds2413.getPinState(0));
 
     Serial.println("Test - set Latch of switch 1");
-    Serial.println(ds2413.getLatch(1));
-    ds2413.setLatch(1,1);
-    Serial.println(ds2413.getLatch(1));
+    Serial.println(ds2413.getPinLatch(1));
+    ds2413.setPinLatch(1,1);
+    Serial.println(ds2413.getPinLatch(1));
 
     Serial.println("config done");
 }
@@ -49,13 +49,13 @@ void loop()
     if (blinking())
     {
         Serial.print(" A: ");
-        Serial.print(ds2413.getState(0));
+        Serial.print(ds2413.getPinState(0));
         Serial.print(" / ");
-        Serial.print(ds2413.getLatch(0));
+        Serial.print(ds2413.getPinLatch(0));
         Serial.print(" B: ");
-        Serial.print(ds2413.getState(1));
+        Serial.print(ds2413.getPinState(1));
         Serial.print(" / ");
-        Serial.print(ds2413.getLatch(1));
+        Serial.print(ds2413.getPinLatch(1));
         Serial.println(" (State / Latch)");
     }
 }
