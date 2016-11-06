@@ -42,7 +42,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
    - use static-assertions for plausibility checks
 - hardware-dependencies are combined in "platform.h", synced with [Onewire-Lib](https://github.com/PaulStoffregen/OneWire)
    - supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822 (...)
-   - tested architectures: atmega328, teensy3.2
+   - tested architectures: atmega328 @ 16 MHz / arduino Uno, teensy3.2
    - for portability and tests the hub can be compiled on a PC with the supplied mock-up functions
    - at the moment the lib relies sole on loop-counting for timing, no direct access to interrupt or timers, **NOTE:** if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
 - Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
@@ -57,7 +57,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - extend constness to all onewire-slaves and unify naming of functions across similar devices
 - include tests into each device-example and add a lot of get()/set() for internal device-states
 - fully support for ds2450 and ds2503/5/6, also fix ds2890 and ds2502
-- overdrive-support! must be enabled in config file
+- overdrive-support! must be enabled in config file - works with atmega328@16MHz
 - rework send() and recv(), much more efficient -> atmega328@16MHz is suited for overdrive! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
 - rework Error-Handling-System (reduced a lot of overhead)
 - no return value for hub.searchIDTree() or item.duty() needed anymore
@@ -103,16 +103,17 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### HELP - What to do if things don't work as expected?
 - is your arduino software up to date (>v1.6.8)
-- update this lib to the latest release (v1.2.0)
+- update this lib to the latest release (v2.0.0)
 - if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
 - Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
 - check if clock-speed of the µC is correctly set (if possible) - test with simple blinking example, 1sec ON should really need 1sec. timing is critical
 - begin with a simple example like the ds18b20. the ds18b20 doesn't support overdrive, so the master won't switch to higher datarates
 - check if your setup is right: you need at least external power for your µC and a dataline with groundline to your Onewire-Master
-- is there more than one master on the bus?
-- does any other sensor has ever worked with with master?
+- is there more than one master on the bus? It won't work!
+- has any other sensor ever worked with with master?
 - is serial-debugging disabled (see src/OneWireHub_config.h)?
 - if you can provide a recording via logic-analyzer (logic 8 or similar) there should be chance we can help you 
+- if you checked all these points feel free to open an issue at [Github](https://github.com/orgua/OneWireHub)
 
 ### Ancestors of this Lib:
 - original pieces seem to be adopted from [OneWireSlave](http://robocraft.ru/blog/arduino/302.html)
