@@ -1,5 +1,5 @@
 /*
- *    Example-Code that emulates a DS2503 4kbit EEPROM, Add Only Memory
+ *    Example-Code that emulates a DS2506 4kbit EEPROM, Add Only Memory
  *
  *      DOES NOT WORK YET
  *
@@ -22,7 +22,7 @@ auto ds2506     = DS2506( 0x0F, 0x00, 0x00, 0x06, 0x25, 0xDA, 0x00 );
 void setup()
 {
     Serial.begin(115200);
-    Serial.println("OneWire-Hub DS2503");
+    Serial.println("OneWire-Hub DS2506");
 
     // Setup OneWire
     hub.attach(ds2503);
@@ -49,7 +49,7 @@ void setup()
 
     Serial.println("Test Write Data to page 4");
     Serial.println(ds2506.getPageUsed(4));
-    const uint8_t mem_dummy[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+    constexpr uint8_t mem_dummy[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
     ds2506.writeMemory(mem_dummy, sizeof(mem_dummy), 4*32);
     Serial.println(ds2506.getPageUsed(4));
 

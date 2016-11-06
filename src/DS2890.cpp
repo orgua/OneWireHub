@@ -2,12 +2,12 @@
 
 DS2890::DS2890(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    register_feat = REGISTER_MASK_POTI_CHAR | REGISTER_MASK_WIPER_SET | REGISTER_MASK_POTI_NUMB | REGISTER_MASK_WIPER_POS | REGISTER_MASK_POTI_RESI;
+    register_feat = REG_MASK_POTI_CHAR | REG_MASK_WIPER_SET | REG_MASK_POTI_NUMB | REG_MASK_WIPER_POS | REG_MASK_POTI_RESI;
     memset(register_poti, 0, 4);
     register_ctrl    = 0b00001100;
 };
 
-void DS2890::duty(OneWireHub *hub)
+void DS2890::duty(OneWireHub * const hub)
 {
     const uint8_t poti = register_ctrl&POTI_MASK;
     uint8_t data, cmd;

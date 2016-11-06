@@ -23,7 +23,7 @@ DS2502::DS2502(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     };
 };
 
-void DS2502::duty(OneWireHub *hub)
+void DS2502::duty(OneWireHub * const hub)
 {
     uint8_t  reg_TA[2], cmd, data, crc = 0; // Target address, redirected address, command, data, crc
 
@@ -147,7 +147,7 @@ void DS2502::clearStatus(void)
     status[STATUS_FACTORYP] = 0x00; // last byte should be always zero
 };
 
-bool DS2502::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)
+bool DS2502::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position)
 {
     if (position >= MEM_SIZE) return false;
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
@@ -162,7 +162,7 @@ bool DS2502::writeMemory(const uint8_t* source, const uint8_t length, const uint
 
 bool DS2502::readMemory(uint8_t* const destination, const uint8_t length, const uint8_t position) const
 {
-    if (position >= MEM_SIZE) return 0;
+    if (position >= MEM_SIZE) return false;
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
     memcpy(destination,&memory[position],_length);
     return (_length==length);

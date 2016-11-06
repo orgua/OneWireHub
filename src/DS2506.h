@@ -49,10 +49,10 @@ public:
 
     DS2506(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    void duty(OneWireHub *hub);
+    void    duty(OneWireHub * const hub);
 
-    void clearMemory(void);
-    void clearStatus(void);
+    void    clearMemory(void);
+    void    clearStatus(void);
 
     bool    writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position = 0);
     bool    readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position = 0) const;

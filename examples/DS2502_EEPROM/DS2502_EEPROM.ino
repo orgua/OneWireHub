@@ -1,5 +1,5 @@
 /*
- *    Example-Code that emulates a DS2502 - 1kbit EEPROM, Add Only Memory and a dell power supply
+ *    Example-Code that emulates a DS2502 - 1kbit EEPROM, Add Only Memory
  *
  *    Tested with
  *    - dell notebook https://forum.pjrc.com/threads/33640-Teensy-2-OneWire-Slave
@@ -11,16 +11,10 @@
 
 constexpr uint8_t pin_onewire   { 8 };
 
-const uint8_t chargerData[4] = {0xFB, 0x31, 0x33, 0x30};//130W
-//const uint8_t chargerData[4] = {0xFB, 0x30, 0x39, 0x30};//90W
-//const uint8_t chargerData[4] = {0xFB, 0x30, 0x36, 0x36};//65W
-
 auto hub        = OneWireHub(pin_onewire);
 auto ds2502     = DS2502( DS2502::family_code, 0x00, 0xA0, 0x02, 0x25, 0xDA, 0x00 );
 auto ds2501a    = DS2502( 0x91, 0x00, 0xA0, 0x01, 0x25, 0xDA, 0x00 );
 auto ds2501b    = DS2502( 0x11, 0x00, 0xB0, 0x02, 0x25, 0xDA, 0x00 );
-auto dellCHa    = DS2502( 0x89, 0x00, 0x00, 0xA0, 0x11, 0xDE, 0x00 ); // should be x28, but is not testable by the ds9490 this way
-auto dellCHb    = DS2502( 0x28, 0x00, 0x00, 0xA0, 0x11, 0xDE, 0x00 ); // should work
 
 void setup()
 {
@@ -31,22 +25,8 @@ void setup()
     hub.attach(ds2502);
     hub.attach(ds2501a);
     hub.attach(ds2501b);
-    hub.attach(dellCHa);
-    hub.attach(dellCHb);
 
     // Test-Cases: the following code is just to show basic functions, can be removed any time
-    dellCHa.writeMemory(chargerData, sizeof(chargerData), 0x20); // write to bank 1
-    dellCHa.setPageRedirection(0,1); // set memorybanks to all read from bank 1
-    dellCHa.setPageRedirection(1,1);
-    dellCHa.setPageRedirection(2,1);
-    dellCHa.setPageRedirection(3,1);
-
-    dellCHb.writeMemory(chargerData, sizeof(chargerData), 0x20); // write to bank 1
-    dellCHb.setPageRedirection(0,1); // set memorybanks to all read from bank 1
-    dellCHb.setPageRedirection(1,1);
-    dellCHb.setPageRedirection(2,1);
-    dellCHb.setPageRedirection(3,1);
-
     Serial.println("Test Page Redirection p1");
     Serial.println(ds2502.getPageRedirection(1));
     ds2502.setPageRedirection(1,3);
@@ -54,7 +34,7 @@ void setup()
 
     Serial.println("Test Write Data to page 3");
     Serial.println(ds2502.getPageUsed(3));
-    const uint8_t mem_dummy[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+    constexpr uint8_t mem_dummy[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
     ds2502.writeMemory(mem_dummy, sizeof(mem_dummy), 3*32);
     Serial.println(ds2502.getPageUsed(3));
 
@@ -66,8 +46,6 @@ void setup()
     ds2502.writeMemory(mem_dummy, sizeof(mem_dummy), 16); // write in second half of page
     Serial.println(ds2502.getPageUsed(0));
 
-
-
     Serial.println("config done");
 }
 
@@ -75,5 +53,4 @@ void loop()
 {
     // following function must be called periodically
     hub.poll();
-
 }
