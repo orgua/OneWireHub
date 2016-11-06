@@ -27,7 +27,7 @@ void setup()
     hub.attach(ds2501b);
 
     // Test-Cases: the following code is just to show basic functions, can be removed any time
-    Serial.println("Test Page Redirection p1");
+    Serial.println("Test Page Redirection p1 to p3");
     Serial.println(ds2502.getPageRedirection(1));
     ds2502.setPageRedirection(1,3);
     Serial.println(ds2502.getPageRedirection(1));
@@ -45,6 +45,13 @@ void setup()
     Serial.println(ds2502.getPageProtection(0));
     ds2502.writeMemory(mem_dummy, sizeof(mem_dummy), 16); // write in second half of page
     Serial.println(ds2502.getPageUsed(0));
+
+    Serial.print("Test Read binary Data to page 3: 0x");
+    uint8_t mem_read[16];
+    ds2502.readMemory(mem_read, 16, 3*32 - 1); // begin one byte earlier than page 4
+    Serial.println(mem_read[2],HEX); // should read 0x11
+
+    // ds2502.clearMemory(); // begin fresh after doing some work
 
     Serial.println("config done");
 }

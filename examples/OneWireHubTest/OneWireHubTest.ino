@@ -68,8 +68,8 @@ void setup()
     pinMode(pin_led, OUTPUT);
 
     // Setup OneWire
-    ds1822.setTemp(21.0f);
-    ds18S20.setTemp(10.0f);
+    ds1822.setTemperature(21.0f);
+    ds18S20.setTemperature(10.0f);
     hub.attach(ds1822);
     hub.attach(ds18B20);
     hub.attach(ds18S20);
@@ -101,7 +101,7 @@ void loop()
         static float temperature = 20.0;
         temperature += 0.1;
         if (temperature > 40.0) temperature = 10.0;
-        ds18B20.setTemp(temperature);
+        ds18B20.setTemperature(temperature);
         //Serial.println(temperature);
 
         // DS2450

@@ -5,15 +5,17 @@ DS2431::DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     static_assert(sizeof(scratchpad) < 256, "Implementation does not cover the whole address-space");
     static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
 
+    clearMemory();
+
     memset(&scratchpad[0], static_cast<uint8_t>(0x00), sizeof(scratchpad));
 
     page_protection = 0;
     page_eprom_mode = 0;
 
-    checkMemory();
+    updatePageStatus();
 };
 
-void DS2431::duty(OneWireHub *hub)
+void DS2431::duty(OneWireHub * const hub)
 {
     constexpr uint8_t ALTERNATING_10 = 0xAA;
     static uint16_t reg_TA = 0; // contains TA1, TA2
@@ -27,7 +29,7 @@ void DS2431::duty(OneWireHub *hub)
     {
         case 0x0F:      // WRITE SCRATCHPAD COMMAND
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc))  return;
-            reg_ES = reinterpret_cast<uint8_t *>(&reg_TA)[0] & uint8_t(0b00000111); // TODO: when not zero we should issue reg_ES |= 0b00100000; (datasheet not clear)
+            reg_ES = reinterpret_cast<uint8_t *>(&reg_TA)[0] & SCRATCHPAD_MASK; // TODO: when not zero we should issue reg_ES |= 0b00100000; (datasheet not clear)
 
             // receive up to 8 bytes of data
             page_offset = reg_ES;
@@ -45,12 +47,12 @@ void DS2431::duty(OneWireHub *hub)
 
             if (reg_TA < 128) // check if page is protected or in eprom-mode
             {
-                const uint8_t position = uint8_t(reg_TA) & uint8_t(0b11111000);
-                if (checkProtection(reinterpret_cast<uint8_t *>(&reg_TA)[0]))       // protected: load memory-segment to scratchpad
+                const uint8_t position = uint8_t(reg_TA) & ~SCRATCHPAD_MASK;
+                if (getPageProtection(reinterpret_cast<uint8_t *>(&reg_TA)[0]))       // protected: load memory-segment to scratchpad
                 {
                     for (uint8_t i = 0; i < SCRATCHPAD_SIZE; ++i) scratchpad[i] = memory[position + i];
                 }
-                else if (checkEpromMode(reinterpret_cast<uint8_t *>(&reg_TA)[0]))   // eprom: logical AND of memory and data, TODO: there is somehow a bug here, protection works but EPROM-Mode not (CRC-Error)
+                else if (getPageEpromMode(reinterpret_cast<uint8_t *>(&reg_TA)[0]))   // eprom: logical AND of memory and data, TODO: there is somehow a bug here, protection works but EPROM-Mode not (CRC-Error)
                 {
                     for (uint8_t i = page_offset; i < SCRATCHPAD_SIZE; ++i) scratchpad[i] &= memory[position + i];
                 };
@@ -81,7 +83,7 @@ void DS2431::duty(OneWireHub *hub)
 
             if (reg_ES & 0b00100000)    return; // writing failed before
 
-            reg_TA &= ~uint16_t(0b00000111);
+            reg_TA &= ~uint16_t(SCRATCHPAD_MASK);
 
             // Write Scratchpad
             writeMemory(scratchpad, SCRATCHPAD_SIZE, reinterpret_cast<uint8_t *>(&reg_TA)[0]); // checks if copy protected
@@ -109,22 +111,61 @@ void DS2431::duty(OneWireHub *hub)
     };
 };
 
-bool DS2431::checkProtection(const uint8_t position)
+void DS2431::clearMemory(void)
+{
+    memset(&memory[0], static_cast<uint8_t>(0x00), sizeof(memory));
+};
+
+bool DS2431::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position)
+{
+    for (uint8_t i = 0; i < length; ++i) {
+        if ((position + i) >= sizeof(memory)) break;
+        if (getPageProtection(position + i)) continue;
+        memory[position + i] = source[i];
+    };
+
+    if ((position+length) > 127) updatePageStatus();
+
+    return true;
+};
+
+bool DS2431::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const
+{
+    if (position >= MEM_SIZE) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    memcpy(destination,&memory[position],_length);
+    return (_length==length);
+};
+
+void DS2431::setPageProtection(const uint8_t position)
+{
+    if      (position < 1*PAGE_SIZE)    memory[0x80] = WP_MODE;
+    else if (position < 2*PAGE_SIZE)    memory[0x81] = WP_MODE;
+    else if (position < 3*PAGE_SIZE)    memory[0x82] = WP_MODE;
+    else if (position < 4*PAGE_SIZE)    memory[0x83] = WP_MODE;
+    else if (position < 0x85)           memory[0x84] = WP_MODE;
+    else if (position == 0x85)          memory[0x85] = WP_MODE;
+    else if (position < 0x88)           memory[0x85] = EP_MODE;
+
+    updatePageStatus();
+};
+
+bool DS2431::getPageProtection(const uint8_t position) const
 {
     // should be an accurate model of the control bytes
-    if      (position <  32)
+    if      (position < 1*PAGE_SIZE)
     {
         if (page_protection & 1) return true;
     }
-    else if (position <  64)
+    else if (position < 2*PAGE_SIZE)
     {
         if (page_protection & 2) return true;
     }
-    else if (position <  96)
+    else if (position < 3*PAGE_SIZE)
     {
         if (page_protection & 4) return true;
     }
-    else if (position < 128)
+    else if (position < 4*PAGE_SIZE)
     {
         if (page_protection & 8) return true;
     }
@@ -159,21 +200,30 @@ bool DS2431::checkProtection(const uint8_t position)
     return false;
 };
 
-bool DS2431::checkEpromMode(const uint8_t position)
+void DS2431::setPageEpromMode(const uint8_t position)
 {
-    if      (position <  32)
+    if      (position < 1*PAGE_SIZE)  memory[0x80] = EP_MODE;
+    else if (position < 2*PAGE_SIZE)  memory[0x81] = EP_MODE;
+    else if (position < 3*PAGE_SIZE)  memory[0x82] = EP_MODE;
+    else if (position < 4*PAGE_SIZE)  memory[0x83] = EP_MODE;
+    updatePageStatus();
+};
+
+bool DS2431::getPageEpromMode(const uint8_t position) const
+{
+    if      (position < 1*PAGE_SIZE)
     {
         if (page_eprom_mode & 1) return true;
     }
-    else if (position <  64)
+    else if (position < 2*PAGE_SIZE)
     {
         if (page_eprom_mode & 2) return true;
     }
-    else if (position <  96)
+    else if (position < 3*PAGE_SIZE)
     {
         if (page_eprom_mode & 4) return true;
     }
-    else if (position < 128)
+    else if (position < 4*PAGE_SIZE)
     {
         if (page_eprom_mode & 8) return true;
     };
@@ -181,46 +231,25 @@ bool DS2431::checkEpromMode(const uint8_t position)
 };
 
 
-void DS2431::clearMemory(void)
+bool DS2431::updatePageStatus(void)
 {
-    memset(&memory[0], static_cast<uint8_t>(0x00), sizeof(memory));
-};
-
-bool DS2431::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)
-{
-    for (uint8_t i = 0; i < length; ++i) {
-        if ((position + i) >= sizeof(memory)) break;
-        if (checkProtection(position+i)) continue;
-        memory[position + i] = source[i];
-    };
-
-    if ((position+length) > 127) checkMemory();
-
-    return true;
-};
-
-bool DS2431::checkMemory(void)
-{
-    constexpr uint8_t WPM = 0x55; // write protect mode
-    constexpr uint8_t EPM = 0xAA; // eprom mode
-
     page_eprom_mode = 0;
     page_protection = 0;
 
-    if (memory[0x80] == WPM) page_protection |= 1;
-    if (memory[0x81] == WPM) page_protection |= 2;
-    if (memory[0x82] == WPM) page_protection |= 4;
-    if (memory[0x83] == WPM) page_protection |= 8;
+    if (memory[0x80] == WP_MODE) page_protection |= 1;
+    if (memory[0x81] == WP_MODE) page_protection |= 2;
+    if (memory[0x82] == WP_MODE) page_protection |= 4;
+    if (memory[0x83] == WP_MODE) page_protection |= 8;
 
-    if (memory[0x84] == WPM) page_protection |= 16;
-    if (memory[0x84] == EPM) page_protection |= 16;
+    if (memory[0x84] == WP_MODE) page_protection |= 16;
+    if (memory[0x84] == EP_MODE) page_protection |= 16;
 
-    if (memory[0x85] == WPM) page_protection |= 32; // only byte x85
-    if (memory[0x85] == EPM) page_protection |= 64+32; // also byte x86 x87
+    if (memory[0x85] == WP_MODE) page_protection |= 32; // only byte x85
+    if (memory[0x85] == EP_MODE) page_protection |= 64+32; // also byte x86 x87
 
-    if (memory[0x80] == EPM) page_eprom_mode |= 1;
-    if (memory[0x81] == EPM) page_eprom_mode |= 2;
-    if (memory[0x82] == EPM) page_eprom_mode |= 4;
-    if (memory[0x83] == EPM) page_eprom_mode |= 8;
+    if (memory[0x80] == EP_MODE) page_eprom_mode |= 1;
+    if (memory[0x81] == EP_MODE) page_eprom_mode |= 2;
+    if (memory[0x82] == EP_MODE) page_eprom_mode |= 4;
+    if (memory[0x83] == EP_MODE) page_eprom_mode |= 8;
     return true;
 };

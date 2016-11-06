@@ -22,7 +22,7 @@ void DS18B20::updateCRC()
     scratchpad[8] = crc8(scratchpad, 8);
 };
 
-void DS18B20::duty(OneWireHub *hub)
+void DS18B20::duty(OneWireHub * const hub)
 {
     uint8_t cmd;
     if (hub->recv(&cmd,1)) return;
@@ -70,17 +70,23 @@ void DS18B20::duty(OneWireHub *hub)
 };
 
 
-void DS18B20::setTemp(const float temperature_degC)
+void DS18B20::setTemperature(const float value_degC)
 {
-    setTempRaw(static_cast<int16_t>(temperature_degC * 16.0));
+    float value = value_degC;
+    if (value >  85) value = 85;
+    if (value < -55) value = -55;
+    setTemperatureRaw(static_cast<int16_t>(value * 16.0f));
 };
 
-void DS18B20::setTemp(const int16_t temperature_degC) // could be int8_t, [-55;+85] degC
+void DS18B20::setTemperature(const int8_t value_degC) // could be int8_t, [-55;+85] degC
 {
-    setTempRaw(temperature_degC * static_cast<int8_t>(16));
+    int8_t value = value_degC;
+    if (value >  85) value = 85;
+    if (value < -55) value = -55;
+    setTemperatureRaw(value * static_cast<int8_t>(16));
 };
 
-void DS18B20::setTempRaw(const int16_t value_raw)
+void DS18B20::setTemperatureRaw(const int16_t value_raw)
 {
     int16_t value = value_raw;
 
@@ -118,3 +124,29 @@ void DS18B20::setTempRaw(const int16_t value_raw)
 
     updateCRC();
 };
+
+int  DS18B20::getTemperature(void) const
+{
+    int16_t value = (scratchpad[1] << 8) | scratchpad[0];
+
+    if (ds18s20_mode)
+    {
+        if (scratchpad[1] & 0xF0)
+        {
+            value &= 0x00FF;
+            value  = -value;
+        }
+        value /= 8;
+    }
+    else
+    {
+        if (scratchpad[1] & 0xF0)
+        {
+            value &= 0x0FFF;
+            value  = -value;
+        }
+        value /= 16;
+    };
+
+    return value;
+}

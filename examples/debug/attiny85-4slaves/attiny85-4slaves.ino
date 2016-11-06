@@ -44,7 +44,7 @@ void setup()
 {
     pinMode(led_PIN, OUTPUT);
     // Setup OneWire
-    ds18B20a.setTemp(10);
+    ds18B20a.setTemperature(10);
     hub.attach(ds18B20a);
     hub.attach(ds18B20b);
     hub.attach(ds2401a);
@@ -62,6 +62,6 @@ void loop()
         static uint8_t temperature = 20;
         temperature += 1;
         if (temperature > 40) temperature = 10;
-        ds18B20b.setTemp(temperature);
+        ds18B20b.setTemperature(temperature);
     }
 }

@@ -5,9 +5,10 @@ DS2405::DS2405(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     pin_state = 0;
 };
 
-void DS2405::duty(OneWireHub *hub)
+void DS2405::duty(OneWireHub * const hub)
 {
-    // IC uses weird bus-features to operate.
+    // IC uses weird bus-features to operate., match-rom is enough
     pin_state = !pin_state;
     hub->sendBit(pin_state);
+    hub->raiseSlaveError(); // leave all routines, but we still miss a reset
 };

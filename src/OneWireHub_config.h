@@ -10,7 +10,7 @@
 #define OVERDRIVE_ENABLE    0 // support overdrive for the slaves
 
 constexpr bool     USE_SERIAL_DEBUG { 0 }; // give debug messages when printError() is called (be aware! it may produce heisenbugs, timing is critical)
-constexpr bool     USE_GPIO_DEBUG   { 1 }; // is a better alternative to serial debug (see readme.md for info)
+constexpr bool     USE_GPIO_DEBUG   { 0 }; // is a better alternative to serial debug (see readme.md for info)
 constexpr uint8_t  GPIO_DEBUG_PIN   { 7 }; // digital pin
 constexpr uint32_t REPETITIONS      { 5000 }; // for measuring the loop-delay --> 10000L takes ~110ms on atmega328p@16Mhz
 

@@ -10,45 +10,45 @@
 class DS2431 : public OneWireItem
 {
 private:
+
+    static constexpr uint16_t MEM_SIZE          = 144;
+
+    static constexpr uint8_t  PAGE_SIZE         = 32;
+    static constexpr uint16_t PAGE_COUNT        = MEM_SIZE / PAGE_SIZE;
+    static constexpr uint8_t  PAGE_MASK         = 0b00011111;
+
     static constexpr uint8_t  SCRATCHPAD_SIZE   = 8;
+    static constexpr uint8_t  SCRATCHPAD_MASK   = 0b00011111;
 
-    uint8_t memory[144] = { 0x5E, 0x01, 0x0D, 0x1C, 0x06, 0xB7, 0x47, 0x01, \
-                            0x8D, 0x9F, 0x6E, 0x23, 0x37, 0x2F, 0xBD, 0xED, \
-                            0x4D, 0xC8, 0x43, 0xBB, 0x8B, 0xA6, 0x1F, 0x03, \
-                            0x5A, 0x7D, 0x09, 0x38, 0x25, 0x1F, 0x5D, 0xD4, \
+    static constexpr uint8_t  WP_MODE           = 0x55; // write protect mode
+    static constexpr uint8_t  EP_MODE           = 0xAA; // eprom mode
 
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+    uint8_t memory[MEM_SIZE];
 
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, \
-
-                            0x00, 0xAA, 0xAA, 0xAA, 0x04, 0x55, 0x06, 0x07, \
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x55 };
     uint8_t scratchpad[SCRATCHPAD_SIZE];
     uint8_t page_protection;
     uint8_t page_eprom_mode;
 
-    bool checkProtection(const uint8_t position);
-    bool checkEpromMode(const uint8_t position);
+    bool    updatePageStatus(void);
 
 public:
-    static constexpr uint8_t family_code = 0x2D;
-    DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
-    void duty(OneWireHub *hub);
 
-    void clearMemory(void);
-    bool writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position = 0);
-    bool checkMemory(void);
+    static constexpr uint8_t family_code = 0x2D;
+
+    DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
+
+    void    duty(OneWireHub * const hub);
+
+    void    clearMemory(void);
+
+    bool    writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position = 0);
+    bool    readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position = 0) const;
+
+    void    setPageProtection(const uint8_t position);
+    bool    getPageProtection(const uint8_t position) const;
+
+    void    setPageEpromMode(const uint8_t position);
+    bool    getPageEpromMode(const uint8_t position) const;
 };
 
 #endif

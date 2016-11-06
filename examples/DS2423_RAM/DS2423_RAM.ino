@@ -13,7 +13,7 @@
 constexpr uint8_t pin_onewire   { 8 };
 
 auto hub = OneWireHub(pin_onewire);
-auto ds2423 = DS2423(DS2423::family_code, 0x01, 0x01, 0x23, 0x24, 0xD0, 0x00);
+auto ds2423 = DS2423(DS2423::family_code, 0x00, 0x00, 0x23, 0x24, 0xDA, 0x00);
 
 void setup()
 {
@@ -22,6 +22,9 @@ void setup()
 
     // Setup OneWire
     hub.attach(ds2423);
+
+    // Test-Cases: the following code is just to show basic functions, can be removed any time
+
 
     Serial.println("config done");
 }
