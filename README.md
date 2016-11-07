@@ -40,6 +40,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=1.6.10 recommended)**
    - use of constexpr instead of #define for better compiler-messages and cleaner code
    - use static-assertions for plausibility checks
+   - user defined literals convert constants into needed format
 - hardware-dependencies are combined in "platform.h", synced with [Onewire-Lib](https://github.com/PaulStoffregen/OneWire)
    - supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822 (...)
    - tested architectures: atmega328 @ 16 MHz / arduino Uno, teensy3.2
@@ -58,7 +59,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - include tests into each device-example and add a lot of get()/set() for internal device-states
 - fully support for ds2423, ds2450 and ds2503/5/6, also fix ds2890 and ds2502
 - overdrive-support! must be enabled in config file - works with atmega328@16MHz
-- rework send() and recv(), much more efficient -> atmega328@16MHz is suited for overdrive! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
+- rework send() and recv(), much more efficient -> less time without interupts (no missing time with millis())! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
 - rework Error-Handling-System (reduced a lot of overhead)
 - no return value for hub.searchIDTree() or item.duty() needed anymore
 - returns 1 if error occured in the following functions: recv(buf[]), send(), awaitTimeslot(), sendBit(), checkReset(), showPrescence(), recvAndProzessCmd()
