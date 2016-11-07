@@ -15,7 +15,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2408 (0x29) 8-Channel Addressable Switch**, GPIO Port-expander
 - **DS2411 (0x01) Serial Number** -> use DS2401 with same family code
 - **DS2413 (0x3A) Dual channel addressable switch with input-sensing**
-- DS2423 (0x1D) 4kbit 1-Wire RAM with Counter
+- **DS2423 (0x1D) 4kbit 1-Wire RAM with Counter**
 - **DS2431 (0x2D) 1kbit protected EEPROM** (also known as DS1972 or DS28E07, same FC)
 - DS2432 (0x33) 1kbit protected EEPROM (basically a ds2431 with extra sha-engine)
 - **DS2433 (0x23) 4Kbit 1-Wire EEPROM**
@@ -56,7 +56,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 ### Recent development (latest at the top):
 - extend constness to all onewire-slaves and unify naming of functions across similar devices
 - include tests into each device-example and add a lot of get()/set() for internal device-states
-- fully support for ds2450 and ds2503/5/6, also fix ds2890 and ds2502
+- fully support for ds2423, ds2450 and ds2503/5/6, also fix ds2890 and ds2502
 - overdrive-support! must be enabled in config file - works with atmega328@16MHz
 - rework send() and recv(), much more efficient -> atmega328@16MHz is suited for overdrive! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
 - rework Error-Handling-System (reduced a lot of overhead)

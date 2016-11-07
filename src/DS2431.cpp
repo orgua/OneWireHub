@@ -22,7 +22,7 @@ void DS2431::duty(OneWireHub * const hub)
     static uint8_t  reg_ES = 0; // E/S register
     uint16_t crc = 0;
 
-    uint8_t  page_offset = 0, cmd, b;
+    uint8_t  page_offset = 0, cmd, data;
     if (hub->recv(&cmd,1,crc))  return;
 
     switch (cmd)
@@ -32,7 +32,7 @@ void DS2431::duty(OneWireHub * const hub)
             reg_ES = reinterpret_cast<uint8_t *>(&reg_TA)[0] & SCRATCHPAD_MASK; // TODO: when not zero we should issue reg_ES |= 0b00100000; (datasheet not clear)
 
             // receive up to 8 bytes of data
-            page_offset = reg_ES;
+            page_offset = reg_ES;       // TODO: should be masked, also regTA
             for (uint8_t i = page_offset; i < SCRATCHPAD_SIZE; ++i)
             {
                 if (hub->recv(&scratchpad[i], 1, crc)) break; // can not return here, have to write data
@@ -74,12 +74,12 @@ void DS2431::duty(OneWireHub * const hub)
             break; // send 1s when read is complete, is passive, so do nothing
 
         case 0x55:      // COPY SCRATCHPAD COMMAND
-            if (hub->recv(&b))                                  return;
-            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[0])   break;
-            if (hub->recv(&b))                                  return;
-            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[1])   break;
-            if (hub->recv(&b))                                  return;
-            if (b != reg_ES)                                    return; // Auth code must match
+            if (hub->recv(&data))                                  return;
+            if (data != reinterpret_cast<uint8_t *>(&reg_TA)[0])   break;
+            if (hub->recv(&data))                                  return;
+            if (data != reinterpret_cast<uint8_t *>(&reg_TA)[1])   break;
+            if (hub->recv(&data))                                  return;
+            if (data != reg_ES)                                    return; // Auth code must match
 
             if (reg_ES & 0b00100000)    return; // writing failed before
 
@@ -113,7 +113,7 @@ void DS2431::duty(OneWireHub * const hub)
 
 void DS2431::clearMemory(void)
 {
-    memset(&memory[0], static_cast<uint8_t>(0x00), sizeof(memory));
+    memset(memory, static_cast<uint8_t>(0x00), sizeof(memory));
 };
 
 bool DS2431::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position)
