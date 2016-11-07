@@ -37,6 +37,11 @@ void setup()
     ds2423.readMemory(mem_read, 16, 31); // begin one byte earlier than page 1
     Serial.println(mem_read[2],HEX); // should read 0x11
 
+    Serial.println("Test Write binary Data to page 12 and influence counter0");
+    Serial.println(ds2423.getCounter(0));
+    ds2423.writeMemory(mem_dummy, sizeof(mem_dummy), 12*32+16); // second half of page 12
+    Serial.println(ds2423.getCounter(0));
+
     Serial.println("Test Read and write Counter 1: ");
     Serial.println(ds2423.getCounter(1));
     ds2423.setCounter(1,2000);
@@ -49,7 +54,7 @@ void setup()
     ds2423.decrementCounter(2);
     Serial.println(ds2423.getCounter(2));
 
-    Serial.println("Test Increment all Counters");
+    Serial.println("Test Read all Counters");
     Serial.println(ds2423.getCounter(0));
     Serial.println(ds2423.getCounter(1));
     Serial.println(ds2423.getCounter(2));

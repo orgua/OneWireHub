@@ -36,35 +36,40 @@ void DS2423::duty(OneWireHub * const hub)
         case 0x0F:      // Write Scratchpad
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) break;
 
-            reg_TA &= REG_TA_MASK; // TODO: can be optimized by just accessing the upper byte
+            reg_TA &= REG_TA_MASK; // compiler makes this to a 8bit OP, nice
             reg_ES = uint8_t(reg_TA) & PAGE_MASK;
 
             for (;reg_ES < PAGE_SIZE; ++reg_ES)
             {
-                if (hub->recv(&scratchpad[reg_ES],1,crc)) return;
-                // if one byte is not complete issue PF-bit in ES
+                if (hub->recv(&scratchpad[reg_ES],1,crc))
+                {
+                    // if one byte is not complete issue PF-bit in ES
+                    break;
+                }
             }
-            reg_ES |= PAGE_MASK;
+            reg_ES--;
+            reg_ES &= PAGE_MASK;
+            if (hub->getError()) break;
             crc = ~crc;
             if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) break;
             break;
 
-        case 0xAA:      // read Scratchpad TODO: we don't need CRC here
-            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) break;
-            if (hub->send(&reg_ES,2,crc)) break;
+        case 0xAA:      // read Scratchpad
+            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2)) break;
+            if (hub->send(&reg_ES,1)) break;
             {
                 const uint8_t start     = uint8_t(reg_TA) & PAGE_MASK;
-                const uint8_t length    = (reg_ES & PAGE_MASK) + uint8_t(1) - start;
-                if (hub->send(&scratchpad[start],length,crc)) return;
+                const uint8_t length    = PAGE_SIZE - start;
+                if (hub->send(&scratchpad[start],length)) return;
             }
             break; // send 1s, be passive ...
 
-        case 0x5A:      // copy scratchpad TODO: we don't need CRC here
-            if (hub->recv(&data,1,crc)) break;
+        case 0x5A:      // copy scratchpad
+            if (hub->recv(&data,1)) break;
             if (data != reinterpret_cast<uint8_t *>(&reg_TA)[0]) break;
-            if (hub->recv(&data,1,crc)) break;
+            if (hub->recv(&data,1)) break;
             if (data != reinterpret_cast<uint8_t *>(&reg_TA)[1]) break;
-            if (hub->recv(&data,1,crc)) break;
+            if (hub->recv(&data,1)) break;
             if (data != reg_ES) break;
 
             reg_ES |= REG_ES_AA_MASK; // compare was successful
@@ -72,25 +77,26 @@ void DS2423::duty(OneWireHub * const hub)
             {
                 const uint8_t start     = uint8_t(reg_TA) & PAGE_MASK;
                 const uint8_t length    = (reg_ES & PAGE_MASK) + uint8_t(1) - start;
-                memcpy(&memory[start], &scratchpad[start], length);
+                writeMemory(&scratchpad[start], length, reg_TA);
             }
 
             while (true) // send 1s when alternating 1 & 0 after copy is complete
             {
-                if (hub->send(&ALTERNATING_10)) return;
+                if (hub->send(&ALTERNATING_10)) break;
             };
             break;
 
-        case 0xF0:      // READ MEMORY TODO: we don't need CRC here
-            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) break;
-            reg_TA &= REG_TA_MASK; // TODO: can be optimized by just accessing the upper byte
+        case 0xF0:      // READ MEMORY
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2)) break;
+            reg_TA &= REG_TA_MASK; // compiler makes this to a 8bit OP, nice
+
             {
                 uint8_t page  = uint8_t(reg_TA >> 5);
                 uint8_t start = uint8_t(reg_TA) & PAGE_MASK;
                 for (;page < PAGE_COUNT; ++page)
                 {
                     const uint8_t length = PAGE_SIZE - start;
-                    if (hub->send(&memory[(page*PAGE_SIZE) + start],length,crc)) return;
+                    if (hub->send(&memory[(page*PAGE_SIZE) + start],length)) return;
                     start = 0;
                 };
             };
@@ -98,7 +104,8 @@ void DS2423::duty(OneWireHub * const hub)
 
         case 0xA5:      // Read Memory + Counter
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) return;
-            reg_TA &= REG_TA_MASK; // TODO: can be optimized by just accessing the upper byte
+            reg_TA &= REG_TA_MASK; // compiler makes this to a 8bit OP, nice
+
             {
                 uint8_t page  = uint8_t(reg_TA >> 5);
                 uint8_t start = uint8_t(reg_TA) & PAGE_MASK;
@@ -107,9 +114,9 @@ void DS2423::duty(OneWireHub * const hub)
                     const uint8_t length = PAGE_SIZE - start;
                     if (hub->send(&memory[(page*PAGE_SIZE) + start],length,crc)) return;
                     start = 0;
-                    if (page > 11) // TODO: page 12 & 13 have write-counters, page 14&15 have hw-counters
+                    if (page >= COUNTER_PAGE_START)
                     {
-                        if (hub->send(reinterpret_cast<uint8_t *>(&memcounter[page-12]),4,crc)) return;
+                        if (hub->send(reinterpret_cast<uint8_t *>(&memcounter[page-COUNTER_PAGE_START]),4,crc)) return;
                     }
                     else
                     {
@@ -127,6 +134,8 @@ void DS2423::duty(OneWireHub * const hub)
         default:
             hub->raiseSlaveError(cmd);
     };
+
+    if (cmd == 0x5A) clearScratchpad();
 };
 
 
@@ -135,11 +144,24 @@ void DS2423::clearMemory(void)
     memset(memory, static_cast<uint8_t>(0x00), MEM_SIZE);
 };
 
+void DS2423::clearScratchpad(void)
+{
+    memset(scratchpad, static_cast<uint8_t>(0x00), PAGE_SIZE);
+};
+
 bool DS2423::writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position)
 {
     if (position >= MEM_SIZE) return false;
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
     memcpy(&memory[position],source,_length);
+
+    const uint8_t page_start = uint8_t(position>>5);
+    const uint8_t page_end   = uint8_t((position+length)>>5);
+
+    for (uint8_t page = page_start; page <= page_end; ++page)// page 12 & 13 have write-counters, page 14&15 have hw-counters
+    {
+        if ((page == COUNTER_PAGE_START) || (page == COUNTER_PAGE_START + 1)) memcounter[page-COUNTER_PAGE_START]++;
+    };
 
     return true;
 };
