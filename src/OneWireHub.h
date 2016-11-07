@@ -6,8 +6,20 @@
 #endif
 
 #include "platform.h" // code for compatibility
-#include "OneWireHub_config.h" // outsource configfile
 
+using     timeOW_t = uint32_t;
+
+constexpr uint32_t operator "" _us(const unsigned long long int time_us) // user defined literal used in config
+{
+    return uint32_t(time_us * microsecondsToClockCycles(1) / VALUE_IPL); // note: microsecondsToClockCycles == speed in MHz....
+};
+
+constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
+{
+    return (time_us * microsecondsToClockCycles(1) / VALUE_IPL); // note: microsecondsToClockCycles == speed in MHz....
+};
+
+#include "OneWireHub_config.h" // outsource configfile
 
 #ifndef HUB_SLAVE_LIMIT
 #error "Slavelimit not defined (why?)"
@@ -22,8 +34,6 @@ using mask_t = uint8_t;
 #else
 #error "Slavelimit is set to zero (why?)"
 #endif
-
-using     timeOW_t = uint32_t;
 
 constexpr timeOW_t VALUE1k      {1000}; // commonly used constant
 constexpr timeOW_t TIMEOW_MAX   {4294967295};   // arduino does not support std-lib...
@@ -47,37 +57,6 @@ enum class Error : uint8_t {
     RESET_IN_PROGRESS          = 15
 };
 
-
-constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
-{
-    return (time_us * microsecondsToClockCycles(1) / VALUE_IPL); // note: microsecondsToClockCycles is speed in MHz....
-};
-
-#if OVERDRIVE_ENABLE
-static constexpr timeOW_t LOOPS_RESET_TIMEOUT          = timeUsToLoops(ONEWIRE_TIME_RESET_TIMEOUT);
-static constexpr timeOW_t LOOPS_RESET_MIN[2]           = { timeUsToLoops(ONEWIRE_TIME_RESET_MIN),        timeUsToLoops(OVERDRIVE_TIME_RESET_MIN) };
-static constexpr timeOW_t LOOPS_RESET_MAX[2]           = { timeUsToLoops(ONEWIRE_TIME_RESET_MAX),        timeUsToLoops(OVERDRIVE_TIME_RESET_MAX) };
-static constexpr timeOW_t LOOPS_PRESENCE_TIMEOUT[2]    = { timeUsToLoops(ONEWIRE_TIME_PRESENCE_TIMEOUT), timeUsToLoops(OVERDRIVE_TIME_PRESENCE_TIMEOUT) };
-static constexpr timeOW_t LOOPS_PRESENCE_MIN[2]        = { timeUsToLoops(ONEWIRE_TIME_PRESENCE_MIN),     timeUsToLoops(OVERDRIVE_TIME_PRESENCE_MIN) };
-static constexpr timeOW_t LOOPS_PRESENCE_MAX[2]        = { timeUsToLoops(ONEWIRE_TIME_PRESENCE_MAX),     timeUsToLoops(OVERDRIVE_TIME_PRESENCE_MAX) };
-static constexpr timeOW_t LOOPS_MSG_HIGH_TIMEOUT       = timeUsToLoops(ONEWIRE_TIME_MSG_HIGH_TIMEOUT);
-static constexpr timeOW_t LOOPS_SLOT_MAX[2]            = { timeUsToLoops(ONEWIRE_TIME_SLOT_MAX),         timeUsToLoops(OVERDRIVE_TIME_SLOT_MAX) };
-static constexpr timeOW_t LOOPS_READ_MIN[2]            = { timeUsToLoops(ONEWIRE_TIME_READ_MIN),         timeUsToLoops(OVERDRIVE_TIME_READ_MIN) };
-static constexpr timeOW_t LOOPS_READ_MAX[2]            = { timeUsToLoops(ONEWIRE_TIME_READ_MAX),         timeUsToLoops(OVERDRIVE_TIME_READ_MAX) };
-static constexpr timeOW_t LOOPS_WRITE_ZERO[2]          = { timeUsToLoops(ONEWIRE_TIME_WRITE_ZERO),       timeUsToLoops(OVERDRIVE_TIME_WRITE_ZERO) };
-#else
-static constexpr timeOW_t LOOPS_RESET_TIMEOUT          = timeUsToLoops(ONEWIRE_TIME_RESET_TIMEOUT);
-static constexpr timeOW_t LOOPS_RESET_MIN[1]           = { timeUsToLoops(ONEWIRE_TIME_RESET_MIN) };
-static constexpr timeOW_t LOOPS_RESET_MAX[1]           = { timeUsToLoops(ONEWIRE_TIME_RESET_MAX) };
-static constexpr timeOW_t LOOPS_PRESENCE_TIMEOUT[1]    = { timeUsToLoops(ONEWIRE_TIME_PRESENCE_TIMEOUT) };
-static constexpr timeOW_t LOOPS_PRESENCE_MIN[1]        = { timeUsToLoops(ONEWIRE_TIME_PRESENCE_MIN) };
-static constexpr timeOW_t LOOPS_PRESENCE_MAX[1]        = { timeUsToLoops(ONEWIRE_TIME_PRESENCE_MAX) };
-static constexpr timeOW_t LOOPS_MSG_HIGH_TIMEOUT       = timeUsToLoops(ONEWIRE_TIME_MSG_HIGH_TIMEOUT);
-static constexpr timeOW_t LOOPS_SLOT_MAX[1]            = { timeUsToLoops(ONEWIRE_TIME_SLOT_MAX) };
-static constexpr timeOW_t LOOPS_READ_MIN[1]            = { timeUsToLoops(ONEWIRE_TIME_READ_MIN) };
-static constexpr timeOW_t LOOPS_READ_MAX[1]            = { timeUsToLoops(ONEWIRE_TIME_READ_MAX) };
-static constexpr timeOW_t LOOPS_WRITE_ZERO[1]          = { timeUsToLoops(ONEWIRE_TIME_WRITE_ZERO) };
-#endif
 
 class OneWireItem;
 

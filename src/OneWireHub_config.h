@@ -14,47 +14,33 @@ constexpr bool     USE_GPIO_DEBUG   { 0 }; // is a better alternative to serial 
 constexpr uint8_t  GPIO_DEBUG_PIN   { 7 }; // digital pin
 constexpr uint32_t REPETITIONS      { 5000 }; // for measuring the loop-delay --> 10000L takes ~110ms on atmega328p@16Mhz
 
-/// the following TIME-values are in microseconds and are taken from the ds2408 datasheet
-// should be --> datasheet
-// was       --> shagrat-legacy
-constexpr uint16_t ONEWIRE_TIME_RESET_TIMEOUT        = 5000; // for not hanging indef in reset-detection, lower value is better for more responsive applications, but can miss resets
-constexpr uint16_t ONEWIRE_TIME_RESET_MIN            =  430; // should be 480, and was 470
-constexpr uint16_t ONEWIRE_TIME_RESET_MAX            =  960; // from ds2413
+/// the following TIME-values are in microseconds and are taken mostly from the ds2408 datasheet
+//  arrays contain the normal timing value and the overdrive-value, the literal "_us" converts the value right away to a usable unit
+//  should be --> datasheet
+//  was       --> shagrat-legacy
+constexpr timeOW_t ONEWIRE_TIME_RESET_TIMEOUT        =  5000_us;          // for not hanging to long in reset-detection, lower value is better for more responsive applications, but can miss resets
+constexpr timeOW_t ONEWIRE_TIME_RESET_MIN[2]         = { 430_us, 48_us }; // should be 480
+constexpr timeOW_t ONEWIRE_TIME_RESET_MAX[2]         = { 960_us, 80_us }; // from ds2413
 
-constexpr uint16_t ONEWIRE_TIME_PRESENCE_TIMEOUT     =   20; // probe measures 40us
-constexpr uint16_t ONEWIRE_TIME_PRESENCE_MIN         =  160; // was 125
-constexpr uint16_t ONEWIRE_TIME_PRESENCE_MAX         =  480; // should be 280, was 480 !!!! why
+constexpr timeOW_t ONEWIRE_TIME_PRESENCE_TIMEOUT     =    20_us;          // probe measures 25us
+constexpr timeOW_t ONEWIRE_TIME_PRESENCE_MIN[2]      = { 160_us,  8_us }; // was 125
+constexpr timeOW_t ONEWIRE_TIME_PRESENCE_MAX[2]      = { 480_us, 32_us }; // should be 280, was 480
 
-constexpr uint16_t ONEWIRE_TIME_MSG_HIGH_TIMEOUT     =15000; // there can be inactive / high timeperiods after reset / presence, this value defines the timeout for these
-constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =  135; // should be 120, was ~1050
+constexpr timeOW_t ONEWIRE_TIME_MSG_HIGH_TIMEOUT     = 15000_us;          // there can be these inactive / high timeperiods after reset / presence, this value defines the timeout for these
+constexpr timeOW_t ONEWIRE_TIME_SLOT_MAX[2]          = { 135_us, 30_us }; // should be 120
 
 // read and write from the viewpoint of the slave!!!!
-constexpr uint16_t ONEWIRE_TIME_READ_MIN             =   20; // was 30, should be 15
-constexpr uint16_t ONEWIRE_TIME_READ_MAX             =   60; //
-constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO           =   30; //
+constexpr timeOW_t ONEWIRE_TIME_READ_MIN[2]          = {  20_us,  4_us }; // should be 15, was 30
+constexpr timeOW_t ONEWIRE_TIME_READ_MAX[2]          = {  60_us, 10_us }; //
+constexpr timeOW_t ONEWIRE_TIME_WRITE_ZERO[2]        = {  30_us,  8_us }; //
 
-// OVERDRIVE
-constexpr uint16_t OVERDRIVE_TIME_RESET_MIN          =   48; //
-constexpr uint16_t OVERDRIVE_TIME_RESET_MAX          =   80; //
-//
-
-constexpr uint16_t OVERDRIVE_TIME_PRESENCE_TIMEOUT   =   20;
-constexpr uint16_t OVERDRIVE_TIME_PRESENCE_MIN       =    8;
-constexpr uint16_t OVERDRIVE_TIME_PRESENCE_MAX       =   32;
-//
-
-constexpr uint16_t OVERDRIVE_TIME_SLOT_MAX           =   30; //
-
-constexpr uint16_t OVERDRIVE_TIME_READ_MIN           =    4; //
-constexpr uint16_t OVERDRIVE_TIME_READ_MAX           =   10; //
-constexpr uint16_t OVERDRIVE_TIME_WRITE_ZERO         =    8; //
 
 // VALUES FOR STATIC ASSERTS
-constexpr uint16_t ONEWIRE_TIME_VALUE_MAX            = ONEWIRE_TIME_MSG_HIGH_TIMEOUT;
+constexpr timeOW_t ONEWIRE_TIME_VALUE_MAX            = ONEWIRE_TIME_MSG_HIGH_TIMEOUT;
 #if OVERDRIVE_ENABLE
-constexpr uint16_t ONEWIRE_TIME_VALUE_MIN            = OVERDRIVE_TIME_READ_MIN;
+constexpr timeOW_t ONEWIRE_TIME_VALUE_MIN            = ONEWIRE_TIME_READ_MIN[2];
 #else
-constexpr uint16_t ONEWIRE_TIME_VALUE_MIN            = ONEWIRE_TIME_PRESENCE_TIMEOUT;
+constexpr timeOW_t ONEWIRE_TIME_VALUE_MIN            = ONEWIRE_TIME_READ_MIN[1];
 #endif
 
 /////////////////////////////////////////////////////
