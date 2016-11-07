@@ -72,7 +72,7 @@ void DS2450::duty(OneWireHub * const hub)
 
 void DS2450::clearMemory(void)
 {
-    memset(&memory[0], static_cast<uint8_t>(0), MEM_SIZE);
+    memset(memory, static_cast<uint8_t>(0), MEM_SIZE);
 
     // set power on defaults
     for (uint8_t adc = 0; adc < POTI_COUNT; ++adc)

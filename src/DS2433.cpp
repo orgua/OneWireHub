@@ -13,7 +13,7 @@ void DS2433::duty(OneWireHub * const hub)
     static uint16_t reg_TA; // contains TA1, TA2 (Target Address)
     static uint8_t  reg_ES = 31;  // E/S register
 
-    uint8_t  length, b, cmd = 0;
+    uint8_t  length, data, cmd = 0;
     uint16_t crc = 0;
 
     if (hub->recv(&cmd,1,crc))  return;
@@ -22,7 +22,7 @@ void DS2433::duty(OneWireHub * const hub)
     {
         case 0x0F:      // WRITE SCRATCHPAD COMMAND
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) return;
-            reinterpret_cast<uint8_t *>(&reg_TA)[1] &= uint8_t(0b1); // make sure to stay in boundry
+            reinterpret_cast<uint8_t *>(&reg_TA)[1] &= uint8_t(0b1); // make sure to stay in boundary // TODO: should be masked, also regTA
             reg_ES = reinterpret_cast<uint8_t *>(&reg_TA)[0] & PAGE_MASK; // register-offset
 
             length = static_cast<uint8_t>(PAGE_SIZE-reg_ES);
@@ -35,12 +35,12 @@ void DS2433::duty(OneWireHub * const hub)
             break;
 
         case 0x55:      // COPY SCRATCHPAD
-            if (hub->recv(&b)) return; // TA1
-            //if (b != reinterpret_cast<uint8_t *>(&reg_TA)[0]) return;
-            if (hub->recv(&b)) return;  // TA2
-            //if (b != reinterpret_cast<uint8_t *>(&reg_TA)[1]) return;
-            if (hub->recv(&b)) return;  // ES
-            //if (b != reg_ES) return;
+            if (hub->recv(&data)) return; // TA1
+            //if (data != reinterpret_cast<uint8_t *>(&reg_TA)[0]) return; // TODO: should be activated
+            if (hub->recv(&data)) return;  // TA2
+            //if (data != reinterpret_cast<uint8_t *>(&reg_TA)[1]) return;
+            if (hub->recv(&data)) return;  // ES
+            //if (data != reg_ES) return;
 
             reg_ES |= 0b10000000;
 
@@ -58,7 +58,7 @@ void DS2433::duty(OneWireHub * const hub)
             if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2))  return; // Adr1
             if (hub->send(&reg_ES)) return; // ES
 
-            // TODO: maybe implement a real scratchpad, would need 32byte extra ram
+            // TODO: maybe implement a real scratchpad, would need 32byte extra ram, done in ds2423
             if (hub->send(&memory[(reg_TA & ~uint16_t(PAGE_MASK))],PAGE_SIZE)) return; // data
             return; // datasheed says we should send all 1s, till reset (1s are passive... so nothing to do here)
 
@@ -78,7 +78,7 @@ void DS2433::duty(OneWireHub * const hub)
 
 void DS2433::clearMemory(void)
 {
-    memset(&memory[0], static_cast<uint8_t>(0x00), MEM_SIZE);
+    memset(memory, static_cast<uint8_t>(0x00), MEM_SIZE);
 };
 
 bool DS2433::writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position)
