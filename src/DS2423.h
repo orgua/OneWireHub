@@ -17,6 +17,7 @@ private:
     static constexpr uint8_t  PAGE_MASK         = 0b00011111;
 
     static constexpr uint8_t  COUNTER_COUNT     = 4;
+    static constexpr uint8_t  COUNTER_PAGE_START= 12; // page 12&13 have write-counters, page 14&15 transmit the hw-counters
 
     static constexpr uint8_t  REG_ES_PF_MASK    = 0b00100000; // partial byte flag
     static constexpr uint8_t  REG_ES_ZERO_MASK  = 0b01000000; // reads always zero
@@ -27,6 +28,8 @@ private:
     uint8_t     memory[MEM_SIZE]; // 4kbit max storage
     uint8_t     scratchpad[PAGE_SIZE];
     uint32_t    memcounter[COUNTER_COUNT];
+
+    void    clearScratchpad(void);
 
 public:
 
