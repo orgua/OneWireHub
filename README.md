@@ -10,6 +10,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS18B20 (0x28) Digital Thermometer, 12bit** (also known as DS1820) 
 - **DS18S20 (0x10) Digital Thermometer, 9bit** (also known as DS1920, use DS18B20 with different family code)
 - **DS1990 (0x01) iButton** (DS2401 with same family code)
+- **DS1990A (0x81) iButton** (DS2401 with different family code)
 - **DS2401 (0x01) Serial Number**
 - **DS2405 (0x05) Single address switch**
 - **DS2408 (0x29) 8-Channel Addressable Switch**, GPIO Port-expander
@@ -23,8 +24,8 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2450 (0x20) 4 channel A/D**
 - **DS2501 (0x11, 0x91) 512bit EEPROM** -> use DS2502 with different family code
 - **DS2502 (0x09, 0x89) 1kbit EEPROM, Add Only Memory** (also known as DS1982, same FC)
-- **DS2503 (0x13) 4kbit EEPROM, Add Only Memory** (also known as DS1983, same FC) -> use DS2502 with different family code
-- **DS2505 (0x0B) 16kbit EEPROM, Add Only Memory** (also known as DS1985, same FC) -> use DS2502 with different family code
+- **DS2503 (0x13) 4kbit EEPROM, Add Only Memory** (also known as DS1983, same FC) -> use DS2506 with different family code
+- **DS2505 (0x0B) 16kbit EEPROM, Add Only Memory** (also known as DS1985, same FC) -> use DS2506 with different family code
 - **DS2506 (0x0F) 64kbit EEPROM, Add Only Memory** (also known as DS1986, same FC)
 - **DS2890 (0x2C) Single channel digital potentiometer - extended to 1-4 CH**
 - Dell Power Supply (use DS2502 with family code set to 0x28)

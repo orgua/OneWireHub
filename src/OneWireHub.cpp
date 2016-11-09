@@ -921,6 +921,11 @@ Error OneWireHub::getError(void) const
     return (_error);
 };
 
+bool OneWireHub::hasError(void) const
+{
+    return (_error != Error::NO_ERROR);
+};
+
 void OneWireHub::raiseSlaveError(const uint8_t cmd)
 {
     _error = Error::INCORRECT_SLAVE_USAGE;

@@ -16,6 +16,7 @@ auto hub     = OneWireHub(pin_onewire);
 auto ds2401A = DS2401( DS2401::family_code, 0x00, 0xA0, 0x01, 0x24, 0xDA, 0x00 );    // Work - Serial Number
 auto ds2401B = DS2401( DS2401::family_code, 0x00, 0xB0, 0x01, 0x24, 0xDA, 0x00 );    // Work - Serial Number
 auto ds2401C = DS2401( DS2401::family_code, 0x00, 0xC0, 0x01, 0x24, 0xDA, 0x00 );
+auto ds1990A = DS2401( 0x81, 0x00, 0xA0, 0x90, 0x19, 0xDA, 0x00 );
 
 bool blinking(void);
 
@@ -29,6 +30,7 @@ void setup()
 
     // Setup OneWire
     hub.attach(ds2401C); // always online
+    hub.attach(ds1990A); // always online
 
     // Test-Cases: the following code is just to show basic functions, can be removed any time
     // ds2401A and B alternate with each LED-Blink-Change, so there is only one online at a time

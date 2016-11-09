@@ -140,9 +140,10 @@ public:
     void     waitLoopsDebug(void) const;
 
     // mostly for debug, partly for state-machine handling
-    void printError(void) const;
+    void  printError(void) const;
     Error getError(void) const; // returns Error
-    void raiseSlaveError(const uint8_t cmd = 0);
+    bool  hasError(void) const; // returns true if Error occured
+    void  raiseSlaveError(const uint8_t cmd = 0);
     Error clearError(void);
 
 };
