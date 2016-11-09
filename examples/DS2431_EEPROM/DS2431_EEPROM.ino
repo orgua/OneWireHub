@@ -45,7 +45,9 @@ void setup()
     Serial.println(ds2431.getPageProtection(1*32 +16)); // ONE
     Serial.println(ds2431.getPageProtection(2*32));     // ZERO, out of bounds
 
-    Serial.println("Test Set Page Protection for p2");
+    Serial.println("Test Set EPROM Mode for p2");
+    constexpr uint8_t mem_FF[] = { 0xFF, 0xFF };
+    ds2431.writeMemory(reinterpret_cast<const uint8_t *>(mem_FF),sizeof(mem_FF),2*32);
     Serial.println(ds2431.getPageEpromMode(2*32));      // ZERO
     ds2431.setPageEpromMode(2*32);
     Serial.println(ds2431.getPageEpromMode(2*32 - 1));  // ZERO, out of bounds

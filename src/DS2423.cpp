@@ -3,30 +3,22 @@
 DS2423::DS2423(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
     static_assert(sizeof(memory) < 65535,  "Implementation does not cover the whole address-space");
+
     clearMemory();
+    clearScratchpad();
 
-    memset(scratchpad, static_cast<uint8_t>(0x00), PAGE_SIZE);
-
-    for (uint8_t n = 0; n < COUNTER_COUNT; ++n)
-    {
-        setCounter(n,0);
-    }
-
-
-
+    for (uint8_t n = 0; n < COUNTER_COUNT; ++n) setCounter(n,0);
 };
 
 void DS2423::duty(OneWireHub * const hub)
 {
     constexpr uint32_t DUMMY_32b_ZERO   = 0x00000000;
     constexpr uint32_t DUMMY_32b_ONES   = 0xFFFFFFFF;
-    constexpr uint8_t ALTERNATING_10    = 0xAA;
+    constexpr uint8_t  ALTERNATING_10   = 0xAA;
     static uint16_t reg_TA = 0;
     static uint8_t  reg_ES = 0;
     uint16_t crc = 0;  // target_address
     uint8_t  data;
-    //uint16_t memory_address_start; // not used atm, but maybe later
-
 
     uint8_t cmd;
     if (hub->recv(&cmd,1,crc))  return;
@@ -43,15 +35,18 @@ void DS2423::duty(OneWireHub * const hub)
             {
                 if (hub->recv(&scratchpad[reg_ES],1,crc))
                 {
-                    // if one byte is not complete issue PF-bit in ES
+                    if (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH) reg_ES |= REG_ES_PF_MASK;
                     break;
                 }
             }
             reg_ES--;
             reg_ES &= PAGE_MASK;
-            if (hub->getError()) break;
-            crc = ~crc;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) break;
+
+            if (hub->getError() == Error::NO_ERROR)  // try to send crc if wanted
+            {
+                crc = ~crc; // normally crc16 is sent ~inverted
+                hub->send(reinterpret_cast<uint8_t *>(&crc), 2);
+            };
             break;
 
         case 0xAA:      // read Scratchpad
@@ -65,13 +60,14 @@ void DS2423::duty(OneWireHub * const hub)
             break; // send 1s, be passive ...
 
         case 0x5A:      // copy scratchpad
-            if (hub->recv(&data,1)) break;
+            if (hub->recv(&data,1))                              break;
             if (data != reinterpret_cast<uint8_t *>(&reg_TA)[0]) break;
-            if (hub->recv(&data,1)) break;
+            if (hub->recv(&data,1))                              break;
             if (data != reinterpret_cast<uint8_t *>(&reg_TA)[1]) break;
-            if (hub->recv(&data,1)) break;
-            if (data != reg_ES) break;
+            if (hub->recv(&data,1))                              break;
+            if (data != reg_ES)                                  break;
 
+            if (reg_ES & REG_ES_PF_MASK)                         break; // stop if error occured earlier
             reg_ES |= REG_ES_AA_MASK; // compare was successful
             // we have ~30µs to write the date
             {

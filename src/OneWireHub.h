@@ -141,7 +141,7 @@ public:
 
     // mostly for debug, partly for state-machine handling
     void printError(void) const;
-    bool getError(void) const; // returns 1 if error occured
+    Error getError(void) const; // returns Error
     void raiseSlaveError(const uint8_t cmd = 0);
     Error clearError(void);
 

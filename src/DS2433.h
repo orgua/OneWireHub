@@ -1,5 +1,6 @@
 // 0x23  4Kb 1-Wire EEPROM
 // works
+// feature: Overdrive capable
 
 #ifndef ONEWIRE_DS2433_H
 #define ONEWIRE_DS2433_H
@@ -11,12 +12,20 @@ class DS2433 : public OneWireItem
 private:
 
     static constexpr uint16_t MEM_SIZE          = 512;
+    static constexpr uint16_t MEM_MASK          = 0x01FF;
 
     static constexpr uint8_t  PAGE_SIZE         = 32;
     static constexpr uint16_t PAGE_COUNT        = MEM_SIZE / PAGE_SIZE;
     static constexpr uint8_t  PAGE_MASK         = 0b00011111;
 
+    static constexpr uint8_t  REG_ES_PF_MASK    = 0b00100000; // partial byte flag
+    static constexpr uint8_t  REG_ES_ZERO_MASK  = 0b01000000; // reads always zero
+    static constexpr uint8_t  REG_ES_AA_MASK    = 0b10000000; // authorization accepted (data copied to target memory)
+
     uint8_t memory[MEM_SIZE]; // 4kbit max storage
+    uint8_t scratchpad[PAGE_SIZE];
+
+    void    clearScratchpad(void);
 
 public:
 

@@ -1,6 +1,7 @@
 // 0x2D  1Kb 1-Wire EEPROM
 // works,
 // note: datasheet is fuzzy, but device is similar to ds2433
+// feature: Overdrive capable
 
 #ifndef ONEWIRE_DS2431_H
 #define ONEWIRE_DS2431_H
@@ -11,14 +12,18 @@ class DS2431 : public OneWireItem
 {
 private:
 
-    static constexpr uint16_t MEM_SIZE          = 144;
+    static constexpr uint8_t  MEM_SIZE          = 144;
 
     static constexpr uint8_t  PAGE_SIZE         = 32;
-    static constexpr uint16_t PAGE_COUNT        = MEM_SIZE / PAGE_SIZE;
+    static constexpr uint8_t  PAGE_COUNT        = MEM_SIZE / PAGE_SIZE;
     static constexpr uint8_t  PAGE_MASK         = 0b00011111;
 
     static constexpr uint8_t  SCRATCHPAD_SIZE   = 8;
-    static constexpr uint8_t  SCRATCHPAD_MASK   = 0b00011111;
+    static constexpr uint8_t  SCRATCHPAD_MASK   = 0b00000111;
+
+    static constexpr uint8_t  REG_ES_PF_MASK    = 0b00100000; // partial byte flag
+    static constexpr uint8_t  REG_ES_ZERO_MASK  = 0b01011000; // reads always zero
+    static constexpr uint8_t  REG_ES_AA_MASK    = 0b10000000; // authorization accepted (data copied to target memory)
 
     static constexpr uint8_t  WP_MODE           = 0x55; // write protect mode
     static constexpr uint8_t  EP_MODE           = 0xAA; // eprom mode
@@ -30,6 +35,7 @@ private:
     uint8_t page_eprom_mode;
 
     bool    updatePageStatus(void);
+    void    clearScratchpad(void);
 
 public:
 
