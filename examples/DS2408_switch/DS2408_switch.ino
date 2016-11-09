@@ -57,7 +57,7 @@ void loop()
     // following function must be called periodically
     hub.poll();
     // this part is just for debugging (USE_SERIAL_DEBUG in OneWire.h must be enabled for output)
-    if (hub.getError()) hub.printError();
+    if (hub.hasError()) hub.printError();
 
     digitalWrite(10, ds2408.getPinState(0));
     digitalWrite(11, ds2408.getPinState(1));
