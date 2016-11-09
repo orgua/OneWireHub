@@ -46,13 +46,11 @@ void DS2433::duty(OneWireHub * const hub)
 
             delayMicroseconds(5000); // simulate writing
 
-            do      hub->sendBit(true);
-            while   (hub->clearError() == Error::READ_TIMESLOT_TIMEOUT_HIGH);
+            do      hub->sendBit(true); // send passive 1s
+            while   (hub->clearError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH); // wait for timeslots
 
-            while (true) // send alternating 1 & 0 after copy is complete
-            {
-                if (hub->send(&ALTERNATE_01)) return;
-            };
+            while (!hub->send(&ALTERNATE_01)); // send alternating 1 & 0 after copy is complete
+            break;
 
         case 0xAA:      // READ SCRATCHPAD COMMAND
             if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2))  return; // Adr1
@@ -86,7 +84,6 @@ bool DS2433::writeMemory(const uint8_t* const source, const uint16_t length, con
     if (position >= MEM_SIZE) return false;
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
     memcpy(&memory[position],source,_length);
-
     return true;
 };
 

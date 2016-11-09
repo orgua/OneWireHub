@@ -14,9 +14,9 @@ constexpr uint8_t pin_onewire   { 8 };
 
 auto hub    = OneWireHub(pin_onewire);
 
-auto ds18b20 = DS18B20(DS18B20::family_code, 0x00, 0x00, 0xB2, 0x18, 0xDA, 0x00);    // Digital Thermometer
-auto ds18s20 = DS18B20(0x10, 0x00, 0x00, 0xA2, 0x18, 0xDA, 0x00);    // Digital Thermometer
-auto ds1822  = DS18B20(0x22, 0x00, 0x00, 0x22, 0x18, 0xDA, 0x00);    // Digital Thermometer
+auto ds18b20 = DS18B20(DS18B20::family_code, 0x00, 0x00, 0xB2, 0x18, 0xDA, 0x00); // DS18B20: 9-12bit, -55 -  +85 degC
+auto ds18s20 = DS18B20(0x10, 0x00, 0x00, 0xA2, 0x18, 0xDA, 0x00);                 // DS18S20: 9   bit, -55 -  +85 degC
+auto ds1822  = DS18B20(0x22, 0x00, 0x00, 0x22, 0x18, 0xDA, 0x00);                 // DS1822:  9-12bit, -55 - +125 degC
 
 bool blinking(void);
 
@@ -34,32 +34,43 @@ void setup()
     hub.attach(ds1822);
 
     // Test-Cases: the following code is just to show basic functions, can be removed any time
-    Serial.print("Test - set int16-Temperatures to -56 degC (out of range): ");
-    ds18b20.setTemperature(int8_t(-56)); // [-55;+85] degC
+    Serial.print("Test - set Temperatures to -56 degC (out of range): ");
+    ds18b20.setTemperature(int8_t(-56));
     Serial.println(ds18b20.getTemperature());
 
-    Serial.print("Test - set int16-Temperatures to -55 degC: ");
-    ds18b20.setTemperature(int8_t(-55)); // [-55;+85] degC
-    Serial.println(ds18b20.getTemperature());
+    Serial.print("Test - set Temperatures to -55 degC: ");
+    ds18b20.setTemperature(int8_t(-55));
+    ds18s20.setTemperature(int8_t(-55));
+    Serial.print(ds18b20.getTemperature());
+    Serial.print(", ");
+    Serial.println(ds18s20.getTemperature());   // ds18s20 is limited to signed 9bit, so it could behave different
 
-    Serial.print("Test - set int16-Temperatures to 0 degC: ");
-    ds18b20.setTemperature(int8_t(0)); // [-55;+85] degC
-    Serial.println(ds18b20.getTemperature());
+    Serial.print("Test - set Temperatures to 0 degC: ");
+    ds18b20.setTemperature(int8_t(0));
+    ds18s20.setTemperature(int8_t(0));
+    Serial.print(ds18b20.getTemperature());
+    Serial.print(", ");
+    Serial.println(ds18s20.getTemperature());
 
-    Serial.print("Test - set int16-Temperatures to 21 degC: ");
+    Serial.print("Test - set Temperatures to 21 degC: ");
     const int8_t temperature = 21;
-    ds18b20.setTemperature(temperature); // [-55;+85] degC
+    ds18b20.setTemperature(temperature);
     ds18s20.setTemperature(temperature);
     ds1822.setTemperature(temperature);
-    Serial.println(ds18b20.getTemperature());
+    Serial.print(ds18b20.getTemperature());
+    Serial.print(", ");
+    Serial.println(ds18s20.getTemperature());
 
-    Serial.print("Test - set int16-Temperatures to 85 degC: ");
-    ds18b20.setTemperature(int8_t(85)); // [-55;+85] degC
-    Serial.println(ds18b20.getTemperature());
+    Serial.print("Test - set Temperatures to 85 degC: ");
+    ds18b20.setTemperature(int8_t(85));
+    ds18s20.setTemperature(int8_t(85));
+    Serial.print(ds18b20.getTemperature());
+    Serial.print(", ");
+    Serial.println(ds18s20.getTemperature());
 
-    Serial.print("Test - set int16-Temperatures to 86 degC (out of range): ");
-    ds18b20.setTemperature(int8_t(86)); // [-55;+85] degC
-    Serial.println(ds18b20.getTemperature());
+    Serial.print("Test - set Temperatures to 126 degC (out of range): ");
+    ds1822.setTemperature(int8_t(126));
+    Serial.println(ds1822.getTemperature());
 
 
     Serial.println("config done");

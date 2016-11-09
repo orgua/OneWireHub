@@ -1,5 +1,5 @@
 // 0x29  8-Channel Addressable Switch @@@
-// basic operation works
+// works, but no alarm search and higher logic / output / control register-action
 
 #ifndef ONEWIRE_DS2408_H
 #define ONEWIRE_DS2408_H
@@ -38,6 +38,12 @@ public:
     void    setPinState(const uint8_t pinNumber, const bool value);
     bool    getPinState(const uint8_t pinNumber) const;
     uint8_t getPinState(void) const;
+
+    void    setPinActivity(const uint8_t pinNumber, const bool value);
+    bool    getPinActivity(const uint8_t pinNumber) const;
+    uint8_t getPinActivity(void) const;
+
+    // TODO: do we need FN to set the output register?
 
 };
 

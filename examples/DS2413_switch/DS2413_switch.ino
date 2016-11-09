@@ -32,10 +32,24 @@ void setup()
     ds2413.setPinState(0,1);
     Serial.println(ds2413.getPinState(0));
 
+    Serial.println("Test - set State of switch 1");
+    ds2413.setPinState(1,1);
+    Serial.println(ds2413.getPinState(1));
+
     Serial.println("Test - set Latch of switch 1");
     Serial.println(ds2413.getPinLatch(1));
     ds2413.setPinLatch(1,1);
-    Serial.println(ds2413.getPinLatch(1));
+    Serial.println(ds2413.getPinLatch(1)); // latch is set
+
+    Serial.println("Test - check State of switch 1");
+    Serial.println(ds2413.getPinState(1)); // will be zero because of latching
+    ds2413.setPinState(1,1);
+    Serial.println(ds2413.getPinState(1)); // still zero
+
+    Serial.println("Test - disable latch and set State of switch 1");
+    ds2413.setPinLatch(1,0);
+    ds2413.setPinState(1,1);
+    Serial.println(ds2413.getPinState(1)); // works again, no latching
 
     Serial.println("config done");
 }

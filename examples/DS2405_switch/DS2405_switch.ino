@@ -26,7 +26,7 @@ void setup()
     hub.attach(ds2405);
 
     // Test-Cases: the following code is just to show basic functions, can be removed any time
-    Serial.println("Test - clear State of GPIO 3");
+    Serial.println("Test - clear State of GPIO 0");
     Serial.println(ds2405.getPinState());
     ds2405.setPinState(1);
     Serial.println(ds2405.getPinState());

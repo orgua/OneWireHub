@@ -1,5 +1,5 @@
 // 0x01  Serial Number
-// Works - 100%
+// Works
 
 #ifndef ONEWIRE_DS2401_H
 #define ONEWIRE_DS2401_H

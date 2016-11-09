@@ -21,19 +21,17 @@ void DS2413::duty(OneWireHub * const hub)
             data = ~data; // Write inverse
             if (hub->send(&data)) return; // send inverted form for safety
 
-            setPinLatch(0, data & static_cast<uint8_t>(0x01)); // A
-            setPinLatch(1, data & static_cast<uint8_t>(0x02)); // B
-            setPinState(0, ~(data & static_cast<uint8_t>(0x01)));
-            setPinState(1, ~(data & static_cast<uint8_t>(0x01)));
+            setPinLatch(0, data & static_cast<uint8_t>(0x01));// A
+            setPinLatch(1, data & static_cast<uint8_t>(0x02));// B
             break;
 
         case 0xF5:      // PIO ACCESS READ
             data = 0;
 
-            if (pin_state[0])  data = data | static_cast<uint8_t>(0x01);
-            if (!pin_latch[0]) data = data | static_cast<uint8_t>(0x02);
-            if (pin_state[1])  data = data | static_cast<uint8_t>(0x04);
-            if (!pin_latch[1]) data = data | static_cast<uint8_t>(0x08);
+            if (pin_state[0])  data |= static_cast<uint8_t>(0x01);
+            if (!pin_latch[0]) data |= static_cast<uint8_t>(0x02);
+            if (pin_state[1])  data |= static_cast<uint8_t>(0x04);
+            if (!pin_latch[1]) data |= static_cast<uint8_t>(0x08);
 
             data = data | (~data << 4);
             if (hub->send(&data)) return;

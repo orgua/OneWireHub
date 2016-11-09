@@ -1,5 +1,5 @@
 // 0x3A  Dual channel addressable switch
-// Works - 100%, supported overdrive not implemented
+// Works, master can latch the pin and pull it thereby down
 
 #ifndef ONEWIRE_DS2413_H
 #define ONEWIRE_DS2413_H
@@ -33,7 +33,7 @@ public:
         return pin_state[a_or_b & 1];
     };
 
-    void    setPinLatch(const uint8_t a_or_b, const bool value)
+    void    setPinLatch(const uint8_t a_or_b, const bool value) // latching a pin will pull it down (state=zero)
     {
         pin_latch[a_or_b & 1] = value;
         if (value) setPinState(a_or_b, 0);
