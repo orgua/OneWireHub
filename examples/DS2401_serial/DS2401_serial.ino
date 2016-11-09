@@ -30,6 +30,10 @@ void setup()
     // Setup OneWire
     hub.attach(ds2401C); // always online
 
+    // Test-Cases: the following code is just to show basic functions, can be removed any time
+    // ds2401A and B alternate with each LED-Blink-Change, so there is only one online at a time
+    // ds2401C is always online
+
     Serial.println("config done");
 }
 

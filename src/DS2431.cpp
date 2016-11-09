@@ -92,13 +92,11 @@ void DS2431::duty(OneWireHub * const hub)
             reg_ES |= 0b10000000;
             delayMicroseconds(10000); // writing takes so long
 
-            do      hub->sendBit(true);
-            while   (hub->clearError() == Error::READ_TIMESLOT_TIMEOUT_HIGH);
+            do      hub->sendBit(true); // send passive 1s
+            while   (hub->clearError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH); // wait for timeslots
 
-            while (true) // send 1s when alternating 1 & 0 after copy is complete
-            {
-                if (hub->send(&ALTERNATING_10)) return;
-            };
+            while (!hub->send(&ALTERNATING_10)); //  alternating 1 & 0 after copy is complete
+            break;
 
         case 0xF0:      // READ MEMORY COMMAND
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2))  return;

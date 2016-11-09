@@ -1,5 +1,9 @@
 // 0x28  Digital Thermometer
-// Works - 100%
+// Works, but without eeprom copy/read and alarm-setting
+// DS18B20: 9-12bit, -55 - +85  degC
+// DS18S20: 9   bit, -55 - +85  degC
+// DS1822:  9-12bit, -55 - +125 degC
+
 
 #ifndef ONEWIRE_DS18B20_H
 #define ONEWIRE_DS18B20_H
@@ -25,8 +29,8 @@ public:
 
     void duty(OneWireHub * const hub);
 
-    void setTemperature(const float value_degC);
-    void setTemperature(const int8_t value_degC);
+    void setTemperature(const float value_degC);  // -55 to +125 degC
+    void setTemperature(const int8_t value_degC); // -55 to +125 degC
     int  getTemperature(void) const;
 
 };

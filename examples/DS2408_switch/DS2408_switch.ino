@@ -33,13 +33,19 @@ void setup()
     pinMode(pin_led, OUTPUT);
 
     // Setup OneWire
-    hub.attach(ds2408); // always online
+    hub.attach(ds2408);
 
     // Test-Cases: the following code is just to show basic functions, can be removed any time
+    Serial.println("Test - clear Activity-State of GPIO 3");
+    Serial.println(ds2408.getPinActivity(3));
+    ds2408.setPinActivity(3,0);
+    Serial.println(ds2408.getPinActivity(3));
+
     Serial.println("Test - clear State of GPIO 3");
     Serial.println(ds2408.getPinState(3));
     ds2408.setPinState(3,0);
     Serial.println(ds2408.getPinState(3));
+    Serial.println(ds2408.getPinActivity(3)); // is active again
 
     // ds2408.clearMemory(); // begin fresh after doing some work
 

@@ -80,10 +80,7 @@ void DS2423::duty(OneWireHub * const hub)
                 writeMemory(&scratchpad[start], length, reg_TA);
             }
 
-            while (true) // send 1s when alternating 1 & 0 after copy is complete
-            {
-                if (hub->send(&ALTERNATING_10)) break;
-            };
+            while (!hub->send(&ALTERNATING_10)); // send 1s when alternating 1 & 0 after copy is complete
             break;
 
         case 0xF0:      // READ MEMORY

@@ -1,5 +1,6 @@
 // 0x05  Single address switch @@@
-// works
+// works, but reading back the value is not supported, because alarm search is not implemented yet
+// this IC is not using standard protocol - it sends data after searchRom and alarmSearch
 
 #ifndef ONEWIRE_DS2405_H
 #define ONEWIRE_DS2405_H

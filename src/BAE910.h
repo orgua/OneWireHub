@@ -1,5 +1,5 @@
 // 0xFC  Multifunction 1-wire slave device @@@
-// works
+// works, basic functionality
 
 #ifndef ONEWIRE_BAE910_H
 #define ONEWIRE_BAE910_H

@@ -8,7 +8,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **BAE910 (0xFC) multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
 - **DS1822 (0x22) Digital Thermometer, 12bit** -> use DS18B20 with different family code
 - **DS18B20 (0x28) Digital Thermometer, 12bit** (also known as DS1820) 
-- **DS18S20 (0x10) Digital Thermometer, 12bit** (also known as DS1920, use DS18B20 with different family code)
+- **DS18S20 (0x10) Digital Thermometer, 9bit** (also known as DS1920, use DS18B20 with different family code)
 - **DS1990 (0x01) iButton** (DS2401 with same family code)
 - **DS2401 (0x01) Serial Number**
 - **DS2405 (0x05) Single address switch**
@@ -55,7 +55,9 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - provide documentation, numerous examples, easy interface for hub and sensors
 
 ### Recent development (latest at the top):
-- extend constness to all onewire-slaves and unify naming of functions across similar devices
+- interface of hub and slave-devices has changed, check header-file or examples for more info
+- rework / clean handling of timing-constants with user defined literals.
+- extend const-corectness to all onewire-slaves and unify naming of functions across similar devices
 - include tests into each device-example and add a lot of get()/set() for internal device-states
 - fully support for ds2423, ds2450 and ds2503/5/6, also fix ds2890 and ds2502
 - overdrive-support! must be enabled in config file - works with atmega328@16MHz
