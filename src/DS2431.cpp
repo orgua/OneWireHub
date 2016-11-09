@@ -69,7 +69,7 @@ void DS2431::duty(OneWireHub * const hub)
 
             {   // send Scratchpad content
                 const uint8_t start  = uint8_t(reg_TA) & SCRATCHPAD_MASK;
-                const uint8_t length = (reg_ES & SCRATCHPAD_MASK)+ uint8_t(1) - start;
+                const uint8_t length = (reg_ES & SCRATCHPAD_MASK)+ uint8_t(1) - start; // difference to ds2433
                 if (hub->send(&scratchpad[start],length,crc))   return;
             }
 
