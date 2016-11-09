@@ -40,6 +40,19 @@ void setup()
     ds2438.setCurrent(700);  // hasn't any unit or scale
     Serial.println(ds2438.getCurrent());
 
+    Serial.println("Test Write Text Data to page 3");
+    constexpr char memory[] = "abcASCII";
+    ds2438.writeMemory(reinterpret_cast<const uint8_t *>(memory),sizeof(memory),3*8);
+
+    Serial.println("Test Write binary Data to page 4&5");
+    constexpr uint8_t mem_dummy[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+    ds2438.writeMemory(mem_dummy, sizeof(mem_dummy), 4*8);
+
+    Serial.print("Test Read binary Data to page 4: 0x");
+    uint8_t mem_read[16];
+    ds2438.readMemory(mem_read, 16, 4*8-1); // begin one byte earlier than page begins
+    Serial.println(mem_read[2],HEX); // should read 0x11
+
     // values will be overwritten by the loop()
 
     Serial.println("config done");

@@ -4,14 +4,7 @@ DS2438::DS2438(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 {
     static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
 
-    memcpy(memory,MemDS2438,(PAGE_COUNT*PAGE_SIZE));
-
-    for (uint8_t page = 0; page <= PAGE_COUNT; ++page)
-    {
-        calcCRC(page);
-    };
-
-    setTemperature(static_cast<int8_t>(20));
+    clearMemory();
 };
 
 void DS2438::duty(OneWireHub * const hub)
@@ -24,15 +17,21 @@ void DS2438::duty(OneWireHub * const hub)
         // reordered for better timing
         case 0xBE:      // Read Scratchpad
             if (hub->recv(&page))  return;
-            if (page >= PAGE_COUNT) page = PAGE_COUNT;
+            if (page >= PAGE_COUNT) return;
             if (hub->send(&memory[page * 8], 8)) return;
             if (hub->send(crc[page])) return;
             break;
 
         case 0x4E:      // Write Scratchpad
             if (hub->recv(&page))  return;
-            if (page >= PAGE_COUNT) page = PAGE_COUNT; // when page out of limits --> switch to garbage-page
-            if (hub->recv(&memory[page * 8], 8)) return;
+            if (page >= PAGE_COUNT) return; // when page out of limits
+            for (uint8_t nByte = page<<3; nByte < (page+1)<<3; ++nByte)
+            {
+                uint8_t data;
+                if (hub->recv(&data, 1)) return;
+                if ((nByte < 7) && (nByte > 0)) continue; // byte 1-6 are read only
+                memory[nByte] = data;
+            };
             calcCRC(page);
             break;
 
@@ -41,7 +40,7 @@ void DS2438::duty(OneWireHub * const hub)
 
         case 0xB8:      // Recall Memory
             if (hub->recv(&page))  return;
-            if (page >= PAGE_COUNT) page = PAGE_COUNT; // when page out of limits --> switch to garbage-page
+            if (page >= PAGE_COUNT) page = PAGE_COUNT - 1; // when page out of limits
             break;
 
         case 0x44:      // Convert T
@@ -57,8 +56,50 @@ void DS2438::duty(OneWireHub * const hub)
 
 void DS2438::calcCRC(const uint8_t page)
 {
-    crc[page] = crc8(&memory[page * 8], 8);
-}
+    if (page  < PAGE_COUNT)  crc[page] = crc8(&memory[page * 8], 8);
+};
+
+void DS2438::clearMemory(void)
+{
+    memcpy(memory,MemDS2438,(PAGE_COUNT*PAGE_SIZE));
+
+    memory[0] |= REG0_MASK_IAD;  // enable automatic current measurements
+    memory[0] |= REG0_MASK_CA;   // enable current accumulator (page7, byte 4-7)
+    memory[0] &= ~REG0_MASK_AD;  // 1: battery voltage, 0: ADC-GPIO
+    memory[0] &= ~REG0_MASK_TB;  // temperature busy flag
+    memory[0] &= ~REG0_MASK_NVB; // eeprom busy flag
+    memory[0] &= ~REG0_MASK_ADB; // adc busy flag
+
+    for (uint8_t page = 0; page < PAGE_COUNT; ++page)
+    {
+        calcCRC(page);
+    };
+};
+
+bool DS2438::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position)
+{
+    if (position >= MEM_SIZE) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    memcpy(&memory[position],source,_length);
+
+    const uint8_t page_start = uint8_t(position>>3);
+    const uint8_t page_end   = uint8_t((position+length)>>3);
+
+    for (uint8_t page = page_start; page <= page_end; ++page)// page 12 & 13 have write-counters, page 14&15 have hw-counters
+    {
+        calcCRC(page);
+    };
+
+    return true;
+};
+
+bool DS2438::readMemory(uint8_t* const destination, const uint8_t length, const uint8_t position) const
+{
+    if (position >= MEM_SIZE) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    memcpy(destination,&memory[position],_length);
+    return (_length==length);
+};
 
 void DS2438::setTemperature(const float temp_degC)
 {

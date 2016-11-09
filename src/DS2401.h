@@ -1,5 +1,6 @@
 // 0x01  Serial Number
 // Works
+// native features: none
 
 #ifndef ONEWIRE_DS2401_H
 #define ONEWIRE_DS2401_H
