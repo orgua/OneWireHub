@@ -6,8 +6,7 @@ DS2431::DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
 
     clearMemory();
-
-    memset(&scratchpad[0], static_cast<uint8_t>(0x00), sizeof(scratchpad));
+    clearScratchpad();
 
     page_protection = 0;
     page_eprom_mode = 0;
@@ -29,32 +28,37 @@ void DS2431::duty(OneWireHub * const hub)
     {
         case 0x0F:      // WRITE SCRATCHPAD COMMAND
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc))  return;
-            reg_ES = reinterpret_cast<uint8_t *>(&reg_TA)[0] & SCRATCHPAD_MASK; // TODO: when not zero we should issue reg_ES |= 0b00100000; (datasheet not clear)
+            reg_ES = uint8_t(reg_TA) & SCRATCHPAD_MASK;
+            page_offset = reg_ES;
 
             // receive up to 8 bytes of data
-            page_offset = reg_ES;       // TODO: should be masked, also regTA
-            for (uint8_t i = page_offset; i < SCRATCHPAD_SIZE; ++i)
+            for (; reg_ES < SCRATCHPAD_SIZE; ++reg_ES)
             {
-                if (hub->recv(&scratchpad[i], 1, crc)) break; // can not return here, have to write data
-                if (reg_ES < 7) reg_ES++;
+                if (hub->recv(&scratchpad[reg_ES], 1, crc))
+                {
+                    if (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH) reg_ES |= REG_ES_PF_MASK;
+                    break;
+                }
             };
+            reg_ES--;
+            reg_ES &= SCRATCHPAD_MASK;
 
-            if (!hub->getError())  // try to send crc if wanted
+            if (hub->getError() == Error::NO_ERROR)  // try to send crc if wanted
             {
                 crc = ~crc; // normally crc16 is sent ~inverted
                 hub->send(reinterpret_cast<uint8_t *>(&crc), 2);
             };
 
-            if (reg_TA < 128) // check if page is protected or in eprom-mode
+            if (reg_TA < (4*PAGE_SIZE)) // check if page is protected or in eprom-mode
             {
                 const uint8_t position = uint8_t(reg_TA) & ~SCRATCHPAD_MASK;
                 if (getPageProtection(reinterpret_cast<uint8_t *>(&reg_TA)[0]))       // protected: load memory-segment to scratchpad
                 {
                     for (uint8_t i = 0; i < SCRATCHPAD_SIZE; ++i) scratchpad[i] = memory[position + i];
                 }
-                else if (getPageEpromMode(reinterpret_cast<uint8_t *>(&reg_TA)[0]))   // eprom: logical AND of memory and data, TODO: there is somehow a bug here, protection works but EPROM-Mode not (CRC-Error)
+                else if (getPageEpromMode(reinterpret_cast<uint8_t *>(&reg_TA)[0]))   // eprom: logical AND of memory and data
                 {
-                    for (uint8_t i = page_offset; i < SCRATCHPAD_SIZE; ++i) scratchpad[i] &= memory[position + i];
+                    for (uint8_t i = page_offset; i <= reg_ES; ++i) scratchpad[i] &= memory[position + i];
                 };
             };
             break;
@@ -64,8 +68,8 @@ void DS2431::duty(OneWireHub * const hub)
             if (hub->send(&reg_ES,1,crc)) return;
 
             {   // send Scratchpad content
-                const uint8_t start  = reinterpret_cast<uint8_t *>(&reg_TA)[0] & uint8_t(0x03);
-                const uint8_t length = (reg_ES & uint8_t(0x03))+ uint8_t(1) - start;
+                const uint8_t start  = uint8_t(reg_TA) & SCRATCHPAD_MASK;
+                const uint8_t length = (reg_ES & SCRATCHPAD_MASK)+ uint8_t(1) - start;
                 if (hub->send(&scratchpad[start],length,crc))   return;
             }
 
@@ -81,27 +85,30 @@ void DS2431::duty(OneWireHub * const hub)
             if (hub->recv(&data))                                  return;
             if (data != reg_ES)                                    return; // Auth code must match
 
-            if (reg_ES & 0b00100000)    return; // writing failed before
+            if (getPageProtection(uint8_t(reg_TA)))                break; // stop if page is protected (WriteMemory also checks this)
+            if (reg_ES & REG_ES_PF_MASK)                           break; // stop if error occured earlier
+
+            reg_ES |= REG_ES_AA_MASK; // compare was successful
 
             reg_TA &= ~uint16_t(SCRATCHPAD_MASK);
 
-            // Write Scratchpad
+            // Write Scratchpad to memory, writing takes about 10ms
             writeMemory(scratchpad, SCRATCHPAD_SIZE, reinterpret_cast<uint8_t *>(&reg_TA)[0]); // checks if copy protected
 
-            // set the auth code uppermost bit, AA
-            reg_ES |= 0b10000000;
-            delayMicroseconds(10000); // writing takes so long
-
-            do      hub->sendBit(true); // send passive 1s
-            while   (hub->clearError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH); // wait for timeslots
+            do
+            {
+                hub->clearError();
+                hub->sendBit(true); // send passive 1s
+            }
+            while   (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH); // wait for timeslots
 
             while (!hub->send(&ALTERNATING_10)); //  alternating 1 & 0 after copy is complete
             break;
 
         case 0xF0:      // READ MEMORY COMMAND
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2))  return;
-            if (reg_TA >= sizeof(memory)) return;
-            if (hub->send(&memory[reg_TA],sizeof(memory) - reg_TA,crc)) return;
+            if (reg_TA >= MEM_SIZE) return;
+            if (hub->send(&memory[reg_TA],MEM_SIZE - uint8_t(reg_TA),crc)) return;
             break; // send 1s when read is complete, is passive, so do nothing here
 
         default:
@@ -112,6 +119,11 @@ void DS2431::duty(OneWireHub * const hub)
 void DS2431::clearMemory(void)
 {
     memset(memory, static_cast<uint8_t>(0x00), sizeof(memory));
+};
+
+void DS2431::clearScratchpad(void)
+{
+    memset(scratchpad, static_cast<uint8_t>(0x00), SCRATCHPAD_SIZE);
 };
 
 bool DS2431::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position)

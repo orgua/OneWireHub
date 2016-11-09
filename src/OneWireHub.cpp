@@ -515,7 +515,7 @@ bool OneWireHub::recvAndProcessCmd(void)
     };
 
     if (_error == Error::RESET_IN_PROGRESS) return false;
-    else                                    return (getError());
+    else                                    return (_error != Error::NO_ERROR);
 };
 
 
@@ -579,6 +579,7 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
         {
             if (sendBit(static_cast<bool>(bitMask & dataByte)))
             {
+                if ((bitMask == 0x01) && (_error == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH)) _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
                 interrupts();
                 return true;
             }
@@ -608,6 +609,7 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length, uint16
         {
             if (sendBit(static_cast<bool>(0x01 & dataByte)))
             {
+                if ((counter == 0) && (_error ==Error::AWAIT_TIMESLOT_TIMEOUT_HIGH)) _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
                 interrupts();
                 return true;
             };
@@ -632,7 +634,7 @@ bool OneWireHub::send(const uint8_t dataByte)
     return send(&dataByte,1);
 };
 
-
+//
 bool OneWireHub::recvBit(void)
 {
     noInterrupts();
@@ -678,7 +680,12 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
         for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
         {
             if (recvBit())                 value |= bitMask;
-            if (_error != Error::NO_ERROR) return true;
+            if (_error != Error::NO_ERROR)
+            {
+                if ((bitMask == 0x01) && (_error ==Error::AWAIT_TIMESLOT_TIMEOUT_HIGH)) _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
+                interrupts();
+                return true;
+            };
         };
 
         address[bytes_received] = value;
@@ -716,7 +723,12 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length, uint16_t &cr
             }
             else mix = 0;
 
-            if (_error != Error::NO_ERROR) return 1;
+            if (_error != Error::NO_ERROR)
+            {
+                if ((bitMask == 0x01) && (_error ==Error::AWAIT_TIMESLOT_TIMEOUT_HIGH)) _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
+                interrupts();
+                return true;
+            };
 
             mix ^= static_cast<uint8_t>(crc16) & static_cast<uint8_t>(0x01);
             crc16 >>= 1;
@@ -904,9 +916,9 @@ void OneWireHub::printError(void) const
     };
 };
 
-bool OneWireHub::getError(void) const
+Error OneWireHub::getError(void) const
 {
-    return (_error != Error::NO_ERROR);
+    return (_error);
 };
 
 void OneWireHub::raiseSlaveError(const uint8_t cmd)

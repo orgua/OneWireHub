@@ -4,6 +4,7 @@ DS2433::DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 {
     static_assert(sizeof(memory) < 65535,  "Implementation does not cover the whole address-space");
     clearMemory();
+    clearScratchpad();
 };
 
 void DS2433::duty(OneWireHub * const hub)
@@ -13,7 +14,7 @@ void DS2433::duty(OneWireHub * const hub)
     static uint16_t reg_TA; // contains TA1, TA2 (Target Address)
     static uint8_t  reg_ES = 31;  // E/S register
 
-    uint8_t  length, data, cmd = 0;
+    uint8_t  data, cmd;
     uint16_t crc = 0;
 
     if (hub->recv(&cmd,1,crc))  return;
@@ -22,42 +23,65 @@ void DS2433::duty(OneWireHub * const hub)
     {
         case 0x0F:      // WRITE SCRATCHPAD COMMAND
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) return;
-            reinterpret_cast<uint8_t *>(&reg_TA)[1] &= uint8_t(0b1); // make sure to stay in boundary // TODO: should be masked, also regTA
-            reg_ES = reinterpret_cast<uint8_t *>(&reg_TA)[0] & PAGE_MASK; // register-offset
+            reg_TA &= MEM_MASK; // make sure to stay in boundary
+            reg_ES = uint8_t(reg_TA) & PAGE_MASK; // register-offset
 
-            length = static_cast<uint8_t>(PAGE_SIZE-reg_ES);
-            if (hub->recv(&memory[reg_TA],length,crc)) return; // TODO: should iterate like done in ds2431
+            // receive up to 8 bytes of data
+            for (; reg_ES < PAGE_SIZE; ++reg_ES)
+            {
+                if (hub->recv(&scratchpad[reg_ES], 1, crc))
+                {
+                    if (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH) reg_ES |= REG_ES_PF_MASK;
+                    break;
+                }
+            };
+            reg_ES--;
+            reg_ES &= PAGE_MASK;
 
-            reg_ES = 0b00011111;
-
-            crc = ~crc; // normally crc16 is sent ~inverted
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2))  return;
+            if (hub->getError() == Error::NO_ERROR)  // try to send crc if wanted
+            {
+                crc = ~crc; // normally crc16 is sent ~inverted
+                hub->send(reinterpret_cast<uint8_t *>(&crc), 2);
+            };
             break;
 
         case 0x55:      // COPY SCRATCHPAD
             if (hub->recv(&data)) return; // TA1
-            //if (data != reinterpret_cast<uint8_t *>(&reg_TA)[0]) return; // TODO: should be activated
+            if (data != reinterpret_cast<uint8_t *>(&reg_TA)[0]) return;
             if (hub->recv(&data)) return;  // TA2
-            //if (data != reinterpret_cast<uint8_t *>(&reg_TA)[1]) return;
+            if (data != reinterpret_cast<uint8_t *>(&reg_TA)[1]) return;
             if (hub->recv(&data)) return;  // ES
-            //if (data != reg_ES) return;
+            if (data != reg_ES) return;
 
-            reg_ES |= 0b10000000;
+            if (reg_ES & REG_ES_PF_MASK)                           break; // stop if error occured earlier
 
-            delayMicroseconds(5000); // simulate writing
+            reg_ES |= REG_ES_AA_MASK; // compare was successful
 
-            do      hub->sendBit(true); // send passive 1s
-            while   (hub->clearError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH); // wait for timeslots
+            {    // Write Scratchpad to memory, writing takes about 5ms
+                const uint8_t start  = uint8_t(reg_TA) & PAGE_MASK;
+                const uint8_t length = (reg_ES & PAGE_MASK)+ uint8_t(1) - start;
+                writeMemory(&scratchpad[start], length, reg_TA);
+            }
+
+            do
+            {
+                hub->clearError();
+                hub->sendBit(true); // send passive 1s
+            }
+            while   (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH); // wait for timeslots
 
             while (!hub->send(&ALTERNATE_01)); // send alternating 1 & 0 after copy is complete
             break;
 
         case 0xAA:      // READ SCRATCHPAD COMMAND
-            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2))  return; // Adr1
-            if (hub->send(&reg_ES)) return; // ES
+            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2))  return;
+            if (hub->send(&reg_ES,1)) return;
 
-            // TODO: maybe implement a real scratchpad, would need 32byte extra ram, done in ds2423
-            if (hub->send(&memory[(reg_TA & ~uint16_t(PAGE_MASK))],PAGE_SIZE)) return; // data
+            {   // send Scratchpad content
+                const uint8_t start  = uint8_t(reg_TA) & PAGE_MASK;
+                const uint8_t length = PAGE_SIZE - start;
+                if (hub->send(&scratchpad[start],length))   return;
+            }
             return; // datasheed says we should send all 1s, till reset (1s are passive... so nothing to do here)
 
         case 0xF0:      // READ MEMORY
@@ -77,6 +101,11 @@ void DS2433::duty(OneWireHub * const hub)
 void DS2433::clearMemory(void)
 {
     memset(memory, static_cast<uint8_t>(0x00), MEM_SIZE);
+};
+
+void DS2433::clearScratchpad(void)
+{
+    memset(scratchpad, static_cast<uint8_t>(0x00), PAGE_SIZE);
 };
 
 bool DS2433::writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position)
