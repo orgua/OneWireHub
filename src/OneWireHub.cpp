@@ -540,7 +540,7 @@ bool OneWireHub::sendBit(const bool value)
     while ((DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
     if (!retries)
     {
-        _error = Error::READ_TIMESLOT_TIMEOUT_HIGH; // TODO: rename AWAIT TIMESLOT
+        _error = Error::AWAIT_TIMESLOT_TIMEOUT_HIGH;
         interrupts();
         return true;
     };
@@ -556,7 +556,7 @@ bool OneWireHub::sendBit(const bool value)
         retries = ONEWIRE_TIME_READ_MAX[od_mode];
     }
 
-    while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
+    while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries)); // TODO: we should check for (!retries) because there could be a reset in progress...
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     return false;
@@ -651,7 +651,7 @@ bool OneWireHub::recvBit(void)
     while ((DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
     if (!retries)
     {
-        _error = Error::READ_TIMESLOT_TIMEOUT_HIGH;
+        _error = Error::AWAIT_TIMESLOT_TIMEOUT_HIGH;
         interrupts();
         return true;
     };
@@ -884,7 +884,7 @@ void OneWireHub::printError(void) const
         else if (_error == Error::VERY_SHORT_RESET) Serial.print("very short reset");
         else if (_error == Error::PRESENCE_LOW_ON_LINE) Serial.print("presence low on line");
         else if (_error == Error::READ_TIMESLOT_TIMEOUT_LOW) Serial.print("read timeout low");
-        else if (_error == Error::READ_TIMESLOT_TIMEOUT_HIGH) Serial.print("read timeout high");
+        else if (_error == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH) Serial.print("await timeout high");
         else if (_error == Error::PRESENCE_HIGH_ON_LINE) Serial.print("presence high on line");
         else if (_error == Error::INCORRECT_ONEWIRE_CMD) Serial.print("incorrect onewire command");
         else if (_error == Error::INCORRECT_SLAVE_USAGE) Serial.print("slave was used in incorrect way");
