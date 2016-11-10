@@ -3,117 +3,105 @@
 DS2450::DS2450(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) :
         OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    constexpr uint32_t mem_size = PAGE_COUNT*PAGE_SIZE;
-    static_assert(mem_size < 256,  "Implementation does not cover the whole address-space");
-    memset(&memory[0], static_cast<uint8_t>(0), mem_size);
-    if (mem_size > 0x1C) memory[0x1C] = 0x40;
+    static_assert((PAGE_COUNT*PAGE_SIZE) < 256,  "Implementation does not cover the whole address-space");
+    clearMemory();
 };
 
-bool DS2450::duty(OneWireHub *hub)
+void DS2450::duty(OneWireHub * const hub)
 {
-    uint16_t memory_address;
-    //uint16_t memory_address_start; // needed when fully implemented
-    uint8_t  b;
-    uint16_t crc = 0;
+    uint16_t reg_TA, crc = 0; // target address
+    uint8_t  data, cmd, length;
 
-    uint8_t cmd = hub->recv();
-    if (hub->getError())  return false;
+    if (hub->recv(&cmd,1,crc))  return;
 
     switch (cmd)
     {
         case 0xAA: // READ MEMORY
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) return;
 
-            crc = crc16(0xAA, crc); // Cmd
-
-            b = hub->recv(); // Adr1
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
-            crc = crc16(b, crc);
-
-            b = hub->recv(); // Adr2
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
-            crc = crc16(b, crc);
-
-            //memory_address_start = memory_address;
-            if (memory_address > (PAGE_COUNT-1)*PAGE_SIZE) memory_address = 0; // prevent read out of bounds
-
-            for (uint8_t i = 0; i < PAGE_SIZE; ++i)
+            while(reg_TA < MEM_SIZE)
             {
-                b = memory[memory_address + i];
-                hub->send(b);
-                if (hub->getError()) // possibility to break loop if send fails
-                {
-                    hub->clearError();
-                    break;
-                }
-                crc = crc16(b, crc);
+                length = PAGE_SIZE - (reinterpret_cast<uint8_t *>(&reg_TA)[0] & PAGE_MASK);
+                if (hub->send(&memory[reg_TA], length, crc)) return;
+
+                crc = ~crc; // normally crc16 is sent ~inverted
+                if (hub->send(reinterpret_cast<uint8_t *>(&crc), 2)) return;
+
+                // prepare next page-readout
+                reg_TA = (reg_TA & ~PAGE_MASK) + PAGE_SIZE;
+                crc = 0;
             };
-
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
-            if (hub->getError())  return false;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-            if (hub->getError())  return false;
-            // TODO: not fully implemented
-
             break;
 
         case 0x55: // write memory (only page 1&2 allowed)
-            crc = crc16(0x55, crc); // Cmd
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) break;
+            if (reg_TA < PAGE_SIZE)             break; // page 0 is off limits
 
-            b = hub->recv(); // Adr1
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&memory_address)[0] = b;
-            crc = crc16(b, crc);
-
-            b = hub->recv(); // Adr2
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&memory_address)[1] = b;
-            crc = crc16(b, crc);
-
-            //memory_address_start = memory_address;
-            if (memory_address > (PAGE_COUNT-1)*PAGE_SIZE) memory_address = 0; // prevent read out of bounds
-
-            for (uint8_t i = 0; i < PAGE_SIZE; ++i)
+            while(reg_TA < MEM_SIZE)
             {
-                memory[memory_address + i] = hub->recv();
-                if (hub->getError()) // possibility to break loop if recv fails
-                {
-                    hub->clearError();
-                    break;
-                }
-                crc = crc16(memory[memory_address + i], crc);
+                if (hub->recv(&data, 1, crc))   break;
+
+                crc = ~crc; // normally crc16 is sent ~inverted
+                if (hub->send(reinterpret_cast<uint8_t *>(&crc), 2)) break;
+
+                if (hub->send(&data, 1))        break;
+                memory[reg_TA] = data; // write data
+
+                crc = ++reg_TA; // prepare next address-readout: load new TA into crc
             };
-
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
-            if (hub->getError())  return false;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-            if (hub->getError())  return false;
-
-            // TODO: write back data if wanted, till the end of register
+            correctMemory();
             break;
 
         case 0x3C: // convert, starts adc
-            crc = crc16(0x3C, crc); // Cmd
-            crc = crc16(hub->recv(), crc); // input select mask, not important
-            if (hub->getError())  return false;
-            b = hub->recv(); // read out control byte
-            if (hub->getError())  return false;
-            crc = crc16(b, crc);
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[0]);
-            if (hub->getError())  return false;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-            if (hub->getError())  return false;
-            hub->sendBit(0); // still converting....
-            if (hub->getError())  return false;
-            hub->sendBit(1); // finished conversion
-            break;
+            if (hub->recv(reinterpret_cast<uint8_t *>(&cmd),1,crc)) return; // input select mask, not important
+            if (hub->recv(reinterpret_cast<uint8_t *>(&data),1,crc)) return; // read out control byte
+
+            // in reality master can now set registers of potentiometers to 0x0000 or 0xFFFF to track changes
+
+            crc = ~crc; // normally crc16 is sent ~inverted
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
+
+            // takes max 5.3 ms for 16 bit ( 4 CH * 16 bit * 80 us + 160 us per request = 5.3 ms )
+            if (hub->sendBit(false)) return; // still converting....
+            break; // finished conversion: send 1, is passive ...
 
         default:
             hub->raiseSlaveError(cmd);
     };
+};
 
-    return !(hub->getError());
+void DS2450::clearMemory(void)
+{
+    memset(memory, static_cast<uint8_t>(0), MEM_SIZE);
+
+    // set power on defaults
+    for (uint8_t adc = 0; adc < POTI_COUNT; ++adc)
+    {
+        // CONTROL/STATUS DATA
+        memory[(1*PAGE_SIZE) + (adc*2) + 0] = 0x08;
+        memory[(1*PAGE_SIZE) + (adc*2) + 1] = 0x8C;
+        // alarm settings
+        memory[(2*PAGE_SIZE) + (adc*2) + 1] = 0xFF;
+    };
+};
+
+void DS2450::correctMemory(void)
+{
+    for (uint8_t adc = 0; adc < POTI_COUNT; ++adc)
+    {
+        //// control / status data
+        /// byte 0,2,4,6
+        // bit 0:3 -> RC3 sets resolution of the ADCs. 1to15bits and 0 for 16 bits. MSB aligned
+        memory[(1*PAGE_SIZE) + (adc*2)] &= 0b11001111; // bit 4:5 must be always zero
+        // bit 6 -> output control: set 0 for enablesd transistors
+        // bit 7 -> output enable: set 0 for ADC,
+        /// byte 1,3,5,7
+        // bit 0 -> IR sets input voltage: 0 for 2.55 V, 1 for 5.1 V
+        memory[(1*PAGE_SIZE) + (adc*2) + 1] &= 0b10111101; // bit 1&6 -> always zero
+        // bit 2:3 -> enable alarm search low, high
+        // bit 4:5 -> alarm flag for low, high
+        // bit 7 -> power on reset, must be written 0 by master
+    };
 };
 
 bool DS2450::setPotentiometer(const uint16_t p1, const uint16_t p2, const uint16_t p3, const uint16_t p4)
@@ -125,12 +113,24 @@ bool DS2450::setPotentiometer(const uint16_t p1, const uint16_t p2, const uint16
     return true;
 };
 
-bool DS2450::setPotentiometer(const uint8_t number, const uint16_t value)
+bool DS2450::setPotentiometer(const uint8_t channel, const uint16_t value)
 {
-    if (number > 3) return 1;
+    if (channel >= POTI_COUNT) return false;
     uint8_t LByte = static_cast<uint8_t>(value>>0) & static_cast<uint8_t>(0xFF);
     uint8_t HByte = static_cast<uint8_t>(value>>8) & static_cast<uint8_t>(0xFF);
-    memory[2*number+0] = LByte;
-    memory[2*number+1] = HByte;
+    memory[(2*channel)  ] = LByte;
+    memory[(2*channel)+1] = HByte;
+    correctMemory();
     return true;
 };
+
+uint16_t DS2450::getPotentiometer(const uint8_t channel) const
+{
+    if (channel >= POTI_COUNT) return 0;
+    uint16_t value;
+    value  = memory[(2*channel)+1]<<8;
+    value |= memory[(2*channel)  ];
+    return value;
+}
+
+

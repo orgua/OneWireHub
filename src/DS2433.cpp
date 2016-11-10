@@ -4,173 +4,122 @@ DS2433::DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 {
     static_assert(sizeof(memory) < 65535,  "Implementation does not cover the whole address-space");
     clearMemory();
+    clearScratchpad();
 };
 
-bool DS2433::duty(OneWireHub *hub)
+void DS2433::duty(OneWireHub * const hub)
 {
-    static uint16_t reg_TA; // contains TA1, TA2
+    constexpr uint8_t ALTERNATE_01 = 0b10101010;
+
+    static uint16_t reg_TA; // contains TA1, TA2 (Target Address)
     static uint8_t  reg_ES = 31;  // E/S register
 
-    uint8_t  mem_counter = 0; // offer feedback with PF-bit
+    uint8_t  data, cmd;
     uint16_t crc = 0;
-    uint8_t  b;
 
-    uint8_t cmd = hub->recv();
-    if (hub->getError())  return false;
+    if (hub->recv(&cmd,1,crc))  return;
 
     switch (cmd)
     {
-        // WRITE SCRATCHPAD COMMAND
-        case 0x0F:
-            crc = crc16(0x0F,0);
-            // Adr1
-            b = hub->recv();
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
-            reg_ES = b & uint8_t(0b00011111); // register-offset
-            crc = crc16(b,crc);
+        case 0x0F:      // WRITE SCRATCHPAD COMMAND
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) return;
+            reg_TA &= MEM_MASK; // make sure to stay in boundary
+            reg_ES = uint8_t(reg_TA) & PAGE_MASK; // register-offset
 
-            // Adr2
-            b = hub->recv();
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[1] = b & uint8_t(0b1);
-            crc = crc16(b,crc);
-
-            for (uint8_t i = 0; i < static_cast<uint8_t>(32-reg_ES); ++i) // model of the 32byte scratchpad, directly to memory
+            // receive up to 8 bytes of data
+            for (; reg_ES < PAGE_SIZE; ++reg_ES)
             {
-                b = hub->recv();
-                if (hub->getError())
+                if (hub->recv(&scratchpad[reg_ES], 1, crc))
                 {
-                    // set the PF-Flag if error occured in the middle of the byte
-                    if (hub->clearError() != Error::FIRST_BIT_OF_BYTE_TIMEOUT) reg_ES |= 0b00100000;
+                    if (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH) reg_ES |= REG_ES_PF_MASK;
                     break;
-                };
-                memory[reg_TA + i] = b;
-                crc = crc16(b,crc);
-                mem_counter++;
+                }
             };
-            if ((reg_ES + mem_counter) > 31) mem_counter = uint8_t(31) - reg_ES;
-            reg_ES += mem_counter; // store current pointer
+            reg_ES--;
+            reg_ES &= PAGE_MASK;
 
-            if (reg_ES != 0b00011111) break;
-
-            crc = ~crc; // normally crc16 is sent ~inverted
-            hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0]));
-            if (hub->getError())  return false;
-            hub->send(reinterpret_cast<uint8_t *>(&crc)[1]);
-
+            if (hub->getError() == Error::NO_ERROR)  // try to send crc if wanted
+            {
+                crc = ~crc; // normally crc16 is sent ~inverted
+                hub->send(reinterpret_cast<uint8_t *>(&crc), 2);
+            };
             break;
 
-            // COPY SCRATCHPAD
-        case 0x55:
-            b = hub->recv(); // TA1
-            if (hub->getError())  return false;
-            //if (b != reinterpret_cast<uint8_t *>(&reg_TA)[0]) break;
+        case 0x55:      // COPY SCRATCHPAD
+            if (hub->recv(&data)) return; // TA1
+            if (data != reinterpret_cast<uint8_t *>(&reg_TA)[0]) return;
+            if (hub->recv(&data)) return;  // TA2
+            if (data != reinterpret_cast<uint8_t *>(&reg_TA)[1]) return;
+            if (hub->recv(&data)) return;  // ES
+            if (data != reg_ES) return;
 
-            b = hub->recv(); // TA2
-            if (hub->getError())  return false;
-            //if (b != reinterpret_cast<uint8_t *>(&reg_TA)[1]) break;
+            if (reg_ES & REG_ES_PF_MASK)                           break; // stop if error occured earlier
 
-            b = hub->recv(); // ES
-            if (hub->getError())  return false;
-            //if (b != reg_ES) break;
+            reg_ES |= REG_ES_AA_MASK; // compare was successful
 
-            reg_ES |= 0b10000000;
+            {    // Write Scratchpad to memory, writing takes about 5ms
+                const uint8_t start  = uint8_t(reg_TA) & PAGE_MASK;
+                const uint8_t length = (reg_ES & PAGE_MASK)+ uint8_t(1) - start;
+                writeMemory(&scratchpad[start], length, reg_TA);
+            }
 
-            delayMicroseconds(5000); // simulate writing
-            hub->extendTimeslot();
-            hub->sendBit(1);
-            hub->clearError();
-            hub->extendTimeslot();
-            while (1) // send alternating 1 & 0 after copy is complete
+            do
             {
-                hub->send(0b10101010);
-                if (hub->getError()) break;
-            };
+                hub->clearError();
+                hub->sendBit(true); // send passive 1s
+            }
+            while   (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH); // wait for timeslots
 
+            while (!hub->send(&ALTERNATE_01)); // send alternating 1 & 0 after copy is complete
             break;
 
-            // READ SCRATCHPAD COMMAND
-        case 0xAA:
-            // Adr1
-            hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[0]);
-            if (hub->getError())  return false;
+        case 0xAA:      // READ SCRATCHPAD COMMAND
+            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2))  return;
+            if (hub->send(&reg_ES,1)) return;
 
-            // Adr2
-            hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[1]);
-            if (hub->getError())  return false;
+            {   // send Scratchpad content
+                const uint8_t start  = uint8_t(reg_TA) & PAGE_MASK;
+                const uint8_t length = PAGE_SIZE - start;
+                if (hub->send(&scratchpad[start],length))   return;
+            }
+            return; // datasheed says we should send all 1s, till reset (1s are passive... so nothing to do here)
 
-            // ES
-            hub->send(reg_ES);
-            if (hub->getError())  return false;
+        case 0xF0:      // READ MEMORY
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2)) return;
 
-            hub->extendTimeslot();
-            // TODO: maybe implement a real scratchpad, would need 32byte extra ram
-
-            // data
-            for (uint8_t i = 0; i < 32; ++i) // model of the 32byte scratchpad, always aligned with blocks
+            for (uint16_t i = reg_TA; i < MEM_SIZE; i+=PAGE_SIZE) // model of the 32byte scratchpad
             {
-                const uint16_t mem_start = (reg_TA & ~uint16_t(0b00011111));
-                hub->send(memory[mem_start + i]);
-                if (hub->getError()) break;
+                if (hub->send(&memory[i],PAGE_SIZE)) return;
             };
-
-            if (hub->getError()) break;
-
-            // datasheed says we should return all 1s, send(255), till reset
-            while (1)
-            {
-                hub->send(255);
-                if (hub->getError()) break;
-            };
-
-            break;
-
-            // READ MEMORY
-        case 0xF0:
-            // Adr1
-            b = hub->recv();
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
-
-            // Adr2
-            b = hub->recv();
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
-
-            // data
-            for (uint16_t i = reg_TA; i < 512; ++i) // model of the 32byte scratchpad
-            {
-                hub->send(memory[i]);
-                if (hub->getError()) break;
-            };
-
-            if (hub->getError()) break;
-
-            // datasheed says we should return all 1s, send(255), till reset
-            while (1)
-            {
-                hub->send(255);
-                if (hub->getError()) break;
-            };
-            break;
+            return; // datasheed says we should send all 1s, till reset (1s are passive... so nothing to do here)
 
         default:
             hub->raiseSlaveError(cmd);
     };
-    return !(hub->getError());
 };
 
 void DS2433::clearMemory(void)
 {
-    memset(&memory[0], static_cast<uint8_t>(0x00), sizeof(memory));
+    memset(memory, static_cast<uint8_t>(0x00), MEM_SIZE);
 };
 
-bool DS2433::writeMemory(const uint8_t* source, const uint16_t length, const uint16_t position)
+void DS2433::clearScratchpad(void)
 {
-    for (uint16_t i = 0; i < length; ++i) {
-        if ((position + i) >= sizeof(memory)) return false;
-        memory[position + i] = source[i];
-    };
+    memset(scratchpad, static_cast<uint8_t>(0x00), PAGE_SIZE);
+};
+
+bool DS2433::writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position)
+{
+    if (position >= MEM_SIZE) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    memcpy(&memory[position],source,_length);
     return true;
+};
+
+bool DS2433::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const
+{
+    if (position >= MEM_SIZE) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    memcpy(destination,&memory[position],_length);
+    return (_length==length);
 };

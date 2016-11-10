@@ -4,22 +4,22 @@
 #if defined(ARDUINO) && ARDUINO >= 100
 #include <Arduino.h>
 #endif
+
 #include "platform.h" // code for compatibility
 
-/////////////////////////////////////////////////////
-// CONFIG ///////////////////////////////////////////
-/////////////////////////////////////////////////////
+using     timeOW_t = uint32_t;
 
-// INFO: had to go with a define because some compilers use constexpr as simple const --> massive problems
-#define HUB_SLAVE_LIMIT 8 // set the limit of the hub HERE
+constexpr uint32_t operator "" _us(const unsigned long long int time_us) // user defined literal used in config
+{
+    return uint32_t(time_us * microsecondsToClockCycles(1) / VALUE_IPL); // note: microsecondsToClockCycles == speed in MHz....
+};
 
-#define USE_SERIAL_DEBUG    0 // give debug messages when printError() is called
-#define USE_GPIO_DEBUG      0
-#define GPIO_DEBUG_PIN      4 // digital pin
+constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
+{
+    return (time_us * microsecondsToClockCycles(1) / VALUE_IPL); // note: microsecondsToClockCycles == speed in MHz....
+};
 
-/////////////////////////////////////////////////////
-// END OF CONFIG ////////////////////////////////////
-/////////////////////////////////////////////////////
+#include "OneWireHub_config.h" // outsource configfile
 
 #ifndef HUB_SLAVE_LIMIT
 #error "Slavelimit not defined (why?)"
@@ -35,7 +35,8 @@ using mask_t = uint8_t;
 #error "Slavelimit is set to zero (why?)"
 #endif
 
-using timeOW_t = uint32_t;
+constexpr timeOW_t VALUE1k      {1000}; // commonly used constant
+constexpr timeOW_t TIMEOW_MAX   {4294967295};   // arduino does not support std-lib...
 
 enum class Error : uint8_t {
     NO_ERROR                   = 0,
@@ -46,13 +47,14 @@ enum class Error : uint8_t {
     VERY_SHORT_RESET           = 5,
     PRESENCE_LOW_ON_LINE       = 6,
     READ_TIMESLOT_TIMEOUT_LOW  = 7,
-    READ_TIMESLOT_TIMEOUT_HIGH = 8,
+    AWAIT_TIMESLOT_TIMEOUT_HIGH = 8,
     PRESENCE_HIGH_ON_LINE      = 9,
     INCORRECT_ONEWIRE_CMD      = 10,
     INCORRECT_SLAVE_USAGE      = 11,
     TRIED_INCORRECT_WRITE      = 12,
     FIRST_TIMESLOT_TIMEOUT     = 13,
-    FIRST_BIT_OF_BYTE_TIMEOUT  = 14
+    FIRST_BIT_OF_BYTE_TIMEOUT  = 14,
+    RESET_IN_PROGRESS          = 15
 };
 
 
@@ -63,38 +65,24 @@ class OneWireHub
 private:
 
     static constexpr uint8_t ONEWIRESLAVE_LIMIT                 = HUB_SLAVE_LIMIT;
-    static constexpr uint8_t ONEWIRE_TREE_SIZE                  = 2*ONEWIRESLAVE_LIMIT - 1;
+    static constexpr uint8_t ONEWIRE_TREE_SIZE                  = ( 2 * ONEWIRESLAVE_LIMIT ) - 1;
 
-
-    /// the following TIME-values are in microseconds and are taken from the ds2408 datasheet
-    // should be --> datasheet
-    // was       --> shagrat-legacy
-    static constexpr uint16_t ONEWIRE_TIME_BUS_CHANGE_MAX       =    5; //
-
-    static constexpr uint16_t ONEWIRE_TIME_RESET_MIN            =  430; // should be 480, and was 470
-    static constexpr uint16_t ONEWIRE_TIME_RESET_MAX            =  960; // from ds2413
-
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_SAMPLE_MIN  =   20; // probe measures 40us
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_STD     =  160; // was 125
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_LOW_MAX     =  480; // should be 280, was 480 !!!! why
-    static constexpr uint16_t ONEWIRE_TIME_PRESENCE_HIGH_MAX    =20000; // TODO: length of high-side not really relevant, so we should switch to a fn that detects the length of the most recent low-phase
-
-    static constexpr uint16_t ONEWIRE_TIME_SLOT_MAX             =  135; // should be 120, was ~1050
-
-    // read and write from the viewpoint of the slave!!!!
-    static constexpr uint16_t ONEWIRE_TIME_READ_ONE_LOW_MAX     =   60; //
-    static constexpr uint16_t ONEWIRE_TIME_READ_STD             =   20; // was 30
-    static constexpr uint16_t ONEWIRE_TIME_WRITE_ZERO_LOW_STD   =   30; //
+#if OVERDRIVE_ENABLE
+    bool od_mode;
+#else
+    static constexpr bool od_mode = false;
+#endif
 
     Error   _error;
     uint8_t _error_cmd;
 
     io_reg_t          pin_bitMask;
     volatile io_reg_t *pin_baseReg;
-    uint8_t           extend_timeslot_detection;
-    uint8_t           skip_reset_detection;
 
-    bool              overdrive_mode;
+#if 1 //USE_GPIO_DEBUG
+    io_reg_t          debug_bitMask;
+    volatile io_reg_t *debug_baseReg;
+#endif
 
     uint8_t      slave_count;
     OneWireItem *slave_list[ONEWIRESLAVE_LIMIT];  // private slave-list (use attach/detach)
@@ -109,60 +97,55 @@ private:
 
     uint8_t buildIDTree(void);
     uint8_t buildIDTree(uint8_t position_IDBit, const mask_t slave_mask);
+    void    searchIDTree(void);
 
-    uint8_t getNrOfFirstBitSet(const mask_t mask);
-    uint8_t getNrOfFirstFreeIDTreeElement(void);
+    uint8_t getNrOfFirstBitSet(const mask_t mask) const;
+    uint8_t getNrOfFirstFreeIDTreeElement(void) const;
 
-    bool checkReset(uint16_t timeout_us);
+    bool checkReset(void);      // returns 1 if error occured
+    bool showPresence(void);    // returns 1 if error occured
+    bool recvAndProcessCmd();   // returns 1 if error occured
 
-    bool showPresence(void);
+    void wait(const timeOW_t loops_wait) const;
+    void wait(const uint16_t timeout_us) const;
 
-    bool search(void);
-
-    bool recvAndProcessCmd();
-
-    __attribute__((always_inline))
-    void wait(const uint16_t timeout_us);
-
-    __attribute__((always_inline))
-    bool awaitTimeSlotAndWrite(const bool writeZero = 0);
-
-    __attribute__((always_inline))
-    bool waitWhilePinIs(const bool value, const uint16_t timeout_us);
+    inline __attribute__((always_inline))
+    timeOW_t waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value = false) const;
 
 public:
 
-    explicit OneWireHub(uint8_t pin);
+    explicit OneWireHub(const uint8_t pin);
 
     uint8_t attach(OneWireItem &sensor);
     bool    detach(const OneWireItem &sensor);
     bool    detach(const uint8_t slave_number);
 
-    uint8_t getIndexOfNextSensorInList(const uint8_t index_start = 0);
+    uint8_t getIndexOfNextSensorInList(const uint8_t index_start = 0) const;
 
     bool poll(void);
 
-    void extendTimeslot(void);
-
-    bool send(const uint8_t dataByte);
-    bool send(const uint8_t address[], const uint8_t data_length);
-    bool sendBit(const bool value);
-
+    bool sendBit(const bool value);                                                 // returns 1 if error occured
+    bool send(const uint8_t dataByte);                                              // returns 1 if error occured
+    bool send(const uint8_t address[], const uint8_t data_length = 1);              // returns 1 if error occured
+    bool send(const uint8_t address[], const uint8_t data_length, uint16_t &crc16); // returns 1 if error occured
     // CRC takes ~7.4µs/byte (Atmega328P@16MHz) but is distributing the load between each bit-send to 0.9 µs/bit (see debug-crc-comparison.ino)
     // important: the final crc is expected to be inverted (crc=~crc) !!!
-    uint16_t sendAndCRC16(uint8_t dataByte, uint16_t crc16);
 
-    uint8_t recv(void);
-    bool    recv(uint8_t address[], const uint8_t data_length); // TODO: change send/recv to return bool TRUE on success, recv returns data per reference
     bool    recvBit(void);
-    uint8_t recvAndCRC16(uint16_t &crc16);
+    bool    recv(uint8_t address[], const uint8_t data_length = 1);                 // returns 1 if error occured
+    bool    recv(uint8_t address[], const uint8_t data_length, uint16_t &crc16);    // returns 1 if error occured
 
-    void printError(void);
-    bool getError(void);
-    void raiseSlaveError(const uint8_t cmd = 0);
+    timeOW_t waitLoopsCalibrate(void); // returns Instructions per loop
+    void     waitLoops1ms(void);
+    void     waitLoopsDebug(void) const;
+
+    // mostly for debug, partly for state-machine handling
+    void  printError(void) const;
+    Error getError(void) const; // returns Error
+    bool  hasError(void) const; // returns true if Error occured
+    void  raiseSlaveError(const uint8_t cmd = 0);
     Error clearError(void);
+
 };
-
-
 
 #endif

@@ -8,7 +8,7 @@ DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5
     scratchpad[2] = 0x4B; // THRE --> Trigger register TH
     scratchpad[3] = 0x46; // TLRE --> TLow
     scratchpad[4] = 0x7F; // Conf
-    // = 0 R1 R0 1 1 1 1 1 --> R=0 9bit, R=3 12bit
+    // = 0 R1 R0 1 1 1 1 1 --> R=0 9bit .... R=3 12bit
     scratchpad[5] = 0xFF; // 0xFF
     scratchpad[6] = 0x00; // Reset
     scratchpad[7] = 0x10; // 0x10
@@ -22,21 +22,16 @@ void DS18B20::updateCRC()
     scratchpad[8] = crc8(scratchpad, 8);
 };
 
-bool DS18B20::duty(OneWireHub *hub)
+void DS18B20::duty(OneWireHub * const hub)
 {
-    const uint8_t cmd = hub->recv();
-    if (hub->getError())  return false;
+    uint8_t cmd;
+    if (hub->recv(&cmd,1)) return;
 
     switch (cmd)
     {
-        case 0x44: // CONVERT T --> start a new measurement conversion
-            //hub->sendBit(1); // 1 is passive ...
-            break;
-
         case 0x4E: // WRITE SCRATCHPAD
-            // write 3 byte of data to scratchpad[1:3]
-            hub->recv(&scratchpad[2], 3);
-            if (hub->getError())  return false;
+            // write 3 byte of data to scratchpad[2:4], ds18s20 only first 2 bytes (TH, TL)
+            hub->recv(&scratchpad[2], 3); // dont return here, so crc gets updated even if write not complete
             updateCRC();
             break;
 
@@ -45,69 +40,62 @@ bool DS18B20::duty(OneWireHub *hub)
             break;
 
         case 0x48: // COPY SCRATCHPAD to EEPROM
-            // send1 if parasite power is used
-            break;
+            // todo: we could implement eprom here und below, copy scratchpad[2:4], ds18s20 only first 2 bytes (TH, TL)
+            break; // send1 if parasite power is used, is passive
 
-        case 0xB8: // RECALL E2 (EEPROM to 3byte from Scratchpad)
-            //hub->sendBit(1); // signal that OP is done // 1 is passive ...
-            break;
+        case 0xB8: // RECALL E2 (3 byte EEPROM to Scratchpad[2:4])
+            break;// signal that OP is done, 1s is passive ...
 
         case 0xB4: // READ POWER SUPPLY
-            //hub->sendBit(1); // 1: say i am external powered, 0: uses parasite power, // 1 is passive, so omit it ...
+            //hub->sendBit(0); // 1: say i am external powered, 0: uses parasite power, 1 is passive, so omit it ...
             break;
 
-            // READ TIME SLOTS, respond with 1 if conversion is done, not usable with parasite power
-
-            //  write trim2               0x63
-            //  copy trim2                0x64
-            //  read trim2                0x68
-            //  read trim1                0x93
-            //  copy trim1                0x94
-            //  write trim1               0x95
-        case 0xEC:
-            // TODO: Alarm search command, respond if flag is set
-            break;
+        case 0x44: // CONVERT T --> start a new measurement conversion
+            // we have 94 ... 750ms time here (9-12bit conversion)
+            break; // send 1s, is passive ...
 
         default:
             hub->raiseSlaveError(cmd);
     };
-
-    return !(hub->getError());
 };
 
 
-void DS18B20::setTemp(const float temperature_degC)
+void DS18B20::setTemperature(const float value_degC)
 {
-    setTempRaw(static_cast<int16_t>(temperature_degC * 16.0));
+    float value = value_degC;
+    if (value > 125) value = 125;
+    if (value < -55) value = -55;
+    setTemperatureRaw(static_cast<int16_t>(value * 16.0f));
 };
 
-void DS18B20::setTemp(const int16_t temperature_degC) // could be int8_t, [-55;+85] degC
+void DS18B20::setTemperature(const int8_t value_degC) // could be int8_t, [-55;+85] degC
 {
-    setTempRaw(temperature_degC * static_cast<int8_t>(16));
+    int8_t value = value_degC;
+    if (value > 125) value = 125;
+    if (value < -55) value = -55;
+    setTemperatureRaw(value * static_cast<int8_t>(16));
 };
 
-
-void DS18B20::setTempRaw(const int16_t value_raw)
+void DS18B20::setTemperatureRaw(const int16_t value_raw)
 {
     int16_t value = value_raw;
 
     if (ds18s20_mode)
     {
-        value /= 8;
+        value /= 8; // deg*16/8 = deg*2 ...
         if (value > 0)
         {
-            value &= 0x00FF;
+            value &= 0x00FF; // upper byte is signum (0)
         }
         else
         {
             value = -value;
-            value |= 0xFF00;
+            value |= 0xFF00; // upper byte is signum (1)
         };
     }
     else
     {
-        // normal 18b20
-        // uses always 12bit mode! also 9,10,11,12 bit possible bitPosition seems to stay the same
+        // normal 18b20, uses always 12bit mode! also 9,10,11,12 bit possible bitPosition seems to stay the same
         if (value > 0)
         {
             value &= 0x0FFF;
@@ -125,3 +113,29 @@ void DS18B20::setTempRaw(const int16_t value_raw)
 
     updateCRC();
 };
+
+int  DS18B20::getTemperature(void) const
+{
+    int16_t value = (scratchpad[1] << 8) | scratchpad[0];
+
+    if (ds18s20_mode)
+    {
+        if (scratchpad[1] & 0xF0)
+        {
+            value &= 0x00FF;
+            value  = -value;
+        }
+        value /= 2;
+    }
+    else
+    {
+        if (scratchpad[1] & 0xF0)
+        {
+            value &= 0x0FFF;
+            value  = -value;
+        }
+        value /= 16;
+    };
+
+    return value;
+}

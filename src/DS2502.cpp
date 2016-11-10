@@ -2,251 +2,220 @@
 
 DS2502::DS2502(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
-
-    if      (ID1 == 0x11)   sizeof_memory = (64 < sizeof(memory)) ? 64 : sizeof(memory); // autorecognize the ds2501 with smaller mem-size
-    else if (ID1 == 0x91)   sizeof_memory = (64 < sizeof(memory)) ? 64 : sizeof(memory); // autorecognize the ds2501 with smaller men-size
-    else                    sizeof_memory = sizeof(memory);
+    static_assert(MEM_SIZE < 256, "Implementation does not cover the whole address-space");
 
     clearMemory();
     clearStatus();
+
+    if ((ID1 == 0x11) || (ID1 == 0x91))
+    {
+        // when set to DS2501, the upper two memory pages are not accessible, always read 0xFF
+        for (uint8_t page = 2; page < PAGE_COUNT; ++page)
+        {
+            setPageUsed(page);
+            setPageProtection(page);
+            sizeof_memory = 64;
+        };
+    }
+    else
+    {
+        sizeof_memory = 128;    // must be DS2502 then
+    };
 };
 
-bool DS2502::duty(OneWireHub *hub)
+void DS2502::duty(OneWireHub * const hub)
 {
-    uint16_t reg_TA; // address
-    uint8_t  reg_address = 0;
-    uint8_t  b;
-    uint8_t  crc = 0;
+    uint8_t  reg_TA[2], cmd, data, crc = 0; // Target address, redirected address, command, data, crc
 
-    uint8_t cmd = hub->recv();
-    if (hub->getError())  return false;
+    if (hub->recv(&cmd))  return;
     crc = crc8(&cmd,1,crc);
 
-    b = hub->recv(); // Adr1
-    if (hub->getError())  return false;
-    reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
-    crc = crc8(&b,1,crc);
+    if (hub->recv(reg_TA,2))  return;
+    crc = crc8(reg_TA,2,crc);
 
-    b = hub->recv(); // Adr2
-    if (hub->getError())  return false;
-    reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
-    crc = crc8(&b,1,crc);
-    
+    if (reg_TA[1]) return; // upper byte of target adress should not contain any data
+
     switch (cmd)
     {
-        case 0xF0: // READ MEMORY
-            hub->send(crc);
-            if (hub->getError()) break;
+        case 0xF0:      // READ MEMORY
+            if (hub->send(&crc))        break;
 
             crc = 0; // reInit CRC and send data
-            for (uint16_t i = reg_TA; i < sizeof_memory; ++i)
+            for (uint8_t i = reg_TA[0]; i < sizeof_memory; ++i)
             {
-                uint8_t j = translateRedirection(i);
-                hub->send(memory[j]);
-                if (hub->getError()) break;
-                crc = crc8(&memory[j],1,crc);
+                const uint8_t reg_RA = translateRedirection(i);
+                if (hub->send(&memory[reg_RA])) return;
+                crc = crc8(&memory[reg_RA],1,crc);
             };
-            if (hub->getError()) break;
+            hub->send(&crc);
+            break; // datasheet says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
 
-            hub->send(crc);
-            if (hub->getError()) break;
+        case 0xC3:      // READ DATA (like 0xF0, but repeatedly till the end of page with following CRC)
+            if (hub->send(&crc)) break;
 
-            while (1) // datasheed says we should return all 1s, send(255), till reset
-            {
-                hub->send(255);
-                if (hub->getError()) break;
-            };
-            break;
-
-        case 0xC3: // READ DATA (like 0xF0, but repeatedly till the end of page with following CRC)
-            hub->send(crc);
-            if (hub->getError()) break;
-
-            while (reg_address < sizeof_memory)
+            while (reg_TA[0] < sizeof_memory)
             {
                 crc = 0; // reInit CRC and send data
-                reg_address = uint8_t((reg_TA & ~page_mask) + (1 << 5));
-                for (uint16_t i = reg_TA; i < reg_address; ++i)
+                const uint8_t reg_EA = (reg_TA[0] & ~PAGE_MASK) + PAGE_SIZE; // End Address
+                for (uint8_t i = reg_TA[0]; i < reg_EA; ++i)
                 {
-                    uint8_t j = translateRedirection(i);
-                    hub->send(memory[j]);
-                    if (hub->getError()) break;
-                    crc = crc8(&memory[j], 1, crc);
+                    const uint8_t reg_RA = translateRedirection(i);
+                    if (hub->send(&memory[reg_RA])) return;
+                    crc = crc8(&memory[reg_RA], 1, crc);
                 };
-                if (hub->getError()) break;
 
-                hub->send(crc);
-                if (hub->getError()) break;
-                reg_TA = reg_address;
+                if (hub->send(&crc)) break;
+                reg_TA[0] = reg_EA;
             };
+            break; // datasheet says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
 
-            while (1) // datasheed says we should return all 1s, send(255), till reset
-            {
-                hub->send(255);
-                if (hub->getError()) break;
-            };
-            break;
-
-
-        case 0xAA: // READ STATUS // TODO: nearly same code as 0xF0, but with status[] instead of memory[]
-            hub->send(crc);
-            if (hub->getError()) break;
+        case 0xAA:      // READ STATUS // TODO: nearly same code as 0xF0, but with status[] instead of memory[]
+            if (hub->send(&crc)) break;
 
             crc = 0; // reInit CRC and send data
-            for (uint16_t i = reg_TA; i < sizeof(status); ++i)
+            for (uint8_t i = reg_TA[0]; i < STATUS_SIZE; ++i)
             {
-                // TODO: redirection
-                hub->send(status[i]);
-                if (hub->getError()) break;
+                if (hub->send(&status[i])) return;
                 crc = crc8(&status[i],1,crc);
             };
-            if (hub->getError()) break;
+            hub->send(&crc);
+            break; // datasheet says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
 
-            hub->send(crc);
-            if (hub->getError()) break;
-
-            while (1) // datasheed says we should return all 1s, send(255), till reset
+        case 0x0F:      // WRITE MEMORY
+            while (reg_TA[0] < sizeof_memory)
             {
-                hub->send(255);
-                if (hub->getError()) break;
-            };
-            break;
+                if (hub->recv(&data))       break;
+                crc = crc8(&data,1,crc);
 
-        case 0x0F: // WRITE MEMORY
-            if (reg_TA > sizeof_memory) return false; // check for valid address
+                if (hub->send(&crc))        break;
 
-            b = hub->recv(); // data
-            if (hub->getError())  return false;
-            crc = crc8(&b,1,crc);
+                const uint8_t reg_RA = translateRedirection(reg_TA[0]);
 
-            hub->send(crc);
-            if (hub->getError())  return false;
-            hub->extendTimeslot();
-
-            if (checkProtection(reg_TA)) return false;
-
-            reg_address = translateRedirection(reg_TA);
-            memory[reg_address] &= b; // like EPROM-Mode
-
-            hub->send(memory[reg_address]);
-            if (hub->getError())  return false;
-
-            reg_TA++;
-            while (reg_TA < sizeof_memory)
-            {
-                b = hub->recv(); // data
-                if (hub->getError())  return false;
-                crc = crc8(&b,1,reinterpret_cast<uint8_t *>(&reg_TA)[0]);
-
-                hub->send(crc);
-                if (hub->getError())  return false;
-                hub->extendTimeslot();
-
-                reg_address = translateRedirection(reg_TA);
-                if (!checkProtection(reg_address))
+                if (getPageProtection(reg_TA[0]))
                 {
-                    memory[reg_address] &= b; // like EPROM-Mode
-
-                    hub->send(memory[reg_address]);
-                    if (hub->getError()) return false;
+                    const uint8_t mem_zero = 0x00; // send dummy data
+                    if (hub->send(&mem_zero)) break;
+                }
+                else
+                {
+                    memory[reg_RA] &= data; // EPROM-Mode
+                    setPageUsed(reg_RA);
+                    if (hub->send(&memory[reg_RA])) break;
                 };
-                reg_TA++;
+                crc = ++reg_TA[0];
             };
             break;
 
-        case 0x55: // WRITE STATUS
-            if (reg_TA > sizeof(status)) return false; // check for valid address
-
-            b = hub->recv(); // data
-            if (hub->getError())  return false;
-            crc = crc8(&b,1,crc);
-
-            hub->send(crc);
-            if (hub->getError())  return false;
-            hub->extendTimeslot();
-
-            status[reg_TA] &= b; // like EPROM-Mode
-
-            hub->send(status[reg_TA]);
-            if (hub->getError())  return false;
-
-            reg_TA++;
-            while (reg_TA < sizeof(status))
+        case 0x55:      // WRITE STATUS
+            while (reg_TA[0] < STATUS_SIZE)
             {
-                b = hub->recv(); // data
-                if (hub->getError())  return false;
-                crc = crc8(&b,1,reinterpret_cast<uint8_t *>(&reg_TA)[0]);
+                if (hub->recv(&data))       break;
+                crc = crc8(&data,1,crc);
 
-                hub->send(crc);
-                if (hub->getError())  return false;
-                hub->extendTimeslot();
+                if (hub->send(&crc))        break;
 
-                status[reg_TA] &= b; // like EPROM-Mode
-                hub->send(status[reg_TA]);
-                if (hub->getError()) return false;
+                data = writeStatus(reg_TA[0], data);
 
-                reg_TA++;
+                if (hub->send(&data)) break;
+
+                crc = ++reg_TA[0];
             };
             break;
 
         default:
             hub->raiseSlaveError(cmd);
     };
-    return !(hub->getError());
+};
+
+uint8_t DS2502::translateRedirection(const uint8_t source_address) const
+{
+    const uint8_t  source_page    = static_cast<uint8_t >(source_address >> 5);
+    const uint8_t  destin_page    = getPageRedirection(source_page);
+    if (destin_page == 0x00)        return source_address;
+    const uint8_t destin_address  = (source_address & PAGE_MASK) | (destin_page << 5);
+    return destin_address;
 };
 
 void DS2502::clearMemory(void)
 {
-    memset(&memory[0], static_cast<uint8_t>(0xFF), sizeof_memory);
+    memset(memory, static_cast<uint8_t>(0xFF), MEM_SIZE);
 };
 
 void DS2502::clearStatus(void)
 {
-    for (uint8_t i = 0; i < sizeof(status); ++i)  status[i] = 0xFF;
-    status[sizeof(status)-1] = 0x00; // last byte should be always zero
+    memset(status, static_cast<uint8_t>(0xFF), STATUS_SIZE);
+    status[STATUS_FACTORYP] = 0x00; // last byte should be always zero
 };
 
-bool DS2502::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)
+bool DS2502::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position)
 {
-    for (uint8_t i = 0; i < length; ++i)
-    {
-        if ((position + i) >= sizeof_memory) return false;
-        memory[position + i] = source[i];
-    };
+    if (position >= MEM_SIZE) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    memcpy(&memory[position],source,_length);
+
+    const uint8_t page_start = static_cast<uint8_t>(position >> 5);
+    const uint8_t page_stop  = static_cast<uint8_t>((position + _length) >> 5);
+    for (uint8_t page = page_start; page <= page_stop; page++) setPageUsed(page);
+
+    return (_length==length);
+};
+
+bool DS2502::readMemory(uint8_t* const destination, const uint8_t length, const uint8_t position) const
+{
+    if (position >= MEM_SIZE) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    memcpy(destination,&memory[position],_length);
+    return (_length==length);
+};
+
+
+uint8_t DS2502::writeStatus(const uint8_t address, const uint8_t value)
+{
+    if (address < STATUS_UNDEF_B1)  status[address] &= value; // writing is allowed only here
+    return status[address];
+};
+
+uint8_t DS2502::readStatus(const uint8_t address) const
+{
+    if (address >= STATUS_SIZE)     return 0xFF;
+    return status[address];
+};
+
+
+void DS2502::setPageProtection(const uint8_t page)
+{
+    if (page < PAGE_COUNT)          status[STATUS_WP_PAGES] &= ~(uint8_t(1<<page));
+};
+
+bool DS2502::getPageProtection(const uint8_t page) const
+{
+    if (page >= PAGE_COUNT) return true;
+    return !(status[STATUS_WP_PAGES] & uint8_t(1<<page));
+};
+
+void DS2502::setPageUsed(const uint8_t page)
+{
+    if (page < PAGE_COUNT)  status[STATUS_WP_PAGES] &= ~(uint8_t(1<<(page+4)));
+};
+
+bool DS2502::getPageUsed(const uint8_t page) const
+{
+    if (page >= PAGE_COUNT) return true;
+    return !(status[STATUS_WP_PAGES] & uint8_t(1<<(page+4)));
+};
+
+
+bool DS2502::setPageRedirection(const uint8_t page_source, const uint8_t page_destin)
+{
+    if (page_source >= PAGE_COUNT)  return false; // really available
+    if (page_destin >= PAGE_COUNT)  return false; // virtual mem of the device
+
+    status[page_source + STATUS_PG_REDIR] = (page_destin == page_source) ? uint8_t(0xFF) : ~page_destin; // datasheet dictates this, so no page can be redirected to page 0
     return true;
 };
 
-bool DS2502::checkProtection(const uint16_t reg_address)
+uint8_t DS2502::getPageRedirection(const uint8_t page) const
 {
-    uint8_t reg_index = uint8_t(reg_address >> 5);
-    return ((status[0] & (1<<reg_index)) == 0);
-};
-
-uint8_t DS2502::translateRedirection(const uint16_t reg_address)
-{
-    uint8_t reg_index = uint8_t(1) + uint8_t(reg_address >> 5);
-
-    uint8_t reg_offset = (status[reg_index] == 0xFF) ? uint8_t(reg_address) : ((~status[reg_index])<<5);
-
-    return ((reg_offset & ~page_mask) | uint8_t(reg_address & page_mask));
-};
-
-bool DS2502::redirectPage(const uint8_t page_source, const uint8_t page_dest)
-{
-    if (page_source > 3) return false;
-    if (page_dest > 3) return false;
-
-    status[page_source + 1] = (page_dest == page_source) ? uint8_t(0xFF) : ~page_dest; // datasheet dictates this, so no page can be redirected to page 0
-    return true;
-};
-
-bool DS2502::protectPage(const uint8_t page, const bool status_protected)
-{
-    if (page > 3) return false;
-
-    status[0] &= ~(1<<page);
-    status[0] |= ((!status_protected)&0x01)<<page;
-
-    return true;
+    if (page >= PAGE_COUNT) return 0x00;
+    return ~(status[page + STATUS_PG_REDIR]); // TODO: maybe invert this in ReadStatus and safe some Operations? Redirection is critical and often done
 };

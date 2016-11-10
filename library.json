@@ -1,7 +1,7 @@
 {
 "name": "OneWireHub",
 "frameworks": "Arduino",
-"keywords": "onewire, 1-wire, bus, slave, sensor, temperature, voltage, current, DS1822, DS18B20, DS18S20, DS1990, DS2401, DS2405, DS2408, DS2413, DS2423, DS2433, DS2438, DS2450, DS2890, DS1972, DS2431, BAE910, DS1982, DS2502, DS2501",
+"keywords": "onewire, 1-wire, bus, slave, sensor, temperature, voltage, current, memory, BAE910, DS1822, DS18B20, DS18S20, DS1990, DS2401, DS2405, DS2408, DS2411, DS2413, DS2423, DS2431, DS2432, DS2433, DS2438, DS2450, DS2501, DS2502, DS2503, DS2505, DS2506, DS2890",
 "description": "OneWire slave device emulator with support for up to 32 simultaneous devices",
 "authors":
 [
