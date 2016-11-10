@@ -2,6 +2,7 @@
  *    Example-Code that emulates a BAE910
  *    ( http://www.brain4home.eu/node/4 )
  *
+ *    Tested with:
  */
 
 #include "OneWireHub.h"
@@ -12,26 +13,9 @@ constexpr uint8_t pin_onewire   { 8 };
 constexpr uint8_t pin_analog    { 0 };
 
 auto hub    = OneWireHub(pin_onewire);
-auto bae910 = BAE910(BAE910::family_code, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06);
+auto bae910 = BAE910(BAE910::family_code, 0x00, 0x00, 0x10, 0xE9, 0xBA, 0x00);
 
-
-bool blinking()
-{
-    const  uint32_t interval    = 500;          // interval at which to blink (milliseconds)
-    static uint32_t nextMillis  = millis();     // will store next time LED will updated
-
-    if (millis() > nextMillis)
-    {
-        nextMillis += interval;             // save the next time you blinked the LED
-        static uint8_t ledState = LOW;      // ledState used to set the LED
-        if (ledState == LOW)    ledState = HIGH;
-        else                    ledState = LOW;
-        digitalWrite(pin_led, ledState);
-        return 1;
-    }
-    return 0;
-}
-
+bool blinking(void);
 
 void setup()
 {
@@ -62,4 +46,21 @@ void loop()
         // read ADC and write into BAE register
         bae910.memory.field.adc10 = analogRead(pin_analog);
     }
+}
+
+bool blinking(void)
+{
+    const  uint32_t interval    = 500;          // interval at which to blink (milliseconds)
+    static uint32_t nextMillis  = millis();     // will store next time LED will updated
+
+    if (millis() > nextMillis)
+    {
+        nextMillis += interval;             // save the next time you blinked the LED
+        static uint8_t ledState = LOW;      // ledState used to set the LED
+        if (ledState == LOW)    ledState = HIGH;
+        else                    ledState = LOW;
+        digitalWrite(pin_led, ledState);
+        return 1;
+    }
+    return 0;
 }

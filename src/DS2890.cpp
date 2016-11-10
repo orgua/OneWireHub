@@ -2,83 +2,68 @@
 
 DS2890::DS2890(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    register_feat = REGISTER_MASK_POTI_CHAR | REGISTER_MASK_WIPER_SET | REGISTER_MASK_WIPER_POS | REGISTER_MASK_POTI_RESI;
-    register_poti[0] = 0;
-    register_poti[1] = 0;
-    register_poti[2] = 0;
-    register_poti[3] = 0;
+    register_feat = REG_MASK_POTI_CHAR | REG_MASK_WIPER_SET | REG_MASK_POTI_NUMB | REG_MASK_WIPER_POS | REG_MASK_POTI_RESI;
+    memset(register_poti, 0, 4);
     register_ctrl    = 0b00001100;
 };
 
-bool DS2890::duty(OneWireHub *hub)
+void DS2890::duty(OneWireHub * const hub)
 {
-    uint8_t temp = 0;
-    uint8_t cmd = hub->recv();
-    if (hub->getError())  return false;
+    const uint8_t poti = register_ctrl&POTI_MASK;
+    uint8_t data, cmd;
+
+    start_over:
+
+    if (hub->recv(&cmd))  return;
 
     switch (cmd)
     {
+        case 0x0F:      // WRITE POSITION
+            if (hub->recv(&data))           break;
+            if (hub->send(&data))           break;
+            if (hub->recv(&cmd))            break;
 
-        case 0x0F: // WRITE POSITION
-            temp = hub->recv();
-            if (hub->getError())  return false;
-            hub->send(temp);
-            if (hub->getError())  return false;
-            cmd = hub->recv();
-            if (hub->getError())  return false;
+            if (cmd == RELEASE_CODE) register_poti[poti] = data;
+            break; // respond with 1s ... passive
 
-            // release code received
-            if (cmd == 0x96)      register_poti[register_ctrl&0x03] = temp;
+        case 0x55:      // WRITE CONTROL REGISTER
+            if (hub->recv(&data))           break;
+            if (hub->send(&data))           break;
+            if (hub->recv(&cmd))            break;
 
+            if (data&0x01) data &= ~0x04;
+            else           data |= 0x04;
+            if (data&0x02) data &= ~0x08;
+            else           data |= 0x08;
+
+            if (cmd == RELEASE_CODE) register_ctrl = data;
+            break; // respond with 1s ... passive
+
+        case 0xAA:      // READ CONTROL REGISTER
+            if (hub->send(&register_feat))  break;
+            if (hub->send(&register_ctrl))  break;
+            while (!hub->sendBit(false));
             break;
 
-
-        case 0x55: // WRITE CONTROL REGISTER
-            temp = hub->recv();
-            if (hub->getError())  return false;
-
-            if (temp&0x01) temp |= 0x04;
-            else temp &= ~0x04;
-            if (temp&0x02) temp |= 0x08;
-            else temp &= ~0x08;
-
-            hub->send(temp);
-            if (hub->getError())  return false;
-
-            cmd = hub->recv();
-            if (hub->getError())  return false;
-
-            // release code received
-            if (cmd == 0x96)      register_ctrl = temp;
-
+        case 0xF0:      // READ POSITION
+            if (hub->send(&register_ctrl))  break;
+            if (hub->send(&register_poti[poti])) break;
+            while (!hub->sendBit(false));
             break;
 
-
-        case 0xAA: // READ CONTROL REGISTER
-            hub->send(register_ctrl);
-            if (hub->getError())  return false;
-            hub->send(register_feat);
+        case 0xC3:      // INCREMENT
+            if (register_poti[poti] < 0xFF) register_poti[poti]++;
+            if (hub->send(&register_poti[poti])) break;
             break;
 
-        case 0xF0: // READ POSITION
-            hub->send(register_ctrl);
-            if (hub->getError())  return false;
-            hub->send(register_poti[register_ctrl&0x03]);
-            break;
-
-        case 0xC3: // INCREMENT
-            if (register_poti[register_ctrl&0x03] < 0xFF) register_poti[register_ctrl&0x03]++;
-            hub->send(register_poti[register_ctrl&0x03]);
-            break;
-
-        case 0x99: // DECREMENT
-            if (register_poti[register_ctrl&0x03]) register_poti[register_ctrl&0x03]--;
-            hub->send(register_poti[register_ctrl&0x03]);
+        case 0x99:      // DECREMENT
+            if (register_poti[poti]) register_poti[poti]--;
+            if (hub->send(&register_poti[poti])) break;
             break;
 
         default:
             hub->raiseSlaveError(cmd);
     };
 
-    return !(hub->getError());
+    if ((cmd == 0xC3) || (cmd == 0x99)) goto start_over; // only for this device -> when INCREMENT or DECREMENT the master can issue another cmd right away
 };

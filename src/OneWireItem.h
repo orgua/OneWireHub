@@ -21,9 +21,9 @@ public:
 
     uint8_t ID[8];
 
-    void sendID(OneWireHub *hub);
+    void sendID(OneWireHub * const hub) const;
 
-    virtual bool duty(OneWireHub *hub) = 0;
+    virtual void duty(OneWireHub * const hub) = 0;
 
     static uint8_t crc8(const uint8_t address[], const uint8_t len, const uint8_t init = 0);
 

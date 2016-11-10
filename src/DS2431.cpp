@@ -5,224 +5,177 @@ DS2431::DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     static_assert(sizeof(scratchpad) < 256, "Implementation does not cover the whole address-space");
     static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
 
-    memset(&scratchpad[0], static_cast<uint8_t>(0x00), sizeof(scratchpad));
+    clearMemory();
+    clearScratchpad();
 
     page_protection = 0;
     page_eprom_mode = 0;
 
-    checkMemory();
+    updatePageStatus();
 };
 
-bool DS2431::duty(OneWireHub *hub)
+void DS2431::duty(OneWireHub * const hub)
 {
+    constexpr uint8_t ALTERNATING_10 = 0xAA;
     static uint16_t reg_TA = 0; // contains TA1, TA2
-    static uint8_t  reg_ES = 0;  // E/S register
-    static uint16_t crc = 0;
+    static uint8_t  reg_ES = 0; // E/S register
+    uint16_t crc = 0;
 
-    uint8_t  page_offset = 0;
+    uint8_t  page_offset = 0, cmd, data;
+    if (hub->recv(&cmd,1,crc))  return;
 
-    uint8_t cmd = hub->recv();
-    if (hub->getError())  return false;
-    uint8_t  b;
     switch (cmd)
     {
-        // WRITE SCRATCHPAD COMMAND
-        case 0x0F:
-            crc = crc16(0x0F, 0x00);
-            // Adr1
-            b = hub->recv();
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
-            reg_ES = b & uint8_t(0b00000111); // TODO: when not zero we should issue reg_ES |= 0b00100000; (datasheet not clear)
-            crc = crc16(b, crc);
-
-            // Adr2
-            b = hub->recv();
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
-            crc = crc16(b, crc);
-
-            // up to 8 bytes of data
+        case 0x0F:      // WRITE SCRATCHPAD COMMAND
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc))  return;
+            reg_ES = uint8_t(reg_TA) & SCRATCHPAD_MASK;
             page_offset = reg_ES;
-            for (uint8_t i = reg_ES; i < 8; ++i) { // address can point directly to offset-byte in scratchpad
-                b = hub->recv();
-                if (hub->getError())
+
+            // receive up to 8 bytes of data
+            for (; reg_ES < SCRATCHPAD_SIZE; ++reg_ES)
+            {
+                if (hub->recv(&scratchpad[reg_ES], 1, crc))
                 {
-                    // set the PF-Flag if error occured in the middle of the byte
-                    if (hub->clearError() != Error::FIRST_BIT_OF_BYTE_TIMEOUT) reg_ES |= 0b00100000;
+                    if (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH) reg_ES |= REG_ES_PF_MASK;
                     break;
                 }
-                if (reg_ES < 7) reg_ES++;
-                scratchpad[i] = b;
-                crc = crc16(b, crc);
+            };
+            reg_ES--;
+            reg_ES &= SCRATCHPAD_MASK;
+
+            if (hub->getError() == Error::NO_ERROR)  // try to send crc if wanted
+            {
+                crc = ~crc; // normally crc16 is sent ~inverted
+                hub->send(reinterpret_cast<uint8_t *>(&crc), 2);
             };
 
-            // check if page is protected or in eprom-mode
-            if (reg_TA < 128)
+            if (reg_TA < (4*PAGE_SIZE)) // check if page is protected or in eprom-mode
             {
-                const uint8_t position = uint8_t(reg_TA) & uint8_t(0b11111000);
-                if (checkProtection(reinterpret_cast<uint8_t *>(&reg_TA)[0]))
+                const uint8_t position = uint8_t(reg_TA) & ~SCRATCHPAD_MASK;
+                if (getPageProtection(reinterpret_cast<uint8_t *>(&reg_TA)[0]))       // protected: load memory-segment to scratchpad
                 {
-                    // protected: load memory-segment to scratchpad
-                    for (uint8_t i = 0; i < 8; ++i)
-                    {
-                        scratchpad[i] = memory[position + i];
-                    }
-                } else if (checkEpromMode(reinterpret_cast<uint8_t *>(&reg_TA)[0]))
+                    for (uint8_t i = 0; i < SCRATCHPAD_SIZE; ++i) scratchpad[i] = memory[position + i];
+                }
+                else if (getPageEpromMode(reinterpret_cast<uint8_t *>(&reg_TA)[0]))   // eprom: logical AND of memory and data
                 {
-                    // eprom: logical AND of memory and data, TODO: there is somehow a bug here, protection works but EPROM-Mode not (CRC-Error)
-                    for (uint8_t i = page_offset; i < 8; ++i)
-                    {
-                        scratchpad[i] &= memory[position + i];
-                    }
+                    for (uint8_t i = page_offset; i <= reg_ES; ++i) scratchpad[i] &= memory[position + i];
                 };
             };
-
-            if (reg_ES & 0b00100000) return false; // only partial filling of bytes
-
-            // CRC-16
-            crc = ~crc; // normally crc16 is sent ~inverted
-            hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0]));
-            if (hub->getError())  return false;
-            hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[1]));
-
             break;
 
-        // READ SCRATCHPAD COMMAND
-        case 0xAA:
-            crc = crc16(0xAA, 0);
-            // Write-to address
-            hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[0]);
-            crc = crc16(reinterpret_cast<uint8_t *>(&reg_TA)[0], crc);
-            if (hub->getError())  return false;
+        case 0xAA:      // READ SCRATCHPAD COMMAND
+            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2,crc))  return;
+            if (hub->send(&reg_ES,1,crc)) return;
 
-            hub->send(reinterpret_cast<uint8_t *>(&reg_TA)[1]);
-            crc = crc16(reinterpret_cast<uint8_t *>(&reg_TA)[1], crc);
-            if (hub->getError())  return false;
-
-            hub->send(reg_ES);
-            crc = crc16(reg_ES, crc);
-            if (hub->getError())  return false;
-
-            //Scratchpad content
-            page_offset = reinterpret_cast<uint8_t *>(&reg_TA)[0] & uint8_t(0x03);
-            for (uint8_t i = page_offset; i < (reg_ES & 0x03)+1; ++i) {
-                hub->send(scratchpad[i]);
-                if (hub->getError()) return false; // master can break, but gets no crc afterwards
-                crc = crc16(scratchpad[i], crc);
-            };
-            
-            // CRC-16
-            crc = ~crc;
-            hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[0]));
-            if (hub->getError())  return false;
-            hub->send(uint8_t(reinterpret_cast<uint8_t *>(&crc)[1]));
-            if (hub->getError())  return false;
-
-            while (1) // send 1s when read is complete
-            {
-                hub->send(255);
-                if (hub->getError()) return false;
-            };
-
-            break;
-        
-        // COPY SCRATCHPAD COMMAND
-        case 0x55:
-            // Adr1
-            b = hub->recv();
-            if (hub->getError())  return false;
-            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[0]) break;
-
-            // Adr2
-            b = hub->recv();
-            if (hub->getError())  return false;
-            if (b != reinterpret_cast<uint8_t *>(&reg_TA)[1]) break; // Write-to addresses must match
-            
-            // Auth code must match
-            b = hub->recv();
-            if (hub->getError())  return false;
-            if (b != reg_ES) break;
-
-            if (reg_ES & 0b00100000) break; // writing failed before
-
-            reg_TA &= ~uint16_t(0b00000111);
-
-            // Write Scratchpad
-            writeMemory(scratchpad, 8, reinterpret_cast<uint8_t *>(&reg_TA)[0]); // checks if copy protected
-
-            // set the auth code uppermost bit, AA
-            reg_ES |= 0b10000000;
-            delayMicroseconds(10000); // writing takes so long
-            hub->extendTimeslot();
-            hub->sendBit(1);
-            hub->clearError();
-            hub->extendTimeslot();
-            while (1) // send 1s when alternating 1 & 0 after copy is complete
-            {
-                hub->send(0b10101010);
-                if (hub->getError())
-                {
-                    break;
-                };
-            };
-
-            break;
-        
-        // READ MEMORY COMMAND
-        case 0xF0:
-            // Adr1
-            b = hub->recv();
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[0] = b;
-
-            // Adr2
-            b = hub->recv();
-            if (hub->getError())  return false;
-            reinterpret_cast<uint8_t *>(&reg_TA)[1] = b;
- 
-            for (uint16_t index_byte = reg_TA; index_byte < sizeof(memory); ++index_byte)
-            {
-                hub->send(memory[index_byte]);
-                if (hub->getError())  break;
+            {   // send Scratchpad content
+                const uint8_t start  = uint8_t(reg_TA) & SCRATCHPAD_MASK;
+                const uint8_t length = (reg_ES & SCRATCHPAD_MASK)+ uint8_t(1) - start; // difference to ds2433
+                if (hub->send(&scratchpad[start],length,crc))   return;
             }
 
-            if (hub->getError())  break;
+            crc = ~crc;
+            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
+            break; // send 1s when read is complete, is passive, so do nothing
 
-            while (1) // send 1s when read is complete
+        case 0x55:      // COPY SCRATCHPAD COMMAND
+            if (hub->recv(&data))                                  return;
+            if (data != reinterpret_cast<uint8_t *>(&reg_TA)[0])   break;
+            if (hub->recv(&data))                                  return;
+            if (data != reinterpret_cast<uint8_t *>(&reg_TA)[1])   break;
+            if (hub->recv(&data))                                  return;
+            if (data != reg_ES)                                    return; // Auth code must match
+
+            if (getPageProtection(uint8_t(reg_TA)))                break; // stop if page is protected (WriteMemory also checks this)
+            if (reg_ES & REG_ES_PF_MASK)                           break; // stop if error occured earlier
+
+            reg_ES |= REG_ES_AA_MASK; // compare was successful
+
+            reg_TA &= ~uint16_t(SCRATCHPAD_MASK);
+
+            // Write Scratchpad to memory, writing takes about 10ms
+            writeMemory(scratchpad, SCRATCHPAD_SIZE, reinterpret_cast<uint8_t *>(&reg_TA)[0]); // checks if copy protected
+
+            do
             {
-                hub->send(255);
-                if (hub->getError())
-                {
-                    break;
-                };
-            };
+                hub->clearError();
+                hub->sendBit(true); // send passive 1s
+            }
+            while   (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH); // wait for timeslots
 
+            while (!hub->send(&ALTERNATING_10)); //  alternating 1 & 0 after copy is complete
             break;
+
+        case 0xF0:      // READ MEMORY COMMAND
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2))  return;
+            if (reg_TA >= MEM_SIZE) return;
+            if (hub->send(&memory[reg_TA],MEM_SIZE - uint8_t(reg_TA),crc)) return;
+            break; // send 1s when read is complete, is passive, so do nothing here
 
         default:
             hub->raiseSlaveError(cmd);
-
     };
-    return !(hub->getError());
 };
 
-bool DS2431::checkProtection(const uint8_t position)
+void DS2431::clearMemory(void)
+{
+    memset(memory, static_cast<uint8_t>(0x00), sizeof(memory));
+};
+
+void DS2431::clearScratchpad(void)
+{
+    memset(scratchpad, static_cast<uint8_t>(0x00), SCRATCHPAD_SIZE);
+};
+
+bool DS2431::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position)
+{
+    for (uint8_t i = 0; i < length; ++i) {
+        if ((position + i) >= sizeof(memory)) break;
+        if (getPageProtection(position + i)) continue;
+        memory[position + i] = source[i];
+    };
+
+    if ((position+length) > 127) updatePageStatus();
+
+    return true;
+};
+
+bool DS2431::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const
+{
+    if (position >= MEM_SIZE) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    memcpy(destination,&memory[position],_length);
+    return (_length==length);
+};
+
+void DS2431::setPageProtection(const uint8_t position)
+{
+    if      (position < 1*PAGE_SIZE)    memory[0x80] = WP_MODE;
+    else if (position < 2*PAGE_SIZE)    memory[0x81] = WP_MODE;
+    else if (position < 3*PAGE_SIZE)    memory[0x82] = WP_MODE;
+    else if (position < 4*PAGE_SIZE)    memory[0x83] = WP_MODE;
+    else if (position < 0x85)           memory[0x84] = WP_MODE;
+    else if (position == 0x85)          memory[0x85] = WP_MODE;
+    else if (position < 0x88)           memory[0x85] = EP_MODE;
+
+    updatePageStatus();
+};
+
+bool DS2431::getPageProtection(const uint8_t position) const
 {
     // should be an accurate model of the control bytes
-    if      (position <  32)
+    if      (position < 1*PAGE_SIZE)
     {
         if (page_protection & 1) return true;
     }
-    else if (position <  64)
+    else if (position < 2*PAGE_SIZE)
     {
         if (page_protection & 2) return true;
     }
-    else if (position <  96)
+    else if (position < 3*PAGE_SIZE)
     {
         if (page_protection & 4) return true;
     }
-    else if (position < 128)
+    else if (position < 4*PAGE_SIZE)
     {
         if (page_protection & 8) return true;
     }
@@ -257,21 +210,30 @@ bool DS2431::checkProtection(const uint8_t position)
     return false;
 };
 
-bool DS2431::checkEpromMode(const uint8_t position)
+void DS2431::setPageEpromMode(const uint8_t position)
 {
-    if      (position <  32)
+    if      (position < 1*PAGE_SIZE)  memory[0x80] = EP_MODE;
+    else if (position < 2*PAGE_SIZE)  memory[0x81] = EP_MODE;
+    else if (position < 3*PAGE_SIZE)  memory[0x82] = EP_MODE;
+    else if (position < 4*PAGE_SIZE)  memory[0x83] = EP_MODE;
+    updatePageStatus();
+};
+
+bool DS2431::getPageEpromMode(const uint8_t position) const
+{
+    if      (position < 1*PAGE_SIZE)
     {
         if (page_eprom_mode & 1) return true;
     }
-    else if (position <  64)
+    else if (position < 2*PAGE_SIZE)
     {
         if (page_eprom_mode & 2) return true;
     }
-    else if (position <  96)
+    else if (position < 3*PAGE_SIZE)
     {
         if (page_eprom_mode & 4) return true;
     }
-    else if (position < 128)
+    else if (position < 4*PAGE_SIZE)
     {
         if (page_eprom_mode & 8) return true;
     };
@@ -279,46 +241,25 @@ bool DS2431::checkEpromMode(const uint8_t position)
 };
 
 
-void DS2431::clearMemory(void)
+bool DS2431::updatePageStatus(void)
 {
-    memset(&memory[0], static_cast<uint8_t>(0x00), sizeof(memory));
-};
-
-bool DS2431::writeMemory(const uint8_t* source, const uint8_t length, const uint8_t position)
-{
-    for (uint8_t i = 0; i < length; ++i) {
-        if ((position + i) >= sizeof(memory)) break;
-        if (checkProtection(position+i)) continue;
-        memory[position + i] = source[i];
-    };
-
-    if ((position+length) > 127) checkMemory();
-
-    return true;
-};
-
-bool DS2431::checkMemory(void)
-{
-    constexpr uint8_t WPM = 0x55; // write protect mode
-    constexpr uint8_t EPM = 0xAA; // eprom mode
-
     page_eprom_mode = 0;
     page_protection = 0;
 
-    if (memory[0x80] == WPM) page_protection |= 1;
-    if (memory[0x81] == WPM) page_protection |= 2;
-    if (memory[0x82] == WPM) page_protection |= 4;
-    if (memory[0x83] == WPM) page_protection |= 8;
+    if (memory[0x80] == WP_MODE) page_protection |= 1;
+    if (memory[0x81] == WP_MODE) page_protection |= 2;
+    if (memory[0x82] == WP_MODE) page_protection |= 4;
+    if (memory[0x83] == WP_MODE) page_protection |= 8;
 
-    if (memory[0x84] == WPM) page_protection |= 16;
-    if (memory[0x84] == EPM) page_protection |= 16;
+    if (memory[0x84] == WP_MODE) page_protection |= 16;
+    if (memory[0x84] == EP_MODE) page_protection |= 16;
 
-    if (memory[0x85] == WPM) page_protection |= 32; // only byte x85
-    if (memory[0x85] == EPM) page_protection |= 64+32; // also byte x86 x87
+    if (memory[0x85] == WP_MODE) page_protection |= 32; // only byte x85
+    if (memory[0x85] == EP_MODE) page_protection |= 64+32; // also byte x86 x87
 
-    if (memory[0x80] == EPM) page_eprom_mode |= 1;
-    if (memory[0x81] == EPM) page_eprom_mode |= 2;
-    if (memory[0x82] == EPM) page_eprom_mode |= 4;
-    if (memory[0x83] == EPM) page_eprom_mode |= 8;
+    if (memory[0x80] == EP_MODE) page_eprom_mode |= 1;
+    if (memory[0x81] == EP_MODE) page_eprom_mode |= 2;
+    if (memory[0x82] == EP_MODE) page_eprom_mode |= 4;
+    if (memory[0x83] == EP_MODE) page_eprom_mode |= 8;
     return true;
 };

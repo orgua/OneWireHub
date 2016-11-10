@@ -7,6 +7,7 @@
 #######################################
 
 OneWireHub	KEYWORD1
+BAE910	KEYWORD1
 DS1822	KEYWORD1
 DS18B20	KEYWORD1
 DS18S20	KEYWORD1
@@ -14,54 +15,136 @@ DS1990 	KEYWORD1
 DS2401	KEYWORD1
 DS2405	KEYWORD1
 DS2408	KEYWORD1
+DS2411	KEYWORD1
 DS2413	KEYWORD1
 DS2423	KEYWORD1
+DS2431	KEYWORD1
+DS2432	KEYWORD1
 DS2433	KEYWORD1
 DS2438	KEYWORD1
 DS2450	KEYWORD1
+DS2501	KEYWORD1
+DS2502	KEYWORD1
+DS2503	KEYWORD1
+DS2505	KEYWORD1
+DS2506	KEYWORD1
 DS2890	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
+## OneWireHUB
+OneWireHub	KEYWORD2
 attach	KEYWORD2
 detach	KEYWORD2
-buildIDTree	KEYWORD2
-waitForRequest	KEYWORD2
-checkReset	KEYWORD2
-showPresence	KEYWORD2
-search	KEYWORD2
-send	KEYWORD2
-recv	KEYWORD2
-send	KEYWORD2
-sendAndCRC16	KEYWORD2
-recv	KEYWORD2
-sendBit	KEYWORD2
-recvBit	KEYWORD2
+getIndexOfNextSensorInList	KEYWORD2
 poll	KEYWORD2
+sendBit	KEYWORD2
+send	KEYWORD2
+recvBit	KEYWORD2
+recv	KEYWORD2
+waitLoopsCalibrate	KEYWORD2
+waitLoops1ms	KEYWORD2
+waitLoopsDebug	KEYWORD2
+printError	KEYWORD2
+getError	KEYWORD2
+raiseSlaveError	KEYWORD2
+clearError	KEYWORD2
 
+## OneWireItem
+sendID	KEYWORD2
 duty	KEYWORD2
 crc8	KEYWORD2
 crc16	KEYWORD2
 
-updateCRC	KEYWORD2
-setTemp	KEYWORD2
+## BAE910
 
-readState	KEYWORD2
-setState	KEYWORD2
-readLatch	KEYWORD2
-setLatch	KEYWORD2
+## DS18B20
+setTemperature	KEYWORD2
+getTemperature	KEYWORD2
 
-setTemp	KEYWORD2
-setVolt	KEYWORD2
-setCurr	KEYWORD2
+## DS2401
 
+## DS2405
+setPinState	KEYWORD2
+getPinState	KEYWORD2
+
+## DS2408
+clearMemory	KEYWORD2
+setPinState	KEYWORD2
+getPinState	KEYWORD2
+
+## DS2413
+setPinState	KEYWORD2
+getPinState	KEYWORD2
+setPinLatch	KEYWORD2
+getPinLatch	KEYWORD2
+
+## DS2423
+
+## DS2431
+clearMemory	KEYWORD2
+writeMemory	KEYWORD2
+readMemory	KEYWORD2
+setPageProtection	KEYWORD2
+getPageProtection	KEYWORD2
+setPageEpromMode	KEYWORD2
+getPageEpromMode	KEYWORD2
+
+## DS2433
+clearMemory	KEYWORD2
+writeMemory	KEYWORD2
+readMemory	KEYWORD2
+
+## DS2438
+setTemperature	KEYWORD2
+getTemperature	KEYWORD2
+setVoltage	KEYWORD2
+getVoltage	KEYWORD2
+setCurrent	KEYWORD2
+getCurrent	KEYWORD2
+
+## DS2450
+clearMemory	KEYWORD2
 setPotentiometer	KEYWORD2
+getPotentiometer	KEYWORD2
 
-readPoti	KEYWORD2
-readCtrl	KEYWORD2
-readFeat	KEYWORD2
+## DS2502
+clearMemory	KEYWORD2
+clearStatus	KEYWORD2
+writeMemory	KEYWORD2
+readMemory	KEYWORD2
+writeStatus	KEYWORD2
+readStatus	KEYWORD2
+setPageProtection	KEYWORD2
+getPageProtection	KEYWORD2
+setPageUsed	KEYWORD2
+getPageUsed	KEYWORD2
+setPageRedirection	KEYWORD2
+getPageRedirection	KEYWORD2
+
+## DS2506
+clearMemory	KEYWORD2
+clearStatus	KEYWORD2
+writeMemory	KEYWORD2
+readMemory	KEYWORD2
+writeStatus	KEYWORD2
+readStatus	KEYWORD2
+setPageProtection	KEYWORD2
+getPageProtection	KEYWORD2
+setRedirectionProtection	KEYWORD2
+getRedirectionProtection	KEYWORD2
+setPageUsed	KEYWORD2
+getPageUsed	KEYWORD2
+setPageRedirection	KEYWORD2
+getPageRedirection	KEYWORD2
+
+## DS2890
+setPotentiometer	KEYWORD2
+getPotentiometer	KEYWORD2
+getRegCtrl	KEYWORD2
+getRegFeat	KEYWORD2
 
 #######################################
 # Instances (KEYWORD2)
