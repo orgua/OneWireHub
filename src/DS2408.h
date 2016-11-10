@@ -1,6 +1,6 @@
 // 8-Channel Addressable Switch @@@
 // works, but no alarm search and higher logic / output / control register-action
-// native features: Overdrive capable, alarm search
+// native bus-features: Overdrive capable, alarm search
 
 #ifndef ONEWIRE_DS2408_H
 #define ONEWIRE_DS2408_H

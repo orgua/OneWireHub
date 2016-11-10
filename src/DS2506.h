@@ -1,4 +1,7 @@
 // 64kbit EEPROM, Add Only Memory
+// works, writing could not be tested (DS9490 does not support hi-voltage mode and complains)
+// note: not available memory will be redirected or faked
+// native bus-features: Overdrive capable
 
 #ifndef ONEWIRE_DS2506_H
 #define ONEWIRE_DS2506_H

@@ -3,49 +3,46 @@
 DS2450::DS2450(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) :
         OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    static_assert((PAGE_COUNT*PAGE_SIZE) < 256,  "Implementation does not cover the whole address-space");
+    static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
     clearMemory();
 };
 
 void DS2450::duty(OneWireHub * const hub)
 {
     uint16_t reg_TA, crc = 0; // target address
-    uint8_t  data, cmd, length;
+    uint8_t  cmd;
 
     if (hub->recv(&cmd,1,crc))  return;
+    if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) return;
 
     switch (cmd)
     {
         case 0xAA: // READ MEMORY
-            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) return;
-
             while(reg_TA < MEM_SIZE)
             {
-                length = PAGE_SIZE - (reinterpret_cast<uint8_t *>(&reg_TA)[0] & PAGE_MASK);
+                const uint8_t length = PAGE_SIZE - (uint8_t(reg_TA) & PAGE_MASK);
                 if (hub->send(&memory[reg_TA], length, crc)) return;
 
                 crc = ~crc; // normally crc16 is sent ~inverted
                 if (hub->send(reinterpret_cast<uint8_t *>(&crc), 2)) return;
 
                 // prepare next page-readout
-                reg_TA = (reg_TA & ~PAGE_MASK) + PAGE_SIZE;
+                reg_TA += length;
                 crc = 0;
             };
             break;
 
         case 0x55: // write memory (only page 1&2 allowed)
-            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) break;
-            if (reg_TA < PAGE_SIZE)             break; // page 0 is off limits
-
             while(reg_TA < MEM_SIZE)
             {
+                uint8_t data;
                 if (hub->recv(&data, 1, crc))   break;
 
                 crc = ~crc; // normally crc16 is sent ~inverted
                 if (hub->send(reinterpret_cast<uint8_t *>(&crc), 2)) break;
 
                 if (hub->send(&data, 1))        break;
-                memory[reg_TA] = data; // write data
+                if (reg_TA >= PAGE_SIZE)        memory[reg_TA] = data; // write data, page 0 is off limits
 
                 crc = ++reg_TA; // prepare next address-readout: load new TA into crc
             };
@@ -53,14 +50,10 @@ void DS2450::duty(OneWireHub * const hub)
             break;
 
         case 0x3C: // convert, starts adc
-            if (hub->recv(reinterpret_cast<uint8_t *>(&cmd),1,crc)) return; // input select mask, not important
-            if (hub->recv(reinterpret_cast<uint8_t *>(&data),1,crc)) return; // read out control byte
-
+            // received reg_TA contains: input select mask (not important) and read out control byte
             // in reality master can now set registers of potentiometers to 0x0000 or 0xFFFF to track changes
-
             crc = ~crc; // normally crc16 is sent ~inverted
             if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
-
             // takes max 5.3 ms for 16 bit ( 4 CH * 16 bit * 80 us + 160 us per request = 5.3 ms )
             if (hub->sendBit(false)) return; // still converting....
             break; // finished conversion: send 1, is passive ...
@@ -78,10 +71,10 @@ void DS2450::clearMemory(void)
     for (uint8_t adc = 0; adc < POTI_COUNT; ++adc)
     {
         // CONTROL/STATUS DATA
-        memory[(1*PAGE_SIZE) + (adc*2) + 0] = 0x08;
-        memory[(1*PAGE_SIZE) + (adc*2) + 1] = 0x8C;
+        memory[(1*PAGE_SIZE) + (adc*2) + 0] = 0x00; // 16bit
+        memory[(1*PAGE_SIZE) + (adc*2) + 1] = 0x8C; // enable POR, Alarm enable high / low
         // alarm settings
-        memory[(2*PAGE_SIZE) + (adc*2) + 1] = 0xFF;
+        memory[(2*PAGE_SIZE) + (adc*2) + 1] = 0xFF; // high threshold max
     };
 };
 
@@ -121,7 +114,7 @@ bool DS2450::setPotentiometer(const uint8_t channel, const uint16_t value)
     memory[(2*channel)  ] = LByte;
     memory[(2*channel)+1] = HByte;
     correctMemory();
-    return true;
+    return true; // TODO: check with alarm settings p2, and raise alarm, also check when data is written
 };
 
 uint16_t DS2450::getPotentiometer(const uint8_t channel) const

@@ -1,6 +1,6 @@
 // 4 channel A/D
-// works, but without
-// native features: Overdrive capable, alarm search
+// works, but without alarm features and other controllable functions beside ADC-Reading
+// native bus-features: Overdrive capable, alarm search
 
 #ifndef ONEWIRE_DS2450_H
 #define ONEWIRE_DS2450_H
@@ -19,11 +19,10 @@ private:
     static constexpr uint8_t MEM_SIZE    = PAGE_COUNT*PAGE_SIZE;
 
     uint8_t memory[MEM_SIZE];
-    // Page1 : conversion results:  16bit for Channel A, B, C & D, power on default: 0x00
+    // Page1 : conversion results:  16 bit for Channel A, B, C & D, power on default: 0x00
     // Page2 : control / status:    16 bit per channel
     // Page3 : alarm settings:      16 bit per channel
     // Page3 : factory calibration
-
 
     void correctMemory(void);
 
