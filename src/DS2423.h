@@ -1,6 +1,6 @@
 // 4kb 1-Wire RAM with Counter
 // works
-// native features: Overdrive capable
+// native bus-features: Overdrive capable
 
 #ifndef ONEWIRE_DS2423_H
 #define ONEWIRE_DS2423_H

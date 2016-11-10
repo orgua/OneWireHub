@@ -1,8 +1,6 @@
 // 1Kbit 1-Wire EEPROM, Add Only Memory
 // works, writing could not be tested (DS9490 does not support hi-voltage mode and complains)
-// Copyright by Kondi (initial version), https://forum.pjrc.com/threads/33640-Teensy-2-OneWire-Slave
-// DS2501: 0x11, autoset to 512bits
-// dell powersupply: 0x28
+// native bus-features: none
 
 #ifndef ONEWIRE_DS2502_H
 #define ONEWIRE_DS2502_H

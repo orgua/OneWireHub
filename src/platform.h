@@ -197,7 +197,7 @@ void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 #define DIRECT_MODE_OUTPUT(base, pin)   pinMode(pin,OUTPUT)
 #warning "OneWire. Fallback mode. Using API calls for pinMode,digitalRead and digitalWrite. Operation of this library is not guaranteed on this architecture."
 using io_reg_t = uint32_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+constexpr uint8_t VALUE_IPL {1}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
 /////////////////////////////////////////// EXTRA PART /////////////////////////////////////////
 // this part is loaded if no proper arduino-environment is found (good for external testing)
@@ -224,7 +224,7 @@ uint8_t digitalPinToPort(uint8_t x) {return 0;};
 uint8_t *portInputRegister(uint8_t x) {return 0;};
 uint8_t digitalPinToBitMask(uint8_t x) {return 0;};
 
-uint32_t microsecondsToClockCycles(uint32_t x) {return 0;};
+constexpr uint32_t microsecondsToClockCycles(uint32_t x) {return 100;}; // mockup, emulate 100 MHz CPU
 
 void delayMicroseconds(...) {};
 uint32_t micros(void) {return 0;}; // takes about 3 µs to process @ 16 MHz
@@ -268,7 +268,7 @@ void memset(T1 address[], T1 initValue, T2 size)
 };
 
 template <typename T1, typename T2>
-void memcpy(T1 destination[], T1 source, T2 bytes)
+void memcpy(T1 destination[], const T1 source[], T2 bytes)
 {
     for (T2 counter = 0; counter < bytes; ++counter)
     {

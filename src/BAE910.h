@@ -1,6 +1,6 @@
 // Multifunction 1-wire slave device @@@
 // works, basic functionality
-// native features: unknown
+// native bus-features: unknown
 
 #ifndef ONEWIRE_BAE910_H
 #define ONEWIRE_BAE910_H

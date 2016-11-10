@@ -1,6 +1,6 @@
 // Serial Number
 // Works
-// native features: none
+// native bus-features: none
 
 #ifndef ONEWIRE_DS2401_H
 #define ONEWIRE_DS2401_H

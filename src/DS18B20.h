@@ -3,7 +3,7 @@
 // DS18B20: 9-12bit, -55 - +85  degC
 // DS18S20: 9   bit, -55 - +85  degC
 // DS1822:  9-12bit, -55 - +125 degC
-// native features: alarm search
+// native bus-features: alarm search
 
 #ifndef ONEWIRE_DS18B20_H
 #define ONEWIRE_DS18B20_H

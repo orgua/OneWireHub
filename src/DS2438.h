@@ -1,6 +1,6 @@
 // Smart Battery Monitor
 // works, but without real EPROM copy/recall functionallity, Timer,
-// native features: none
+// native bus-features: none
 
 #ifndef ONEWIRE_DS2438_H
 #define ONEWIRE_DS2438_H

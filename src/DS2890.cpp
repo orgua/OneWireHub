@@ -3,7 +3,7 @@
 DS2890::DS2890(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
     register_feat = REG_MASK_POTI_CHAR | REG_MASK_WIPER_SET | REG_MASK_POTI_NUMB | REG_MASK_WIPER_POS | REG_MASK_POTI_RESI;
-    memset(register_poti, 0, 4);
+    memset(register_poti, uint8_t(0), 4);
     register_ctrl    = 0b00001100;
 };
 
@@ -31,12 +31,15 @@ void DS2890::duty(OneWireHub * const hub)
             if (hub->send(&data))           break;
             if (hub->recv(&cmd))            break;
 
-            if (data&0x01) data &= ~0x04;
-            else           data |= 0x04;
-            if (data&0x02) data &= ~0x08;
-            else           data |= 0x08;
+            if (cmd == RELEASE_CODE)
+            {
+                if (data&0x01) data &= ~0x04;
+                else           data |= 0x04;
+                if (data&0x02) data &= ~0x08;
+                else           data |= 0x08;
 
-            if (cmd == RELEASE_CODE) register_ctrl = data;
+                register_ctrl = data;
+            };
             break; // respond with 1s ... passive
 
         case 0xAA:      // READ CONTROL REGISTER

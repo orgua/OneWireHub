@@ -1,6 +1,6 @@
 // Dual channel addressable switch
 // Works, master can latch the pin and pull it thereby down
-// native features: Overdrive capable
+// native bus-features: Overdrive capable
 
 #ifndef ONEWIRE_DS2413_H
 #define ONEWIRE_DS2413_H

@@ -1,7 +1,7 @@
 // Single address switch @@@
 // works, but reading back the value is not supported, because alarm search is not implemented yet
 // this IC is not using standard protocol - it sends data after searchRom and alarmSearch
-// native features: alarm search
+// native bus-features: alarm search
 
 #ifndef ONEWIRE_DS2405_H
 #define ONEWIRE_DS2405_H

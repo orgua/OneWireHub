@@ -1,5 +1,6 @@
 // Single channel digital potentiometer
-// Works - 100%
+// Works, is prepared for four channels
+// native bus-features: Overdrive capable
 
 #ifndef ONEWIRE_DS2890_H
 #define ONEWIRE_DS2890_H

@@ -1,6 +1,6 @@
 // 4Kb 1-Wire EEPROM
 // works
-// native features: Overdrive capable
+// native bus-features: Overdrive capable
 
 #ifndef ONEWIRE_DS2433_H
 #define ONEWIRE_DS2433_H
