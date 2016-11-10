@@ -1,4 +1,4 @@
-// 0x01  Serial Number
+// Serial Number
 // Works
 // native features: none
 

@@ -1,4 +1,4 @@
-// 0x3A  Dual channel addressable switch
+// Dual channel addressable switch
 // Works, master can latch the pin and pull it thereby down
 // native features: Overdrive capable
 

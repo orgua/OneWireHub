@@ -1,4 +1,4 @@
-// 0x2C  Single channel digital potentiometer
+// Single channel digital potentiometer
 // Works - 100%
 
 #ifndef ONEWIRE_DS2890_H

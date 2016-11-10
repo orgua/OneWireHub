@@ -1,4 +1,4 @@
-// 0x23  4Kb 1-Wire EEPROM
+// 4Kb 1-Wire EEPROM
 // works
 // native features: Overdrive capable
 

@@ -1,4 +1,4 @@
-// 0xFC  Multifunction 1-wire slave device @@@
+// Multifunction 1-wire slave device @@@
 // works, basic functionality
 // native features: unknown
 

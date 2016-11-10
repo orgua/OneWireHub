@@ -1,4 +1,4 @@
-// 0x2D  1Kb 1-Wire EEPROM
+// 1Kb 1-Wire EEPROM
 // works,
 // note: datasheet is fuzzy, but device is similar to ds2433
 // native features: Overdrive capable

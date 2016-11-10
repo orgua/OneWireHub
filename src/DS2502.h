@@ -1,4 +1,4 @@
-// 0x09  1Kbit 1-Wire EEPROM, Add Only Memory
+// 1Kbit 1-Wire EEPROM, Add Only Memory
 // works, writing could not be tested (DS9490 does not support hi-voltage mode and complains)
 // Copyright by Kondi (initial version), https://forum.pjrc.com/threads/33640-Teensy-2-OneWire-Slave
 // DS2501: 0x11, autoset to 512bits
