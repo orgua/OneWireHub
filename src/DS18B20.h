@@ -1,4 +1,4 @@
-// 0x28  Digital Thermometer
+// Digital Thermometer
 // Works, but without eeprom copy/read and alarm-setting
 // DS18B20: 9-12bit, -55 - +85  degC
 // DS18S20: 9   bit, -55 - +85  degC

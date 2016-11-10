@@ -1,4 +1,4 @@
-// 0x29  8-Channel Addressable Switch @@@
+// 8-Channel Addressable Switch @@@
 // works, but no alarm search and higher logic / output / control register-action
 // native features: Overdrive capable, alarm search
 

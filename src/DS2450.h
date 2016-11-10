@@ -1,5 +1,6 @@
-// 0x20 4 channel A/D
-// supports overdrive
+// 4 channel A/D
+// works, but without
+// native features: Overdrive capable, alarm search
 
 #ifndef ONEWIRE_DS2450_H
 #define ONEWIRE_DS2450_H

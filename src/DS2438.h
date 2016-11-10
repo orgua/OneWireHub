@@ -1,4 +1,4 @@
-// 0x26  Smart Battery Monitor
+// Smart Battery Monitor
 // works, but without real EPROM copy/recall functionallity, Timer,
 // native features: none
 

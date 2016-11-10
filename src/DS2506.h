@@ -1,4 +1,4 @@
-// (0x0F) 64kbit EEPROM, Add Only Memory
+// 64kbit EEPROM, Add Only Memory
 
 #ifndef ONEWIRE_DS2506_H
 #define ONEWIRE_DS2506_H

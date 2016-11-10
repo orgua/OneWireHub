@@ -1,4 +1,4 @@
-// 0x1D  4kb 1-Wire RAM with Counter
+// 4kb 1-Wire RAM with Counter
 // works
 // native features: Overdrive capable
 
