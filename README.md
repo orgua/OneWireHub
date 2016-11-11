@@ -5,7 +5,7 @@ The OneWireHub is an Arduino compatible (and many more platforms) library to emu
 The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your home automation environment.
 
 ### Supported Slaves:
-- **BAE910 (0xFC) multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
+- **BAE0910 (0xFC) multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
 - **DS1822 (0x22) Digital Thermometer, 12bit** -> use DS18B20 with different family code
 - **DS18B20 (0x28) Digital Thermometer, 12bit** (also known as DS1820) 
 - **DS18S20 (0x10) Digital Thermometer, 9bit** (also known as DS1920, use DS18B20 with different family code)
@@ -33,7 +33,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 Note: **Bold printed devices are feature-complete and were mostly tested with a DS9490 (look into the regarding example-file for more information) and a loxone system (when supported).**
 
 ### Features:
-- supports up to 32 slaves (8 is standard setting), adjust HUB_SLAVE_LIMIT in src/OneWireHub_config.h to safe RAM & program space
+- supports up to 32 slaves simultaneously (8 is standard setting), adjust HUB_SLAVE_LIMIT in src/OneWireHub_config.h to safe RAM & program space
 - hot-plug: add and remove slaves as needed
 - support for most onewire-features: MATCH ROM (0x55), SKIP ROM (0xCC), READ ROM (0x0F,0x33), RESUME COMMAND (0xA5)
    - **OVERDRIVE-Mode**: Master can issue OD SKIP ROM (0x13) or OD MATCH ROM (0x69) and slave stays in this mode till it sees a long reset -> OD-feature must be activated in config
@@ -45,7 +45,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - hardware-dependencies are combined in "platform.h", synced with [Onewire-Lib](https://github.com/PaulStoffregen/OneWire)
    - supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822 (...)
    - tested architectures: atmega328 @ 16 MHz / arduino Uno, teensy3.2
-   - for portability and tests the hub can be compiled on a PC with the supplied mock-up functions
+   - for portability and tests the hub can be compiled on a PC with the supplied mock-up functions in platform.h
    - at the moment the lib relies sole on loop-counting for timing, no direct access to interrupt or timers, **NOTE:** if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
 - Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
 - GPIO-Debug output - shows status by issuing high-states (activate in src/OneWireHub_config.h, is a better alternative to serial debug)
@@ -55,18 +55,51 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
    - during hub-startup it issues a 1ms long high-state (you can check the instruction-per-loop-value for your architecture with this)
 - provide documentation, numerous examples, easy interface for hub and sensors
 
+### How does the Hub work
+- this layered description gives you a basic idea of how the functions inside the hub work together
+- this will not tell you how the [onewire protocol](https://en.wikipedia.org/wiki/1-Wire) works - read a device datasheet or the link for that
+- Low Level - hardware access
+   - macros like DIRECT_READ() and DIRECT_WRITE() handle bus-access (platform.h)
+   - checkReset() and showPresence() are used to react to a beginning OW-Message
+   - sendBit(), recvBit() manage the information inside each timeslot issued by the master
+- Mid Level - onewire protocol logic
+   - send() and recv() can process data between device and master on byte-level (and do a CRC if needed)
+   - recvAndProcessCmd() handles basic commands of the master like: search-rom, match-rom, skip-rom, read-rom
+- High Level - user interaction
+   - attach() adds an instance of a ow-device to the hub so the master can find it on the bus. there is a lot to do here. the device ID must be integrated into the tree-structure so that the hub knows how to react during a search-rom-command  
+   - detach() takes the selected emulated device offline and restructures the search-tree
+   - poll() lets the hub listen to the bus. If there is a reset within a given time-frame it will continue to handle the message (show presence and receive commands), otherwise it will exit and you can do other stuff. the user should call this function as often as possible to intercept every message and therefore stay visible on the bus
+- Slave Level:
+   - slave.duty() gets automatically called when the master sends special commands (for example match-rom). now it is possible to handle device specific commands like "read memory" or "do temperature measurement". These commands deviate for each device.
+   - slave.setTemperature() and slave.writeMemory() for example are individual functions that handle core-functionality of the device and can be called by the user
+- for further details try reading the header-files or check the examples
+
+### HELP - What to do if things don't work as expected?
+- is your arduino software up to date (>v1.6.8)
+- update this lib to the latest release (v2.0.0)
+- if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
+- Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
+- check if clock-speed of the µC is correctly set (if possible) - test with simple blinking example, 1sec ON should really need 1sec. timing is critical
+- begin with a simple example like the ds18b20. the ds18b20 doesn't support overdrive, so the master won't switch to higher datarates
+- check if your setup is right: you need at least external power for your µC and a dataline with groundline to your Onewire-Master
+- is there more than one master on the bus? It won't work!
+- has any other sensor ever worked with with master?
+- is serial-debugging disabled (see src/OneWireHub_config.h)?
+- if you can provide a recording via logic-analyzer (logic 8 or similar) there should be chance we can help you 
+- if you checked all these points feel free to open an issue at [Github](https://github.com/orgua/OneWireHub)
+
 ### Recent development (latest at the top):
 - interface of hub and slave-devices has changed, check header-file or examples for more info
 - rework / clean handling of timing-constants with user defined literals.
 - extend const-correctness to all onewire-slaves and unify naming of functions across similar devices
 - include tests into each device-example and add a lot of get()/set() for internal device-states
 - full support for ds2423, ds2450 and ds2503/5/6
-- fix and enhance ds2431, ds2433, ds2502, ds2890, probably every slave got a rework
+- fix and enhance ds2431, ds2433, ds2502, ds2890, probably every slave got a rework / optimization
 - overdrive-support! must be enabled in config file - works with atmega328@16MHz
 - rework send() and recv(), much more efficient -> less time without interupts (no missing time with millis())! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
 - rework Error-Handling-System (reduced a lot of overhead)
 - no return value for hub.searchIDTree() or item.duty() needed anymore
-- returns 1 if error occured in the following functions: recv(buf[]), send(), awaitTimeslot(), sendBit(), checkReset(), showPrescence(), recvAndProzessCmd()
+- returns 1 if error occured in the following functions: recv(buf[]), send(), awaitTimeslot(), sendBit(), checkReset(), showPresence(), recvAndProzessCmd()
 - support for ds2408 (thanks to vytautassurvila) and ds2450
 - offline calibration by watching the bus (examples/debug/calibrate_by_bus_timing)
    - branch for online calibration was abandoned because it took to much resources (DS18B20-Sketch compiled to 8434 // 482 bytes instead of 7026 // 426 bytes now) 
@@ -105,20 +138,6 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 **Note:** this will certainly not work with an emulated device. Powering a µController via GPIO is sometimes possible, but needs preparation and tests.
 
 [read more](http://electronics.stackexchange.com/questions/193300/digital-ic-that-draws-power-from-data-pins)
-
-### HELP - What to do if things don't work as expected?
-- is your arduino software up to date (>v1.6.8)
-- update this lib to the latest release (v2.0.0)
-- if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
-- Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
-- check if clock-speed of the µC is correctly set (if possible) - test with simple blinking example, 1sec ON should really need 1sec. timing is critical
-- begin with a simple example like the ds18b20. the ds18b20 doesn't support overdrive, so the master won't switch to higher datarates
-- check if your setup is right: you need at least external power for your µC and a dataline with groundline to your Onewire-Master
-- is there more than one master on the bus? It won't work!
-- has any other sensor ever worked with with master?
-- is serial-debugging disabled (see src/OneWireHub_config.h)?
-- if you can provide a recording via logic-analyzer (logic 8 or similar) there should be chance we can help you 
-- if you checked all these points feel free to open an issue at [Github](https://github.com/orgua/OneWireHub)
 
 ### Ancestors of this Lib:
 - original pieces seem to be adopted from [OneWireSlave](http://robocraft.ru/blog/arduino/302.html)
