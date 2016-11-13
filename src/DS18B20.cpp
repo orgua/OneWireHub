@@ -98,11 +98,11 @@ void DS18B20::setTemperatureRaw(const int16_t value_raw)
         // normal 18b20, uses always 12bit mode! also 9,10,11,12 bit possible bitPosition seems to stay the same
         if (value > 0)
         {
-            value &= 0x0FFF;
+            value &= 0x07FF; // upper 5 bits are signum
         } else
         {
             value = -value;
-            value |= 0xF000;
+            value |= 0xF800;
         };
     };
 
@@ -131,7 +131,7 @@ int  DS18B20::getTemperature(void) const
     {
         if (scratchpad[1] & 0xF0)
         {
-            value &= 0x0FFF;
+            value &= 0x07FF;
             value  = -value;
         }
         value /= 16;

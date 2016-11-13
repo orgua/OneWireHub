@@ -16,7 +16,6 @@ private:
 
     uint8_t scratchpad[9];
 
-    void setTemperatureRaw(const int16_t value_raw);
     void updateCRC(void);
 
     bool ds18s20_mode;
@@ -32,6 +31,8 @@ public:
     void setTemperature(const float value_degC);  // -55 to +125 degC
     void setTemperature(const int8_t value_degC); // -55 to +125 degC
     int  getTemperature(void) const;
+
+    void setTemperatureRaw(const int16_t value_raw);
 
 };
 
