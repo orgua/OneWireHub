@@ -106,8 +106,8 @@ void BAE910::duty(OneWireHub * const hub)
             crc = ~crc;
             if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
             // verify answer from master, then copy memory
-            if (hub->recv(&ta1 ,1))                             return;
-            if (ta1 == 0xBC)
+            if (hub->recv(&ecmd ,1))                             return;
+            if (ecmd == 0xBC)
             {
                 while (len-- > 0) // reverse byte order
                 {
