@@ -98,7 +98,6 @@ private:
 protected:
 
     uint8_t scratchpad[BAE910_SCRATCHPAD_SIZE];
-    virtual void extCommand(const uint8_t ecmd, const uint8_t payload_len = 0); // read payload from scratchpad
 
 public:
 
