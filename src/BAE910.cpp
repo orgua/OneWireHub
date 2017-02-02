@@ -18,8 +18,8 @@ void BAE910::duty(OneWireHub * const hub)
     switch (cmd)
     {
         case 0x11: // READ VERSION
-            if (hub->send(&BAE910_SW_VER,1,crc))                return;
-            if (hub->send(&BAE910_BOOTSTRAP_VER,1,crc))         return;
+            if (hub->send(&memory.SW_VER,1,crc))                return;
+            if (hub->send(&memory.BOOTSTRAP_VER,1,crc))         return;
 
             crc = ~crc;
             if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
