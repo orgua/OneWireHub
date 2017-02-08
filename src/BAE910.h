@@ -12,6 +12,7 @@ static constexpr uint8_t  BAE910_DEVICE_TYPE      = 0x02;  // Type 2 for BAE0910
 static constexpr uint8_t  BAE910_CHIP_TYPE        = 0x01;  // Chip type= 0x01 for the MC9S08SH8, 8 pin package soic8
 
 static constexpr uint8_t  BAE910_SCRATCHPAD_SIZE  = 32;
+static constexpr uint8_t  BAE910_MEMORY_SIZE      = 128;
 //// END OF CONFIG //////////////////////////////////////
 
 typedef struct
@@ -85,7 +86,7 @@ typedef struct
 } sBAE910;
 
 typedef union {
-    uint8_t bytes[0x80];
+    uint8_t bytes[BAE910_MEMORY_SIZE];
     sBAE910 field;
 } mBAE910; // overlay with memory_array
 
