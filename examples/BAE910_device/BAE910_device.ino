@@ -26,6 +26,8 @@ void setup()
 
     // Setup OneWire
     hub.attach(bae910);
+    bae910.memory.field.SW_VER = 0x01;
+    bae910.memory.field.BOOTSTRAP_VER = 0x01;
 
     Serial.println("config done");
 }
