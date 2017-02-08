@@ -4,26 +4,8 @@ BAE910::BAE910(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 {
     static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
 
-    extCommand(0xBB); // clear memory
-};
-
-void BAE910::extCommand(const uint8_t ecmd, const uint8_t payload_len)
-{
-    if (payload_len >= sizeof (memory)) return;
-    if (payload_len >= sizeof (scratchpad)) return;
-
-    // reserved: // TODO: this is untested and just a good guess
-    if (ecmd == 0xBB) // 0xBB  Erase Firmware
-    {
-        memset(&memory.bytes[0], static_cast<uint8_t>(0x00), sizeof(memory.bytes));
-    }
-    else if (ecmd == 0xBA) // 0xBA  Flash Firmware
-    {
-        for (uint8_t i = payload_len; i < sizeof(memory); --i)
-        {
-            memory.bytes[0x7F - i] = scratchpad[i];
-        }
-    }
+    // clear memory
+    memset(&memory.bytes[0], static_cast<uint8_t>(0x00), sizeof(memory.bytes));
 };
 
 void BAE910::duty(OneWireHub * const hub)
@@ -36,8 +18,8 @@ void BAE910::duty(OneWireHub * const hub)
     switch (cmd)
     {
         case 0x11: // READ VERSION
-            if (hub->send(&BAE910_SW_VER,1,crc))                return;
-            if (hub->send(&BAE910_BOOTSTRAP_VER,1,crc))         return;
+            if (hub->send(&memory.field.SW_VER,1,crc))                return;
+            if (hub->send(&memory.field.BOOTSTRAP_VER,1,crc))         return;
 
             crc = ~crc;
             if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
@@ -49,25 +31,6 @@ void BAE910::duty(OneWireHub * const hub)
 
             crc = ~crc;
             if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
-            break;
-
-        case 0x13: // EXTENDED COMMAND
-            if (hub->recv(&ecmd,1,crc))                         return;
-            if (hub->recv(&len ,1,crc))                         return;
-
-            if (len > BAE910_SCRATCHPAD_SIZE)
-            {
-                hub->raiseSlaveError(cmd);
-                return;
-            }
-
-            if (hub->recv(scratchpad,len,crc))                  return;
-
-            crc = ~crc;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
-            // verify answer from master, then execute command
-            if (hub->recv(&ta1 ,1))                             return;
-            if (ta1 == 0xBC)    extCommand(ecmd, len);
             break;
 
         case 0x14: // READ MEMORY
@@ -116,8 +79,8 @@ void BAE910::duty(OneWireHub * const hub)
             };
             break;
 
-        case 0x16: // ERASE EEPROM PAGE (not needed/implemented yet)
-
+//        case 0x13: // EXTENDED COMMAND
+//        case 0x16: // ERASE EEPROM PAGE (not needed/implemented yet)
         default:
             hub->raiseSlaveError(cmd);
     };

@@ -11,9 +11,6 @@
 static constexpr uint8_t  BAE910_DEVICE_TYPE      = 0x02;  // Type 2 for BAE0910. Type 3 for BAE0911 (planned)
 static constexpr uint8_t  BAE910_CHIP_TYPE        = 0x01;  // Chip type= 0x01 for the MC9S08SH8, 8 pin package soic8
 
-static constexpr uint8_t  BAE910_BOOTSTRAP_VER    = 0x01;  // undefined data
-static constexpr uint8_t  BAE910_SW_VER           = 0x01;  // undefined data (0x00 = corrupted)
-
 static constexpr uint8_t  BAE910_SCRATCHPAD_SIZE  = 32;
 //// END OF CONFIG //////////////////////////////////////
 
@@ -83,7 +80,8 @@ typedef struct
     uint8_t  outc;
     uint8_t  cntc;
     uint8_t  adcc;
-    uint16_t reserved;
+    uint8_t  SW_VER; // 0x00 = corrupted
+    uint8_t  BOOTSTRAP_VER;
 } sBAE910;
 
 typedef union {
@@ -98,7 +96,6 @@ private:
 protected:
 
     uint8_t scratchpad[BAE910_SCRATCHPAD_SIZE];
-    virtual void extCommand(const uint8_t ecmd, const uint8_t payload_len = 0); // read payload from scratchpad
 
 public:
 
