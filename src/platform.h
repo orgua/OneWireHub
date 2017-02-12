@@ -80,7 +80,11 @@ constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far -
 #define DIRECT_WRITE_LOW(base, mask)    (GPOC = (mask))             //GPIO_OUT_W1TC_ADDRESS
 #define DIRECT_WRITE_HIGH(base, mask)   (GPOS = (mask))             //GPIO_OUT_W1TS_ADDRESS
 using io_reg_t = uint32_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+// The ESP8266 has two possible CPU frequencies
+// 80 MHz, default
+constexpr uint8_t VALUE_IPL {22}; // instructions per loop, not verified yet
+// 160 MHz
+//constexpr uint8_t VALUE_IPL {26}; // instructions per loop, not verified yet
 
 #elif defined(__SAMD21G18A__)
 #define PIN_TO_BASEREG(pin)             portModeRegister(digitalPinToPort(pin))
