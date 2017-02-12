@@ -812,6 +812,9 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
     // repetitions the longest low-states on the bus with millis(), assume it is a OW-reset
     while (repetitions--)
     {
+#if defined(ARDUINO_ARCH_ESP8266)
+ESP.wdtFeed();
+#endif
         uint32_t time_needed = 0;
 
         // try to catch a OW-reset each time
@@ -833,6 +836,9 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
     noInterrupts();
     while (repetitions++ < REPETITIONS)
     {
+#if defined(ARDUINO_ARCH_ESP8266)
+ESP.wdtFeed();
+#endif
         if (!waitLoopsWhilePinIs(wait_loops, true)) continue;
         const timeOW_t loops_left = waitLoopsWhilePinIs(TIMEOW_MAX, false);
         const timeOW_t loops_needed = TIMEOW_MAX - loops_left;
