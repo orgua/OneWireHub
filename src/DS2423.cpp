@@ -8,7 +8,7 @@ DS2423::DS2423(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     clearScratchpad();
 
     for (uint8_t n = 0; n < COUNTER_COUNT; ++n) setCounter(n,0);
-};
+}
 
 void DS2423::duty(OneWireHub * const hub)
 {
@@ -46,7 +46,7 @@ void DS2423::duty(OneWireHub * const hub)
             {
                 crc = ~crc; // normally crc16 is sent ~inverted
                 hub->send(reinterpret_cast<uint8_t *>(&crc), 2);
-            };
+            }
             break;
 
         case 0xAA:      // read Scratchpad
@@ -91,8 +91,8 @@ void DS2423::duty(OneWireHub * const hub)
                     const uint8_t length = PAGE_SIZE - start;
                     if (hub->send(&memory[(page*PAGE_SIZE) + start],length)) return;
                     start = 0;
-                };
-            };
+                }
+            }
             break; // send 1s, be passive ...
 
         case 0xA5:      // Read Memory + Counter
@@ -114,33 +114,33 @@ void DS2423::duty(OneWireHub * const hub)
                     else
                     {
                         if (hub->send(reinterpret_cast<const uint8_t *>(&DUMMY_32b_ONES),4,crc)) return;
-                    };
+                    }
                     if (hub->send(reinterpret_cast<const uint8_t *>(&DUMMY_32b_ZERO),4,crc)) return;
 
                     crc = ~crc;
                     if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
                     crc = 0;
-                };
-            };
+                }
+            }
             break;
 
         default:
             hub->raiseSlaveError(cmd);
-    };
+    }
 
     if (cmd == 0x5A) clearScratchpad();
-};
+}
 
 
 void DS2423::clearMemory(void)
 {
     memset(memory, static_cast<uint8_t>(0x00), MEM_SIZE);
-};
+}
 
 void DS2423::clearScratchpad(void)
 {
     memset(scratchpad, static_cast<uint8_t>(0x00), PAGE_SIZE);
-};
+}
 
 bool DS2423::writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position)
 {
@@ -154,10 +154,10 @@ bool DS2423::writeMemory(const uint8_t* const source, const uint16_t length, con
     for (uint8_t page = page_start; page <= page_end; ++page)// page 12 & 13 have write-counters, page 14&15 have hw-counters
     {
         if ((page == COUNTER_PAGE_START) || (page == COUNTER_PAGE_START + 1)) memcounter[page-COUNTER_PAGE_START]++;
-    };
+    }
 
     return true;
-};
+}
 
 bool DS2423::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const
 {
@@ -165,30 +165,30 @@ bool DS2423::readMemory(uint8_t* const destination, const uint16_t length, const
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
     memcpy(destination,&memory[position],_length);
     return (_length==length);
-};
+}
 
 void     DS2423::setCounter(uint8_t counter, uint32_t value)
 {
     if (counter > COUNTER_COUNT) return;
     memcounter[counter] = value;
-};
+}
 
 uint32_t DS2423::getCounter(uint8_t counter)
 {
     if (counter > COUNTER_COUNT) return 0;
     return memcounter[counter];
-};
+}
 
 void     DS2423::incrementCounter(uint8_t counter)
 {
     if (counter > COUNTER_COUNT) return;
     if (memcounter[counter] == 0xFFFF) return;
     memcounter[counter]++;
-};
+}
 
 void     DS2423::decrementCounter(uint8_t counter)
 {
     if (counter > COUNTER_COUNT) return;
     if (memcounter[counter] == 0x0000) return;
     memcounter[counter]--;
-};
+}

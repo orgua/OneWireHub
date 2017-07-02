@@ -100,7 +100,7 @@ void setup()
     updateSensorTCS();
     updateSensorMPL();
     updateSensorSI7();
-};
+}
 
 void updateSensorTCS(void) // 8560 559
 {
@@ -131,7 +131,7 @@ void updateSensorTCS(void) // 8560 559
     ds18b1.setTemperatureRaw(value_crgb[2]);
     ds18b2.setTemperatureRaw(value_crgb[3]);
     ds18b3.setTemperatureRaw(value_crgb[0]);
-};
+}
 
 void updateSensorMPL(void)
 {
@@ -151,7 +151,7 @@ void updateSensorMPL(void)
     }
 
     ds18b4.setTemperatureRaw(pascal16);
-};
+}
 
 void updateSensorSI7(void)
 {

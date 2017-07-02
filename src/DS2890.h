@@ -37,22 +37,22 @@ public:
     void    setPotentiometer(const uint8_t channel, const uint8_t value)
     {
         register_poti[channel&POTI_MASK] = value;
-    };
+    }
 
     uint8_t getPotentiometer(const uint8_t channel) const
     {
         return register_poti[channel&POTI_MASK];
-    };
+    }
 
     uint8_t getRegCtrl(void) const
     {
         return register_ctrl;
-    };
+    }
 
     uint8_t getRegFeat(void) const
     {
         return register_feat;
-    };
+    }
 };
 
 #endif

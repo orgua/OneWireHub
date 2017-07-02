@@ -25,12 +25,12 @@ public:
     void setPinState(const bool value)
     {
         pin_state = value;
-    };
+    }
 
     bool getPinState(void) const
     {
         return pin_state;
-    };
+    }
 };
 
 #endif

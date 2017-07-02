@@ -5,7 +5,7 @@ DS2890::DS2890(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     register_feat = REG_MASK_POTI_CHAR | REG_MASK_WIPER_SET | REG_MASK_POTI_NUMB | REG_MASK_WIPER_POS | REG_MASK_POTI_RESI;
     memset(register_poti, uint8_t(0), 4);
     register_ctrl    = 0b00001100;
-};
+}
 
 void DS2890::duty(OneWireHub * const hub)
 {
@@ -33,13 +33,13 @@ void DS2890::duty(OneWireHub * const hub)
 
             if (cmd == RELEASE_CODE)
             {
-                if (data&0x01 != 0) data &= ~0x04;
-                else                data |= 0x04;
-                if (data&0x02 != 0) data &= ~0x08;
-                else                data |= 0x08;
+                if ((data&0x01) != 0) data &= ~0x04;
+                else                  data |= 0x04;
+                if ((data&0x02) != 0) data &= ~0x08;
+                else                  data |= 0x08;
 
                 register_ctrl = data;
-            };
+            }
             break; // respond with 1s ... passive
 
         case 0xAA:      // READ CONTROL REGISTER
@@ -66,7 +66,7 @@ void DS2890::duty(OneWireHub * const hub)
 
         default:
             hub->raiseSlaveError(cmd);
-    };
+    }
 
     if ((cmd == 0xC3) || (cmd == 0x99)) goto start_over; // only for this device -> when INCREMENT or DECREMENT the master can issue another cmd right away
-};
+}

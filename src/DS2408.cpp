@@ -3,7 +3,7 @@
 DS2408::DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
     clearMemory();
-};
+}
 
 void DS2408::duty(OneWireHub * const hub)
 {
@@ -53,7 +53,7 @@ void DS2408::duty(OneWireHub * const hub)
                 crc = ~crc; // most important step, easy to miss....
                 if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
                 crc = crc2;
-            };
+            }
 
         case 0xC3:      // reset activity latches
             memory[REG_PIO_ACTIVITY] = 0x00;
@@ -74,8 +74,8 @@ void DS2408::duty(OneWireHub * const hub)
 
         default:
             hub->raiseSlaveError(cmd);
-    };
-};
+    }
+}
 
 void DS2408::clearMemory(void)
 {
@@ -99,30 +99,30 @@ void DS2408::setPinState(const uint8_t pinNumber, const bool value)
     memory[REG_PIO_ACTIVITY] |= pio_state ^ memory[REG_PIO_LOGIC]; // TODO: just good guess here, has anyone the energy to figure out each register?
     memory[REG_PIO_LOGIC]    = pio_state;
     memory[REG_PIO_OUTPUT]   = pio_state;
-};
+}
 
 bool DS2408::getPinState(const uint8_t pinNumber) const
 {
     return static_cast<bool>(memory[REG_PIO_LOGIC] & ( 1 << pinNumber ));
-};
+}
 
 uint8_t DS2408::getPinState(void) const
 {
     return memory[REG_PIO_LOGIC];
-};
+}
 
 void DS2408::setPinActivity(const uint8_t pinNumber, const bool value)
 {
     if (value)  memory[REG_PIO_ACTIVITY] |=  (1<<pinNumber);
     else        memory[REG_PIO_ACTIVITY] &= ~(1<<pinNumber);
-};
+}
 
 bool DS2408::getPinActivity(const uint8_t pinNumber) const
 {
     return static_cast<bool>(memory[REG_PIO_ACTIVITY] & ( 1 << pinNumber ));
-};
+}
 
 uint8_t DS2408::getPinActivity(void) const
 {
     return memory[REG_PIO_ACTIVITY];
-};
+}

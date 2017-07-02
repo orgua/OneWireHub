@@ -74,7 +74,7 @@ void setup()
 
 
     Serial.println("config done");
-};
+}
 
 void loop()
 {

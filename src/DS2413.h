@@ -27,23 +27,23 @@ public:
         if (value && pin_latch[a_or_b & 1]) return 0; // can't set 1 because pin is latched
         pin_state[a_or_b & 1] = value;
         return 1;
-    };
+    }
 
     bool    getPinState(const uint8_t a_or_b) const
     {
         return pin_state[a_or_b & 1];
-    };
+    }
 
     void    setPinLatch(const uint8_t a_or_b, const bool value) // latching a pin will pull it down (state=zero)
     {
         pin_latch[a_or_b & 1] = value;
         if (value) setPinState(a_or_b, 0);
-    };
+    }
 
     bool    getPinLatch(const uint8_t a_or_b) const
     {
         return pin_latch[a_or_b & 1];
-    };
+    }
 };
 
 #endif

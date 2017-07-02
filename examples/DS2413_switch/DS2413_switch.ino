@@ -89,4 +89,4 @@ bool blinking(void)
         return 1;
     }
     return 0;
-};
+}

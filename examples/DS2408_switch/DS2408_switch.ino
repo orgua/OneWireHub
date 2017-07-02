@@ -76,7 +76,7 @@ void loop()
         Serial.print("0x");
         Serial.println(ds2408.getPinState(),BIN);
     }
-};
+}
 
 bool blinking(void)
 {

@@ -31,8 +31,8 @@ void pinTestLegacy(void)
     {
         DIRECT_WRITE_HIGH(reg, pin_bitMaskL);
         DIRECT_WRITE_LOW(reg, pin_bitMaskL);
-    };
-};
+    }
+}
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -72,8 +72,8 @@ void pinTestOneWireLib(void)
     {
         DIRECT_WRITE_HIGH(reg, mask);
         DIRECT_WRITE_LOW(reg, mask);
-    };
-};
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -88,7 +88,7 @@ void pinConfigClean(const uint8_t pin)
     // setup direct pin-access
     pin_bitMask = PIN_TO_BITMASK(pin);
     pin_baseReg = PIN_TO_BASEREG(pin);
-};
+}
 
 void pinTestClean(void)
 {
@@ -99,8 +99,8 @@ void pinTestClean(void)
     {
         DIRECT_WRITE_HIGH(pin_baseReg, pin_bitMask);
         DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
-    };
-};
+    }
+}
 
 
 void setup()
@@ -131,8 +131,8 @@ void setup()
             noInterrupts();
             pinTestClean();
             break;
-    };
-};
+    }
+}
 
 void loop()
 {
