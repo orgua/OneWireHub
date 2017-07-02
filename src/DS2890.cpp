@@ -33,10 +33,10 @@ void DS2890::duty(OneWireHub * const hub)
 
             if (cmd == RELEASE_CODE)
             {
-                if (data&0x01) data &= ~0x04;
-                else           data |= 0x04;
-                if (data&0x02) data &= ~0x08;
-                else           data |= 0x08;
+                if (data&0x01 != 0) data &= ~0x04;
+                else                data |= 0x04;
+                if (data&0x02 != 0) data &= ~0x08;
+                else                data |= 0x08;
 
                 register_ctrl = data;
             };
@@ -60,7 +60,7 @@ void DS2890::duty(OneWireHub * const hub)
             break;
 
         case 0x99:      // DECREMENT
-            if (register_poti[poti]) register_poti[poti]--;
+            if (register_poti[poti] != 0) register_poti[poti]--;
             if (hub->send(&register_poti[poti])) break;
             break;
 
