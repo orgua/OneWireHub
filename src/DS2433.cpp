@@ -5,7 +5,7 @@ DS2433::DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     static_assert(sizeof(memory) < 65535,  "Implementation does not cover the whole address-space");
     clearMemory();
     clearScratchpad();
-};
+}
 
 void DS2433::duty(OneWireHub * const hub)
 {
@@ -34,7 +34,7 @@ void DS2433::duty(OneWireHub * const hub)
                     if (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH) reg_ES |= REG_ES_PF_MASK;
                     break;
                 }
-            };
+            }
             reg_ES--;
             reg_ES &= PAGE_MASK;
 
@@ -42,7 +42,7 @@ void DS2433::duty(OneWireHub * const hub)
             {
                 crc = ~crc; // normally crc16 is sent ~inverted
                 hub->send(reinterpret_cast<uint8_t *>(&crc), 2);
-            };
+            }
             break;
 
         case 0x55:      // COPY SCRATCHPAD
@@ -90,23 +90,23 @@ void DS2433::duty(OneWireHub * const hub)
             for (uint16_t i = reg_TA; i < MEM_SIZE; i+=PAGE_SIZE) // model of the 32byte scratchpad
             {
                 if (hub->send(&memory[i],PAGE_SIZE)) return;
-            };
+            }
             return; // datasheed says we should send all 1s, till reset (1s are passive... so nothing to do here)
 
         default:
             hub->raiseSlaveError(cmd);
-    };
-};
+    }
+}
 
 void DS2433::clearMemory(void)
 {
     memset(memory, static_cast<uint8_t>(0x00), MEM_SIZE);
-};
+}
 
 void DS2433::clearScratchpad(void)
 {
     memset(scratchpad, static_cast<uint8_t>(0x00), PAGE_SIZE);
-};
+}
 
 bool DS2433::writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position)
 {
@@ -114,7 +114,7 @@ bool DS2433::writeMemory(const uint8_t* const source, const uint16_t length, con
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
     memcpy(&memory[position],source,_length);
     return true;
-};
+}
 
 bool DS2433::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const
 {
@@ -122,4 +122,4 @@ bool DS2433::readMemory(uint8_t* const destination, const uint16_t length, const
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
     memcpy(destination,&memory[position],_length);
     return (_length==length);
-};
+}

@@ -20,7 +20,7 @@ DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5
 void DS18B20::updateCRC()
 {
     scratchpad[8] = crc8(scratchpad, 8);
-};
+}
 
 void DS18B20::duty(OneWireHub * const hub)
 {
@@ -56,8 +56,8 @@ void DS18B20::duty(OneWireHub * const hub)
 
         default:
             hub->raiseSlaveError(cmd);
-    };
-};
+    }
+}
 
 
 void DS18B20::setTemperature(const float value_degC)
@@ -66,7 +66,7 @@ void DS18B20::setTemperature(const float value_degC)
     if (value > 125) value = 125;
     if (value < -55) value = -55;
     setTemperatureRaw(static_cast<int16_t>(value * 16.0f));
-};
+}
 
 void DS18B20::setTemperature(const int8_t value_degC) // could be int8_t, [-55;+85] degC
 {
@@ -74,7 +74,7 @@ void DS18B20::setTemperature(const int8_t value_degC) // could be int8_t, [-55;+
     if (value > 125) value = 125;
     if (value < -55) value = -55;
     setTemperatureRaw(value * static_cast<int8_t>(16));
-};
+}
 
 void DS18B20::setTemperatureRaw(const int16_t value_raw)
 {
@@ -91,7 +91,7 @@ void DS18B20::setTemperatureRaw(const int16_t value_raw)
         {
             value = -value;
             value |= 0xFF00; // upper byte is signum (1)
-        };
+        }
     }
     else
     {
@@ -103,8 +103,8 @@ void DS18B20::setTemperatureRaw(const int16_t value_raw)
         {
             value = -value;
             value |= 0xF800;
-        };
-    };
+        }
+    }
 
     scratchpad[0] = reinterpret_cast<uint8_t *>(&value)[0];
     scratchpad[1] = reinterpret_cast<uint8_t *>(&value)[1];
@@ -112,7 +112,7 @@ void DS18B20::setTemperatureRaw(const int16_t value_raw)
     // if out of bounds >=TH, <=TL trigger flag
 
     updateCRC();
-};
+}
 
 int  DS18B20::getTemperature(void) const
 {
@@ -135,7 +135,7 @@ int  DS18B20::getTemperature(void) const
             value  = -value;
         }
         value /= 16;
-    };
+    }
 
     return value;
 }

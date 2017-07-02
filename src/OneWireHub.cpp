@@ -34,7 +34,7 @@ OneWireHub::OneWireHub(const uint8_t pin)
 
     static_assert(VALUE_IPL, "Your architecture has not been calibrated yet, please run examples/debug/calibrate_by_bus_timing and report instructions per loop (IPL) to https://github.com/orgua/OneWireHub");
     static_assert(ONEWIRE_TIME_VALUE_MIN>1,"YOUR ARCHITECTURE IS TO SLOW, THIS MAY RESULT IN TIMING-PROBLEMS");
-};
+}
 
 
 // attach a sensor to the hub
@@ -52,7 +52,7 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
             calibrate_loop_timing = false;
             waitLoops1ms();
         }
-    };
+    }
 
     // find position of next free storage-position
     uint8_t position = 255;
@@ -77,7 +77,7 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
     slave_count++;
     buildIDTree();
     return position;
-};
+}
 
 bool    OneWireHub::detach(const OneWireItem &sensor)
 {
@@ -94,7 +94,7 @@ bool    OneWireHub::detach(const OneWireItem &sensor)
 
     if (position != 255)    return detach(position);
     else                    return 0;
-};
+}
 
 bool    OneWireHub::detach(const uint8_t slave_number)
 {
@@ -106,7 +106,7 @@ bool    OneWireHub::detach(const uint8_t slave_number)
     slave_count--;
     buildIDTree();
     return 1;
-};
+}
 
 
 // just look through each bit of each ID and build a tree, so there are n=slaveCount decision-points
@@ -120,7 +120,7 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask) const
         _mask >>= 1;
     }
     return 0;
-};
+}
 
 // return next not empty element in slave-list
 uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start) const
@@ -130,7 +130,7 @@ uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start) const
         if (slave_list[i] != nullptr)  return i;
     }
     return 0;
-};
+}
 
 // gone through the address, store this result
 uint8_t OneWireHub::getNrOfFirstFreeIDTreeElement(void) const
@@ -140,7 +140,7 @@ uint8_t OneWireHub::getNrOfFirstFreeIDTreeElement(void) const
         if (idTree[i].id_position == 255) return i;
     }
     return 0;
-};
+}
 
 // initial FN to build the ID-Tree
 uint8_t OneWireHub::buildIDTree(void)
@@ -204,7 +204,7 @@ uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const mask_t mask_slaves
             idTree[active_element].got_one         = buildIDTree(position_IDBit, mask_pos);
             idTree[active_element].got_zero        = buildIDTree(position_IDBit, mask_neg);
             return active_element;
-        };
+        }
 
         position_IDBit++;
     }
@@ -397,7 +397,7 @@ void OneWireHub::searchIDTree(void)
     }
 
     slave_selected = slave_list[active_slave];
-};
+}
 
 bool OneWireHub::recvAndProcessCmd(void)
 {
@@ -441,26 +441,26 @@ bool OneWireHub::recvAndProcessCmd(void)
                     {
                         flag = false;
                         break;
-                    };
-                };
+                    }
+                }
 
                 if (flag)
                 {
                     slave_selected = slave_list[i];
                     break;
-                };
-            };
+                }
+            }
 
             if (!flag)
             {
                 return true;
-            };
+            }
 
             if (slave_selected != nullptr)
             {
                 if (USE_GPIO_DEBUG) DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
                 slave_selected->duty(this);
-            };
+            }
             break;
 
         case 0x3C: // overdrive SKIP ROM
@@ -480,7 +480,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             {
                 if (USE_GPIO_DEBUG) DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
                 slave_selected->duty(this);
-            };
+            }
             break;
 
         case 0x0F: // OLD READ ROM
@@ -495,7 +495,7 @@ bool OneWireHub::recvAndProcessCmd(void)
             if (slave_selected != nullptr)
             {
                 slave_selected->sendID(this);
-            };
+            }
             return false;
 
         case 0xEC: // ALARM SEARCH
@@ -512,11 +512,11 @@ bool OneWireHub::recvAndProcessCmd(void)
         default: // Unknown command
             _error = Error::INCORRECT_ONEWIRE_CMD;
             _error_cmd = cmd;
-    };
+    }
 
     if (_error == Error::RESET_IN_PROGRESS) return false;
     else                                    return (_error != Error::NO_ERROR);
-};
+}
 
 
 // info: check for errors after calling and break/return if possible, returns true if error is detected
@@ -533,7 +533,7 @@ bool OneWireHub::sendBit(const bool value)
         _error = Error::RESET_IN_PROGRESS;
         interrupts();
         return true;
-    };
+    }
 
     // Wait for bus to fall LOW, start of new timeslot
     retries = ONEWIRE_TIME_MSG_HIGH_TIMEOUT;
@@ -543,7 +543,7 @@ bool OneWireHub::sendBit(const bool value)
         _error = Error::AWAIT_TIMESLOT_TIMEOUT_HIGH;
         interrupts();
         return true;
-    };
+    }
 
     // first difference to inner-loop of read()
     if (writeZero)
@@ -560,7 +560,7 @@ bool OneWireHub::sendBit(const bool value)
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     return false;
-};
+}
 
 
 // should be the prefered function for writes, returns true if error occured
@@ -583,16 +583,16 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
                 interrupts();
                 return true;
             }
-        };
+        }
         if (USE_GPIO_DEBUG)
         {
             DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
             DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-        };
-    };
+        }
+    }
     interrupts();
     return (bytes_sent != data_length);
-};
+}
 
 bool OneWireHub::send(const uint8_t address[], const uint8_t data_length, uint16_t &crc16)
 {
@@ -612,27 +612,27 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length, uint16
                 if ((counter == 0) && (_error ==Error::AWAIT_TIMESLOT_TIMEOUT_HIGH)) _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
                 interrupts();
                 return true;
-            };
+            }
 
             const uint8_t mix = ((uint8_t) crc16 ^ dataByte) & static_cast<uint8_t>(0x01);
             crc16 >>= 1;
             if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
             dataByte >>= 1;
-        };
+        }
         if (USE_GPIO_DEBUG)
         {
             DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
             DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-        };
-    };
+        }
+    }
     interrupts();
     return (bytes_sent != data_length);
-};
+}
 
 bool OneWireHub::send(const uint8_t dataByte)
 {
     return send(&dataByte,1);
-};
+}
 
 //
 bool OneWireHub::recvBit(void)
@@ -646,7 +646,7 @@ bool OneWireHub::recvBit(void)
         _error = Error::RESET_IN_PROGRESS;
         interrupts();
         return true;
-    };
+    }
 
     // Wait for bus to fall LOW, start of new timeslot
     retries = ONEWIRE_TIME_MSG_HIGH_TIMEOUT;
@@ -656,14 +656,14 @@ bool OneWireHub::recvBit(void)
         _error = Error::AWAIT_TIMESLOT_TIMEOUT_HIGH;
         interrupts();
         return true;
-    };
+    }
 
     // wait a specific time to do a read (data is valid by then), // first difference to inner-loop of write()
     retries = ONEWIRE_TIME_READ_MIN[od_mode];
     while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
 
     return (retries > 0);
-};
+}
 
 
 bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
@@ -685,8 +685,8 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
                 if ((bitMask == 0x01) && (_error ==Error::AWAIT_TIMESLOT_TIMEOUT_HIGH)) _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
                 interrupts();
                 return true;
-            };
-        };
+            }
+        }
 
         address[bytes_received] = value;
 
@@ -694,12 +694,12 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
         {
             DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
             DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-        };
-    };
+        }
+    }
 
     interrupts();
     return (bytes_received != data_length);
-};
+}
 
 
 // should be the prefered function for reads, returns true if error occured
@@ -728,24 +728,24 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length, uint16_t &cr
                 if ((bitMask == 0x01) && (_error ==Error::AWAIT_TIMESLOT_TIMEOUT_HIGH)) _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
                 interrupts();
                 return true;
-            };
+            }
 
             mix ^= static_cast<uint8_t>(crc16) & static_cast<uint8_t>(0x01);
             crc16 >>= 1;
             if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
-        };
+        }
 
         address[bytes_received] = value;
         if (USE_GPIO_DEBUG)
         {
             DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
             DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-        };
-    };
+        }
+    }
 
     interrupts();
     return (bytes_received != data_length);
-};
+}
 
 
 void OneWireHub::wait(const uint16_t timeout_us) const
@@ -756,8 +756,8 @@ void OneWireHub::wait(const uint16_t timeout_us) const
     {
         loops = waitLoopsWhilePinIs(loops,state);
         state = !state;
-    };
-};
+    }
+}
 
 void OneWireHub::wait(const timeOW_t loops_wait) const
 {
@@ -767,8 +767,8 @@ void OneWireHub::wait(const timeOW_t loops_wait) const
     {
         loops = waitLoopsWhilePinIs(loops,state);
         state = !state;
-    };
-};
+    }
+}
 
 
 // returns false if pins stays in the wanted state all the time
@@ -777,7 +777,7 @@ timeOW_t OneWireHub::waitLoopsWhilePinIs(volatile timeOW_t retries, const bool p
     if (retries == 0) return 0;
     while ((DIRECT_READ(pin_baseReg, pin_bitMask) == pin_value) && (--retries));
     return retries;
-};
+}
 
 void OneWireHub::waitLoops1ms(void)
 {
@@ -792,9 +792,9 @@ void OneWireHub::waitLoops1ms(void)
             DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
             loops_left = waitLoopsWhilePinIs(loops_1ms, true);
             DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-        };
-    };
-};
+        }
+    }
+}
 
 // this calibration calibrates timing with the longest low-state on the OW-Bus.
 // first it measures some resets with the millis()-fn to get real timing.
@@ -822,10 +822,10 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
             waitLoopsWhilePinIs(TIMEOW_MAX, false);
             const uint32_t time_stop = micros();
             time_needed = time_stop - time_start;
-        };
+        }
 
         if (time_needed > time_for_reset) time_for_reset = time_needed;
-    };
+    }
 
     timeOW_t loops_for_reset = 0;
     repetitions = 0;
@@ -837,7 +837,7 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
         const timeOW_t loops_left = waitLoopsWhilePinIs(TIMEOW_MAX, false);
         const timeOW_t loops_needed = TIMEOW_MAX - loops_left;
         if (loops_needed>loops_for_reset) loops_for_reset = loops_needed;
-    };
+    }
     interrupts();
 
     waitLoops1ms();
@@ -845,7 +845,7 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
     const timeOW_t value_ipl = ( time_for_reset * microsecondsToClockCycles(1) ) / loops_for_reset;
 
     return value_ipl;
-};
+}
 
 
 void OneWireHub::waitLoopsDebug(void) const
@@ -880,8 +880,8 @@ void OneWireHub::waitLoopsDebug(void) const
         Serial.print("write zero : \t");
         Serial.println(ONEWIRE_TIME_WRITE_ZERO[od_mode]);
         Serial.flush();
-    };
-};
+    }
+}
 
 void OneWireHub::printError(void) const
 {
@@ -912,29 +912,29 @@ void OneWireHub::printError(void) const
         } else
         {
             Serial.println("");
-        };
-    };
-};
+        }
+    }
+}
 
 Error OneWireHub::getError(void) const
 {
     return (_error);
-};
+}
 
 bool OneWireHub::hasError(void) const
 {
     return (_error != Error::NO_ERROR);
-};
+}
 
 void OneWireHub::raiseSlaveError(const uint8_t cmd)
 {
     _error = Error::INCORRECT_SLAVE_USAGE;
     _error_cmd = cmd;
-};
+}
 
 Error OneWireHub::clearError(void) // and return it if needed
 {
     const Error _tmp = _error;
     _error = Error::NO_ERROR;
     return _tmp;
-};
+}

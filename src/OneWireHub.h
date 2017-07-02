@@ -12,12 +12,12 @@ using     timeOW_t = uint32_t;
 constexpr uint32_t operator "" _us(const unsigned long long int time_us) // user defined literal used in config
 {
     return uint32_t(time_us * microsecondsToClockCycles(1) / VALUE_IPL); // note: microsecondsToClockCycles == speed in MHz....
-};
+}
 
 constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
 {
     return (time_us * microsecondsToClockCycles(1) / VALUE_IPL); // note: microsecondsToClockCycles == speed in MHz....
-};
+}
 
 #include "OneWireHub_config.h" // outsource configfile
 

@@ -10,7 +10,7 @@ OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uin
     ID[5] = ID6;
     ID[6] = ID7;
     ID[7] = crc8(ID, 7);
-};
+}
 
 void OneWireItem::sendID(OneWireHub * const hub) const {
     hub->send(ID, 8);
@@ -73,7 +73,7 @@ uint8_t OneWireItem::crc8(const uint8_t address[], const uint8_t length, const u
 #endif
     }
     return crc;
-};
+}
 
 
 uint16_t OneWireItem::crc16(const uint8_t address[], const uint8_t length, const uint16_t init)
@@ -107,7 +107,7 @@ uint16_t OneWireItem::crc16(const uint8_t address[], const uint8_t length, const
     }
 #endif
     return crc;
-};
+}
 
 uint16_t OneWireItem::crc16(uint8_t value, uint16_t crc)
 {
@@ -123,4 +123,4 @@ uint16_t OneWireItem::crc16(uint8_t value, uint16_t crc)
     crc ^= (static_cast<uint16_t>(cdata) << 1);
     return crc;
 #endif
-};
+}

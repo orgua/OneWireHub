@@ -5,7 +5,7 @@ BAE910::BAE910(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
 
     extCommand(0xBB); // clear memory
-};
+}
 
 void BAE910::extCommand(const uint8_t ecmd, const uint8_t payload_len)
 {
@@ -24,7 +24,7 @@ void BAE910::extCommand(const uint8_t ecmd, const uint8_t payload_len)
             memory.bytes[0x7F - i] = scratchpad[i];
         }
     }
-};
+}
 
 void BAE910::duty(OneWireHub * const hub)
 {
@@ -112,13 +112,13 @@ void BAE910::duty(OneWireHub * const hub)
                 while (len-- > 0) // reverse byte order
                 {
                     memory.bytes[0x7F - ta1 - len] = scratchpad[len];
-                };
-            };
+                }
+            }
             break;
 
         case 0x16: // ERASE EEPROM PAGE (not needed/implemented yet)
 
         default:
             hub->raiseSlaveError(cmd);
-    };
-};
+    }
+}
