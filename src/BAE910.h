@@ -8,13 +8,13 @@
 #include "OneWireItem.h"
 
 //// CONFIG /////////////////////////////////////////////
-static constexpr uint8_t  BAE910_DEVICE_TYPE      = 0x02;  // Type 2 for BAE0910. Type 3 for BAE0911 (planned)
-static constexpr uint8_t  BAE910_CHIP_TYPE        = 0x01;  // Chip type= 0x01 for the MC9S08SH8, 8 pin package soic8
+static constexpr uint8_t  BAE910_DEVICE_TYPE      { 0x02 };  // Type 2 for BAE0910. Type 3 for BAE0911 (planned)
+static constexpr uint8_t  BAE910_CHIP_TYPE        { 0x01 };  // Chip type= 0x01 for the MC9S08SH8, 8 pin package soic8
 
-static constexpr uint8_t  BAE910_BOOTSTRAP_VER    = 0x01;  // undefined data
-static constexpr uint8_t  BAE910_SW_VER           = 0x01;  // undefined data (0x00 = corrupted)
+static constexpr uint8_t  BAE910_BOOTSTRAP_VER    { 0x01 };  // undefined data
+static constexpr uint8_t  BAE910_SW_VER           { 0x01 };  // undefined data (0x00 = corrupted)
 
-static constexpr uint8_t  BAE910_SCRATCHPAD_SIZE  = 32;
+static constexpr uint8_t  BAE910_SCRATCHPAD_SIZE  { 32 };
 //// END OF CONFIG //////////////////////////////////////
 
 typedef struct
@@ -93,22 +93,20 @@ typedef union {
 
 class BAE910 : public OneWireItem
 {
-private:
-
 protected:
 
     uint8_t scratchpad[BAE910_SCRATCHPAD_SIZE];
-    virtual void extCommand(const uint8_t ecmd, const uint8_t payload_len = 0); // read payload from scratchpad
+    void extCommand(uint8_t ecmd, uint8_t payload_len = 0); // read payload from scratchpad
 
 public:
 
-    mBAE910 memory;
+    static constexpr uint8_t family_code              { 0xFC };
 
-    static constexpr uint8_t family_code              = 0xFC;
+    mBAE910 memory;
 
     BAE910(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    void duty(OneWireHub * const hub);
+    void duty(OneWireHub * hub) final;
 
     // TODO: can be extended with clearMemory(), writeMemory(), readMemory() similar to ds2506
 };
