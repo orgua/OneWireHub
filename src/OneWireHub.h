@@ -24,7 +24,7 @@ constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
 #ifndef HUB_SLAVE_LIMIT
 #error "Slavelimit not defined (why?)"
 #elif (HUB_SLAVE_LIMIT > 32)
-#error "Slavelimit is set to high (32)"
+#error "Slavelimit is set too high (32)"
 #elif (HUB_SLAVE_LIMIT > 16)
 using mask_t = uint32_t;
 #elif (HUB_SLAVE_LIMIT > 8)

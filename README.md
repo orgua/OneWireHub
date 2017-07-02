@@ -76,7 +76,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### HELP - What to do if things don't work as expected?
 - is your arduino software up to date (>v1.6.8)
-- update this lib to the latest release (v2.0.0)
+- update this lib to the latest release (v2.1.0)
 - if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
 - Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
 - check if clock-speed of the µC is correctly set (if possible) - test with simple blinking example, 1sec ON should really need 1sec. timing is critical
@@ -84,7 +84,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - check if your setup is right: you need at least external power for your µC and a dataline with groundline to your Onewire-Master
 - is there more than one master on the bus? It won't work!
 - has any other sensor ever worked with with master?
-- is serial-debugging disabled (see src/OneWireHub_config.h)?
+- is serial- and gpio-debugging disabled (see src/OneWireHub_config.h)?
 - if you can provide a recording via logic-analyzer (logic 8 or similar) there should be chance we can help you 
 - if you checked all these points feel free to open an issue at [Github](https://github.com/orgua/OneWireHub)
 
