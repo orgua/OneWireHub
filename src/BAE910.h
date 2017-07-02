@@ -104,6 +104,8 @@ public:
 
     mBAE910 memory;
 
+    static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
+
     BAE910(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
     void duty(OneWireHub * hub) final;

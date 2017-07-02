@@ -33,11 +33,12 @@ void DS2502::duty(OneWireHub * const hub)
     if (hub->recv(reg_TA,2))  return;
     crc = crc8(reg_TA,2,crc);
 
-    if (reg_TA[1]) return; // upper byte of target adress should not contain any data
+    if (reg_TA[1] != 0) return; // upper byte of target adress should not contain any data
 
     switch (cmd)
     {
         case 0xF0:      // READ MEMORY
+
             if (hub->send(&crc))        break;
 
             crc = 0; // reInit CRC and send data
@@ -51,6 +52,7 @@ void DS2502::duty(OneWireHub * const hub)
             break; // datasheet says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
 
         case 0xC3:      // READ DATA (like 0xF0, but repeatedly till the end of page with following CRC)
+
             if (hub->send(&crc)) break;
 
             while (reg_TA[0] < sizeof_memory)
@@ -70,6 +72,7 @@ void DS2502::duty(OneWireHub * const hub)
             break; // datasheet says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
 
         case 0xAA:      // READ STATUS // TODO: nearly same code as 0xF0, but with status[] instead of memory[]
+
             if (hub->send(&crc)) break;
 
             crc = 0; // reInit CRC and send data
@@ -82,6 +85,7 @@ void DS2502::duty(OneWireHub * const hub)
             break; // datasheet says we should return all 1s, send(255), till reset, nothing to do here, 1s are passive
 
         case 0x0F:      // WRITE MEMORY
+
             while (reg_TA[0] < sizeof_memory)
             {
                 if (hub->recv(&data))       break;
@@ -107,6 +111,7 @@ void DS2502::duty(OneWireHub * const hub)
             break;
 
         case 0x55:      // WRITE STATUS
+
             while (reg_TA[0] < STATUS_SIZE)
             {
                 if (hub->recv(&data))       break;
@@ -123,6 +128,7 @@ void DS2502::duty(OneWireHub * const hub)
             break;
 
         default:
+
             hub->raiseSlaveError(cmd);
     }
 }
@@ -190,7 +196,7 @@ void DS2502::setPageProtection(const uint8_t page)
 bool DS2502::getPageProtection(const uint8_t page) const
 {
     if (page >= PAGE_COUNT) return true;
-    return !(status[STATUS_WP_PAGES] & uint8_t(1<<page));
+    return ((status[STATUS_WP_PAGES] & uint8_t(1<<page)) == 0);
 }
 
 void DS2502::setPageUsed(const uint8_t page)
@@ -201,7 +207,7 @@ void DS2502::setPageUsed(const uint8_t page)
 bool DS2502::getPageUsed(const uint8_t page) const
 {
     if (page >= PAGE_COUNT) return true;
-    return !(status[STATUS_WP_PAGES] & uint8_t(1<<(page+4)));
+    return ((status[STATUS_WP_PAGES] & uint8_t(1<<(page+4))) == 0);
 }
 
 

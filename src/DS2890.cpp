@@ -19,6 +19,7 @@ void DS2890::duty(OneWireHub * const hub)
     switch (cmd)
     {
         case 0x0F:      // WRITE POSITION
+
             if (hub->recv(&data))           break;
             if (hub->send(&data))           break;
             if (hub->recv(&cmd))            break;
@@ -27,6 +28,7 @@ void DS2890::duty(OneWireHub * const hub)
             break; // respond with 1s ... passive
 
         case 0x55:      // WRITE CONTROL REGISTER
+
             if (hub->recv(&data))           break;
             if (hub->send(&data))           break;
             if (hub->recv(&cmd))            break;
@@ -43,28 +45,33 @@ void DS2890::duty(OneWireHub * const hub)
             break; // respond with 1s ... passive
 
         case 0xAA:      // READ CONTROL REGISTER
+
             if (hub->send(&register_feat))  break;
             if (hub->send(&register_ctrl))  break;
             while (!hub->sendBit(false));
             break;
 
         case 0xF0:      // READ POSITION
+
             if (hub->send(&register_ctrl))  break;
             if (hub->send(&register_poti[poti])) break;
             while (!hub->sendBit(false));
             break;
 
         case 0xC3:      // INCREMENT
+
             if (register_poti[poti] < 0xFF) register_poti[poti]++;
             if (hub->send(&register_poti[poti])) break;
             break;
 
         case 0x99:      // DECREMENT
+
             if (register_poti[poti] != 0) register_poti[poti]--;
             if (hub->send(&register_poti[poti])) break;
             break;
 
         default:
+
             hub->raiseSlaveError(cmd);
     }
 

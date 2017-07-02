@@ -13,6 +13,7 @@ void DS2401::duty(OneWireHub * const hub)
     switch (cmd)
     {
         default:
+
             hub->raiseSlaveError(cmd);
     }
 }

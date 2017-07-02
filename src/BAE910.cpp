@@ -2,8 +2,6 @@
 
 BAE910::BAE910(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
-
     extCommand(0xBB); // clear memory
 }
 
@@ -36,6 +34,7 @@ void BAE910::duty(OneWireHub * const hub)
     switch (cmd)
     {
         case 0x11: // READ VERSION
+
             if (hub->send(&BAE910_SW_VER,1,crc))                return;
             if (hub->send(&BAE910_BOOTSTRAP_VER,1,crc))         return;
 
@@ -44,6 +43,7 @@ void BAE910::duty(OneWireHub * const hub)
             break;
 
         case 0x12: // READ TYPE
+
             if (hub->send(&BAE910_DEVICE_TYPE,1,crc))           return;
             if (hub->send(&BAE910_CHIP_TYPE,1,crc))             return;
 
@@ -52,6 +52,7 @@ void BAE910::duty(OneWireHub * const hub)
             break;
 
         case 0x13: // EXTENDED COMMAND
+
             if (hub->recv(&ecmd,1,crc))                         return;
             if (hub->recv(&len ,1,crc))                         return;
 
@@ -71,6 +72,7 @@ void BAE910::duty(OneWireHub * const hub)
             break;
 
         case 0x14: // READ MEMORY
+
             if (hub->recv(&ta1,1,crc))                          return;
             if (hub->recv(&ta2,1,crc))                          return;
             if (hub->recv(&len,1,crc))                          return;
@@ -91,6 +93,7 @@ void BAE910::duty(OneWireHub * const hub)
             break;
 
         case 0x15: // WRITE MEMORY
+
             if (hub->recv(&ta1,1,crc))                          return;
             if (hub->recv(&ta2,1,crc))                          return;
             if (hub->recv(&len,1,crc))                          return;
@@ -119,6 +122,7 @@ void BAE910::duty(OneWireHub * const hub)
         case 0x16: // ERASE EEPROM PAGE (not needed/implemented yet)
 
         default:
+
             hub->raiseSlaveError(cmd);
     }
 }

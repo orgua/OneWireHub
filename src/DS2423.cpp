@@ -12,12 +12,12 @@ DS2423::DS2423(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 void DS2423::duty(OneWireHub * const hub)
 {
-    constexpr uint32_t DUMMY_32b_ZERO   = 0x00000000;
-    constexpr uint32_t DUMMY_32b_ONES   = 0xFFFFFFFF;
-    constexpr uint8_t  ALTERNATING_10   = 0xAA;
-    static uint16_t reg_TA = 0;
-    static uint8_t  reg_ES = 0;
-    uint16_t crc = 0;  // target_address
+    constexpr uint32_t DUMMY_32b_ZERO   { 0x00000000 }; // should be std::numeric_limits<uint32_t>::lowest()
+    constexpr uint32_t DUMMY_32b_ONES   { 0xFFFFFFFF };
+    constexpr uint8_t  ALTERNATING_10   { 0xAA };
+    static    uint16_t reg_TA           { 0 };
+    static    uint8_t  reg_ES           { 0 };
+    uint16_t crc { 0 };  // target_address
     uint8_t  data;
 
     uint8_t cmd;
@@ -26,6 +26,7 @@ void DS2423::duty(OneWireHub * const hub)
     switch (cmd)
     {
         case 0x0F:      // Write Scratchpad
+
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) break;
 
             reg_TA &= REG_TA_MASK; // compiler makes this to a 8bit OP, nice
@@ -50,6 +51,7 @@ void DS2423::duty(OneWireHub * const hub)
             break;
 
         case 0xAA:      // read Scratchpad
+
             if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2)) break;
             if (hub->send(&reg_ES,1)) break;
             {
@@ -60,6 +62,7 @@ void DS2423::duty(OneWireHub * const hub)
             break; // send 1s, be passive ...
 
         case 0x5A:      // copy scratchpad
+
             if (hub->recv(&data,1))                              break;
             if (data != reinterpret_cast<uint8_t *>(&reg_TA)[0]) break;
             if (hub->recv(&data,1))                              break;
@@ -67,7 +70,7 @@ void DS2423::duty(OneWireHub * const hub)
             if (hub->recv(&data,1))                              break;
             if (data != reg_ES)                                  break;
 
-            if (reg_ES & REG_ES_PF_MASK)                         break; // stop if error occured earlier
+            if ((reg_ES & REG_ES_PF_MASK) != 0)                  break; // stop if error occured earlier
             reg_ES |= REG_ES_AA_MASK; // compare was successful
             // we have ~30µs to write the date
             {
@@ -80,6 +83,7 @@ void DS2423::duty(OneWireHub * const hub)
             break;
 
         case 0xF0:      // READ MEMORY
+
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2)) break;
             reg_TA &= REG_TA_MASK; // compiler makes this to a 8bit OP, nice
 
@@ -96,6 +100,7 @@ void DS2423::duty(OneWireHub * const hub)
             break; // send 1s, be passive ...
 
         case 0xA5:      // Read Memory + Counter
+
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) return;
             reg_TA &= REG_TA_MASK; // compiler makes this to a 8bit OP, nice
 
@@ -125,6 +130,7 @@ void DS2423::duty(OneWireHub * const hub)
             break;
 
         default:
+
             hub->raiseSlaveError(cmd);
     }
 

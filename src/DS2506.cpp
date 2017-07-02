@@ -42,6 +42,7 @@ void DS2506::duty(OneWireHub * const hub)
     switch (cmd)
     {
         case 0xF0:      // READ MEMORY
+
             while (reg_TA <= sizeof_memory)
             {
                 const uint16_t destin_TA = translateRedirection(reg_TA);
@@ -68,6 +69,7 @@ void DS2506::duty(OneWireHub * const hub)
             break; // datasheet says we should return 1s, till reset, nothing to do here
 
         case 0xA5:      // EXTENDED READ MEMORY (with redirection-information)
+
             while (reg_TA <= sizeof_memory)
             {
                 const uint8_t  source_page = static_cast<uint8_t>(reg_TA>>5);
@@ -87,7 +89,7 @@ void DS2506::duty(OneWireHub * const hub)
                 {
                     data  = 0x00;
                     uint8_t counter = length;
-                    while (counter--)
+                    while (counter-- != 0)
                     {
                         if (hub->send(&data, 1, crc)) return;
                     }
@@ -101,6 +103,7 @@ void DS2506::duty(OneWireHub * const hub)
             break; // datasheet says we should return 1s, till reset, nothing to do here
 
         case 0xAA:      // READ STATUS
+
             while (reg_TA < STATUS_SIZE_DEV) // check for valid address
             {
                 reg_RA = reg_TA&uint8_t(7);
@@ -118,6 +121,7 @@ void DS2506::duty(OneWireHub * const hub)
             break;
 
         case 0x0F:      // WRITE MEMORY
+
             while (reg_TA < sizeof_memory) // check for valid address
             {
                 if (hub->recv(&data,1,crc)) break;
@@ -144,6 +148,7 @@ void DS2506::duty(OneWireHub * const hub)
             break;
 
         case 0xF3:      // SPEED WRITE MEMORY, omit CRC
+
             while (reg_TA < sizeof_memory) // check for valid address
             {
                 if (hub->recv(&data)) break;
@@ -167,6 +172,7 @@ void DS2506::duty(OneWireHub * const hub)
             break;
 
         case 0x55:      // WRITE STATUS
+
             while (reg_TA < STATUS_SIZE_DEV) // check for valid address
             {
                 if (hub->recv(&data,1,crc)) break;
@@ -182,6 +188,7 @@ void DS2506::duty(OneWireHub * const hub)
             break;
 
         case 0xF5:      // SPEED WRITE STATUS, omit CRC
+
             while (reg_TA < STATUS_SIZE_DEV) // check for valid address
             {
                 if (hub->recv(&data,1,crc)) break;
@@ -194,6 +201,7 @@ void DS2506::duty(OneWireHub * const hub)
             break;
 
         default:
+
             hub->raiseSlaveError(cmd);
     }
 }
@@ -242,35 +250,35 @@ uint16_t DS2506::translateRedirection(const uint16_t source_address) const// TOD
 uint8_t DS2506::readStatus(const uint16_t address) const
 {
     uint16_t SA = address;
+    uint8_t  return_value { 0x00 };
 
-    if (address < STATUS_WP_REDIR_BEG)              // is WP_PAGES
+    if (address < STATUS_WP_REDIR_BEG)                              // is WP_PAGES
     {
-        if (SA >= STATUS_SEGMENT) return 0x00;      // emulate protection
-        else                      return status[SA];
+        if (SA < STATUS_SEGMENT) return_value = status[SA];         // emulate protection
     }
-    else if (address < STATUS_PG_WRITN_BEG)         // is WP_REDIR
+    else if (address < STATUS_PG_WRITN_BEG)                         // is WP_REDIR
     {
         SA -= STATUS_WP_REDIR_BEG;
-        if (SA >= STATUS_SEGMENT) return 0x00;      // emulate protection
-        else                      return status[SA+STATUS_SEGMENT];
+        if (SA < STATUS_SEGMENT) return_value = status[SA+STATUS_SEGMENT];      // emulate protection
     }
-    else if (address < STATUS_UNDEF_B1_BEG)         // is PG_WRITTEN
+    else if (address < STATUS_UNDEF_B1_BEG)                         // is PG_WRITTEN
     {
         SA -= STATUS_PG_WRITN_BEG;
-        if (SA >= STATUS_SEGMENT) return 0x00;      // emulate written
-        else                      return status[SA+2*STATUS_SEGMENT];
+        if (SA < STATUS_SEGMENT) return_value = status[SA+2*STATUS_SEGMENT];      // emulate written
     }
-    else if (address < STATUS_PG_REDIR_BEG)         // is undefined
+    else if (address < STATUS_PG_REDIR_BEG)                         // is undefined
     {
-        return 0xFF;                                // emulate undefined read
+        return_value = 0xFF;                                        // emulate undefined read
     }
-    else if (address < STATUS_UNDEF_B2_BEG)         // is PG_REDIRECTION
+    else if (address < STATUS_UNDEF_B2_BEG)                         // is PG_REDIRECTION
     {
         SA -= STATUS_PG_REDIR_BEG;
-        if (SA >= PAGE_COUNT)    return 0xFF;       // emulate no redirection
-        else                     return status[SA+3*STATUS_SEGMENT];
+        if (SA < PAGE_COUNT)    return_value = 0xFF;                // emulate no redirection
+        else                    return_value = status[SA+3*STATUS_SEGMENT];
     }
-    else return 0xFF;                               // is undefined
+    else return_value = 0xFF;                                       // is undefined
+
+    return return_value;
 }
 
 uint8_t DS2506::writeStatus(const uint16_t address, const uint8_t value)
@@ -323,7 +331,7 @@ bool DS2506::getPageProtection(const uint8_t page) const
     const uint8_t segment_pos = (page>>3);
     if (segment_pos >= STATUS_SEGMENT) return true;
     const uint8_t page_mask = (uint8_t(1)<<(page&7));
-    return !(status[segment_pos] & page_mask);
+    return ((status[segment_pos] & page_mask) == 0);
 }
 
 void DS2506::setRedirectionProtection(const uint8_t page)
@@ -339,7 +347,7 @@ bool DS2506::getRedirectionProtection(const uint8_t page) const
     const uint8_t segment_pos = (page>>3);
     if (segment_pos >= STATUS_SEGMENT) return true;
     const uint8_t page_mask = (uint8_t(1)<<(page&7));
-    return !(status[STATUS_SEGMENT + segment_pos] & page_mask);
+    return ((status[STATUS_SEGMENT + segment_pos] & page_mask) == 0);
 }
 
 void DS2506::setPageUsed(const uint8_t page)
@@ -355,7 +363,7 @@ bool DS2506::getPageUsed(const uint8_t page) const
     const uint8_t segment_pos = (page>>3);
     if (segment_pos >= STATUS_SEGMENT) return true;
     const uint8_t page_mask = (uint8_t(1)<<(page&7));
-    return !(status[2*STATUS_SEGMENT + segment_pos] & page_mask);
+    return ((status[2*STATUS_SEGMENT + segment_pos] & page_mask) == 0);
 }
 
 bool DS2506::setPageRedirection(const uint8_t page_source, const uint8_t page_destin)
