@@ -16,6 +16,7 @@ void DS2408::duty(OneWireHub * const hub)
     switch (cmd)
     {
         case 0xF0:      // Read PIO Registers
+
             if (hub->recv(&reg_TA,1,crc)) return;
             if((reg_TA < REG_OFFSET) || (reg_TA >= REG_OFFSET + MEM_SIZE)) return;
             if (hub->recv(&data,1,crc)) return; // seconds part of reg_TA, should be zero
@@ -32,6 +33,7 @@ void DS2408::duty(OneWireHub * const hub)
             break; // after memory readout this chip sends logic 1s, which is the same as staying passive
 
         case 0x5A:      // Channel-Access Write
+
             while(true)
             {
                 if (hub->recv(&data,1)) return;
@@ -46,6 +48,7 @@ void DS2408::duty(OneWireHub * const hub)
             }
 
         case 0xF5:      // Channel-Access Read
+
             while (true)
             {
                 static uint16_t crc2 = crc;
@@ -56,10 +59,12 @@ void DS2408::duty(OneWireHub * const hub)
             }
 
         case 0xC3:      // reset activity latches
+
             memory[REG_PIO_ACTIVITY] = 0x00;
             while(!hub->send(&DATA_xAA));
 
         case 0xCC:      // write conditional search register
+
             if (hub->recv(&reg_TA,1))                   return;
             if(reg_TA < (REG_SEARCH_MASK + REG_OFFSET)) return;
             if (hub->recv(&data,1))                     return; // seconds part of reg_TA, should be zero
@@ -73,6 +78,7 @@ void DS2408::duty(OneWireHub * const hub)
             break;
 
         default:
+
             hub->raiseSlaveError(cmd);
     }
 }

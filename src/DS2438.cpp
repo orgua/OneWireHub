@@ -16,6 +16,7 @@ void DS2438::duty(OneWireHub * const hub)
     {
         // reordered for better timing
         case 0xBE:      // Read Scratchpad
+
             if (hub->recv(&page))  return;
             if (page >= PAGE_COUNT) return;
             if (hub->send(&memory[page * 8], 8)) return;
@@ -23,6 +24,7 @@ void DS2438::duty(OneWireHub * const hub)
             break;
 
         case 0x4E:      // Write Scratchpad
+
             if (hub->recv(&page))  return;
             if (page >= PAGE_COUNT) return; // when page out of limits
             for (uint8_t nByte = page<<3; nByte < (page+1)<<3; ++nByte)
@@ -36,20 +38,25 @@ void DS2438::duty(OneWireHub * const hub)
             break;
 
         case 0x48:      // copy scratchpad
+
             // do nothing special, goto recall for now
 
         case 0xB8:      // Recall Memory
+
             if (hub->recv(&page))  return;
             if (page >= PAGE_COUNT) page = PAGE_COUNT - 1; // when page out of limits
             break;
 
         case 0x44:      // Convert T
+
             break; //hub->sendBit(1); // 1 is passive, so ommit it ...
 
         case 0xB4:      // Convert V
+
             break; //hub->sendBit(1); // 1 is passive, so ommit it ...
 
         default:
+
             hub->raiseSlaveError(cmd);
     }
 }

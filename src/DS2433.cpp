@@ -9,19 +9,20 @@ DS2433::DS2433(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 void DS2433::duty(OneWireHub * const hub)
 {
-    constexpr uint8_t ALTERNATE_01 = 0b10101010;
+    constexpr uint8_t ALTERNATE_01 { 0b10101010 };
 
-    static uint16_t reg_TA; // contains TA1, TA2 (Target Address)
-    static uint8_t  reg_ES = 31;  // E/S register
+    static uint16_t reg_TA { 0 }; // contains TA1, TA2 (Target Address)
+    static uint8_t  reg_ES { 31 };  // E/S register
 
     uint8_t  data, cmd;
-    uint16_t crc = 0;
+    uint16_t crc { 0 };
 
     if (hub->recv(&cmd,1,crc))  return;
 
     switch (cmd)
     {
         case 0x0F:      // WRITE SCRATCHPAD COMMAND
+
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc)) return;
             reg_TA &= MEM_MASK; // make sure to stay in boundary
             reg_ES = uint8_t(reg_TA) & PAGE_MASK; // register-offset
@@ -46,6 +47,7 @@ void DS2433::duty(OneWireHub * const hub)
             break;
 
         case 0x55:      // COPY SCRATCHPAD
+
             if (hub->recv(&data)) return; // TA1
             if (data != reinterpret_cast<uint8_t *>(&reg_TA)[0]) return;
             if (hub->recv(&data)) return;  // TA2
@@ -53,7 +55,7 @@ void DS2433::duty(OneWireHub * const hub)
             if (hub->recv(&data)) return;  // ES
             if (data != reg_ES) return;
 
-            if (reg_ES & REG_ES_PF_MASK)                           break; // stop if error occured earlier
+            if ((reg_ES & REG_ES_PF_MASK) != 0)                  break; // stop if error occured earlier
 
             reg_ES |= REG_ES_AA_MASK; // compare was successful
 
@@ -74,6 +76,7 @@ void DS2433::duty(OneWireHub * const hub)
             break;
 
         case 0xAA:      // READ SCRATCHPAD COMMAND
+
             if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2))  return;
             if (hub->send(&reg_ES,1)) return;
 
@@ -85,6 +88,7 @@ void DS2433::duty(OneWireHub * const hub)
             return; // datasheed says we should send all 1s, till reset (1s are passive... so nothing to do here)
 
         case 0xF0:      // READ MEMORY
+
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2)) return;
 
             for (uint16_t i = reg_TA; i < MEM_SIZE; i+=PAGE_SIZE) // model of the 32byte scratchpad
@@ -94,6 +98,7 @@ void DS2433::duty(OneWireHub * const hub)
             return; // datasheed says we should send all 1s, till reset (1s are passive... so nothing to do here)
 
         default:
+
             hub->raiseSlaveError(cmd);
     }
 }

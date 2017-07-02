@@ -18,6 +18,7 @@ void DS2450::duty(OneWireHub * const hub)
     switch (cmd)
     {
         case 0xAA: // READ MEMORY
+
             while(reg_TA < MEM_SIZE)
             {
                 const uint8_t length = PAGE_SIZE - (uint8_t(reg_TA) & PAGE_MASK);
@@ -33,6 +34,7 @@ void DS2450::duty(OneWireHub * const hub)
             break;
 
         case 0x55: // write memory (only page 1&2 allowed)
+
             while(reg_TA < MEM_SIZE)
             {
                 uint8_t data;
@@ -50,6 +52,7 @@ void DS2450::duty(OneWireHub * const hub)
             break;
 
         case 0x3C: // convert, starts adc
+
             // received reg_TA contains: input select mask (not important) and read out control byte
             // in reality master can now set registers of potentiometers to 0x0000 or 0xFFFF to track changes
             crc = ~crc; // normally crc16 is sent ~inverted
@@ -59,6 +62,7 @@ void DS2450::duty(OneWireHub * const hub)
             break; // finished conversion: send 1, is passive ...
 
         default:
+
             hub->raiseSlaveError(cmd);
     }
 }

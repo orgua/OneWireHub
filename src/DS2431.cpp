@@ -16,17 +16,19 @@ DS2431::DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 void DS2431::duty(OneWireHub * const hub)
 {
-    constexpr uint8_t ALTERNATING_10 = 0xAA;
-    static uint16_t reg_TA = 0; // contains TA1, TA2
-    static uint8_t  reg_ES = 0; // E/S register
-    uint16_t crc = 0;
+    constexpr uint8_t ALTERNATING_10 { 0xAA };
+    static uint16_t   reg_TA         { 0 }; // contains TA1, TA2
+    static uint8_t    reg_ES         { 0 }; // E/S register
+    uint16_t          crc            { 0 };
 
-    uint8_t  page_offset = 0, cmd, data;
+    uint8_t  page_offset { 0 };
+    uint8_t  cmd, data;
     if (hub->recv(&cmd,1,crc))  return;
 
     switch (cmd)
     {
         case 0x0F:      // WRITE SCRATCHPAD COMMAND
+
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc))  return;
             reg_ES = uint8_t(reg_TA) & SCRATCHPAD_MASK;
             page_offset = reg_ES;
@@ -64,6 +66,7 @@ void DS2431::duty(OneWireHub * const hub)
             break;
 
         case 0xAA:      // READ SCRATCHPAD COMMAND
+
             if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2,crc))  return;
             if (hub->send(&reg_ES,1,crc)) return;
 
@@ -78,6 +81,7 @@ void DS2431::duty(OneWireHub * const hub)
             break; // send 1s when read is complete, is passive, so do nothing
 
         case 0x55:      // COPY SCRATCHPAD COMMAND
+
             if (hub->recv(&data))                                  return;
             if (data != reinterpret_cast<uint8_t *>(&reg_TA)[0])   break;
             if (hub->recv(&data))                                  return;
@@ -86,7 +90,7 @@ void DS2431::duty(OneWireHub * const hub)
             if (data != reg_ES)                                    return; // Auth code must match
 
             if (getPageProtection(uint8_t(reg_TA)))                break; // stop if page is protected (WriteMemory also checks this)
-            if (reg_ES & REG_ES_PF_MASK)                           break; // stop if error occured earlier
+            if ((reg_ES & REG_ES_PF_MASK) != 0)                    break; // stop if error occured earlier
 
             reg_ES |= REG_ES_AA_MASK; // compare was successful
 
@@ -106,12 +110,14 @@ void DS2431::duty(OneWireHub * const hub)
             break;
 
         case 0xF0:      // READ MEMORY COMMAND
+
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2))  return;
             if (reg_TA >= MEM_SIZE) return;
             if (hub->send(&memory[reg_TA],MEM_SIZE - uint8_t(reg_TA),crc)) return;
             break; // send 1s when read is complete, is passive, so do nothing here
 
         default:
+
             hub->raiseSlaveError(cmd);
     }
 }
@@ -165,47 +171,47 @@ bool DS2431::getPageProtection(const uint8_t position) const
     // should be an accurate model of the control bytes
     if      (position < 1*PAGE_SIZE)
     {
-        if (page_protection & 1) return true;
+        if ((page_protection & 1) != 0) return true;
     }
     else if (position < 2*PAGE_SIZE)
     {
-        if (page_protection & 2) return true;
+        if ((page_protection & 2) != 0) return true;
     }
     else if (position < 3*PAGE_SIZE)
     {
-        if (page_protection & 4) return true;
+        if ((page_protection & 4) != 0) return true;
     }
     else if (position < 4*PAGE_SIZE)
     {
-        if (page_protection & 8) return true;
+        if ((page_protection & 8) != 0) return true;
     }
     else if (position == 0x80)
     {
-        if ((page_protection & (1 + 16)) || (page_eprom_mode & 1)) return true;
+        if (((page_protection & (1 + 16)) != 0) || ((page_eprom_mode & 1)) != 0) return true;
     }
     else if (position == 0x81)
     {
-        if ((page_protection & (2 + 16)) || (page_eprom_mode & 2)) return true;
+        if (((page_protection & (2 + 16)) != 0) || ((page_eprom_mode & 2)) != 0) return true;
     }
     else if (position == 0x82)
     {
-        if ((page_protection & (4 + 16)) || (page_eprom_mode & 4)) return true;
+        if (((page_protection & (4 + 16)) != 0) || ((page_eprom_mode & 4)) != 0) return true;
     }
     else if (position == 0x83)
     {
-        if ((page_protection & (8 + 16)) || (page_eprom_mode & 8)) return true;
+        if (((page_protection & (8 + 16)) != 0) || ((page_eprom_mode & 8)) != 0) return true;
     }
     else if (position == 0x85)
     {
-        if (page_protection & (32+16)) return true;
+        if ((page_protection & (32+16)) != 0) return true;
     }
     else if ((position == 0x86) || (position == 0x87))
     {
-        if (page_protection & (64+16)) return true;
+        if ((page_protection & (64+16)) != 0) return true;
     }
     else if (position > 127) // filter the rest
     {
-        if (page_protection & 16) return true;
+        if ((page_protection & 16) != 0) return true;
     }
     return false;
 }
@@ -223,19 +229,19 @@ bool DS2431::getPageEpromMode(const uint8_t position) const
 {
     if      (position < 1*PAGE_SIZE)
     {
-        if (page_eprom_mode & 1) return true;
+        if ((page_eprom_mode & 1) != 0) return true;
     }
     else if (position < 2*PAGE_SIZE)
     {
-        if (page_eprom_mode & 2) return true;
+        if ((page_eprom_mode & 2) != 0) return true;
     }
     else if (position < 3*PAGE_SIZE)
     {
-        if (page_eprom_mode & 4) return true;
+        if ((page_eprom_mode & 4) != 0) return true;
     }
     else if (position < 4*PAGE_SIZE)
     {
-        if (page_eprom_mode & 8) return true;
+        if ((page_eprom_mode & 8) != 0) return true;
     }
     return false;
 }

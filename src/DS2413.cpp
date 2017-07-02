@@ -17,15 +17,17 @@ void DS2413::duty(OneWireHub * const hub)
     switch (cmd)
     {
         case 0x5A:      // PIO ACCESS WRITE
+
             if (hub->recv(&data)) return;
             data = ~data; // Write inverse
             if (hub->send(&data)) return; // send inverted form for safety
 
-            setPinLatch(0, data & static_cast<uint8_t>(0x01));// A
-            setPinLatch(1, data & static_cast<uint8_t>(0x02));// B
+            setPinLatch(0, (data & static_cast<uint8_t>(0x01)) != 0);// A
+            setPinLatch(1, (data & static_cast<uint8_t>(0x02)) != 0);// B
             break;
 
         case 0xF5:      // PIO ACCESS READ
+
             data = 0;
 
             if (pin_state[0])  data |= static_cast<uint8_t>(0x01);

@@ -93,19 +93,21 @@ bool    OneWireHub::detach(const OneWireItem &sensor)
     }
 
     if (position != 255)    return detach(position);
-    else                    return 0;
+
+    return false;
 }
 
 bool    OneWireHub::detach(const uint8_t slave_number)
 {
-    if (slave_list[slave_number] == nullptr)    return 0;
-    if (!slave_count)                           return 0;
-    if (slave_number >= ONEWIRESLAVE_LIMIT)     return 0;
+    if (slave_list[slave_number] == nullptr)    return false;
+    if (slave_count == 0)                       return false;
+    if (slave_number >= ONEWIRESLAVE_LIMIT)     return false;
 
     slave_list[slave_number] = nullptr;
     slave_count--;
     buildIDTree();
-    return 1;
+
+    return true;
 }
 
 
@@ -116,7 +118,7 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask) const
     mask_t _mask = mask;
     for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
     {
-        if (_mask & 1)  return i;
+        if ((_mask & 1) != 0)  return i;
         _mask >>= 1;
     }
     return 0;
@@ -169,23 +171,23 @@ uint8_t OneWireHub::buildIDTree(void)
 // returns the branch that this iteration has worked on
 uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const mask_t mask_slaves)
 {
-    if (!mask_slaves) return (255);
+    if (mask_slaves == 0) return (255);
 
     while (position_IDBit < 64)
     {
-        mask_t mask_pos = 0;
-        mask_t mask_neg = 0;
-        const uint8_t pos_byte = (position_IDBit >> 3);
-        const uint8_t mask_bit = (static_cast<uint8_t>(1) << (position_IDBit & (7)));
-        mask_t mask_id = 1;
+        mask_t        mask_pos  { 0 };
+        mask_t        mask_neg  { 0 };
+        const uint8_t pos_byte  { static_cast<uint8_t>(position_IDBit >> 3) };
+        const uint8_t mask_bit  { static_cast<uint8_t>(1 << (position_IDBit & 7)) };
+        mask_t        mask_id   { 1 };
 
         // searchIDTree through all active slaves
         for (uint8_t id = 0; id < ONEWIRESLAVE_LIMIT; ++id)
         {
-            if (mask_slaves & mask_id)
+            if ((mask_slaves & mask_id) != 0)
             {
                 // if slave is in mask differentiate the bitValue
-                if (slave_list[id]->ID[pos_byte] & mask_bit)
+                if ((slave_list[id]->ID[pos_byte] & mask_bit) != 0)
                     mask_pos |= mask_id;
                 else
                     mask_neg |= mask_id;
@@ -193,7 +195,7 @@ uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const mask_t mask_slaves
             mask_id <<= 1;
         }
 
-        if (mask_neg && mask_pos)
+        if ((mask_neg != 0) && (mask_pos != 0))
         {
             // there was found a junction
             const uint8_t active_element = getNrOfFirstFreeIDTreeElement();
@@ -225,7 +227,7 @@ bool OneWireHub::poll(void)
 {
     _error = Error::NO_ERROR;
 
-    while (1)
+    while (true)
     {
         // this additional check prevents an infinite loop when calling this FN without sensors attached
         if (slave_count == 0)       return true;
