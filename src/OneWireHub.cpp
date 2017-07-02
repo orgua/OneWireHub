@@ -263,7 +263,7 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
     if (_error == Error::RESET_IN_PROGRESS)
     {
         _error = Error::NO_ERROR;
-        if (!waitLoopsWhilePinIs(ONEWIRE_TIME_RESET_MIN[od_mode] - ONEWIRE_TIME_SLOT_MAX[od_mode] - ONEWIRE_TIME_READ_MAX[od_mode], false)) // last number should read: max(ONEWIRE_TIME_WRITE_ZERO,ONEWIRE_TIME_READ_MAX)
+        if (waitLoopsWhilePinIs(ONEWIRE_TIME_RESET_MIN[od_mode] - ONEWIRE_TIME_SLOT_MAX[od_mode] - ONEWIRE_TIME_READ_MAX[od_mode], false) == 0) // last number should read: max(ONEWIRE_TIME_WRITE_ZERO,ONEWIRE_TIME_READ_MAX)
         {
 #if OVERDRIVE_ENABLE
             const timeOW_t loops_remaining = waitLoopsWhilePinIs(ONEWIRE_TIME_RESET_MAX[0], false); // showPresence() wants to start at high, so wait for it
@@ -281,7 +281,7 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
     if (!DIRECT_READ(pin_baseReg, pin_bitMask)) return true; // just leave if pin is Low, don't bother to wait, TODO: really needed?
 
     // wait for the bus to become low (master-controlled), since we are polling we don't know for how long it was zero
-    if (!waitLoopsWhilePinIs(ONEWIRE_TIME_RESET_TIMEOUT, true))
+    if (waitLoopsWhilePinIs(ONEWIRE_TIME_RESET_TIMEOUT, true) == 0)
     {
         //_error = Error::WAIT_RESET_TIMEOUT;
         return true;
@@ -304,13 +304,9 @@ bool OneWireHub::checkReset(void) // there is a specific high-time needed before
 #endif
 
     // If the master pulled low for to short this will trigger an error
-    if ((ONEWIRE_TIME_RESET_MAX[0] - ONEWIRE_TIME_RESET_MIN[od_mode]) < loops_remaining)
-    {
-        //_error = Error::VERY_SHORT_RESET; // could be activated again, like the error above, errorhandling is mature enough now
-        return true;
-    }
+    //if (loops_remaining > (ONEWIRE_TIME_RESET_MAX[0] - ONEWIRE_TIME_RESET_MIN[od_mode])) _error = Error::VERY_SHORT_RESET; // could be activated again, like the error above, errorhandling is mature enough now
 
-    return false;
+    return (loops_remaining > (ONEWIRE_TIME_RESET_MAX[0] - ONEWIRE_TIME_RESET_MIN[od_mode]));
 }
 
 
@@ -337,7 +333,7 @@ bool OneWireHub::showPresence(void)
     if (USE_GPIO_DEBUG) DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
 
     // When the master or other slaves release the bus within a given time everything is fine
-    if (!waitLoopsWhilePinIs((ONEWIRE_TIME_PRESENCE_MAX[od_mode] - ONEWIRE_TIME_PRESENCE_MIN[od_mode]), false))
+    if (waitLoopsWhilePinIs((ONEWIRE_TIME_PRESENCE_MAX[od_mode] - ONEWIRE_TIME_PRESENCE_MIN[od_mode]), false) == 0)
     {
         _error = Error::PRESENCE_LOW_ON_LINE;
         return true;
@@ -377,7 +373,7 @@ void OneWireHub::searchIDTree(void)
             const uint8_t mask_bit = (static_cast<uint8_t>(1) << (position_IDBit & (7)));
             bool bit_send;
 
-            if (slave_list[active_slave]->ID[pos_byte] & mask_bit)
+            if ((slave_list[active_slave]->ID[pos_byte] & mask_bit) != 0)
             {
                 bit_send = true;
                 if (sendBit(true))  return;
@@ -414,17 +410,20 @@ bool OneWireHub::recvAndProcessCmd(void)
     switch (cmd)
     {
         case 0xF0: // Search rom
+
             slave_selected = nullptr;
             searchIDTree();
             return false; // always trigger a re-init after searchIDTree
 
         case 0x69: // overdrive MATCH ROM
+
 #if OVERDRIVE_ENABLE
             od_mode = true;
             waitLoopsWhilePinIs(ONEWIRE_TIME_READ_MAX[0], false);
 #endif
 
         case 0x55: // MATCH ROM - Choose/Select ROM
+
             slave_selected = nullptr;
 
             if (recv(address, 8))
@@ -466,11 +465,13 @@ bool OneWireHub::recvAndProcessCmd(void)
             break;
 
         case 0x3C: // overdrive SKIP ROM
+
 #if OVERDRIVE_ENABLE
             od_mode = true;
             waitLoopsWhilePinIs(ONEWIRE_TIME_READ_MAX[0], false);
 #endif
         case 0xCC: // SKIP ROM
+
             // NOTE: If more than one slave is present on the bus,
             // and a read command is issued following the Skip ROM command,
             // data collision will occur on the bus as multiple slaves transmit simultaneously
@@ -486,9 +487,11 @@ bool OneWireHub::recvAndProcessCmd(void)
             break;
 
         case 0x0F: // OLD READ ROM
+
             // only usable when there is ONE slave on the bus --> continue to current readRom
 
         case 0x33: // READ ROM
+
             // only usable when there is ONE slave on the bus
             if ((slave_selected == nullptr) && (slave_count == 1))
             {
@@ -501,23 +504,27 @@ bool OneWireHub::recvAndProcessCmd(void)
             return false;
 
         case 0xEC: // ALARM SEARCH
+
             // TODO: Alarm searchIDTree command, respond if flag is set
             // is like searchIDTree-rom, but only slaves with triggered alarm will appear
             break;
 
         case 0xA5: // RESUME COMMAND
+
             if (slave_selected == nullptr) return true;
             if (USE_GPIO_DEBUG) DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
             slave_selected->duty(this);
             break;
 
         default: // Unknown command
+
             _error = Error::INCORRECT_ONEWIRE_CMD;
             _error_cmd = cmd;
     }
 
     if (_error == Error::RESET_IN_PROGRESS) return false;
-    else                                    return (_error != Error::NO_ERROR);
+
+    return (_error != Error::NO_ERROR);
 }
 
 
@@ -529,8 +536,8 @@ bool OneWireHub::sendBit(const bool value)
 
     // Wait for bus to rise HIGH, signaling end of last timeslot
     timeOW_t retries = ONEWIRE_TIME_SLOT_MAX[od_mode];
-    while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
-    if (!retries)
+    while ((DIRECT_READ(pin_baseReg, pin_bitMask) == 0) && (--retries != 0));
+    if (retries == 0)
     {
         _error = Error::RESET_IN_PROGRESS;
         interrupts();
@@ -539,8 +546,8 @@ bool OneWireHub::sendBit(const bool value)
 
     // Wait for bus to fall LOW, start of new timeslot
     retries = ONEWIRE_TIME_MSG_HIGH_TIMEOUT;
-    while ((DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
-    if (!retries)
+    while ((DIRECT_READ(pin_baseReg, pin_bitMask) != 0) && (--retries != 0));
+    if (retries == 0)
     {
         _error = Error::AWAIT_TIMESLOT_TIMEOUT_HIGH;
         interrupts();
@@ -558,7 +565,7 @@ bool OneWireHub::sendBit(const bool value)
         retries = ONEWIRE_TIME_READ_MAX[od_mode];
     }
 
-    while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries)); // TODO: we should check for (!retries) because there could be a reset in progress...
+    while ((DIRECT_READ(pin_baseReg, pin_bitMask) == 0) && (--retries != 0)); // TODO: we should check for (!retries) because there could be a reset in progress...
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
     return false;
@@ -577,7 +584,7 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
     {
         const uint8_t dataByte = address[bytes_sent];
 
-        for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)    // loop for sending bits
+        for (uint8_t bitMask = 0x01; bitMask != 0; bitMask <<= 1)    // loop for sending bits
         {
             if (sendBit(static_cast<bool>(bitMask & dataByte)))
             {
@@ -618,7 +625,7 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length, uint16
 
             const uint8_t mix = ((uint8_t) crc16 ^ dataByte) & static_cast<uint8_t>(0x01);
             crc16 >>= 1;
-            if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
+            if (mix != 0)  crc16 ^= static_cast<uint16_t>(0xA001);
             dataByte >>= 1;
         }
         if (USE_GPIO_DEBUG)
@@ -642,8 +649,8 @@ bool OneWireHub::recvBit(void)
     noInterrupts();
     // Wait for bus to rise HIGH, signaling end of last timeslot
     timeOW_t retries = ONEWIRE_TIME_SLOT_MAX[od_mode];
-    while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
-    if (!retries)
+    while ((DIRECT_READ(pin_baseReg, pin_bitMask) == 0) && (--retries != 0));
+    if (retries == 0)
     {
         _error = Error::RESET_IN_PROGRESS;
         interrupts();
@@ -652,8 +659,8 @@ bool OneWireHub::recvBit(void)
 
     // Wait for bus to fall LOW, start of new timeslot
     retries = ONEWIRE_TIME_MSG_HIGH_TIMEOUT;
-    while ((DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
-    if (!retries)
+    while ((DIRECT_READ(pin_baseReg, pin_bitMask) != 0) && (--retries != 0));
+    if (retries == 0)
     {
         _error = Error::AWAIT_TIMESLOT_TIMEOUT_HIGH;
         interrupts();
@@ -662,7 +669,7 @@ bool OneWireHub::recvBit(void)
 
     // wait a specific time to do a read (data is valid by then), // first difference to inner-loop of write()
     retries = ONEWIRE_TIME_READ_MIN[od_mode];
-    while (!(DIRECT_READ(pin_baseReg, pin_bitMask)) && (--retries));
+    while ((DIRECT_READ(pin_baseReg, pin_bitMask) == 0) && (--retries != 0));
 
     return (retries > 0);
 }
@@ -679,7 +686,7 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
     {
         uint8_t value = 0;
 
-        for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
+        for (uint8_t bitMask = 0x01; bitMask != 0; bitMask <<= 1)
         {
             if (recvBit())                 value |= bitMask;
             if (_error != Error::NO_ERROR)
@@ -716,7 +723,7 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length, uint16_t &cr
     {
         uint8_t value = 0;
         uint8_t mix = 0;
-        for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
+        for (uint8_t bitMask = 0x01; bitMask != 0; bitMask <<= 1)
         {
             if (recvBit())
             {
@@ -734,7 +741,7 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length, uint16_t &cr
 
             mix ^= static_cast<uint8_t>(crc16) & static_cast<uint8_t>(0x01);
             crc16 >>= 1;
-            if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
+            if (mix != 0)  crc16 ^= static_cast<uint16_t>(0xA001);
         }
 
         address[bytes_received] = value;
@@ -754,7 +761,7 @@ void OneWireHub::wait(const uint16_t timeout_us) const
 {
     timeOW_t loops = timeUsToLoops(timeout_us);
     bool state = false;
-    while (loops)
+    while (loops != 0)
     {
         loops = waitLoopsWhilePinIs(loops,state);
         state = !state;
@@ -765,7 +772,7 @@ void OneWireHub::wait(const timeOW_t loops_wait) const
 {
     timeOW_t loops = loops_wait;
     bool state = false;
-    while (loops)
+    while (loops != 0)
     {
         loops = waitLoopsWhilePinIs(loops,state);
         state = !state;
@@ -777,7 +784,7 @@ void OneWireHub::wait(const timeOW_t loops_wait) const
 timeOW_t OneWireHub::waitLoopsWhilePinIs(volatile timeOW_t retries, const bool pin_value) const
 {
     if (retries == 0) return 0;
-    while ((DIRECT_READ(pin_baseReg, pin_bitMask) == pin_value) && (--retries));
+    while ((DIRECT_READ(pin_baseReg, pin_bitMask) == pin_value) && (--retries != 0));
     return retries;
 }
 
@@ -787,7 +794,7 @@ void OneWireHub::waitLoops1ms(void)
     {
         constexpr timeOW_t loops_1ms = 1000_us;
         timeOW_t loops_left = 1;
-        while (loops_left)
+        while (loops_left != 0)
         {
             waitLoopsWhilePinIs(loops_1ms, false);
             DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
@@ -812,14 +819,14 @@ timeOW_t OneWireHub::waitLoopsCalibrate(void)
     DIRECT_MODE_INPUT(pin_baseReg,pin_bitMask);
 
     // repetitions the longest low-states on the bus with millis(), assume it is a OW-reset
-    while (repetitions--)
+    while (repetitions-- != 0)
     {
         uint32_t time_needed = 0;
 
         // try to catch a OW-reset each time
         while (time_needed < TIME_RESET_MIN_US)
         {
-            if (!waitLoopsWhilePinIs(wait_loops, true)) continue;
+            if (waitLoopsWhilePinIs(wait_loops, true) == 0) continue;
             const uint32_t time_start = micros();
             waitLoopsWhilePinIs(TIMEOW_MAX, false);
             const uint32_t time_stop = micros();
