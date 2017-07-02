@@ -120,7 +120,7 @@ int  DS18B20::getTemperature(void) const
 
     if (ds18s20_mode)
     {
-        if (scratchpad[1] & 0xF0)
+        if ((scratchpad[1] & 0xF0) != 0)
         {
             value &= 0x00FF;
             value  = -value;
@@ -129,7 +129,7 @@ int  DS18B20::getTemperature(void) const
     }
     else
     {
-        if (scratchpad[1] & 0xF0)
+        if ((scratchpad[1] & 0xF0) != 0)
         {
             value &= 0x07FF;
             value  = -value;

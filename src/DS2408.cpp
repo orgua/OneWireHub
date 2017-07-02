@@ -7,9 +7,9 @@ DS2408::DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 void DS2408::duty(OneWireHub * const hub)
 {
-    constexpr uint8_t DATA_xAA = 0xAA;
+    constexpr uint8_t DATA_xAA { 0xAA };
     uint8_t cmd, reg_TA, data; // command, targetAdress and databytes
-    uint16_t crc = 0;
+    uint16_t crc { 0 };
 
     if (hub->recv(&cmd,1,crc)) return;
 
@@ -32,7 +32,7 @@ void DS2408::duty(OneWireHub * const hub)
             break; // after memory readout this chip sends logic 1s, which is the same as staying passive
 
         case 0x5A:      // Channel-Access Write
-            while(1)
+            while(true)
             {
                 if (hub->recv(&data,1)) return;
                 if (hub->recv(&cmd ,1)) return; // just because we have to receive something
@@ -46,7 +46,7 @@ void DS2408::duty(OneWireHub * const hub)
             }
 
         case 0xF5:      // Channel-Access Read
-            while (1)
+            while (true)
             {
                 static uint16_t crc2 = crc;
                 if (hub->send(memory,4,crc)) return;
