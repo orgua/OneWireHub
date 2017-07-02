@@ -212,7 +212,7 @@ constexpr uint8_t VALUE_IPL {1}; // instructions per loop, uncalibrated so far -
 #define ARDUINO_attiny // to load up Serial below
 
 template <typename T1>
-uint8_t digitalRead(T1) {return 0;};
+bool digitalRead(T1) {return 0;};
 
 template <typename T1, typename T2>
 uint8_t digitalWrite(T1, T2) {return 0;};

@@ -21,15 +21,15 @@ public:
 
     uint8_t ID[8];
 
-    void sendID(OneWireHub * const hub) const;
+    void sendID(OneWireHub * hub) const;
 
-    virtual void duty(OneWireHub * const hub) = 0;
+    virtual void duty(OneWireHub * hub) = 0;
 
-    static uint8_t crc8(const uint8_t address[], const uint8_t len, const uint8_t init = 0);
+    static uint8_t crc8(const uint8_t address[], uint8_t len, uint8_t init = 0);
 
     // takes ~(5.1-7.0)µs/byte (Atmega328P@16MHz) depends from address_size (see debug-crc-comparison.ino)
     // important: the final crc is expected to be inverted (crc=~crc) !!!
-    static uint16_t crc16(const uint8_t address[], const uint8_t len, const uint16_t init = 0);
+    static uint16_t crc16(const uint8_t address[], uint8_t len, uint16_t init = 0);
 
     // CRC16 of type 0xA001 for little endian
     // takes ~6µs/byte (Atmega328P@16MHz) (see debug-crc-comparison.ino)
