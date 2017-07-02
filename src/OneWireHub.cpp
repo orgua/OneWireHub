@@ -342,6 +342,7 @@ bool OneWireHub::showPresence(void)
     return false;
 }
 
+// note: this FN calls sendBit() & recvBit() but doesn handle interrupts -> calling FN must do this
 void OneWireHub::searchIDTree(void)
 {
     uint8_t position_IDBit  = 0;
@@ -412,7 +413,9 @@ bool OneWireHub::recvAndProcessCmd(void)
         case 0xF0: // Search rom
 
             slave_selected = nullptr;
+            noInterrupts();
             searchIDTree();
+            interrupts();
             return false; // always trigger a re-init after searchIDTree
 
         case 0x69: // overdrive MATCH ROM
@@ -532,7 +535,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 // NOTE: if called separately you need to re-enable interrupts afterwards
 bool OneWireHub::sendBit(const bool value)
 {
-    noInterrupts(); // will be enabled in send() TODO: clear this usage, this FN is used alot 
+    noInterrupts(); // will be enabled in send() TODO: clear up this usage, this sendBit FN is used alot, TEST: just safe state in poll(), disable if needed and re-enable at the end
     const bool writeZero = !value;
 
     // Wait for bus to rise HIGH, signaling end of last timeslot
@@ -644,10 +647,9 @@ bool OneWireHub::send(const uint8_t dataByte)
     return send(&dataByte,1);
 }
 
-// NOTE: if called separately you need to re-enable interrupts afterwards
+// NOTE: if called separately you need disable interrupts before and re-enable them afterwards
 bool OneWireHub::recvBit(void)
 {
-    noInterrupts(); // will be enabled in recv() TODO: test if it works without it
     // Wait for bus to rise HIGH, signaling end of last timeslot
     timeOW_t retries = ONEWIRE_TIME_SLOT_MAX[od_mode];
     while ((DIRECT_READ(pin_baseReg, pin_bitMask) == 0) && (--retries != 0));
