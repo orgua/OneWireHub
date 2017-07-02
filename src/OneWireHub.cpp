@@ -33,7 +33,7 @@ OneWireHub::OneWireHub(const uint8_t pin)
     }
 
     static_assert(VALUE_IPL, "Your architecture has not been calibrated yet, please run examples/debug/calibrate_by_bus_timing and report instructions per loop (IPL) to https://github.com/orgua/OneWireHub");
-    static_assert(ONEWIRE_TIME_VALUE_MIN>1,"YOUR ARCHITECTURE IS TO SLOW, THIS MAY RESULT IN TIMING-PROBLEMS");
+    static_assert(ONEWIRE_TIME_VALUE_MIN>2,"YOUR ARCHITECTURE IS TOO SLOW, THIS MAY RESULT IN TIMING-PROBLEMS"); // it could work though, never tested
 }
 
 
@@ -529,9 +529,10 @@ bool OneWireHub::recvAndProcessCmd(void)
 
 
 // info: check for errors after calling and break/return if possible, returns true if error is detected
+// NOTE: if called separately you need to re-enable interrupts afterwards
 bool OneWireHub::sendBit(const bool value)
 {
-    noInterrupts();
+    noInterrupts(); // will be enabled in send() TODO: clear this usage, this FN is used alot 
     const bool writeZero = !value;
 
     // Wait for bus to rise HIGH, signaling end of last timeslot
@@ -575,7 +576,7 @@ bool OneWireHub::sendBit(const bool value)
 // should be the prefered function for writes, returns true if error occured
 bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
 {
-    noInterrupts();
+    noInterrupts(); // will be enabled at the end of function
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
     uint8_t bytes_sent = 0;
@@ -605,7 +606,7 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
 
 bool OneWireHub::send(const uint8_t address[], const uint8_t data_length, uint16_t &crc16)
 {
-    noInterrupts();
+    noInterrupts(); // will be enabled at the end of function
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
     uint8_t bytes_sent = 0;
@@ -643,10 +644,10 @@ bool OneWireHub::send(const uint8_t dataByte)
     return send(&dataByte,1);
 }
 
-//
+// NOTE: if called separately you need to re-enable interrupts afterwards
 bool OneWireHub::recvBit(void)
 {
-    noInterrupts();
+    noInterrupts(); // will be enabled in recv() TODO: test if it works without it
     // Wait for bus to rise HIGH, signaling end of last timeslot
     timeOW_t retries = ONEWIRE_TIME_SLOT_MAX[od_mode];
     while ((DIRECT_READ(pin_baseReg, pin_bitMask) == 0) && (--retries != 0));
@@ -677,7 +678,7 @@ bool OneWireHub::recvBit(void)
 
 bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
 {
-    noInterrupts();
+    noInterrupts(); // will be enabled at the end of function
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
@@ -714,7 +715,7 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
 // should be the prefered function for reads, returns true if error occured
 bool OneWireHub::recv(uint8_t address[], const uint8_t data_length, uint16_t &crc16)
 {
-    noInterrupts();
+    noInterrupts(); // will be enabled at the end of function
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
 
