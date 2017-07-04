@@ -14,6 +14,9 @@ constexpr bool     USE_GPIO_DEBUG   { false }; // is a better alternative to ser
 constexpr uint8_t  GPIO_DEBUG_PIN   { 7 }; // digital pin
 constexpr uint32_t REPETITIONS      { 5000 }; // for measuring the loop-delay --> 10000L takes ~110ms on atmega328p@16Mhz
 
+static_assert(!(USE_SERIAL_DEBUG && (microsecondsToClockCycles(1) < 20)), "Serial debug is enabled in OW-Config. SHOULD NOT be enabled with < 20 MHz uC");
+static_assert(!(USE_GPIO_DEBUG && (microsecondsToClockCycles(1) < 20) && (OVERDRIVE_ENABLE != 0)), "Gpio debug is enabled in OW-Config. SHOULD NOT be enabled with < 20 MHz uC and Overdrive enabled");
+
 /// the following TIME-values are in microseconds and are taken mostly from the ds2408 datasheet
 //  arrays contain the normal timing value and the overdrive-value, the literal "_us" converts the value right away to a usable unit
 //  should be --> datasheet
