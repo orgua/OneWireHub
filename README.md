@@ -83,8 +83,9 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - begin with a simple example like the ds18b20. the ds18b20 doesn't support overdrive, so the master won't switch to higher datarates
 - check if your setup is right: you need at least external power for your µC and a dataline with groundline to your Onewire-Master
 - is there more than one master on the bus? It won't work!
-- has any other sensor ever worked with with master?
+- has any other sensor (real or emulated) ever worked with this master? -> the simplest device would be a ds2401
 - is serial- and gpio-debugging disabled (see src/OneWireHub_config.h)?
+- on slow arduinos it can be helpful to disable serial completely to get reliable results -> comment out serial.begin() 
 - if you can provide a recording via logic-analyzer (logic 8 or similar) there should be chance we can help you 
 - if you checked all these points feel free to open an issue at [Github](https://github.com/orgua/OneWireHub)
 
