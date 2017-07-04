@@ -19,6 +19,14 @@ public:
 
     OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
+    ~OneWireItem() = default; // TODO: detach if deleted before hub
+
+    OneWireItem(const OneWireItem& owItem) = delete;             // disallow copy constructor
+    OneWireItem(OneWireItem&& owItem) = default;               // default  move constructor
+    OneWireItem& operator=(OneWireItem& owItem) = delete;        // disallow copy assignment
+    OneWireItem& operator=(const OneWireItem& owItem) = delete;  // disallow copy assignment
+    OneWireItem& operator=(OneWireItem&& owItem) = delete;       // disallow move assignment
+
     uint8_t ID[8];
 
     void sendID(OneWireHub * hub) const;

@@ -102,9 +102,9 @@ private:
     uint8_t getNrOfFirstBitSet(mask_t mask) const;
     uint8_t getNrOfFirstFreeIDTreeElement(void) const;
 
-    bool checkReset(void);      // returns 1 if error occured
-    bool showPresence(void);    // returns 1 if error occured
-    bool recvAndProcessCmd();   // returns 1 if error occured
+    bool checkReset(void);      // returns true if error occured
+    bool showPresence(void);    // returns true if error occured
+    bool recvAndProcessCmd();   // returns true if error occured
 
     void wait(timeOW_t loops_wait) const;
     void wait(uint16_t timeout_us) const;
@@ -115,6 +115,14 @@ private:
 public:
 
     explicit OneWireHub(uint8_t pin);
+
+    ~OneWireHub() = default; // nothing special to do here
+
+    OneWireHub(const OneWireHub& hub) = delete;             // disallow copy constructor
+    OneWireHub(OneWireHub&& hub) = default;               // default move constructor
+    OneWireHub& operator=(OneWireHub& hub) = delete;        // disallow copy assignment
+    OneWireHub& operator=(const OneWireHub& hub) = delete;  // disallow copy assignment
+    OneWireHub& operator=(OneWireHub&& hub) = delete;       // disallow move assignment
 
     uint8_t attach(OneWireItem &sensor);
     bool    detach(const OneWireItem &sensor);
