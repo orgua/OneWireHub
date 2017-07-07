@@ -17,13 +17,13 @@ private:
     static constexpr uint16_t MEM_SIZE_PROPOSE      { 256 }; // TUNE HERE! Give this device as much RAM as your CPU can spare
 
     static constexpr uint8_t  PAGE_SIZE             { 32 };
-    static constexpr uint16_t PAGE_COUNT            { MEM_SIZE_PROPOSE / PAGE_SIZE };
+    static constexpr uint16_t PAGE_COUNT            { MEM_SIZE_PROPOSE / PAGE_SIZE }; // ATM: 8
     static constexpr uint8_t  PAGE_MASK             { 0b00011111 };
 
     static constexpr uint16_t MEM_SIZE              { PAGE_COUNT * PAGE_SIZE };
     static constexpr uint16_t MEM_MASK              { MEM_SIZE - 1 };
 
-    static constexpr uint8_t  STATUS_SEGMENT        { PAGE_COUNT / 8 };
+    static constexpr uint8_t  STATUS_SEGMENT        { PAGE_COUNT / 8 }; // ATM: 1
     static constexpr uint16_t STATUS_SIZE           { PAGE_COUNT + (3*STATUS_SEGMENT) };
     static constexpr uint16_t STATUS_SIZE_DEV       { 0x200 }; // device specific "real" size
 
