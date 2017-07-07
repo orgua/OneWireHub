@@ -8,6 +8,8 @@
 
 #include "OneWireItem.h"
 
+constexpr uint8_t value_xFF { static_cast<uint8_t>(0xFF) };
+
 class DS2506 : public OneWireItem
 {
 private:
