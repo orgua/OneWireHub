@@ -7,13 +7,17 @@
 
 #include "platform.h" // code for compatibility
 
-using     timeOW_t = uint32_t;
+using     timeOW_t            = uint32_t;
+constexpr timeOW_t timeOW_max = 4294967295; // will arduino-gcc ever offer some stl? std::numeric_limits::max would be cleaner
 
-constexpr uint32_t operator "" _us(const unsigned long long int time_us) // user defined literal used in config
+constexpr timeOW_t operator "" _us(const unsigned long long int time_us) // user defined literal used in config
 {
-    return uint32_t(time_us * microsecondsToClockCycles(1) / VALUE_IPL); // note: microsecondsToClockCycles == speed in MHz....
+    return timeOW_t(time_us * microsecondsToClockCycles(1) / VALUE_IPL); // note: microsecondsToClockCycles == speed in MHz....
+    // TODO: overflow detection would be nice, but literals are allowed with return-only, not solvable ATM
 }
 
+
+// same FN, but not as literal
 constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
 {
     return (time_us * microsecondsToClockCycles(1) / VALUE_IPL); // note: microsecondsToClockCycles == speed in MHz....
