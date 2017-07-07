@@ -848,7 +848,7 @@ ESP.wdtFeed();
 #if defined(ARDUINO_ARCH_ESP8266)
 ESP.wdtFeed();
 #endif
-        if (!waitLoopsWhilePinIs(wait_loops, true)) continue;
+        if (waitLoopsWhilePinIs(wait_loops, true) == 0) continue;
         const timeOW_t loops_left = waitLoopsWhilePinIs(TIMEOW_MAX, false);
         const timeOW_t loops_needed = TIMEOW_MAX - loops_left;
         if (loops_needed>loops_for_reset) loops_for_reset = loops_needed;

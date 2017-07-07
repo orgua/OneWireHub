@@ -56,7 +56,7 @@ void DS2506::duty(OneWireHub * const hub)
                 {
                     data  = 0x00;
                     uint8_t counter = length;
-                    while (counter--)
+                    while (counter-- > 0)
                     {
                         if (hub->send(&data, 1, crc)) return;
                     }
@@ -208,12 +208,12 @@ void DS2506::duty(OneWireHub * const hub)
 
 void DS2506::clearMemory(void)
 {
-    memset(memory, static_cast<uint8_t>(0xFF), MEM_SIZE);
+    memset(memory, value_xFF, MEM_SIZE);
 }
 
 void DS2506::clearStatus(void)
 {
-    memset(status, static_cast<uint8_t>(0xFF), STATUS_SIZE);
+    memset(status, value_xFF, STATUS_SIZE);
 }
 
 bool DS2506::writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position)
