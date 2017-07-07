@@ -26,6 +26,8 @@ void setup()
 
     // Setup OneWire
     hub.attach(bae910);
+    bae910.memory.field.SW_VER = 0x01;
+    bae910.memory.field.BOOTSTRAP_VER = 0x01;
 
     Serial.println("config done");
 }
@@ -35,7 +37,7 @@ void loop()
     // following function must be called periodically
     hub.poll();
     // this part is just for debugging (USE_SERIAL_DEBUG in OneWire.h must be enabled for output)
-    if (hub.getError()) hub.printError();
+    if (hub.hasError()) hub.printError();
 
     // write something into BAEs rtc
     bae910.memory.field.rtc = millis() / 1000;

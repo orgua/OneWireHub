@@ -258,7 +258,7 @@ public:
 } Serial;
 
 template <typename T1, typename T2>
-void memset(T1 address[], T1 initValue, T2 size)
+void memset(T1 address[], T1 initValue[], T2 size)
 {
     size = size / sizeof(T2);
     for (T2 counter = 0; counter < size; ++counter)
@@ -268,13 +268,29 @@ void memset(T1 address[], T1 initValue, T2 size)
 }
 
 template <typename T1, typename T2>
-void memcpy(T1 destination[], const T1 source[], T2 bytes)
+void memcpy(T1 destination[], const T1 source[], T2 bytes) 
 {
-    for (T2 counter = 0; counter < bytes; ++counter)
+    for (T2 counter = 0; counter < bytes; ++counter) // TODO: loop is not bytebased (others too)
     {
         destination[counter] = source[counter];
     }
 }
+
+template <typename T1, typename T2>
+bool memcmp(T1 destination[], T1 source[], T2 bytes) // return true if string is different
+{
+    for (T2 counter = 0; counter < bytes; ++counter)
+    {
+        if (destination[counter] != source[counter]) return true;
+    };
+    return false;
+};
+
+void        delay(uint32_t time_millis);
+uint32_t    millis(void);
+
+void        wdt_reset(void);
+void        wdt_enable(...);
 
 #endif
 
