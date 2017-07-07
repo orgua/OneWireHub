@@ -80,11 +80,8 @@ constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far -
 #define DIRECT_WRITE_LOW(base, mask)    (GPOC = (mask))             //GPIO_OUT_W1TC_ADDRESS
 #define DIRECT_WRITE_HIGH(base, mask)   (GPOS = (mask))             //GPIO_OUT_W1TS_ADDRESS
 using io_reg_t = uint32_t; // define special datatype for register-access
-// The ESP8266 has two possible CPU frequencies
-// 80 MHz, default
-constexpr uint8_t VALUE_IPL {22}; // instructions per loop, not verified yet
-// 160 MHz
-//constexpr uint8_t VALUE_IPL {26}; // instructions per loop, not verified yet
+// The ESP8266 has two possible CPU frequencies: 160 MHz (26 IPL) and 80 MHz (22 IPL) -> something influences the IPL-Value
+constexpr uint8_t VALUE_IPL { (microsecondsToClockCycles(1) > 120) ? 26 : 22}; // instructions per loop, not verified yet
 
 #elif defined(__SAMD21G18A__)
 #define PIN_TO_BASEREG(pin)             portModeRegister(digitalPinToPort(pin))
@@ -262,7 +259,7 @@ public:
 } Serial;
 
 template <typename T1, typename T2>
-void memset(T1 address[], T1 initValue[], T2 size)
+void memset(T1 address[], T1 initValue, T2 size)
 {
     size = size / sizeof(T2);
     for (T2 counter = 0; counter < size; ++counter)
