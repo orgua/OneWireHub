@@ -9,7 +9,7 @@
 
 //// CONFIG /////////////////////////////////////////////
 static constexpr uint8_t  BAE910_DEVICE_TYPE      { 0x02 };  // Type 2 for BAE0910. Type 3 for BAE0911 (planned)
-static constexpr uint8_t  BAE910_CHIP_TYPE        { 0x01 };  // Chip type= 0x01 for the MC9S08SH8, 8 pin package soic8
+static constexpr uint8_t  BAE910_CHIP_TYPE        { 0x01 };  // Chip type= 0x01 for the MC9S08SH8, 8 pin package SO-IC 8
 
 static constexpr uint8_t  BAE910_SCRATCHPAD_SIZE  { 32  };
 //// END OF CONFIG //////////////////////////////////////
