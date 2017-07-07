@@ -212,7 +212,7 @@ constexpr uint8_t VALUE_IPL {1}; // instructions per loop, uncalibrated so far -
 #define ARDUINO_attiny // to load up Serial below
 
 template <typename T1>
-uint8_t digitalRead(T1) {return 0;};
+bool digitalRead(T1) {return 0;};
 
 template <typename T1, typename T2>
 uint8_t digitalWrite(T1, T2) {return 0;};
@@ -265,7 +265,7 @@ void memset(T1 address[], T1 initValue[], T2 size)
     {
         address[counter] = (initValue);
     }
-};
+}
 
 template <typename T1, typename T2>
 void memcpy(T1 destination[], const T1 source[], T2 bytes) 
@@ -273,8 +273,8 @@ void memcpy(T1 destination[], const T1 source[], T2 bytes)
     for (T2 counter = 0; counter < bytes; ++counter) // TODO: loop is not bytebased (others too)
     {
         destination[counter] = source[counter];
-    };
-};
+    }
+}
 
 template <typename T1, typename T2>
 bool memcmp(T1 destination[], T1 source[], T2 bytes) // return true if string is different

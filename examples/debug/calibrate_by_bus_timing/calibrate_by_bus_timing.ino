@@ -37,7 +37,7 @@ void setup()
 
     pinMode(pin_led, OUTPUT);
     digitalWrite(pin_led,HIGH);
-};
+}
 
 void loop()
 {
@@ -78,7 +78,7 @@ void loop()
             loops_left = retries;
 
             DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-        };
+        }
 
         loops_left = 1;
         while (loops_left)
@@ -96,7 +96,7 @@ void loop()
 
             DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask); // Fast high low flank
             DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
-        };
+        }
     }
 }
 

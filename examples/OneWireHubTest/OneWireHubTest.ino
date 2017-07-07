@@ -4,6 +4,10 @@
  *
  *    Tested with:
  *    - https://github.com/PaulStoffregen/OneWire on the other side as Master
+ *
+ *    Compile size (program / ram)
+ *      9232 / 706 byte with arduino 1.6.10 and onewirehub 2.0.1
+ *      9272 & 708 byte with arduino 1.8.03 and onewirehub 2.0.1
  */
 
 #include "OneWireHub.h"

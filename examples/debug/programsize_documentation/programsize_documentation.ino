@@ -38,7 +38,7 @@ void setup()
     // Set const temperature
     const int8_t temperature = 21;
     ds18b20.setTemperature(temperature);
-};
+}
 
 void loop()
 {
