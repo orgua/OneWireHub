@@ -58,7 +58,9 @@ void DS2450::duty(OneWireHub * const hub)
             crc = ~crc; // normally crc16 is sent ~inverted
             if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
             // takes max 5.3 ms for 16 bit ( 4 CH * 16 bit * 80 us + 160 us per request = 5.3 ms )
-            if (hub->sendBit(false)) return; // still converting....
+            noInterrupts();
+            hub->sendBit(false); // still converting....
+            interrupts();
             break; // finished conversion: send 1, is passive ...
 
         default:

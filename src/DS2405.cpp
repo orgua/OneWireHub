@@ -9,7 +9,9 @@ void DS2405::duty(OneWireHub * const hub)
 {
     // IC uses weird bus-features to operate., match-rom is enough
     pin_state = !pin_state;
+    noInterrupts();
     while(!hub->sendBit(pin_state)); // if master issues read slots it gets the state...
+    interrupts();
 
     // TODO: when alarm search is implemented (0xEC):
     // when PIO pin is driven low this device issues an alarm, otherwise stays alarm is disabled
