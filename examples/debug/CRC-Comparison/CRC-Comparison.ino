@@ -283,7 +283,7 @@ uint16_t v2A_crc16(const uint8_t address[], const uint8_t len)
     }
 
     return crc;
-};
+}
 
 
 /// Variant 2B - onewire-lib callable one byte at once, untouched
@@ -311,7 +311,7 @@ uint16_t v2B_crc16(uint16_t crc, const uint8_t value, const uint8_t len)
     }
 
     return crc;
-};
+}
 
 /// Variant 2C - call one by one (byte), transformed for speed
 
@@ -325,7 +325,7 @@ uint16_t v2C_crc16(uint16_t crc, uint8_t value)
     crc ^= cdata;
     crc ^= (static_cast<uint16_t>(cdata) << 1);
     return crc;
-};
+}
 
 /// var 2D - Test call by reference --> not a good idea
 
@@ -338,7 +338,7 @@ void v2D_crc16(uint16_t &crc, uint8_t value)
     uint16_t cdata = (static_cast<uint16_t>(value) << 6);
     crc ^= cdata;
     crc ^= (static_cast<uint16_t>(cdata) << 1);
-};
+}
 
 
 /// Variant 2E - more tuning with ASM-compare
@@ -357,7 +357,7 @@ uint16_t v2E_crc16(uint16_t crc, uint8_t value)
     crc ^= cdata;
     crc ^= (static_cast<uint16_t>(cdata) << 1);
     return crc;
-};
+}
 
 /*   Assembly of var 2D
  *

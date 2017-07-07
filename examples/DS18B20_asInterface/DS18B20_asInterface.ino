@@ -75,7 +75,7 @@ void setup()
     }
 
     tcs3772.setAGain(4);
-    tcs3772.setATime(15);
+    tcs3772.setATime(17);
 
     mpl3115.setEnabled(0); // manual mode,onetime-measure:
     mpl3115.setAltimeter(0);
@@ -100,9 +100,9 @@ void setup()
     updateSensorTCS();
     updateSensorMPL();
     updateSensorSI7();
-};
+}
 
-void updateSensorTCS(void)
+void updateSensorTCS(void) // 8560 559
 {
     uint16_t value_crgb[4];
 
@@ -121,11 +121,17 @@ void updateSensorTCS(void)
         Serial.println("");
     }
 
-    ds18b0.setTemperatureRaw(value_crgb[1]>>2);
-    ds18b1.setTemperatureRaw(value_crgb[2]>>2);
-    ds18b2.setTemperatureRaw(value_crgb[3]>>2);
-    ds18b3.setTemperatureRaw(value_crgb[0]>>2);
-};
+    for (uint8_t i=0; i<4; ++i)
+    {
+        value_crgb[i] = value_crgb[i]>>2;
+        if (value_crgb[i] > 2047) value_crgb[i] = 2047;
+    }
+
+    ds18b0.setTemperatureRaw(value_crgb[1]);
+    ds18b1.setTemperatureRaw(value_crgb[2]);
+    ds18b2.setTemperatureRaw(value_crgb[3]);
+    ds18b3.setTemperatureRaw(value_crgb[0]);
+}
 
 void updateSensorMPL(void)
 {
@@ -145,7 +151,7 @@ void updateSensorMPL(void)
     }
 
     ds18b4.setTemperatureRaw(pascal16);
-};
+}
 
 void updateSensorSI7(void)
 {

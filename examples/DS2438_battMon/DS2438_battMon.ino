@@ -79,8 +79,8 @@ void loop()
         ds2438.setCurrent(current);
 
         Serial.println(temp);
-    };
-};
+    }
+}
 
 bool blinking(void)
 {

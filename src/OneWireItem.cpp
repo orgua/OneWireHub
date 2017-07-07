@@ -10,7 +10,7 @@ OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uin
     ID[5] = ID6;
     ID[6] = ID7;
     ID[7] = crc8(ID, 7);
-};
+}
 
 void OneWireItem::sendID(OneWireHub * const hub) const {
     hub->send(ID, 8);
@@ -63,17 +63,17 @@ uint8_t OneWireItem::crc8(const uint8_t address[], const uint8_t length, const u
         crc = _crc_ibutton_update(crc, address[i]);
 #else
         uint8_t inByte = address[i];
-        for (uint8_t j = 8; j; --j)
+        for (uint8_t j = 8; j > 0; --j)
         {
             uint8_t mix = (crc ^ inByte) & static_cast<uint8_t>(0x01);
             crc >>= 1;
-            if (mix) crc ^= 0x8C;
+            if (mix != 0) crc ^= 0x8C;
             inByte >>= 1;
         }
 #endif
     }
     return crc;
-};
+}
 
 
 uint16_t OneWireItem::crc16(const uint8_t address[], const uint8_t length, const uint16_t init)
@@ -97,7 +97,7 @@ uint16_t OneWireItem::crc16(const uint8_t address[], const uint8_t length, const
         cdata = (cdata ^ crc) & static_cast<uint16_t>(0xff);
         crc >>= 8;
 
-        if (oddParity[cdata & 0x0F] ^ oddParity[cdata >> 4])
+        if ((oddParity[cdata & 0x0F] ^ oddParity[cdata >> 4]) != 0)
             crc ^= 0xC001;
 
         cdata <<= 6;
@@ -107,7 +107,7 @@ uint16_t OneWireItem::crc16(const uint8_t address[], const uint8_t length, const
     }
 #endif
     return crc;
-};
+}
 
 uint16_t OneWireItem::crc16(uint8_t value, uint16_t crc)
 {
@@ -117,10 +117,10 @@ uint16_t OneWireItem::crc16(uint8_t value, uint16_t crc)
     static const uint8_t oddParity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
     value = (value ^ static_cast<uint8_t>(crc));
     crc >>= 8;
-    if (oddParity[value & 0x0F] ^ oddParity[value >> 4])   crc ^= 0xC001;
+    if ((oddParity[value & 0x0F] ^ oddParity[value >> 4]) != 0)   crc ^= 0xC001;
     uint16_t cdata = (static_cast<uint16_t>(value) << 6);
     crc ^= cdata;
     crc ^= (static_cast<uint16_t>(cdata) << 1);
     return crc;
 #endif
-};
+}

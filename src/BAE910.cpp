@@ -7,18 +7,20 @@ BAE910::BAE910(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
     // clear memory
     memset(&memory.bytes[0], static_cast<uint8_t>(0x00), BAE910_MEMORY_SIZE);
-};
+}
+
 
 void BAE910::duty(OneWireHub * const hub)
 {
     uint8_t  cmd, ta1, ta2, len, ecmd; // command, targetAdress, length and extended command
-    uint16_t crc = 0;
+    uint16_t crc { 0 };
 
     if (hub->recv(&cmd,1,crc))  return;
 
     switch (cmd)
     {
         case 0x11: // READ VERSION
+
             if (hub->send(&memory.field.SW_VER,1,crc))                return;
             if (hub->send(&memory.field.BOOTSTRAP_VER,1,crc))         return;
 
@@ -27,6 +29,7 @@ void BAE910::duty(OneWireHub * const hub)
             break;
 
         case 0x12: // READ TYPE
+
             if (hub->send(&BAE910_DEVICE_TYPE,1,crc))           return;
             if (hub->send(&BAE910_CHIP_TYPE,1,crc))             return;
 
@@ -35,6 +38,7 @@ void BAE910::duty(OneWireHub * const hub)
             break;
 
         case 0x14: // READ MEMORY
+
             if (hub->recv(&ta1,1,crc))                          return;
             if (hub->recv(&ta2,1,crc))                          return;
             if (hub->recv(&len,1,crc))                          return;
@@ -55,6 +59,7 @@ void BAE910::duty(OneWireHub * const hub)
             break;
 
         case 0x15: // WRITE MEMORY
+
             if (hub->recv(&ta1,1,crc))                          return;
             if (hub->recv(&ta2,1,crc))                          return;
             if (hub->recv(&len,1,crc))                          return;
@@ -76,13 +81,14 @@ void BAE910::duty(OneWireHub * const hub)
                 while (len-- > 0) // reverse byte order
                 {
                     memory.bytes[0x7F - ta1 - len] = scratchpad[len];
-                };
-            };
+                }
+            }
             break;
 
 //        case 0x13: // EXTENDED COMMAND
 //        case 0x16: // ERASE EEPROM PAGE (not needed/implemented yet)
         default:
+
             hub->raiseSlaveError(cmd);
-    };
-};
+    }
+}
