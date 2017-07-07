@@ -270,7 +270,7 @@ void memset(T1 address[], T1 initValue[], T2 size)
 template <typename T1, typename T2>
 void memcpy(T1 destination[], const T1 source[], T2 bytes) 
 {
-    for (T2 counter = 0; counter < bytes; ++counter) // TODO: loop is not bytebased (others too)
+    for (T2 counter = 0; counter < bytes; ++counter) // TODO: loop is not byte based (others too)
     {
         destination[counter] = source[counter];
     }
