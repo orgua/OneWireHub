@@ -342,13 +342,15 @@ bool OneWireHub::showPresence(void)
     return false;
 }
 
-// note: this FN calls sendBit() & recvBit() but doesn handle interrupts -> calling FN must do this
+// note: this FN calls sendBit() & recvBit() but doesn't handle interrupts -> calling FN must do this
 void OneWireHub::searchIDTree(void)
 {
     uint8_t position_IDBit  = 0;
     uint8_t trigger_pos     = 0;
     uint8_t active_slave    = idTree[trigger_pos].slave_selected;
     uint8_t trigger_bit     = idTree[trigger_pos].id_position;
+
+    noInterrupts();
 
     while (position_IDBit < 64)
     {
@@ -395,6 +397,8 @@ void OneWireHub::searchIDTree(void)
         position_IDBit++;
     }
 
+    interrupts();
+
     slave_selected = slave_list[active_slave];
 }
 
@@ -413,9 +417,7 @@ bool OneWireHub::recvAndProcessCmd(void)
         case 0xF0: // Search rom
 
             slave_selected = nullptr;
-            noInterrupts();
             searchIDTree();
-            interrupts();
             return false; // always trigger a re-init after searchIDTree
 
         case 0x69: // overdrive MATCH ROM
@@ -532,10 +534,9 @@ bool OneWireHub::recvAndProcessCmd(void)
 
 
 // info: check for errors after calling and break/return if possible, returns true if error is detected
-// NOTE: if called separately you need to re-enable interrupts afterwards
+// NOTE: if called separately you need to handle interrupts, should be disabled during this FN
 bool OneWireHub::sendBit(const bool value)
 {
-    noInterrupts(); // will be enabled in send() TODO: clear up this usage, this sendBit FN is used alot, TEST: just safe state in poll(), disable if needed and re-enable at the end
     const bool writeZero = !value;
 
     // Wait for bus to rise HIGH, signaling end of last timeslot
@@ -544,7 +545,6 @@ bool OneWireHub::sendBit(const bool value)
     if (retries == 0)
     {
         _error = Error::RESET_IN_PROGRESS;
-        interrupts();
         return true;
     }
 
@@ -554,7 +554,6 @@ bool OneWireHub::sendBit(const bool value)
     if (retries == 0)
     {
         _error = Error::AWAIT_TIMESLOT_TIMEOUT_HIGH;
-        interrupts();
         return true;
     }
 
@@ -647,7 +646,7 @@ bool OneWireHub::send(const uint8_t dataByte)
     return send(&dataByte,1);
 }
 
-// NOTE: if called separately you need disable interrupts before and re-enable them afterwards
+// NOTE: if called separately you need to handle interrupts, should be disabled during this FN
 bool OneWireHub::recvBit(void)
 {
     // Wait for bus to rise HIGH, signaling end of last timeslot
@@ -656,7 +655,6 @@ bool OneWireHub::recvBit(void)
     if (retries == 0)
     {
         _error = Error::RESET_IN_PROGRESS;
-        interrupts();
         return true;
     }
 
@@ -666,7 +664,6 @@ bool OneWireHub::recvBit(void)
     if (retries == 0)
     {
         _error = Error::AWAIT_TIMESLOT_TIMEOUT_HIGH;
-        interrupts();
         return true;
     }
 

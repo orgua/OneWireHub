@@ -65,12 +65,16 @@ void DS2433::duty(OneWireHub * const hub)
                 writeMemory(&scratchpad[start], length, reg_TA);
             }
 
+            noInterrupts();
+
             do
             {
                 hub->clearError();
                 hub->sendBit(true); // send passive 1s
             }
             while   (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH); // wait for timeslots
+
+            interrupts();
 
             while (!hub->send(&ALTERNATE_01)); // send alternating 1 & 0 after copy is complete
             break;

@@ -48,14 +48,18 @@ void DS2890::duty(OneWireHub * const hub)
 
             if (hub->send(&register_feat))  break;
             if (hub->send(&register_ctrl))  break;
+            noInterrupts();
             while (!hub->sendBit(false));
+            interrupts();
             break;
 
         case 0xF0:      // READ POSITION
 
             if (hub->send(&register_ctrl))  break;
             if (hub->send(&register_poti[poti])) break;
+            noInterrupts();
             while (!hub->sendBit(false));
+            interrupts();
             break;
 
         case 0xC3:      // INCREMENT

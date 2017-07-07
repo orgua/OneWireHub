@@ -99,12 +99,18 @@ void DS2431::duty(OneWireHub * const hub)
             // Write Scratchpad to memory, writing takes about 10ms
             writeMemory(scratchpad, SCRATCHPAD_SIZE, reinterpret_cast<uint8_t *>(&reg_TA)[0]); // checks if copy protected
 
+            noInterrupts();
+
             do
             {
                 hub->clearError();
+
                 hub->sendBit(true); // send passive 1s
+
             }
             while   (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH); // wait for timeslots
+
+            interrupts();
 
             while (!hub->send(&ALTERNATING_10)); //  alternating 1 & 0 after copy is complete
             break;
