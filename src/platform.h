@@ -278,38 +278,34 @@ public:
 
 } Serial;
 
-//template <typename T1, typename T2>
-//void memset(T1* address, T1 initValue, T2 size);
 
 template<typename T1, typename T2>
-void memset(T1 * const address, const T1 initValue, const T2 size)
+void memset(T1 * const address, const T1 initValue, const T2 bytes)
 {
-    const T2 iterations = size / sizeof(T2);
+    const T2 iterations = bytes / sizeof(T1);
     for (T2 counter = 0; counter < iterations; ++counter)
     {
         address[counter] = (initValue);
     }
 }
 
-//template <typename T1, typename T2>
-//void memcpy(T1* destination, T1* source, T2 bytes);
 
 template<typename T1, typename T2>
 void memcpy(T1 * const destination, const T1 * const source, const T2 bytes)
 {
-    for (T2 counter = 0; counter < bytes; ++counter) // TODO: loop is not byte based (others too)
+    const T2 iterations = bytes / sizeof(T1);
+    for (T2 counter = 0; counter < iterations; ++counter)
     {
         destination[counter] = source[counter];
     }
 }
 
-//template <typename T1, typename T2>
-//bool memcmp(T1* destination, T1* source, T2 bytes);
 
 template <typename T1, typename T2>
 bool memcmp(const T1* const source_A, const T1* const source_B, const T2 bytes) // return true if string is different
 {
-    for (T2 counter = 0; counter < bytes; ++counter)
+    const T2 iterations = bytes / sizeof(T1);
+    for (T2 counter = 0; counter < iterations; ++counter)
     {
         if (source_A[counter] != source_B[counter]) return true;
     };
