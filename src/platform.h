@@ -273,7 +273,7 @@ public:
 
     void println(...) {};
 
-    void flush(void) {};
+    void flush() {};
     void begin(const uint32_t speed_baud) {};
 
 } Serial;
