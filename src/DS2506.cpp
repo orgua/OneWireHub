@@ -379,5 +379,5 @@ bool DS2506::setPageRedirection(const uint8_t page_source, const uint8_t page_de
 uint8_t DS2506::getPageRedirection(const uint8_t page) const
 {
     if (page >= PAGE_COUNT) return 0x00;
-    return ~(status[3*STATUS_SEGMENT + page]); // TODO: maybe invert this in ReadStatus and safe some Operations? Redirection is critical and often done
+    return (~status[3*STATUS_SEGMENT + page]); // TODO: maybe invert this in ReadStatus and safe some Operations? Redirection is critical and often done
 }
