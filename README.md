@@ -34,7 +34,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### Features:
 - supports up to 32 slaves simultaneously (8 is standard setting), adjust HUB_SLAVE_LIMIT in src/OneWireHub_config.h to safe RAM & program space
-- hot-plug: add and remove slaves as needed
+- hot-plug: add and remove slaves as needed during operation
 - support for most onewire-features: MATCH ROM (0x55), SKIP ROM (0xCC), READ ROM (0x0F,0x33), RESUME COMMAND (0xA5)
    - **OVERDRIVE-Mode**: Master can issue OD SKIP ROM (0x13) or OD MATCH ROM (0x69) and slave stays in this mode till it sees a long reset -> OD-feature must be activated in config
    - ALARM SEARCH (0xEC) is NOT implemented yet!
@@ -43,10 +43,11 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
    - use static-assertions for plausibility checks
    - user defined literals convert constants into needed format / unit
 - hardware-dependencies are combined in "platform.h", synced with [Onewire-Lib](https://github.com/PaulStoffregen/OneWire)
-   - supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822 (...)
+   - supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822, raspberry (...)
    - tested architectures: atmega328 @ 16 MHz / arduino Uno, teensy3.2
    - for portability and tests the hub can be compiled on a PC with the supplied mock-up functions in platform.h
    - at the moment the lib relies sole on loop-counting for timing, no direct access to interrupt or timers, **NOTE:** if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
+- hub and slaves are unit tested
 - Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
 - GPIO-Debug output - shows status by issuing high-states (activate in src/OneWireHub_config.h, is a better alternative to serial debug)
    - during presence detection (after reset), 
@@ -85,11 +86,12 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - is there more than one master on the bus? It won't work!
 - has any other sensor (real or emulated) ever worked with this master? -> the simplest device would be a ds2401
 - is serial- and gpio-debugging disabled (see src/OneWireHub_config.h)?
-- on slow arduinos it can be helpful to disable serial completely to get reliable results -> comment out serial.begin() 
+- on slow arduinos it can be helpful to disable the serial port completely to get reliable results -> at least comment out serial.begin() 
 - if you can provide a recording via logic-analyzer (logic 8 or similar) there should be chance we can help you 
 - if you checked all these points feel free to open an issue at [Github](https://github.com/orgua/OneWireHub)
 
 ### Recent development (latest at the top):
+- more explicit coding, a lot of bugfixes with the help of unit tests (esp8266, bea910, ds18b20)
 - interface of hub and slave-devices has changed, check header-file or examples for more info
 - rework / clean handling of timing-constants with user defined literals.
 - extend const-correctness to all onewire-slaves and unify naming of functions across similar devices
@@ -119,7 +121,6 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - replace searchIDTree() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
 
 ### Plans for the future:
-- implementation of ds2423
 - alarm / conditional search
 - irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
