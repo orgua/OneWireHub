@@ -1,6 +1,8 @@
 #include "OneWireHub.h"
 #include "OneWireItem.h"
 
+#include "platform.h"
+
 OneWireHub::OneWireHub(const uint8_t pin)
 {
     _error = Error::NO_ERROR;
