@@ -217,14 +217,16 @@ constexpr uint8_t VALUE_IPL {10}; // instructions per loop, uncalibrated so far 
 #define FALLBACK_BASIC_FNs
 #define FALLBACK_ADDITIONAL_FNs // to load up Serial below
 
+static bool mockup_pin_value[256];
+
 template <typename T1>
-bool digitalRead(const T1 pin) { return (pin != 0); }; // mock up outputs
+bool digitalRead(const T1 pin) { return (mockup_pin_value[pin & 0xFF] != 0); }; // mock up outputs
 
 template <typename T1, typename T2>
-void digitalWrite(const T1 pin, const T2 value) { };
+void digitalWrite(const T1 pin, const T2 value) { mockup_pin_value[pin & 0xFF] = value; };
 
 template <typename T1, typename T2>
-void pinMode(const T1 pin, const T2 value) { };
+void pinMode(const T1 pin, const T2 value) { mockup_pin_value[pin & 0xFF] = value; };
 
 template <typename T1>
 T1 digitalPinToPort(const T1 pin) { return pin; };
@@ -265,16 +267,20 @@ void interrupts(void);
 #define HEX 1
 #endif
 
-class
+static class serial
 {
+private:
+
+    static uint32_t speed;
+
 public:
 
-    void print(...) {};
+    void print(...) { };
 
-    void println(...) {};
+    void println(...) { };
 
-    void flush() {};
-    void begin(const uint32_t speed_baud) {};
+    void flush() { };
+    void begin(const uint32_t speed_baud) { speed = speed_baud; };
 
 } Serial;
 
