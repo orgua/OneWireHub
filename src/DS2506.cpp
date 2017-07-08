@@ -56,7 +56,7 @@ void DS2506::duty(OneWireHub * const hub)
                 {
                     data  = 0x00;
                     uint8_t counter = length;
-                    while (counter--)
+                    while (counter-- > 0)
                     {
                         if (hub->send(&data, 1, crc)) return;
                     }
@@ -208,12 +208,12 @@ void DS2506::duty(OneWireHub * const hub)
 
 void DS2506::clearMemory(void)
 {
-    memset(memory, static_cast<uint8_t>(0xFF), MEM_SIZE);
+    memset(memory, value_xFF, MEM_SIZE);
 }
 
 void DS2506::clearStatus(void)
 {
-    memset(status, static_cast<uint8_t>(0xFF), STATUS_SIZE);
+    memset(status, value_xFF, STATUS_SIZE);
 }
 
 bool DS2506::writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position)
@@ -254,17 +254,17 @@ uint8_t DS2506::readStatus(const uint16_t address) const
 
     if (address < STATUS_WP_REDIR_BEG)                              // is WP_PAGES
     {
-        if (SA < STATUS_SEGMENT) return_value = status[SA];         // emulate protection
+        if (SA < STATUS_SEGMENT) return_value = status[SA+0*STATUS_SEGMENT]; // emulate protection
     }
     else if (address < STATUS_PG_WRITN_BEG)                         // is WP_REDIR
     {
         SA -= STATUS_WP_REDIR_BEG;
-        if (SA < STATUS_SEGMENT) return_value = status[SA+STATUS_SEGMENT];      // emulate protection
+        if (SA < STATUS_SEGMENT) return_value = status[SA+1*STATUS_SEGMENT]; // emulate protection
     }
     else if (address < STATUS_UNDEF_B1_BEG)                         // is PG_WRITTEN
     {
         SA -= STATUS_PG_WRITN_BEG;
-        if (SA < STATUS_SEGMENT) return_value = status[SA+2*STATUS_SEGMENT];      // emulate written
+        if (SA < STATUS_SEGMENT) return_value = status[SA+2*STATUS_SEGMENT]; // emulate written
     }
     else if (address < STATUS_PG_REDIR_BEG)                         // is undefined
     {
@@ -273,8 +273,8 @@ uint8_t DS2506::readStatus(const uint16_t address) const
     else if (address < STATUS_UNDEF_B2_BEG)                         // is PG_REDIRECTION
     {
         SA -= STATUS_PG_REDIR_BEG;
-        if (SA < PAGE_COUNT)    return_value = 0xFF;                // emulate no redirection
-        else                    return_value = status[SA+3*STATUS_SEGMENT];
+        if (SA < PAGE_COUNT)    return_value = status[SA+3*STATUS_SEGMENT];
+        else                    return_value = 0xFF;                // emulate no redirection
     }
     else return_value = 0xFF;                                       // is undefined
 
@@ -379,5 +379,5 @@ bool DS2506::setPageRedirection(const uint8_t page_source, const uint8_t page_de
 uint8_t DS2506::getPageRedirection(const uint8_t page) const
 {
     if (page >= PAGE_COUNT) return 0x00;
-    return ~(status[3*STATUS_SEGMENT + page]); // TODO: maybe invert this in ReadStatus and safe some Operations? Redirection is critical and often done
+    return (~status[3*STATUS_SEGMENT + page]); // TODO: maybe invert this in ReadStatus and safe some Operations? Redirection is critical and often done
 }

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(OneWireHub)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+add_definitions(-std=c++14 -Wall -Wextra -pipe -march=native -mtune=native)
 
 #add_subdirectory(src)
 #include_directories(./src)
@@ -25,7 +25,7 @@ set(SOURCE_FILES
         src/OneWireHub.cpp
         src/OneWireHub_config.h
         src/OneWireItem.cpp
-        src/platform.h
+        src/platform.cpp
         )
 
 add_executable(OneWireHub ${SOURCE_FILES})

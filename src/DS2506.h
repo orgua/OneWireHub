@@ -8,6 +8,8 @@
 
 #include "OneWireItem.h"
 
+constexpr uint8_t value_xFF { static_cast<uint8_t>(0xFF) };
+
 class DS2506 : public OneWireItem
 {
 private:
@@ -17,13 +19,13 @@ private:
     static constexpr uint16_t MEM_SIZE_PROPOSE      { 256 }; // TUNE HERE! Give this device as much RAM as your CPU can spare
 
     static constexpr uint8_t  PAGE_SIZE             { 32 };
-    static constexpr uint16_t PAGE_COUNT            { MEM_SIZE_PROPOSE / PAGE_SIZE };
+    static constexpr uint16_t PAGE_COUNT            { MEM_SIZE_PROPOSE / PAGE_SIZE }; // ATM: 8
     static constexpr uint8_t  PAGE_MASK             { 0b00011111 };
 
     static constexpr uint16_t MEM_SIZE              { PAGE_COUNT * PAGE_SIZE };
     static constexpr uint16_t MEM_MASK              { MEM_SIZE - 1 };
 
-    static constexpr uint8_t  STATUS_SEGMENT        { PAGE_COUNT / 8 };
+    static constexpr uint8_t  STATUS_SEGMENT        { PAGE_COUNT / 8 }; // ATM: 1
     static constexpr uint16_t STATUS_SIZE           { PAGE_COUNT + (3*STATUS_SEGMENT) };
     static constexpr uint16_t STATUS_SIZE_DEV       { 0x200 }; // device specific "real" size
 
@@ -38,7 +40,7 @@ private:
     static_assert(STATUS_SEGMENT > 0,   "REAL MEM SIZE IS TOO SMALL");
     static_assert(MEM_SIZE <= 8192,     "REAL MEM SIZE IS TOO BIG, MAX IS 8291 bytes");
 
-    uint8_t     memory[MEM_SIZE];    // 4 pages of 32 bytes
+    uint8_t     memory[MEM_SIZE];    // at least 4 pages of 32 bytes
     uint8_t     status[STATUS_SIZE]; // eprom status bytes
 
     uint16_t    sizeof_memory;              // device specific "real" size

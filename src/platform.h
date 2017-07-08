@@ -3,6 +3,10 @@
 #ifndef ONEWIREHUB_PLATFORM_H
 #define ONEWIREHUB_PLATFORM_H
 
+#if defined(ARDUINO) && ARDUINO >= 100
+#include <Arduino.h>
+#endif
+
 // NOTE: added io_reg_t, don't use IO_REG_TYPE and IO_REG_ASM anymore
 // Platform specific I/O definitions
 
@@ -80,11 +84,8 @@ constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far -
 #define DIRECT_WRITE_LOW(base, mask)    (GPOC = (mask))             //GPIO_OUT_W1TC_ADDRESS
 #define DIRECT_WRITE_HIGH(base, mask)   (GPOS = (mask))             //GPIO_OUT_W1TS_ADDRESS
 using io_reg_t = uint32_t; // define special datatype for register-access
-// The ESP8266 has two possible CPU frequencies
-// 80 MHz, default
-constexpr uint8_t VALUE_IPL {22}; // instructions per loop, not verified yet
-// 160 MHz
-//constexpr uint8_t VALUE_IPL {26}; // instructions per loop, not verified yet
+// The ESP8266 has two possible CPU frequencies: 160 MHz (26 IPL) and 80 MHz (22 IPL) -> something influences the IPL-Value
+constexpr uint8_t VALUE_IPL { (microsecondsToClockCycles(1) > 120) ? 26 : 22}; // instructions per loop, not verified yet
 
 #elif defined(__SAMD21G18A__)
 #define PIN_TO_BASEREG(pin)             portModeRegister(digitalPinToPort(pin))
@@ -182,13 +183,13 @@ void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
     }
 }
 
-#define DIRECT_READ(base, pin)		directRead(base, pin)
+#define DIRECT_READ(base, pin)		    directRead(base, pin)
 #define DIRECT_MODE_INPUT(base, pin)	directModeInput(base, pin)
 #define DIRECT_MODE_OUTPUT(base, pin)	directModeOutput(base, pin)
-#define DIRECT_WRITE_LOW(base, pin)	directWriteLow(base, pin)
+#define DIRECT_WRITE_LOW(base, pin)	    directWriteLow(base, pin)
 #define DIRECT_WRITE_HIGH(base, pin)	directWriteHigh(base, pin)
 
-#else
+#else // any unknown architecture, including PC
 
 #include <inttypes.h>
 
@@ -199,9 +200,9 @@ void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 #define DIRECT_WRITE_HIGH(base, pin)    digitalWrite(pin, HIGH)
 #define DIRECT_MODE_INPUT(base, pin)    pinMode(pin,INPUT)
 #define DIRECT_MODE_OUTPUT(base, pin)   pinMode(pin,OUTPUT)
-#warning "OneWire. Fallback mode. Using API calls for pinMode,digitalRead and digitalWrite. Operation of this library is not guaranteed on this architecture."
+//#warning "OneWire. Fallback mode. Using API calls for pinMode,digitalRead and digitalWrite. Operation of this library is not guaranteed on this architecture."
 using io_reg_t = uint32_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL {1}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+constexpr uint8_t VALUE_IPL {10}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
 /////////////////////////////////////////// EXTRA PART /////////////////////////////////////////
 // this part is loaded if no proper arduino-environment is found (good for external testing)
@@ -213,82 +214,109 @@ constexpr uint8_t VALUE_IPL {1}; // instructions per loop, uncalibrated so far -
 #define HIGH 1
 #define LOW 0
 
-#define ARDUINO_attiny // to load up Serial below
+#define FALLBACK_BASIC_FNs
+#define FALLBACK_ADDITIONAL_FNs // to load up Serial below
+
+static bool mockup_pin_value[256];
 
 template <typename T1>
-bool digitalRead(T1) {return 0;};
+bool digitalRead(const T1 pin) { return (mockup_pin_value[pin & 0xFF] != 0); }; // mock up outputs
 
 template <typename T1, typename T2>
-uint8_t digitalWrite(T1, T2) {return 0;};
+void digitalWrite(const T1 pin, const T2 value) { mockup_pin_value[pin & 0xFF] = value; };
 
 template <typename T1, typename T2>
-uint8_t pinMode(T1, T2) {return 0;};
+void pinMode(const T1 pin, const T2 value) { mockup_pin_value[pin & 0xFF] = value; };
 
-uint8_t digitalPinToPort(uint8_t x) {return 0;};
-uint8_t *portInputRegister(uint8_t x) {return 0;};
-uint8_t digitalPinToBitMask(uint8_t x) {return 0;};
+template <typename T1>
+T1 digitalPinToPort(const T1 pin) { return pin; };
 
-constexpr uint32_t microsecondsToClockCycles(uint32_t x) {return 100;}; // mockup, emulate 100 MHz CPU
+template <typename T1>
+T1 * portInputRegister(const T1 port) { return port; };
 
-void delayMicroseconds(...) {};
-uint32_t micros(void) {return 0;}; // takes about 3 µs to process @ 16 MHz
+template <typename T1>
+T1 digitalPinToBitMask(const T1 pin) { return pin; };
 
-void cli(void) {};
-void sei(void) {};
+constexpr uint32_t microsecondsToClockCycles(const uint32_t micros) {return (100*micros);}; // mockup, emulate 100 MHz CPU
 
-void noInterrupts(void) {};
-void interrupts(void) {};
+template <typename T1>
+void delayMicroseconds(const T1 micros) { };
+
+/// the following fn are no templates and need to be defined in platform.cpp
+
+uint32_t micros(); // takes about 3 µs to process @ 16 MHz
+
+void cli();
+void sei();
+
+void noInterrupts();
+
+void interrupts(void);
 
 #endif
 
-#ifdef ARDUINO_attiny // Test to make it work on aTtiny85, 8MHz
+#if defined(ARDUINO_attiny)
+#define FALLBACK_ADDITIONAL_FNs // to load up Serial below
+#endif
+
+
+#ifdef FALLBACK_ADDITIONAL_FNs // Test to make it work on aTtiny85, 8MHz
 /// README: use pin2 or pin3 for Attiny, source: https://github.com/gioblu/PJON/wiki/ATtiny-interfacing
 
-#include "inttypes.h" // why here?
-
+#ifndef HEX
 #define HEX 1
+#endif
 
-class
+static class serial
 {
+private:
+
+    static uint32_t speed;
+
 public:
 
-    void print(...) {};
+    void print(...) { };
 
-    void println(...) {};
+    void println(...) { };
 
-    void flush(void) {};
-    void begin(uint32_t x) {};
+    void flush() { };
+    void begin(const uint32_t speed_baud) { speed = speed_baud; };
 
 } Serial;
 
-template <typename T1, typename T2>
-void memset(T1 address[], T1 initValue[], T2 size)
+
+template<typename T1, typename T2>
+void memset(T1 * const address, const T1 initValue, const T2 bytes)
 {
-    size = size / sizeof(T2);
-    for (T2 counter = 0; counter < size; ++counter)
+    const T2 iterations = bytes / sizeof(T1);
+    for (T2 counter = 0; counter < iterations; ++counter)
     {
         address[counter] = (initValue);
     }
 }
 
-template <typename T1, typename T2>
-void memcpy(T1 destination[], const T1 source[], T2 bytes) 
+
+template<typename T1, typename T2>
+void memcpy(T1 * const destination, const T1 * const source, const T2 bytes)
 {
-    for (T2 counter = 0; counter < bytes; ++counter) // TODO: loop is not bytebased (others too)
+    const T2 iterations = bytes / sizeof(T1);
+    for (T2 counter = 0; counter < iterations; ++counter)
     {
         destination[counter] = source[counter];
     }
 }
 
+
 template <typename T1, typename T2>
-bool memcmp(T1 destination[], T1 source[], T2 bytes) // return true if string is different
+bool memcmp(const T1* const source_A, const T1* const source_B, const T2 bytes) // return true if string is different
 {
-    for (T2 counter = 0; counter < bytes; ++counter)
+    const T2 iterations = bytes / sizeof(T1);
+    for (T2 counter = 0; counter < iterations; ++counter)
     {
-        if (destination[counter] != source[counter]) return true;
+        if (source_A[counter] != source_B[counter]) return true;
     };
     return false;
-};
+}
 
 void        delay(uint32_t time_millis);
 uint32_t    millis(void);
