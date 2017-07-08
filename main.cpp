@@ -2,6 +2,7 @@
 //
 //
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -24,14 +25,38 @@ using namespace std;
 #include "src/DS2506.h"  // 64kb EEPROM
 #include "src/DS2890.h"  // Single channel digital potentiometer
 
-template<typename T1, typename T2>
-bool test_eq(const T1 value_A, const T2 value_B, const string message)
+constexpr uint8_t operator "" _u8(const unsigned long long int value)
 {
-    if (value_A == value_B) cout << "- PASS ";
-    else                    cout << "- FAIL (" << value_A << " != " << value_B << ") ";
+    return static_cast<uint8_t>(value);
+}
 
-    cout << message << endl;
-};
+constexpr int8_t operator "" _i8(const unsigned long long int value)
+{
+    return static_cast<int8_t>(value);
+}
+
+size_t tests_absolved = 0;
+
+template<typename T1, typename T2>
+void test_eq(const T1 value_A, const T2 value_B, const string message)
+{
+    if (value_A != value_B) cout << "- FAIL (" << to_string(value_A) << " != " << to_string(value_B) << ") " << message << endl;
+    tests_absolved++;
+}
+
+template<typename T1>
+const vector<T1> initializeLinear(const T1 value_start, const T1 value_increment, const size_t size)
+{
+    vector<T1> data(size,value_start);
+    T1 value = value_start;
+    for (size_t index = 0; index < size; ++index)
+    {
+        data[index] = value;
+        value += value_increment;
+    }
+    return data;
+}
+
 
 int main()
 {
@@ -51,6 +76,8 @@ int main()
     auto ds2405   = DS2405( 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - Single address switch
     auto ds2408   = DS2408( 0x29, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 8-Channel Addressable Switch
     auto ds2413   = DS2413( 0x3A, 0x0D, 0x02, 0x04, 0x01, 0x03, 0x00 );    // Work - Dual channel addressable switch
+
+    auto ds2401c  = DS2401( 0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0C );    // Work - Serial Number
 
     auto ds2423   = DS2423( 0x1D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
     auto ds2431   = DS2431( 0x2D, 0xE8, 0x9F, 0x90, 0x0E, 0x00, 0x00 );    // Work - 1kb 1-Wire EEPROM
@@ -103,21 +130,52 @@ int main()
 
     {
         /// DS18B20
-        constexpr float tempA{22.0f};
-        constexpr int8_t tempB{21};
-        constexpr int8_t tempC{10};
+        const auto temp_A = initializeLinear( -55.0f, 1.0f, 181);
+        const auto temp_B = initializeLinear( int8_t(-55), 1_i8, 181);
 
-        ds1822.setTemperature(tempA);
-        test_eq(tempA, ds1822.getTemperature(), "DS1822");
+        for (const auto temp : temp_A)
+        {
+            ds1822.setTemperature(temp);
+            test_eq(temp, ds1822.getTemperature(), "DS1822 float temp =" + to_string(temp));
+        }
 
-        ds18B20.setTemperature(tempB);
-        test_eq(tempB, ds18B20.getTemperature(), "DS18B20");
+        ds1822.setTemperature(-56.0f);
+        test_eq(-55.0f, ds1822.getTemperature(), "DS1822 float out of bounds NEG");
 
-        ds18S20.setTemperature(tempC);
-        test_eq(tempC, ds18S20.getTemperature(), "DS18S20");
+        ds1822.setTemperature(126.0f);
+        test_eq(125.0f, ds1822.getTemperature(), "DS1822 float out of bounds POS");
+
+        for (const auto temp : temp_B)
+        {
+            ds18B20.setTemperature(temp);
+            test_eq(temp, ds18B20.getTemperature(), "DS18B22 int8 temp =" + to_string(temp));
+        }
+
+        for (const auto temp : temp_B)
+        {
+            ds18S20.setTemperature(temp);
+            test_eq(temp, ds18S20.getTemperature(), "DS18S22 int8 temp =" + to_string(temp));
+        }
     }
 
-    /// DS2401 nothing to do
+    {
+        /// DS2401 and general hub test
+        const auto position_A = hubA.attach(ds2401c);
+        test_eq(255_u8, position_A, "DS2401 attach to full hub");
+
+        const auto position_B = hubA.detach(ds2401c);
+        test_eq(false, position_B, "DS2401 detach not attached device to full hub");
+
+        const auto position_C = hubA.detach(ds2401a);
+        test_eq(true, position_C, "DS2401 detach an attached device");
+
+        const auto position_D = hubA.attach(ds2401b);
+        test_eq(4_u8, position_D, "DS2401 attach an already attached device");
+
+        const auto position_E = hubA.attach(ds2401c);
+        test_eq(3_u8, position_E, "DS2401 attach an unattached devices");
+    }
+
 
     {
         /// DS2405
@@ -153,7 +211,7 @@ int main()
     }
 
 
-    
+
 
     bae910.memory.field.rtc = 1000;
 
@@ -166,6 +224,8 @@ int main()
     if (hubA.hasError()) hubA.printError();
     if (hubB.hasError()) hubB.printError();
     if (hubC.hasError()) hubC.printError();
+
+    cout << "Program did run " << tests_absolved << " tests." << endl;
 
     return 0;
 };
