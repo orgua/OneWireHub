@@ -77,7 +77,7 @@ int main()
     auto ds2408   = DS2408( 0x29, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 8-Channel Addressable Switch
     auto ds2413   = DS2413( 0x3A, 0x0D, 0x02, 0x04, 0x01, 0x03, 0x00 );    // Work - Dual channel addressable switch
 
-    auto ds2401c  = DS2401( 0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0C );    // Work - Serial Number
+    auto ds2401c  = DS2401( 0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0C );    // additional device for testing
 
     auto ds2423   = DS2423( 0x1D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
     auto ds2431   = DS2431( 0x2D, 0xE8, 0x9F, 0x90, 0x0E, 0x00, 0x00 );    // Work - 1kb 1-Wire EEPROM
@@ -125,8 +125,9 @@ int main()
     hubC.attach(ds2890C);
     hubC.attach(bae910);
 
-    cout << "- use every device-function at least once" << endl;
+    cout << "- use every device-function at least once and do some unit-testing" << endl;
 
+    // TODO: maybe put the code in src_files to the depending device_unittest.h
 
     {
         /// DS18B20
@@ -136,80 +137,192 @@ int main()
         for (const auto temp : temp_A)
         {
             ds1822.setTemperature(temp);
-            test_eq(temp, ds1822.getTemperature(), "DS1822 float temp =" + to_string(temp));
+            test_eq(ds1822.getTemperature(), temp, "DS1822 float temp =" + to_string(temp));
         }
 
         ds1822.setTemperature(-56.0f);
-        test_eq(-55.0f, ds1822.getTemperature(), "DS1822 float out of bounds NEG");
+        test_eq(ds1822.getTemperature(), -55.0f, "DS1822 float out of bounds NEG");
 
         ds1822.setTemperature(126.0f);
-        test_eq(125.0f, ds1822.getTemperature(), "DS1822 float out of bounds POS");
+        test_eq(ds1822.getTemperature(), 125.0f, "DS1822 float out of bounds POS");
 
         for (const auto temp : temp_B)
         {
             ds18B20.setTemperature(temp);
-            test_eq(temp, ds18B20.getTemperature(), "DS18B22 int8 temp =" + to_string(temp));
+            test_eq(ds18B20.getTemperature(), temp, "DS18B22 int8 temp =" + to_string(temp));
         }
 
         for (const auto temp : temp_B)
         {
             ds18S20.setTemperature(temp);
-            test_eq(temp, ds18S20.getTemperature(), "DS18S22 int8 temp =" + to_string(temp));
+            test_eq(ds18S20.getTemperature(), temp, "DS18S22 int8 temp =" + to_string(temp));
         }
     }
 
     {
         /// DS2401 and general hub test
         const auto position_A = hubA.attach(ds2401c);
-        test_eq(255_u8, position_A, "DS2401 attach to full hub");
+        test_eq(position_A, 255_u8, "DS2401 attach to full hub");
 
         const auto position_B = hubA.detach(ds2401c);
-        test_eq(false, position_B, "DS2401 detach not attached device to full hub");
+        test_eq(position_B, false, "DS2401 detach not attached device to full hub");
 
         const auto position_C = hubA.detach(ds2401a);
-        test_eq(true, position_C, "DS2401 detach an attached device");
+        test_eq(position_C, true, "DS2401 detach an attached device");
 
         const auto position_D = hubA.attach(ds2401b);
-        test_eq(4_u8, position_D, "DS2401 attach an already attached device");
+        test_eq(position_D, 4_u8, "DS2401 attach an already attached device");
 
         const auto position_E = hubA.attach(ds2401c);
-        test_eq(3_u8, position_E, "DS2401 attach an unattached devices");
+        test_eq(position_E, 3_u8, "DS2401 attach an unattached devices");
     }
 
+    // TODO: look through src code, for now just converted ino-examples
 
     {
         /// DS2405
         ds2405.setPinState(true);
-        test_eq(true, ds2405.getPinState(), "DS2405 true");
+        test_eq(ds2405.getPinState(), true, "DS2405 true");
         ds2405.setPinState(false);
-        test_eq(false, ds2405.getPinState(), "DS2405 false");
+        test_eq(ds2405.getPinState(), false, "DS2405 false");
     }
 
     {
-        /// DS2408
+        /// DS2408 TODO: vector with tests, raise activity
         ds2408.clearMemory();
         ds2408.setPinState(0, true);
         ds2408.setPinState(1, false);
         ds2408.setPinState(2, false);
         ds2408.setPinState(3, false);
-        test_eq(true, ds2408.getPinState(0), "DS2408 state true");
-        test_eq(false, ds2408.getPinState(1), "DS2408 state false");
-        test_eq(0x01, ds2408.getPinState() & 0x0F, "DS2408 state cplx");
+        test_eq(ds2408.getPinState(0), true, "DS2408 state true");
+        test_eq(ds2408.getPinState(1), false, "DS2408 state false");
+        test_eq(ds2408.getPinState() & 0x0F, 0x01, "DS2408 state cplx");
 
         ds2408.setPinActivity(0, true);
         ds2408.setPinActivity(1, false);
         ds2408.setPinActivity(2, false);
         ds2408.setPinActivity(3, false);
-        test_eq(true, ds2408.getPinActivity(0), "DS2408 activity true");
-        test_eq(false, ds2408.getPinActivity(1), "DS2408 activity false");
-        test_eq(0x01, ds2408.getPinActivity() & 0x0F, "DS2408 activity cplx");
+        test_eq(ds2408.getPinActivity(0), true, "DS2408 activity true");
+        test_eq(ds2408.getPinActivity(1), false, "DS2408 activity false");
+        test_eq(ds2408.getPinActivity() & 0x0F, 0x01, "DS2408 activity cplx");
     }
 
     {
         /// DS2413
+        const auto values_pin = initializeLinear(0_u8, 1_u8, 2);
 
+        for (const auto value : values_pin)
+        {
+            ds2413.setPinState(value,false);
+            test_eq(ds2413.getPinState(value), false, "DS2413 state of pin " + to_string(value));
+
+            ds2413.setPinState(value,true);
+            test_eq(ds2413.getPinState(value), true, "DS2413 state of pin " + to_string(value));
+
+            ds2413.setPinLatch(value,false);
+            test_eq(ds2413.getPinLatch(value), false, "DS2413 latch of pin " + to_string(value));
+
+            ds2413.setPinLatch(value,true);
+            test_eq(ds2413.getPinLatch(value), true, "DS2413 latch of pin " + to_string(value));
+
+            test_eq(ds2413.getPinState(value), false, "DS2413 change in state of pin " + to_string(value) + " because of latch");
+            ds2413.setPinState(value,true);
+            test_eq(ds2413.getPinState(value), false, "DS2413 re-enable state of pin " + to_string(value) + " fails because pin still latched");
+
+            ds2413.setPinLatch(value,false);
+            test_eq(ds2413.getPinState(value), false, "DS2413 state of pin " + to_string(value) + " after disabling latch");
+
+            ds2413.setPinState(value,true);
+            test_eq(ds2413.getPinState(value), true, "DS2413 re-enable state of pin " + to_string(value) + " after disabling latch works");
+        }
     }
 
+    {
+        // DS2423
+        constexpr char memory[] = "abcdefg-test-data full ASCII:-?+";
+        constexpr uint8_t mem_dummy[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+
+        ds2423.clearMemory(); // begin fresh after doing some work
+
+        test_eq(ds2423.getCounter(0), 0, "DS2423 write counter 0 - fresh state");
+        ds2423.writeMemory(mem_dummy, sizeof(mem_dummy), 12*32+16); // second half of page 12
+        test_eq(ds2423.getCounter(0), 1, "DS2423 write counter 0 - increment by writing register");
+
+        test_eq(ds2423.getCounter(1), 0, "DS2423 write counter 1 - fresh state");
+        ds2423.setCounter(1,2000);
+        test_eq(ds2423.getCounter(1), 2000, "DS2423 write counter 1 - set counter");
+
+        ds2423.writeMemory(mem_dummy, sizeof(mem_dummy), 12*32+17); // second half of page 12 and 1 byte of page 13
+        test_eq(ds2423.getCounter(0), 2, "DS2423 write counter 0 - increment by writing register");
+        test_eq(ds2423.getCounter(1), 2001, "DS2423 write counter 1 - increment by writing register");
+
+        test_eq(ds2423.getCounter(2), 0, "DS2423 write counter 2 - fresh state");
+        ds2423.incrementCounter(2);
+        test_eq(ds2423.getCounter(2), 1, "DS2423 write counter 2 - incrementing");
+        ds2423.decrementCounter(2);
+        test_eq(ds2423.getCounter(2), 0, "DS2423 write counter 2 - decrementing");
+
+        test_eq(ds2423.getCounter(3), 0, "DS2423 write counter 3 - fresh state");
+
+        // Test-Cases: the following code is just to show basic functions, can be removed any time
+        ds2423.writeMemory(reinterpret_cast<const uint8_t *>(memory),sizeof(memory),0x00);
+
+        ds2423.writeMemory(mem_dummy, sizeof(mem_dummy), 1*32);
+
+        uint8_t mem_read[16];
+        ds2423.readMemory(mem_read, 16, 31); // begin one byte earlier than page 1
+
+        for (size_t index = 1; index < sizeof(mem_dummy); ++index)
+        {
+            test_eq(mem_read[index], mem_dummy[index-1], "DS2423 mem re-read at position " + to_string(index));
+        }
+    }
+
+    {
+        // DS2431
+        constexpr char memory[] = "abcdefg-test-data full ASCII:-?+";
+        constexpr uint8_t mem_dummy[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+
+        ds2431.clearMemory(); // begin fresh after doing some work
+
+        ds2431.writeMemory(reinterpret_cast<const uint8_t *>(memory),sizeof(memory),0x00);
+        ds2431.writeMemory(mem_dummy, sizeof(mem_dummy), 1*32);
+
+        uint8_t mem_read[16];
+        ds2431.readMemory(mem_read, 16, 31); // begin one byte earlier than page 1
+        for (size_t index = 1; index < sizeof(mem_dummy); ++index)
+        {
+            test_eq(mem_read[index], mem_dummy[index-1], "DS2431 mem re-read at position " + to_string(index));
+        }
+
+        test_eq(ds2431.getPageProtection(1*32 -  1), false, "DS2431 test page protection before");
+        test_eq(ds2431.getPageProtection(1*32 +  0), false, "DS2431 test page protection before");
+        test_eq(ds2431.getPageProtection(2*32 +  0), false, "DS2431 test page protection before");
+        ds2431.setPageProtection(1*32);
+        test_eq(ds2431.getPageProtection(1*32 -  1), false, "DS2431 test page protection after");
+        test_eq(ds2431.getPageProtection(1*32 +  0),  true, "DS2431 test page protection after");
+        test_eq(ds2431.getPageProtection(1*32 +  8),  true, "DS2431 test page protection after");
+        test_eq(ds2431.getPageProtection(1*32 + 18),  true, "DS2431 test page protection after");
+        test_eq(ds2431.getPageProtection(2*32 -  1),  true, "DS2431 test page protection after");
+        test_eq(ds2431.getPageProtection(2*32 -  0), false, "DS2431 test page protection after");
+        ds2431.setPageProtection(2*32);
+        test_eq(ds2431.getPageProtection(2*32 -  0),  true, "DS2431 test page protection after");
+
+
+        constexpr uint8_t mem_FF[] = { 0xFF, 0xFF };
+        ds2431.writeMemory(reinterpret_cast<const uint8_t *>(mem_FF),sizeof(mem_FF),2*32);
+        test_eq(ds2431.getPageEpromMode(2*32 - 1), false, "DS2431 test page eprom mode before");
+        test_eq(ds2431.getPageEpromMode(2*32 - 0), false, "DS2431 test page eprom mode before");
+        test_eq(ds2431.getPageEpromMode(2*32 + 1), false, "DS2431 test page eprom mode before");
+        ds2431.setPageEpromMode(2*32);
+        test_eq(ds2431.getPageEpromMode(2*32 - 1), false, "DS2431 test page eprom mode after");
+        test_eq(ds2431.getPageEpromMode(2*32 - 0),  true, "DS2431 test page eprom mode after");
+        test_eq(ds2431.getPageEpromMode(2*32 + 1),  true, "DS2431 test page eprom mode after");
+        test_eq(ds2431.getPageEpromMode(3*32 - 1),  true, "DS2431 test page eprom mode after");
+        test_eq(ds2431.getPageEpromMode(3*32 - 0), false, "DS2431 test page eprom mode after");
+
+        // TODO: test real eprom
+    }
 
 
 
