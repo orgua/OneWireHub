@@ -30,9 +30,19 @@ constexpr uint8_t operator "" _u8(const unsigned long long int value)
     return static_cast<uint8_t>(value);
 }
 
+constexpr uint32_t operator "" _u32(const unsigned long long int value)
+{
+    return static_cast<uint32_t>(value);
+}
+
 constexpr int8_t operator "" _i8(const unsigned long long int value)
 {
     return static_cast<int8_t>(value);
+}
+
+constexpr int32_t operator "" _i32(const unsigned long long int value)
+{
+    return static_cast<int32_t>(value);
 }
 
 size_t tests_absolved = 0;
@@ -244,37 +254,42 @@ int main()
 
         ds2423.clearMemory(); // begin fresh after doing some work
 
-        test_eq(ds2423.getCounter(0), 0, "DS2423 write counter 0 - fresh state");
+        test_eq(ds2423.getCounter(0), 0_u32, "DS2423 write counter 0 - fresh state");
         ds2423.writeMemory(mem_dummy, sizeof(mem_dummy), 12*32+16); // second half of page 12
-        test_eq(ds2423.getCounter(0), 1, "DS2423 write counter 0 - increment by writing register");
+        test_eq(ds2423.getCounter(0), 1_u32, "DS2423 write counter 0 - increment by writing register");
 
-        test_eq(ds2423.getCounter(1), 0, "DS2423 write counter 1 - fresh state");
+        test_eq(ds2423.getCounter(1), 0_u32, "DS2423 write counter 1 - fresh state");
         ds2423.setCounter(1,2000);
-        test_eq(ds2423.getCounter(1), 2000, "DS2423 write counter 1 - set counter");
+        test_eq(ds2423.getCounter(1), 2000_u32, "DS2423 write counter 1 - set counter");
 
         ds2423.writeMemory(mem_dummy, sizeof(mem_dummy), 12*32+17); // second half of page 12 and 1 byte of page 13
-        test_eq(ds2423.getCounter(0), 2, "DS2423 write counter 0 - increment by writing register");
-        test_eq(ds2423.getCounter(1), 2001, "DS2423 write counter 1 - increment by writing register");
+        test_eq(ds2423.getCounter(0), 2_u32, "DS2423 write counter 0 - increment by writing register");
+        test_eq(ds2423.getCounter(1), 2001_u32, "DS2423 write counter 1 - increment by writing register");
 
-        test_eq(ds2423.getCounter(2), 0, "DS2423 write counter 2 - fresh state");
+        test_eq(ds2423.getCounter(2), 0_u32, "DS2423 write counter 2 - fresh state");
         ds2423.incrementCounter(2);
-        test_eq(ds2423.getCounter(2), 1, "DS2423 write counter 2 - incrementing");
+        test_eq(ds2423.getCounter(2), 1_u32, "DS2423 write counter 2 - incrementing");
         ds2423.decrementCounter(2);
-        test_eq(ds2423.getCounter(2), 0, "DS2423 write counter 2 - decrementing");
+        test_eq(ds2423.getCounter(2), 0_u32, "DS2423 write counter 2 - decrementing");
 
-        test_eq(ds2423.getCounter(3), 0, "DS2423 write counter 3 - fresh state");
+        test_eq(ds2423.getCounter(3), 0_u32, "DS2423 write counter 3 - fresh state");
 
         // Test-Cases: the following code is just to show basic functions, can be removed any time
         ds2423.writeMemory(reinterpret_cast<const uint8_t *>(memory),sizeof(memory),0x00);
-
         ds2423.writeMemory(mem_dummy, sizeof(mem_dummy), 1*32);
 
-        uint8_t mem_read[16];
-        ds2423.readMemory(mem_read, 16, 31); // begin one byte earlier than page 1
+        uint8_t mem_read[sizeof(memory)];
 
+        ds2423.readMemory(mem_read, sizeof(memory), 0x00);
+        for (size_t index = 0; index < sizeof(memory); ++index)
+        {
+            test_eq(mem_read[index], memory[index], "DS2423 mem re-read at position A " + to_string(index));
+        }
+
+        ds2423.readMemory(mem_read, sizeof(mem_dummy), 31); // begin one byte earlier than page 1
         for (size_t index = 1; index < sizeof(mem_dummy); ++index)
         {
-            test_eq(mem_read[index], mem_dummy[index-1], "DS2423 mem re-read at position " + to_string(index));
+            test_eq(mem_read[index], mem_dummy[index-1], "DS2423 mem re-read at position B " + to_string(index));
         }
     }
 
@@ -288,11 +303,18 @@ int main()
         ds2431.writeMemory(reinterpret_cast<const uint8_t *>(memory),sizeof(memory),0x00);
         ds2431.writeMemory(mem_dummy, sizeof(mem_dummy), 1*32);
 
-        uint8_t mem_read[16];
-        ds2431.readMemory(mem_read, 16, 31); // begin one byte earlier than page 1
+        uint8_t mem_read[sizeof(memory)];
+
+        ds2431.readMemory(mem_read, sizeof(memory), 0x00);
+        for (size_t index = 0; index < sizeof(memory); ++index)
+        {
+            test_eq(mem_read[index], memory[index], "DS2431 mem re-read at position A " + to_string(index));
+        }
+
+        ds2431.readMemory(mem_read, sizeof(mem_dummy), 31); // begin one byte earlier than page 1
         for (size_t index = 1; index < sizeof(mem_dummy); ++index)
         {
-            test_eq(mem_read[index], mem_dummy[index-1], "DS2431 mem re-read at position " + to_string(index));
+            test_eq(mem_read[index], mem_dummy[index-1], "DS2431 mem re-read at position B " + to_string(index));
         }
 
         test_eq(ds2431.getPageProtection(1*32 -  1), false, "DS2431 test page protection before");
@@ -324,6 +346,218 @@ int main()
         // TODO: test real eprom
     }
 
+    {
+        // DS2433
+        constexpr char memory[] = "abcdefg-test-data full ASCII:-?+";
+        constexpr uint8_t mem_dummy[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+
+        ds2433.clearMemory(); // begin fresh after doing some work
+
+        ds2433.writeMemory(reinterpret_cast<const uint8_t *>(memory),sizeof(memory),0x00);
+        ds2433.writeMemory(mem_dummy, sizeof(mem_dummy), 1*32);
+
+        uint8_t mem_read[sizeof(memory)];
+
+        ds2433.readMemory(mem_read, sizeof(memory), 0); // begin one byte earlier than page 1
+        for (size_t index = 0; index < sizeof(memory); ++index)
+        {
+            test_eq(mem_read[index], memory[index], "DS2433 mem re-read at position A " + to_string(index));
+        }
+
+        ds2433.readMemory(mem_read, sizeof(mem_dummy), 31); // begin one byte earlier than page 1
+        for (size_t index = 1; index < sizeof(mem_dummy); ++index)
+        {
+            test_eq(mem_read[index], mem_dummy[index-1], "DS2433 mem re-read at position B " + to_string(index));
+        }
+    }
+
+    {
+        // DS2438
+        const auto temp_A = initializeLinear( -55.0f, 1.0f, 181);
+        const auto temp_B = initializeLinear( int8_t(-55), 1_i8, 181);
+
+        for (const auto temp : temp_A)
+        {
+            ds2438.setTemperature(temp);
+            test_eq(ds2438.getTemperature(), temp, "DS2438 float temp =" + to_string(temp));
+        }
+
+        ds2438.setTemperature(-56.0f);
+        test_eq(ds2438.getTemperature(), -55.0f, "DS2438 float out of bounds NEG");
+
+        ds2438.setTemperature(126.0f);
+        test_eq(ds2438.getTemperature(), 125.0f, "DS2438 float out of bounds POS");
+
+        for (const auto temp : temp_B)
+        {
+            ds2438.setTemperature(temp);
+            test_eq(ds2438.getTemperature(), temp, "DS2438 int8 temp =" + to_string(temp));
+        }
+
+        for (uint16_t voltage_10mV = 0; voltage_10mV < 1024; ++voltage_10mV)
+        {
+            ds2438.setVoltage(voltage_10mV); // 10mV-Steps
+            test_eq(ds2438.getVoltage(), voltage_10mV, "DS2438 voltage");
+        }
+
+        for (int16_t current = -1024; current < 1024; ++current)
+        {
+            ds2438.setCurrent(current); // 10mV-Steps
+            test_eq(ds2438.getCurrent(), current, "DS2438 current");
+        }
+
+
+        constexpr char memory[] = "abcASCII";
+        constexpr uint8_t mem_dummy[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+
+        ds2438.writeMemory(reinterpret_cast<const uint8_t *>(memory),sizeof(memory),3*8);
+        ds2438.writeMemory(mem_dummy, sizeof(mem_dummy), 4*8);
+
+        uint8_t mem_read[sizeof(mem_dummy)];
+
+        ds2438.readMemory(mem_read, sizeof(memory), 3*8); // begin one byte earlier than page 1
+        for (size_t index = 0; index < sizeof(memory); ++index)
+        {
+            test_eq(mem_read[index], memory[index], "DS2438 mem re-read at position A " + to_string(index));
+        }
+
+        ds2438.readMemory(mem_read, sizeof(mem_dummy), 4*8-1); // begin one byte earlier than page 1
+        for (size_t index = 1; index < sizeof(mem_dummy); ++index)
+        {
+            test_eq(mem_read[index], mem_dummy[index-1], "DS2438 mem re-read at position B " + to_string(index));
+        }
+    }
+
+    {
+        // DS2450
+        ds2450.clearMemory(); // begin fresh after doing some work
+
+        constexpr uint16_t test_data[] = { 0, 1, 2, 10, 101, 511, 1111, 33333, 65535, 77};
+
+        ds2450.setPotentiometer(77,77,77,77); // set all channels at once
+
+        for (uint8_t poti_write = 0; poti_write < 4; ++poti_write)
+        {
+
+            for (size_t index = 0; index < (sizeof(test_data)/2); ++index)
+            {
+                ds2450.setPotentiometer(poti_write,test_data[index]);
+
+                // check also for cross-pollution
+                for (uint8_t poti_read = 0; poti_read < 4; ++poti_read)
+                {
+                    const uint16_t result = (poti_read == poti_write) ? test_data[index] : uint16_t(77);
+                    test_eq(ds2450.getPotentiometer(poti_read), result, "DS2450 test for poti " + to_string(poti_write) + " with poti " + to_string(poti_read));
+                }
+            }
+        }
+    }
+
+    {
+        // DS2502
+        ds2502.clearMemory(); // begin fresh after doing some work
+
+        uint8_t mem_read[16];
+
+        for (uint8_t page = 0; page < 4; ++page)
+        {
+            ds2502.readMemory(mem_read, sizeof(mem_read), page * 32_u8); // begin one byte earlier than page 1
+            for (size_t index = 0; index < sizeof(mem_read); ++index)
+            {
+                test_eq(mem_read[index], 0xFF, "DS2502 mem re-read in a clean state");
+            }
+        }
+
+        constexpr uint8_t mem_dummy[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+        test_eq(ds2502.getPageUsed(3), 0, "DS2502 get page used counter");
+        ds2502.writeMemory(mem_dummy, sizeof(mem_dummy), 3*32);
+        test_eq(ds2502.getPageUsed(3), 1, "DS2502 get page used counter");
+
+        ds2502.readMemory(mem_read, sizeof(mem_read), 1_u8 * 32_u8); // begin one byte earlier than page 1
+        for (size_t index = 0; index < sizeof(mem_read); ++index)
+        {
+            test_eq(mem_read[index], 0xFF, "DS2502 mem re-read page 1 - still clean state");
+        }
+
+        ds2502.readMemory(mem_read, sizeof(mem_read), 3_u8 * 32_u8); // begin one byte earlier than page 1
+        for (size_t index = 0; index < sizeof(mem_read); ++index)
+        {
+            test_eq(mem_read[index], mem_dummy[index], "DS2502 mem re-read page 3 - new data");
+        }
+
+        test_eq(ds2502.getPageRedirection(1), 0, "DS2502 test for redirection ");
+        ds2502.setPageRedirection(1,3);
+        test_eq(ds2502.getPageRedirection(1), 3, "DS2502 test for redirection ");
+
+        ds2502.readMemory(mem_read, sizeof(mem_read), 1_u8 * 32_u8); // begin one byte earlier than page 1
+        for (size_t index = 0; index < sizeof(mem_read); ++index)
+        {
+            test_eq(mem_read[index], 0xFF, "DS2502 mem re-read page 1 - still clean, only affects master");
+        }
+
+        Serial.println("Test Write Data to protected page 0 -> is possible, only affects master");
+        test_eq(ds2502.getPageUsed(0), 0, "DS2502 get use-counter before accessing it");
+        test_eq(ds2502.getPageProtection(0), false, "DS2502 get page-protection before protecting");
+        ds2502.setPageProtection(0);
+        test_eq(ds2502.getPageProtection(0), true, "DS2502 get page-protection after protecting");
+        ds2502.writeMemory(mem_dummy, sizeof(mem_dummy), 16); // write in second half of page
+        test_eq(ds2502.getPageUsed(0), 1, "DS2502 get use-counter after write to protected page (only affects master)");
+    }
+
+    {
+        // DS2506
+        ds2506.clearMemory(); // begin fresh after doing some work
+        ds2506.clearStatus(); // begin fresh after doing some work
+
+        for (uint8_t page = 0; page < 8; ++page)
+        {
+            test_eq(ds2506.getRedirectionProtection(page), false, "DS2506 get protection for redirection - not modified for page " + to_string(page));
+        }
+
+        ds2506.setRedirectionProtection(2);
+
+        for (uint8_t page = 0; page < 8; ++page)
+        {
+            const bool result = (page == 2);
+            test_eq(ds2506.getRedirectionProtection(page), result, "DS2506 get protection for redirection - after mod for page " + to_string(page));
+        }
+
+
+        for (uint8_t page = 0; page < 8; ++page)
+        {
+            test_eq(ds2506.getPageRedirection(page), 0_u8, "DS2506 get page redirection - not modified for page " + to_string(page));
+        }
+
+        ds2506.setPageRedirection(2,4); // -> will fail
+        ds2506.setPageRedirection(3,4); // -> works
+
+        for (uint8_t page = 0; page < 8; ++page)
+        {
+            const uint8_t result = (page == 3) ? 4_u8 : 0_u8;
+            test_eq(ds2506.getPageRedirection(page), result, "DS2506 get page redirection - modified for page " + to_string(page));
+        }
+/*
+
+        Serial.println("Test Write Data to page 4");
+        Serial.println(ds2506.getPageUsed(4)); // unused
+        constexpr uint8_t mem_dummy[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+        ds2506.writeMemory(mem_dummy, sizeof(mem_dummy), 4*32);
+        Serial.println(ds2506.getPageUsed(4)); // is used now
+
+        Serial.println("Test Write Data to protected page 0 -> is possible, only affects master");
+        Serial.println(ds2506.getPageUsed(0));        // is unused
+        Serial.println(ds2506.getPageProtection(0));  // is unprotected
+        ds2506.setPageProtection(0);                  // protect it
+        Serial.println(ds2506.getPageProtection(0));  // is protected
+        ds2506.writeMemory(mem_dummy, sizeof(mem_dummy), 16); // write in second half of page
+        Serial.println(ds2506.getPageUsed(0));        // is used now
+
+        Serial.print("Test Read binary Data to page 4: 0x");
+        uint8_t mem_read[16];
+        ds2506.readMemory(mem_read, 16, 4*32 - 1); // begin one byte earlier than page 4
+        Serial.println(mem_read[2],HEX); // should read 0x11
+  */
+    }
 
 
     bae910.memory.field.rtc = 1000;
