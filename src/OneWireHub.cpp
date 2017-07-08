@@ -1,6 +1,8 @@
 #include "OneWireHub.h"
 #include "OneWireItem.h"
 
+#include "platform.h"
+
 OneWireHub::OneWireHub(const uint8_t pin)
 {
     _error = Error::NO_ERROR;
@@ -40,7 +42,7 @@ OneWireHub::OneWireHub(const uint8_t pin)
 // attach a sensor to the hub
 uint8_t OneWireHub::attach(OneWireItem &sensor)
 {
-    if (slave_count >= ONEWIRESLAVE_LIMIT) return 0; // hub is full
+    if (slave_count >= ONEWIRESLAVE_LIMIT) return 255; // hub is full
 
     // demonstrate an 1ms-Low-State on the debug pin (only if bus stays high during this time)
     // done here because this FN is always called before hub is used
@@ -60,13 +62,13 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
     {
         // check for already attached sensors
         if (slave_list[i] == &sensor)
+        {
             return i;
-
+        }
         // store position of first empty space
         if ((position>ONEWIRESLAVE_LIMIT) && (slave_list[i] == nullptr))
         {
             position = i;
-            break;
         }
     }
 
@@ -848,7 +850,7 @@ ESP.wdtFeed();
 #if defined(ARDUINO_ARCH_ESP8266)
 ESP.wdtFeed();
 #endif
-        if (!waitLoopsWhilePinIs(wait_loops, true)) continue;
+        if (waitLoopsWhilePinIs(wait_loops, true) == 0) continue;
         const timeOW_t loops_left = waitLoopsWhilePinIs(TIMEOW_MAX, false);
         const timeOW_t loops_needed = TIMEOW_MAX - loops_left;
         if (loops_needed>loops_for_reset) loops_for_reset = loops_needed;

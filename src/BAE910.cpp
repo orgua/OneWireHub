@@ -3,7 +3,7 @@
 BAE910::BAE910(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
     static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
-    static_assert(sizeof(sBAE910) <= BAE910_MEMORY_SIZE,  "Memory-Struct is larger than its memory");
+    static_assert(sizeof(sBAE910) <= BAE910_MEMORY_SIZE,  "Memory-struct is larger than its memory"); // not needed anymore, but not hurting either
 
     // clear memory
     memset(&memory.bytes[0], static_cast<uint8_t>(0x00), BAE910_MEMORY_SIZE);
@@ -12,7 +12,7 @@ BAE910::BAE910(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 void BAE910::duty(OneWireHub * const hub)
 {
-    uint8_t  cmd, ta1, ta2, len, ecmd; // command, targetAdress, length and extended command
+    uint8_t  cmd, ta1, ta2, len, eCmd; // command, targetAddress, length and extended command
     uint16_t crc { 0 };
 
     if (hub->recv(&cmd,1,crc))  return;
@@ -75,8 +75,8 @@ void BAE910::duty(OneWireHub * const hub)
             crc = ~crc;
             if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
             // verify answer from master, then copy memory
-            if (hub->recv(&ecmd ,1))                             return;
-            if (ecmd == 0xBC)
+            if (hub->recv(&eCmd ,1))                             return;
+            if (eCmd == 0xBC)
             {
                 while (len-- > 0) // reverse byte order
                 {
