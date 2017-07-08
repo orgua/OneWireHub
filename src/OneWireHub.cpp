@@ -42,7 +42,7 @@ OneWireHub::OneWireHub(const uint8_t pin)
 // attach a sensor to the hub
 uint8_t OneWireHub::attach(OneWireItem &sensor)
 {
-    if (slave_count >= ONEWIRESLAVE_LIMIT) return 0; // hub is full
+    if (slave_count >= ONEWIRESLAVE_LIMIT) return 255; // hub is full
 
     // demonstrate an 1ms-Low-State on the debug pin (only if bus stays high during this time)
     // done here because this FN is always called before hub is used
@@ -62,13 +62,13 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
     {
         // check for already attached sensors
         if (slave_list[i] == &sensor)
+        {
             return i;
-
+        }
         // store position of first empty space
         if ((position>ONEWIRESLAVE_LIMIT) && (slave_list[i] == nullptr))
         {
             position = i;
-            break;
         }
     }
 
