@@ -155,7 +155,7 @@ bool DS2423::writeMemory(const uint8_t* const source, const uint16_t length, con
     memcpy(&memory[position],source,_length);
 
     const uint8_t page_start = uint8_t(position>>5);
-    const uint8_t page_end   = uint8_t((position+length)>>5);
+    const uint8_t page_end   = uint8_t((position+length-1)>>5);
 
     for (uint8_t page = page_start; page <= page_end; ++page)// page 12 & 13 have write-counters, page 14&15 have hw-counters
     {
