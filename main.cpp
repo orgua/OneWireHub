@@ -45,12 +45,16 @@ constexpr int32_t operator "" _i32(const unsigned long long int value)
     return static_cast<int32_t>(value);
 }
 
-size_t tests_absolved = 0;
+size_t tests_absolved = 0, tests_failed = 0;
 
 template<typename T1, typename T2>
 void test_eq(const T1 value_A, const T2 value_B, const string message)
 {
-    if (value_A != value_B) cout << "- FAIL (" << to_string(value_A) << " != " << to_string(value_B) << ") " << message << endl;
+    if (value_A != value_B)
+    {
+        cout << "- FAIL (" << to_string(value_A) << " != " << to_string(value_B) << ") " << message << endl;
+        tests_failed++;
+    }
     tests_absolved++;
 }
 
@@ -140,10 +144,20 @@ int main()
     // TODO: maybe put the code in src_files to the depending device_unittest.h
 
     {
+        bae910.memory.field.SW_VER = 0x01;
+        bae910.memory.field.BOOTSTRAP_VER = 0x01;
+        bae910.memory.field.rtc = 1000;
+        // there is nothing else to do here
+    }
+
+
+
+    {
         /// DS18B20
         const auto temp_A = initializeLinear( -55.0f, 1.0f, 181);
         const auto temp_B = initializeLinear( int8_t(-55), 1_i8, 181);
 
+        // write and read back temperatures, float and int
         for (const auto temp : temp_A)
         {
             ds1822.setTemperature(temp);
@@ -169,28 +183,10 @@ int main()
         }
     }
 
-    {
-        /// DS2401 and general hub test
-        const auto position_A = hubA.attach(ds2401c);
-        test_eq(position_A, 255_u8, "DS2401 attach to full hub");
-
-        const auto position_B = hubA.detach(ds2401c);
-        test_eq(position_B, false, "DS2401 detach not attached device to full hub");
-
-        const auto position_C = hubA.detach(ds2401a);
-        test_eq(position_C, true, "DS2401 detach an attached device");
-
-        const auto position_D = hubA.attach(ds2401b);
-        test_eq(position_D, 4_u8, "DS2401 attach an already attached device");
-
-        const auto position_E = hubA.attach(ds2401c);
-        test_eq(position_E, 3_u8, "DS2401 attach an unattached devices");
-    }
-
     // TODO: look through src code, for now just converted ino-examples
 
     {
-        /// DS2405
+        /// DS2405 - set and read back pin States
         ds2405.setPinState(true);
         test_eq(ds2405.getPinState(), true, "DS2405 true");
         ds2405.setPinState(false);
@@ -495,7 +491,7 @@ int main()
             test_eq(mem_read[index], 0xFF, "DS2502 mem re-read page 1 - still clean, only affects master");
         }
 
-        Serial.println("Test Write Data to protected page 0 -> is possible, only affects master");
+        // Test Write Data to protected page 0 -> is possible, only affects master");
         test_eq(ds2502.getPageUsed(0), 0, "DS2502 get use-counter before accessing it");
         test_eq(ds2502.getPageProtection(0), false, "DS2502 get page-protection before protecting");
         ds2502.setPageProtection(0);
@@ -506,12 +502,15 @@ int main()
 
     {
         // DS2506
+        constexpr uint8_t mem_dummy[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+        uint8_t mem_read[sizeof(mem_dummy)];
+
         ds2506.clearMemory(); // begin fresh after doing some work
         ds2506.clearStatus(); // begin fresh after doing some work
 
         for (uint8_t page = 0; page < 8; ++page)
         {
-            test_eq(ds2506.getRedirectionProtection(page), false, "DS2506 get protection for redirection - not modified for page " + to_string(page));
+            test_eq(ds2506.getRedirectionProtection(page), false, "DS2506 get protection for redirection (not modified yet) for page " + to_string(page));
         }
 
         ds2506.setRedirectionProtection(2);
@@ -519,48 +518,117 @@ int main()
         for (uint8_t page = 0; page < 8; ++page)
         {
             const bool result = (page == 2);
-            test_eq(ds2506.getRedirectionProtection(page), result, "DS2506 get protection for redirection - after mod for page " + to_string(page));
+            test_eq(ds2506.getRedirectionProtection(page), result, "DS2506 get protection for redirection (modified) for page " + to_string(page));
         }
 
 
         for (uint8_t page = 0; page < 8; ++page)
         {
-            test_eq(ds2506.getPageRedirection(page), 0_u8, "DS2506 get page redirection - not modified for page " + to_string(page));
+            test_eq(ds2506.getPageRedirection(page), 0_u8, "DS2506 get page redirection (not modified yet) for page " + to_string(page));
         }
 
         ds2506.setPageRedirection(2,4); // -> will fail
-        ds2506.setPageRedirection(3,4); // -> works
+        ds2506.setPageRedirection(3,4); // -> will work
 
         for (uint8_t page = 0; page < 8; ++page)
         {
             const uint8_t result = (page == 3) ? 4_u8 : 0_u8;
-            test_eq(ds2506.getPageRedirection(page), result, "DS2506 get page redirection - modified for page " + to_string(page));
+            test_eq(ds2506.getPageRedirection(page), result, "DS2506 get page redirection (modified) for page " + to_string(page));
         }
-/*
 
-        Serial.println("Test Write Data to page 4");
-        Serial.println(ds2506.getPageUsed(4)); // unused
-        constexpr uint8_t mem_dummy[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+        for (uint8_t page = 0; page < 8; ++page)
+        {
+            test_eq(ds2506.getPageUsed(page), false, "DS2506 get page usage (not modified yet) for page " + to_string(page));
+        }
+
+
         ds2506.writeMemory(mem_dummy, sizeof(mem_dummy), 4*32);
-        Serial.println(ds2506.getPageUsed(4)); // is used now
 
-        Serial.println("Test Write Data to protected page 0 -> is possible, only affects master");
-        Serial.println(ds2506.getPageUsed(0));        // is unused
-        Serial.println(ds2506.getPageProtection(0));  // is unprotected
-        ds2506.setPageProtection(0);                  // protect it
-        Serial.println(ds2506.getPageProtection(0));  // is protected
+        for (uint8_t page = 0; page < 8; ++page)
+        {
+            const bool result = (page == 4);
+            test_eq(ds2506.getPageUsed(page), result, "DS2506 get page usage (modified) for page " + to_string(page));
+        }
+
+        ds2506.readMemory(mem_read, sizeof(mem_read), 4_u8 * 32_u8);
+        for (size_t index = 0; index < sizeof(mem_read); ++index)
+        {
+            test_eq(mem_read[index], mem_dummy[index], "DS2506 mem re-read page 4 - previously written");
+        }
+
+        ds2506.readMemory(mem_read, sizeof(mem_read), 3_u8 * 32_u8);
+        for (size_t index = 0; index < sizeof(mem_read); ++index)
+        {
+            test_eq(mem_read[index], 0xFF, "DS2506 mem re-read page 3 - redirected, but only for master, so unchanged");
+        }
+
+        // Test Write Data to protected page 0 -> is possible, only affects master");
+        test_eq(ds2506.getPageUsed(0), 0, "DS2506 get use-counter before accessing it");
+        test_eq(ds2506.getPageProtection(0), false, "DS2506 get page-protection before protecting");
+        ds2506.setPageProtection(0);
+        test_eq(ds2506.getPageProtection(0), true, "DS2506 get page-protection after protecting");
+
         ds2506.writeMemory(mem_dummy, sizeof(mem_dummy), 16); // write in second half of page
-        Serial.println(ds2506.getPageUsed(0));        // is used now
+        test_eq(ds2506.getPageUsed(0), 1, "DS2506 get use-counter after write to protected page (only affects master)");
 
-        Serial.print("Test Read binary Data to page 4: 0x");
-        uint8_t mem_read[16];
-        ds2506.readMemory(mem_read, 16, 4*32 - 1); // begin one byte earlier than page 4
-        Serial.println(mem_read[2],HEX); // should read 0x11
-  */
+        ds2506.readMemory(mem_read, sizeof(mem_read), 16_u8);
+        for (size_t index = 0; index < sizeof(mem_read); ++index)
+        {
+            test_eq(mem_read[index], mem_dummy[index], "DS2506 mem re-read page 1 - previously written");
+        }
+    }
+
+    {
+        // DS2890
+        constexpr uint8_t test_data[] = { 0, 1, 2, 10, 101, 200, 254, 255, 77};
+
+        for (uint8_t poti_write = 0; poti_write < 4; ++poti_write)
+        {
+            ds2890A.setPotentiometer(poti_write, 77);
+        }
+
+        for (uint8_t poti_write = 0; poti_write < 4; ++poti_write)
+        {
+            for (size_t index = 0; index < sizeof(test_data); ++index)
+            {
+                ds2890A.setPotentiometer(poti_write,test_data[index]);
+
+                // check also for cross-pollution
+                for (uint8_t poti_read = 0; poti_read < 4; ++poti_read)
+                {
+                    const uint16_t result = (poti_read == poti_write) ? test_data[index] : uint16_t(77);
+                    test_eq(ds2890A.getPotentiometer(poti_read), result, "DS2890 test for poti " + to_string(poti_write) + " with poti " + to_string(poti_read));
+                }
+            }
+        }
+
+        test_eq(ds2890A.getRegCtrl(), 12_u8, "DS2890 control register preset");
+        test_eq(ds2890A.getRegFeat(), 255_u8, "DS2890 feature register preset");
     }
 
 
-    bae910.memory.field.rtc = 1000;
+    cout << "- test the hub" << endl;
+
+    {
+        /// DS2401 and general hub test for attaching and detaching
+        const auto position_A = hubA.attach(ds2401c);
+        test_eq(position_A, 255_u8, "DS2401 attach to full hub");
+
+        const auto position_B = hubA.detach(ds2401c);
+        test_eq(position_B, false, "DS2401 detach not attached device to full hub");
+
+        const auto position_C = hubA.detach(ds2401a);
+        test_eq(position_C, true, "DS2401 detach an attached device");
+
+        const auto position_D = hubA.attach(ds2401b);
+        test_eq(position_D, 4_u8, "DS2401 attach an already attached device");
+
+        const auto position_E = hubA.attach(ds2401c);
+        test_eq(position_E, 3_u8, "DS2401 attach an unattached devices");
+    }
+
+    Serial.print("use Serial at least once");
+    Serial.println("use Serial at least once");
 
     cout << "- poll the hubs" << endl;
 
@@ -572,7 +640,7 @@ int main()
     if (hubB.hasError()) hubB.printError();
     if (hubC.hasError()) hubC.printError();
 
-    cout << "Program did run " << tests_absolved << " tests." << endl;
+    cout << "Program did run " << tests_absolved << " tests, " << tests_failed << " of them failed." << endl;
 
-    return 0;
+    return static_cast<int>(tests_failed);
 };
