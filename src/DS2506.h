@@ -40,7 +40,7 @@ private:
     static_assert(STATUS_SEGMENT > 0,   "REAL MEM SIZE IS TOO SMALL");
     static_assert(MEM_SIZE <= 8192,     "REAL MEM SIZE IS TOO BIG, MAX IS 8291 bytes");
 
-    uint8_t     memory[MEM_SIZE];    // 4 pages of 32 bytes
+    uint8_t     memory[MEM_SIZE];    // at least 4 pages of 32 bytes
     uint8_t     status[STATUS_SIZE]; // eprom status bytes
 
     uint16_t    sizeof_memory;              // device specific "real" size
