@@ -54,7 +54,7 @@ void loop()
 
 
     // advanced calibration loop --> try to track and measure it with a logic analyzer
-    if (0)
+    if (false)
     {
         io_reg_t debug_bitMask = PIN_TO_BITMASK(GPIO_DEBUG_PIN);
         volatile io_reg_t *debug_baseReg = PIN_TO_BASEREG(GPIO_DEBUG_PIN);

@@ -1,10 +1,10 @@
 OneWireHub
 ==========
 
-The OneWireHub is an Arduino compatible (and many more platforms) library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously. 
+The OneWireHub is a sleek Arduino compatible (and many more platforms) library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously. 
 The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your home automation environment.
 
-### Supported Slaves:
+### Implemented Slaves:
 - **BAE0910 (0xFC) multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
 - **DS1822 (0x22) Digital Thermometer, 12bit** -> use DS18B20 with different family code
 - **DS18B20 (0x28) Digital Thermometer, 12bit** (also known as DS1820) 
@@ -34,6 +34,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### Features:
 - supports up to 32 slaves simultaneously (8 is standard setting), adjust HUB_SLAVE_LIMIT in src/OneWireHub_config.h to safe RAM & program space
+   - implementation-overhead for the hub is minimal and even saves resources for >1 emulated device
 - hot-plug: add and remove slaves as needed during operation
 - support for most onewire-features: MATCH ROM (0x55), SKIP ROM (0xCC), READ ROM (0x0F,0x33), RESUME COMMAND (0xA5)
    - **OVERDRIVE-Mode**: Master can issue OD SKIP ROM (0x13) or OD MATCH ROM (0x69) and slave stays in this mode till it sees a long reset -> OD-feature must be activated in config
@@ -122,6 +123,8 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### Plans for the future:
 - alarm / conditional search
+- debug tool to determine timings of exotic master
+- better interrupt-handling (save the state before disabling)
 - irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
 - [List of all Family-Codes](http://owfs.sourceforge.net/family.html)
