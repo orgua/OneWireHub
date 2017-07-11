@@ -83,25 +83,24 @@ void DS18B20::setTemperatureRaw(const int16_t value_raw)
     if (ds18s20_mode)
     {
         value /= 8; // deg*16/8 = deg*2 ...
-        if (value > 0)
+        if (value >= 0)
         {
             value &= 0x00FF; // upper byte is signum (0)
         }
         else
         {
-            value = -value;
             value |= 0xFF00; // upper byte is signum (1)
         }
     }
     else
     {
         // normal 18b20, uses always 12bit mode! also 9,10,11,12 bit possible bitPosition seems to stay the same
-        if (value > 0)
+        if (value >= 0)
         {
             value &= 0x07FF; // upper 5 bits are signum
-        } else
+        }
+        else
         {
-            value = -value;
             value |= 0xF800;
         }
     }
@@ -116,26 +115,21 @@ void DS18B20::setTemperatureRaw(const int16_t value_raw)
 
 int  DS18B20::getTemperature(void) const
 {
-    int16_t value = (scratchpad[1] << 8) | scratchpad[0];
+    int16_t value = getTemperatureRaw();
 
     if (ds18s20_mode)
     {
-        if ((scratchpad[1] & 0xF0) != 0)
-        {
-            value &= 0x00FF;
-            value  = -value;
-        }
         value /= 2;
     }
     else
     {
-        if ((scratchpad[1] & 0xF0) != 0)
-        {
-            value &= 0x07FF;
-            value  = -value;
-        }
         value /= 16;
     }
 
     return value;
+}
+
+int16_t DS18B20::getTemperatureRaw() const
+{
+    return static_cast<int16_t>((scratchpad[1] << 8) | scratchpad[0]);
 }
