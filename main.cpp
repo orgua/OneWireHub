@@ -3,6 +3,7 @@
 //
 #include <iostream>
 #include <vector>
+#include <array>
 
 using namespace std;
 
@@ -38,6 +39,11 @@ constexpr uint32_t operator "" _u32(const unsigned long long int value)
 constexpr int8_t operator "" _i8(const unsigned long long int value)
 {
     return static_cast<int8_t>(value);
+}
+
+constexpr int16_t operator "" _i16(const unsigned long long int value)
+{
+    return static_cast<int16_t>(value);
 }
 
 constexpr int32_t operator "" _i32(const unsigned long long int value)
@@ -180,6 +186,30 @@ int main()
         {
             ds18S20.setTemperature(temp);
             test_eq(ds18S20.getTemperature(), temp, "DS18S22 int8 temp =" + to_string(temp));
+        }
+    }
+
+    {
+        // DS18B20 & DS1822 Datasheet examples, both same
+        const std::array<float,10>   temp_degC { 125.0f, 85.0f,  25.0625f, 10.125f, 0.5f,   0.0f,  -0.5f,      -10.125f,   -25.0625f,  -55.0f };
+        const std::array<int16_t,10> temp_raw  { 0x07D0, 0x0550, 0x0191,   0x00A2,  0x0008, 0x0000, 0xFFF8_i16, 0xFF5E_i16, 0xFE6F_i16, 0xFC90_i16 };
+
+        for (size_t index {0}; index < temp_degC.size(); ++index)
+        {
+            ds18B20.setTemperature(temp_degC[index]);
+            test_eq(ds18B20.getTemperatureRaw(), temp_raw[index], "DS18B22 datasheet test" + to_string(index));
+        }
+    }
+
+    {
+        // DS18S20 Datasheet examples
+        const std::array<float,7>   temp_degC { 85.0f,  25.0f,  0.5f,   0.0f,   -0.5f,      -25.0f,     -55.0f };
+        const std::array<int16_t,7> temp_raw  { 0x00AA, 0x0032, 0x0001, 0x0000, 0xFFFF_i16, 0xFFCE_i16, 0xFF92_i16 };
+
+        for (size_t index {0}; index < temp_degC.size(); ++index)
+        {
+            ds18S20.setTemperature(temp_degC[index]);
+            test_eq(ds18S20.getTemperatureRaw(), temp_raw[index], "DS18S22 datasheet test" + to_string(index));
         }
     }
 
