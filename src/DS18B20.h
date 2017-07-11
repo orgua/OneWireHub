@@ -30,9 +30,10 @@ public:
 
     void setTemperature(float value_degC);  // -55 to +125 degC
     void setTemperature(int8_t value_degC); // -55 to +125 degC
-    int  getTemperature(void) const;
+    int  getTemperature() const;
 
-    void setTemperatureRaw(int16_t value_raw);
+    void    setTemperatureRaw(int16_t value_raw);
+    int16_t getTemperatureRaw() const;
 
 };
 
