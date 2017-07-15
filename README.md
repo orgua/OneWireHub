@@ -77,22 +77,23 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - for further details try reading the header-files or check the examples
 
 ### HELP - What to do if things don't work as expected?
-- is your arduino software up to date (>v1.6.8)
-- update this lib to the latest release (v2.1.0)
+- check if your arduino software up to date (>v1.6.8)
+- update this lib to the latest release (v2.1.3)
 - if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
-- Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
-- check if clock-speed of the µC is correctly set (if possible) - test with simple blinking example, 1sec ON should really need 1sec. timing is critical
-- begin with a simple example like the ds18b20. the ds18b20 doesn't support overdrive, so the master won't switch to higher datarates
-- check if your setup is right: you need at least external power for your µC and a dataline with groundline to your Onewire-Master
+- check if clock-speed of the µC is set correctly (if possible) - test with simple blink example, 1sec ON should really need 1sec. timing is critical
+- begin with a simple example like the ds18b20 (if possible). the ds18b20 doesn't support overdrive, so the master won't switch to higher data rates
+- check if your setup is right: you need at least external power for your µC and a data line with ground line to your onewire-master
 - is there more than one master on the bus? It won't work!
 - has any other sensor (real or emulated) ever worked with this master? -> the simplest device would be a ds2401
-- is serial- and gpio-debugging disabled (see src/OneWireHub_config.h)?
-- on slow arduinos it can be helpful to disable the serial port completely to get reliable results -> at least comment out serial.begin() 
+- make sure that serial- and gpio-debugging is disabled (see src/OneWireHub_config.h), especially when using overdrive (be aware! it may produce heisenbugs, timing is critical)
+- on a slow arduino it can be helpful to disable the serial port completely to get reliable results -> at least comment out serial.begin() 
 - if you can provide a recording via logic-analyzer (logic 8 or similar) there should be chance we can help you 
-- if you checked all these points feel free to open an issue at [Github](https://github.com/orgua/OneWireHub)
+   - additional gpio-debug output can be enabled in src/OneWireHub_config.h: set USE_GPIO_DEBUG to 1 (it helps tracking state changes of the hub)
+- if you checked all these points feel free to open an issue at [Github](https://github.com/orgua/OneWireHub) and describe your troubleshooting process
+   - please provide the following basic info: which µC and master do you use, software versions, what device do you try to emulate, what works, what doesn't
 
 ### Recent development (latest at the top):
-- more explicit coding, a lot of bugfixes with the help of unit tests (esp8266, bea910, ds18b20)
+- more explicit coding, a lot of bugfixes with the help of unit tests (mainly esp8266, bea910, ds18b20)
 - interface of hub and slave-devices has changed, check header-file or examples for more info
 - rework / clean handling of timing-constants with user defined literals.
 - extend const-correctness to all onewire-slaves and unify naming of functions across similar devices
@@ -123,7 +124,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### Plans for the future:
 - alarm / conditional search
-- debug tool to determine timings of exotic master
+- debug tool to determine timings of exotic masters
 - better interrupt-handling (save the state before disabling)
 - irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
 - test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
