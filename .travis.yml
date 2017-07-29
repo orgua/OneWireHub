@@ -3,14 +3,25 @@ language: python
 python:
   - "2.7"
 
-sudo: false
+sudo: true
 
 cache:
+  pip: true
+  apt: true
   directories:
     - "~/.platformio"
 
-install:
+before_cache:
+  - rm -f $HOME/.cache/pip/log/debug.log
+
+before_install:
   - pip install -U platformio
+
+addons:
+  apt:
+    packages:
+      - cmake
+      - build-essential
 
 env:
   - PIO_BRD: "'-b uno'"         # arduino uno
@@ -29,7 +40,7 @@ before_script:
   - platformio init $PIO_BRD
 
 script:
-  - platformio ci --lib="." $PIO_BRD ./examples/BAE910_device/BAE910_device.ino
+#  - platformio ci --lib="." $PIO_BRD ./examples/BAE910_device/BAE910_device.ino
   - platformio ci --lib="." $PIO_BRD ./examples/DS18B20_asInterface/DS18B20_asInterface.ino
   - platformio ci --lib="." $PIO_BRD ./examples/DS18B20_thermometer/DS18B20_thermometer.ino
   - platformio ci --lib="." $PIO_BRD ./examples/DS2401_serial/DS2401_serial.ino
