@@ -657,6 +657,81 @@ int main()
         test_eq(position_E, 3_u8, "DS2401 attach an unattached devices");
     }
 
+    {
+        // test new algorithms without bit masks TODO: replace in crc and write/read
+        const uint8_t data_test = 0b11001010;
+        bool write_bits_A[8], write_bits_B[8];
+
+        {
+            uint8_t index = 0;
+            for (uint8_t bitMask = 0x01; bitMask != 0; bitMask <<= 1)
+            {
+                write_bits_A[index++] = ((bitMask & data_test) != 0); // TODO: shifting value could be faster
+            }
+        }
+
+        {
+            uint8_t index = 0;
+            uint8_t value = data_test;
+            for (uint8_t bitMask = 0x01; bitMask != 0; bitMask <<= 1)
+            {
+                write_bits_B[index++] = ((value & 0x01) != 0); // TODO: shifting value could be faster
+                value >>= 1;
+            }
+        }
+
+        for (size_t index = 0; index < 8; ++index)
+        {
+            test_eq(write_bits_B[index], write_bits_A[index], "algo without bitmask on position " + to_string(index));
+        }
+    }
+
+    {
+        // test three possible implementations of the same algorithm for correctness TODO: replace in crc and write/read
+        const uint8_t data_size = 8;
+        uint8_t data_array_A[data_size];
+        uint8_t data_array_B[data_size];
+        uint8_t data_array_C[data_size];
+
+        {
+            uint8_t * data_array = data_array_A;
+            for (uint8_t index = 0; index < data_size; index++)
+            {
+                data_array[index] = index;
+            }
+        }
+
+        {
+            uint8_t * data_array = data_array_B;
+            uint8_t _size = data_size;
+            uint8_t _index = 0;
+
+            while (_size-- > 0)
+            {
+                *data_array = _index++;
+                data_array++;
+            }
+        }
+
+        {
+            uint8_t * data_array = data_array_C;
+            uint8_t _size = data_size;
+            uint8_t _index = 0;
+
+            while (_size-- > 0)
+            {
+                *data_array++ = _index++;
+            }
+        }
+
+        for (size_t index = 0; index < data_size; ++index)
+        {
+            test_eq(data_array_B[index], data_array_A[index], "algo without index B on position " + to_string(index));
+            test_eq(data_array_C[index], data_array_A[index], "algo without index C on position " + to_string(index));
+        }
+
+    }
+
     Serial.print("use Serial at least once");
     Serial.println("use Serial at least once");
 
