@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(OneWireHub)
 
-add_definitions(-std=c++14 -Wall -Wextra -pipe -march=native -mtune=native)
+add_definitions(-std=c++11 -Wall -Wextra -pipe -march=native -mtune=native)
 
 #add_subdirectory(src)
 #include_directories(./src)
