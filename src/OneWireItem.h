@@ -33,7 +33,7 @@ public:
 
     virtual void duty(OneWireHub * hub) = 0;
 
-    static uint8_t crc8(const uint8_t address[], uint8_t len, uint8_t init = 0);
+    static uint8_t crc8(const uint8_t data[], uint8_t data_size, uint8_t crc_init = 0);
 
     // takes ~(5.1-7.0)µs/byte (Atmega328P@16MHz) depends from address_size (see debug-crc-comparison.ino)
     // important: the final crc is expected to be inverted (crc=~crc) !!!
