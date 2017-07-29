@@ -1,0 +1,53 @@
+language: python
+
+python:
+  - "2.7"
+
+sudo: false
+
+cache:
+  directories:
+    - "~/.platformio"
+
+install:
+  - pip install -U platformio
+
+env:
+  - PIO_BRD: "'-b uno'"         # arduino uno
+  - PIO_BRD: "'-b due'"         # arduino due
+  - PIO_BRD: "'-b zero'"        # arduino zero
+  - PIO_BRD: "'-b teensy30 -b teensy31 -b teensy35 -b teensy36'" # teensy 3
+#  - PIO_BRD: "'-b teensy20 -b teensy20pp'"                       # teensy 2
+  - PIO_BRD: "'-b esp01 -b nodemcuv2 -b espduino'"               # esp8266
+  - PIO_BRD: "'-b rfduino'"     # nrf51
+#  - PIO_BRD: "'-b lenny -b uno_pic32'"       # pic32mx -> error: pic32-g++ not found
+  - PIO_BRD: "'-b genuino101'"  # intel curie
+  - PIO_BRD: "'-b attiny88 -b attiny84'"  # attiny
+  - PIO_BRD: "'-b digispark-tiny'"  # attiny
+
+before_script:
+  - platformio init $PIO_BRD
+
+script:
+  - platformio ci --lib="." $PIO_BRD ./examples/BAE910_device/BAE910_device.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS18B20_asInterface/DS18B20_asInterface.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS18B20_thermometer/DS18B20_thermometer.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS2401_serial/DS2401_serial.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS2405_switch/DS2405_switch.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS2408_switch/DS2408_switch.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS2413_switch/DS2413_switch.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS2423_RAM/DS2423_RAM.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS2431_EEPROM/DS2431_EEPROM.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS2433_EEPROM/DS2433_EEPROM.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS2438_battMon/DS2438_battMon.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS2450_ADC/DS2450_ADC.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS2502_DELLCHG/DS2502_DELLCHG.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS2502_EEPROM/DS2502_EEPROM.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS2506_EEPROM/DS2506_EEPROM.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/DS2890_poti/DS2890_poti.ino
+  - platformio ci --lib="." $PIO_BRD ./examples/OneWireHubTest/OneWireHubTest.ino
+  - mkdir build
+  - cd ./build
+  - cmake ..
+  - make
+  - ./OneWireHub

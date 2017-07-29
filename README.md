@@ -93,6 +93,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
    - please provide the following basic info: which µC and master do you use, software versions, what device do you try to emulate, what works, what doesn't
 
 ### Recent development (latest at the top):
+- travis CI and unittests
 - more explicit coding, a lot of bugfixes with the help of unit tests (mainly esp8266, bea910, ds18b20)
 - interface of hub and slave-devices has changed, check header-file or examples for more info
 - rework / clean handling of timing-constants with user defined literals.
