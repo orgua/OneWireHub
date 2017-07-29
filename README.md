@@ -4,6 +4,8 @@ OneWireHub
 The OneWireHub is a sleek Arduino compatible (and many more platforms) library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously. 
 The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your home automation environment.
 
+[![Build Status](https://travis-ci.org/orgua/OneWireHub.svg?branch=master)](https://travis-ci.org/orgua/OneWireHub)
+
 ### Implemented Slaves:
 - **BAE0910 (0xFC) multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
 - **DS1822 (0x22) Digital Thermometer, 12bit** -> use DS18B20 with different family code
@@ -48,7 +50,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
    - tested architectures: atmega328 @ 16 MHz / arduino Uno, teensy3.2
    - for portability and tests the hub can be compiled on a PC with the supplied mock-up functions in platform.h
    - at the moment the lib relies sole on loop-counting for timing, no direct access to interrupt or timers, **NOTE:** if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
-- hub and slaves are unit tested
+- hub and slaves are unit tested and run for each supported architecture through travis CI
 - Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
 - GPIO-Debug output - shows status by issuing high-states (activate in src/OneWireHub_config.h, is a better alternative to serial debug)
    - during presence detection (after reset), 
