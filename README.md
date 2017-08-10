@@ -20,7 +20,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2413 (0x3A) Dual channel addressable switch with input-sensing**
 - **DS2423 (0x1D) 4kbit RAM with Counter**
 - **DS2431 (0x2D) 1kbit protected EEPROM** (also known as DS1972 or DS28E07, same FC)
-- DS2432 (0x33) 1kbit protected EEPROM (basically a ds2431 with extra sha-engine)
+- **DS2432 (0x33) 1kbit protected EEPROM** (basically a ds2431 with extra sha-engine)
 - **DS2433 (0x23) 4Kbit EEPROM** (also known as DS1973)
 - **DS2438 (0x26) Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
 - **DS2450 (0x20) 4 channel A/D**
@@ -30,6 +30,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2505 (0x0B) 16kbit EEPROM, Add Only Memory** (also known as DS1985, same FC) -> use DS2506 with different family code
 - **DS2506 (0x0F) 64kbit EEPROM, Add Only Memory** (also known as DS1986, same FC)
 - **DS2890 (0x2C) Single channel digital potentiometer - extended to 1-4 CH**
+- **DellAC (0x28) Original Dell notebook charger emulator **
 - Dell Power Supply (use DS2502 with family code set to 0x28)
 
 Note: **Bold printed devices are feature-complete and were mostly tested with a DS9490 (look into the regarding example-file for more information) and a loxone system (when supported).**
