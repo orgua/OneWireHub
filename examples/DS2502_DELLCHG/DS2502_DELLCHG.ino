@@ -4,52 +4,46 @@
  *    Tested with
  *    - dell notebook https://forum.pjrc.com/threads/33640-Teensy-2-OneWire-Slave
  *    - DS9490R-Master, atmega328@16MHz as Slave
+ *    - Arduino ProMini clone
+ *    - esp8266
+ *
+ *    OneWire messaging starts when AC adapter is plugged to notebook,
+ *    try to use parasite powering but unfortunately it doesn't provide enough power,
+ *    so You need DC-DC converter to power MCU
+ *
+ *    thanks to Nik / ploys for supplying traces of real data-traffic to figure out communication:
+ *    - reset and presence detection normal
+ *    - cmd from master: 0xCC -> skip rom, so there is only ONE device allowed on the bus
+ *    - cmd from master: 0xF0 -> read memory
+ *    - address request from master: 0x0008
+ *    - master listens for data, gets CRC of seconds cmd and address first, then listens for 3 bytes, does not listen any further
  */
 
 #include "OneWireHub.h"
 #include "DS2502.h"
 
-constexpr uint8_t pin_onewire   { 8 };
+constexpr uint8_t pin_onewire   { 9 };
 
-constexpr uint8_t charger130W[4] = {0xFB, 0x31, 0x33, 0x30};  //130W
-constexpr uint8_t charger090W[4] = {0xFB, 0x30, 0x39, 0x30};  //90W
-constexpr uint8_t charger065W[4] = {0xFB, 0x30, 0x36, 0x36};  //65W
+constexpr uint8_t charger130W[4] = {0x31, 0x33, 0x30};  //130W (=second digit of each hex-number)
+constexpr uint8_t charger090W[4] = {0x30, 0x39, 0x30};  //90W
+constexpr uint8_t charger065W[4] = {0x30, 0x36, 0x36};  //66W
 
-auto hub        = OneWireHub(pin_onewire);
-auto dellCHa    = DS2502( 0x89, 0x00, 0x00, 0xA0, 0x11, 0xDE, 0x00 ); // should be x28, but is not testable by the ds9490 this way
-auto dellCHb    = DS2502( 0x28, 0x00, 0x00, 0xA0, 0x11, 0xDE, 0x00 ); // should work
+auto hub       = OneWireHub(pin_onewire);
+auto dellCH    = DS2502( 0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x0A); // address does not matter, laptop uses skipRom -> note that therefore only one slave device is allowed on the bus
 
 void setup()
 {
-    Serial.begin(115200);
-    Serial.println("OneWire-Hub DS2502 aka Dell Charger");
+    //Serial.begin(115200);
+    //Serial.println("OneWire-Hub DS2502 aka Dell Charger");
 
     // Setup OneWire
-    hub.attach(dellCHa);
-    hub.attach(dellCHb);
+    hub.attach(dellCH);
 
-    // Test-Cases: the following code is just to show basic functions, can be removed any time
-    Serial.println("Test Write 130W-Data into Power Supply and redirect every page to it");
-    dellCHa.writeMemory(charger130W, sizeof(charger130W), 0x20); // write to bank 1
-    dellCHa.setPageRedirection(0,1); // set memorybanks to all read from bank 1
-    dellCHa.setPageRedirection(1,1);
-    dellCHa.setPageRedirection(2,1);
-    dellCHa.setPageRedirection(3,1);
-
-    dellCHb.writeMemory(charger130W, sizeof(charger130W), 0x20); // write to bank 1
-    dellCHb.setPageRedirection(0,1); // set memorybanks to all read from bank 1
-    dellCHb.setPageRedirection(1,1);
-    dellCHb.setPageRedirection(2,1);
-    dellCHb.setPageRedirection(3,1);
-
-    // dellCHb.clearMemory(); // begin fresh after doing some work
-
-    Serial.println("config done");
+    dellCH.writeMemory(charger130W, sizeof(charger130W), 0x08);
 }
 
 void loop()
 {
     // following function must be called periodically
     hub.poll();
-
 }

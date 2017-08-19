@@ -30,7 +30,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2505 (0x0B) 16kbit EEPROM, Add Only Memory** (also known as DS1985, same FC) -> use DS2506 with different family code
 - **DS2506 (0x0F) 64kbit EEPROM, Add Only Memory** (also known as DS1986, same FC)
 - **DS2890 (0x2C) Single channel digital potentiometer - extended to 1-4 CH**
-- Dell Power Supply (use DS2502 with family code set to 0x28)
+- **DellAC (0x28) Dell Power Supply** (use DS2502 with different family code)
 
 Note: **Bold printed devices are feature-complete and were mostly tested with a DS9490 (look into the regarding example-file for more information) and a loxone system (when supported).**
 
