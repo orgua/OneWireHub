@@ -15,7 +15,6 @@
 #define ONEWIRE_GCC_VERSION 0
 #endif
 
-
 #if defined(__AVR__) /* arduino (all with atmega, atiny) */
 
 #define PIN_TO_BASEREG(pin)             (portInputRegister(digitalPinToPort(pin)))
@@ -67,8 +66,7 @@ constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far -
 #define pgm_read_byte(address) (*(const uint8_t *)(address))
 #endif
 using io_reg_t = uint32_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL { 0 }; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
-// TODO
+constexpr uint8_t VALUE_IPL { 22 }; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
 #elif defined(__PIC32MX__)
 
@@ -93,7 +91,7 @@ constexpr uint8_t VALUE_IPL { 0 }; // instructions per loop, uncalibrated so far
 #define DIRECT_WRITE_HIGH(base, mask)   (GPOS = (mask))             //GPIO_OUT_W1TS_ADDRESS
 using io_reg_t = uint32_t; // define special datatype for register-access
 // The ESP8266 has two possible CPU frequencies: 160 MHz (26 IPL) and 80 MHz (22 IPL) -> something influences the IPL-Value
-constexpr uint8_t VALUE_IPL { (microsecondsToClockCycles(1) > 120) ? 26 : 22 }; // instructions per loop, not verified yet
+constexpr uint8_t VALUE_IPL { (microsecondsToClockCycles(1) > 120) ? 26 : 22 }; // instructions per loop
 
 #elif defined(ARDUINO_ARCH_ESP32) || defined(ESP32) /* ESP32 Family */
 
@@ -106,8 +104,7 @@ constexpr uint8_t VALUE_IPL { (microsecondsToClockCycles(1) > 120) ? 26 : 22 }; 
 #define DIRECT_MODE_OUTPUT(base, pin)   pinMode(pin,OUTPUT)
 #define DELAY_MICROSECONDS(us)		    delayMicroseconds(us)
 using io_reg_t = uint32_t; // define special data type for register-access
-constexpr uint8_t VALUE_IPL { 0 }; // instructions per loop, not verified yet
-// TODO
+constexpr uint8_t VALUE_IPL { 39 }; // instructions per loop, for 40 and 80 MHz (see esp8266 difference)
 
 #elif defined(__SAMD21G18A__) /* arduino zero */
 
@@ -119,8 +116,7 @@ constexpr uint8_t VALUE_IPL { 0 }; // instructions per loop, not verified yet
 #define DIRECT_WRITE_LOW(base, mask)    ((*((base)+5)) = (mask))
 #define DIRECT_WRITE_HIGH(base, mask)   ((*((base)+6)) = (mask))
 using io_reg_t = uint32_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
-// TODO
+constexpr uint8_t VALUE_IPL { 18 }; // instructions per loop
 
 #elif defined(NRF52) /* arduino primo */
 
