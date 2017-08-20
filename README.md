@@ -107,14 +107,16 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - for further details try reading the header-files or check the examples
 
 ### HELP - What to do if things don't work as expected?
-- check if your arduino software up to date (>v1.6.8)
-- update this lib to the latest release (v2.1.3)
+- check if your arduino software up to date (>v1.8.0)
+- update this lib to the latest release (v2.2.0)
 - if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
 - check if clock-speed of the µC is set correctly (if possible) - test with simple blink example, 1sec ON should really need 1sec. timing is critical
 - begin with a simple example like the ds18b20 (if possible). the ds18b20 doesn't support overdrive, so the master won't switch to higher data rates
-- check if your setup is right: you need at least external power for your µC and a data line with ground line to your onewire-master
+- check if your setup is right: you need at least external power for your µC and a data line with ground line to your onewire-master (see section below)
 - is there more than one master on the bus? It won't work!
 - has any other sensor (real or emulated) ever worked with this master? -> the simplest device would be a ds2401
+- if communication works, but is unstable please check with logic analyzer
+   - maybe your master is slow and just needs a higher ONEWIRE_TIME_MSG_HIGH_TIMEOUT-value (see OneWireHub_config.h line 37)
 - make sure that serial- and gpio-debugging is disabled (see src/OneWireHub_config.h), especially when using overdrive (be aware! it may produce heisenbugs, timing is critical)
 - on a slow arduino it can be helpful to disable the serial port completely to get reliable results -> at least comment out serial.begin() 
 - if you can provide a recording via logic-analyzer (logic 8 or similar) there should be chance we can help you 
