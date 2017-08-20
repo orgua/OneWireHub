@@ -264,15 +264,15 @@ constexpr uint8_t VALUE_IPL {10}; // instructions per loop, uncalibrated so far 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef ARDUINO
-#define ONEWIRE_FALLBACK_BASIC_FNs
-#define ONEWIRE_FALLBACK_ADDITIONAL_FNs // to load up Serial below
+#define ONEWIREHUB_FALLBACK_BASIC_FNs
+#define ONEWIREHUB_FALLBACK_ADDITIONAL_FNs // to load up Serial below
 #endif
 
 #ifdef ARDUINO_attiny
-#define ONEWIRE_FALLBACK_ADDITIONAL_FNs // to load up Serial below
+#define ONEWIREHUB_FALLBACK_ADDITIONAL_FNs // to load up Serial below
 #endif
 
-#ifdef ONEWIRE_FALLBACK_BASIC_FNs
+#ifdef ONEWIREHUB_FALLBACK_BASIC_FNs
 
 #define INPUT 1
 #define INPUT_PULLUP 1
@@ -326,7 +326,7 @@ T1 pgm_read_byte(const T1* address)
 #endif
 
 
-#ifdef FALLBACK_ADDITIONAL_FNs // Test to make it work on aTtiny85, 8MHz
+#ifdef ONEWIREHUB_FALLBACK_ADDITIONAL_FNs // Test to make it work on aTtiny85, 8MHz
 /// README: use pin2 or pin3 for Attiny, source: https://github.com/gioblu/PJON/wiki/ATtiny-interfacing
 
 #ifndef BIN
@@ -396,8 +396,8 @@ void        wdt_enable(...);
 
 #ifndef PROGMEM
 #define PROGMEM
-#endif
+#endif // PROGMEM
 
-#endif
+#endif // ONEWIREHUB_FALLBACK_ADDITIONAL_FNs
 
 #endif //ONEWIREHUB_PLATFORM_H
