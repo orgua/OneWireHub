@@ -15,7 +15,7 @@
 #include "OneWireHub.h"
 #include "DS18B20.h"  // Digital Thermometer, 12bit
 
-constexpr uint8_t pin_led       { 13 };
+constexpr uint8_t pin_led_dbg   { 13 };
 constexpr uint8_t pin_onewire   { 8 };
 
 auto hub     = OneWireHub(pin_onewire); // do an bus-timing-calibration on first sensor-attachment
@@ -35,15 +35,15 @@ void setup()
 
     hub.attach(ds18b20);
 
-    pinMode(pin_led, OUTPUT);
-    digitalWrite(pin_led,HIGH);
+    pinMode(pin_led_dbg, OUTPUT);
+    digitalWrite(pin_led_dbg,HIGH);
 }
 
 void loop()
 {
-    digitalWrite(pin_led,HIGH);
+    digitalWrite(pin_led_dbg,HIGH);
     const timeOW_t value_ipl = hub.waitLoopsCalibrate();
-    digitalWrite(pin_led,LOW);
+    digitalWrite(pin_led_dbg,LOW);
 
     Serial.print(value_ipl);
     Serial.println("\t instructions per loop");
@@ -56,12 +56,12 @@ void loop()
     // advanced calibration loop --> try to track and measure it with a logic analyzer
     if (false)
     {
-        io_reg_t debug_bitMask = PIN_TO_BITMASK(GPIO_DEBUG_PIN);
-        volatile io_reg_t *debug_baseReg = PIN_TO_BASEREG(GPIO_DEBUG_PIN);
-        pinMode(GPIO_DEBUG_PIN, OUTPUT);
+        io_reg_t debug_bitMask = PIN_TO_BITMASK(pin_led_dbg);
+        volatile io_reg_t *debug_baseReg = PIN_TO_BASEREG(pin_led_dbg);
+        pinMode(pin_led_dbg, OUTPUT);
         DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
 
-        constexpr timeOW_t loops_1ms = timeUsToLoops(uint16_t(VALUE1k));
+        const timeOW_t loops_1ms = timeUsToLoops(uint16_t(VALUE1k));
         timeOW_t loops_left = 1;
         while (loops_left)
         {
