@@ -1,10 +1,6 @@
 #ifndef ONEWIRE_HUB_H
 #define ONEWIRE_HUB_H
 
-#if defined(ARDUINO) && ARDUINO >= 100
-#include <Arduino.h>
-#endif
-
 #include "platform.h" // code for compatibility
 
 using     timeOW_t            = uint32_t;

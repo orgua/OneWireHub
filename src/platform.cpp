@@ -9,7 +9,7 @@ void sei() { };
 
 void noInterrupts() { };
 
-void interrupts(void) { };
+void interrupts() { };
 
 #endif // ONEWIREHUB_FALLBACK_BASIC_FNs
 

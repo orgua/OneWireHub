@@ -4,7 +4,7 @@
 #ifndef ONEWIREHUB_PLATFORM_H
 #define ONEWIREHUB_PLATFORM_H
 
-#if defined(ARDUINO) && ARDUINO >= 100
+#if defined(ARDUINO) && (ARDUINO>=100)
 #include <Arduino.h>
 #endif
 
@@ -179,41 +179,41 @@ using io_reg_t = uint32_t; // define special datatype for register-access
 constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
 static inline __attribute__((always_inline))
-IO_REG_TYPE directRead(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
+io_reg_t directRead(volatile io_reg_t *base, io_reg_t pin)
 {
-    IO_REG_TYPE ret;
+    io_reg_t ret;
     if (SS_GPIO == GPIO_TYPE(pin)) {
-        ret = READ_ARC_REG(((IO_REG_TYPE)base + EXT_PORT_OFFSET_SS));
+        ret = READ_ARC_REG(((io_reg_t)base + EXT_PORT_OFFSET_SS));
     } else {
-        ret = MMIO_REG_VAL_FROM_BASE((IO_REG_TYPE)base, EXT_PORT_OFFSET_SOC);
+        ret = MMIO_REG_VAL_FROM_BASE((io_reg_t)base, EXT_PORT_OFFSET_SOC);
     }
     return ((ret >> GPIO_ID(pin)) & 0x01);
 }
 
 static inline __attribute__((always_inline))
-void directModeInput(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
+void directModeInput(volatile io_reg_t *base, io_reg_t pin)
 {
     if (SS_GPIO == GPIO_TYPE(pin)) {
-        WRITE_ARC_REG(READ_ARC_REG((((IO_REG_TYPE)base) + DIR_OFFSET_SS)) & ~(0x01 << GPIO_ID(pin)),
-			((IO_REG_TYPE)(base) + DIR_OFFSET_SS));
+        WRITE_ARC_REG(READ_ARC_REG((((io_reg_t)base) + DIR_OFFSET_SS)) & ~(0x01 << GPIO_ID(pin)),
+			((io_reg_t)(base) + DIR_OFFSET_SS));
     } else {
-        MMIO_REG_VAL_FROM_BASE((IO_REG_TYPE)base, DIR_OFFSET_SOC) &= ~(0x01 << GPIO_ID(pin));
+        MMIO_REG_VAL_FROM_BASE((io_reg_t)base, DIR_OFFSET_SOC) &= ~(0x01 << GPIO_ID(pin));
     }
 }
 
 static inline __attribute__((always_inline))
-void directModeOutput(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
+void directModeOutput(volatile io_reg_t *base, io_reg_t pin)
 {
     if (SS_GPIO == GPIO_TYPE(pin)) {
-        WRITE_ARC_REG(READ_ARC_REG(((IO_REG_TYPE)(base) + DIR_OFFSET_SS)) | (0x01 << GPIO_ID(pin)),
-			((IO_REG_TYPE)(base) + DIR_OFFSET_SS));
+        WRITE_ARC_REG(READ_ARC_REG(((io_reg_t)(base) + DIR_OFFSET_SS)) | (0x01 << GPIO_ID(pin)),
+			((io_reg_t)(base) + DIR_OFFSET_SS));
     } else {
-        MMIO_REG_VAL_FROM_BASE((IO_REG_TYPE)base, DIR_OFFSET_SOC) |= (0x01 << GPIO_ID(pin));
+        MMIO_REG_VAL_FROM_BASE((io_reg_t)base, DIR_OFFSET_SOC) |= (0x01 << GPIO_ID(pin));
     }
 }
 
 static inline __attribute__((always_inline))
-void directWriteLow(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
+void directWriteLow(volatile io_reg_t *base, io_reg_t pin)
 {
     if (SS_GPIO == GPIO_TYPE(pin)) {
         WRITE_ARC_REG(READ_ARC_REG(base) & ~(0x01 << GPIO_ID(pin)), base);
@@ -223,7 +223,7 @@ void directWriteLow(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 }
 
 static inline __attribute__((always_inline))
-void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
+void directWriteHigh(volatile io_reg_t *base, io_reg_t pin)
 {
     if (SS_GPIO == GPIO_TYPE(pin)) {
         WRITE_ARC_REG(READ_ARC_REG(base) | (0x01 << GPIO_ID(pin)), base);
@@ -283,27 +283,27 @@ constexpr uint8_t VALUE_IPL {10}; // instructions per loop, uncalibrated so far 
 
 static bool mockup_pin_value[256];
 
-template <typename T1>
+template<typename T1>
 bool digitalRead(const T1 pin) { return (mockup_pin_value[pin & 0xFF] != 0); }; // mock up outputs
 
-template <typename T1, typename T2>
+template<typename T1, typename T2>
 void digitalWrite(const T1 pin, const T2 value) { mockup_pin_value[pin & 0xFF] = value; };
 
-template <typename T1, typename T2>
+template<typename T1, typename T2>
 void pinMode(const T1 pin, const T2 value) { mockup_pin_value[pin & 0xFF] = value; };
 
-template <typename T1>
+template<typename T1>
 T1 digitalPinToPort(const T1 pin) { return pin; };
 
-template <typename T1>
+template<typename T1>
 T1 * portInputRegister(const T1 port) { return port; };
 
-template <typename T1>
+template<typename T1>
 T1 digitalPinToBitMask(const T1 pin) { return pin; };
 
-constexpr uint32_t microsecondsToClockCycles(const uint32_t micros) {return (100*micros);}; // mockup, emulate 100 MHz CPU
+constexpr uint32_t microsecondsToClockCycles(const uint32_t micros) { return (100*micros); }; // mockup, emulate 100 MHz CPU
 
-template <typename T1>
+template<typename T1>
 void delayMicroseconds(const T1 micros) { };
 
 /// the following fn are no templates and need to be defined in platform.cpp
@@ -315,7 +315,7 @@ void sei();
 
 void noInterrupts();
 
-void interrupts(void);
+void interrupts();
 
 template<typename T1>
 T1 pgm_read_byte(const T1* address)
@@ -334,14 +334,14 @@ T1 pgm_read_byte(const T1* address)
 #endif
 
 #ifndef HEX
-#define HEX 1
+#define HEX 2
 #endif
 
 static class serial
 {
 private:
 
-    static uint32_t speed;
+    uint32_t speed;
 
 public:
 
@@ -367,7 +367,7 @@ void memset(T1 * const address, const T1 initValue, const T2 bytes)
 
 
 template<typename T1, typename T2>
-void memcpy(T1 * const destination, const T1 * const source, const T2 bytes)
+void memcpy(T1 * const destination, const T1* const source, const T2 bytes)
 {
     const T2 iterations = bytes / sizeof(T1);
     for (T2 counter = 0; counter < iterations; ++counter)
@@ -377,7 +377,7 @@ void memcpy(T1 * const destination, const T1 * const source, const T2 bytes)
 }
 
 
-template <typename T1, typename T2>
+template<typename T1, typename T2>
 bool memcmp(const T1* const source_A, const T1* const source_B, const T2 bytes) // return true if string is different
 {
     const T2 iterations = bytes / sizeof(T1);
