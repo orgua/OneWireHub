@@ -46,7 +46,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
    - use static-assertions for plausibility checks
    - user defined literals convert constants into needed format / unit
 - hardware-dependencies are combined in "platform.h", synced with [Onewire-Lib](https://github.com/PaulStoffregen/OneWire)
-   - supported: arduino zero, teensy, sam3x, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, nrf51822, raspberry (...)
+   - supported: arduino zero, teensy, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, esp32, raspberry (...)
    - tested architectures: atmega328 @ 16 MHz / arduino Uno, teensy3.2
    - for portability and tests the hub can be compiled on a PC with the supplied mock-up functions in platform.h
    - at the moment the lib relies sole on loop-counting for timing, no direct access to interrupt or timers, **NOTE:** if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
@@ -58,6 +58,33 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
    - when duty()-subroutines of an attached slave get called 
    - during hub-startup it issues a 1ms long high-state (you can check the instruction-per-loop-value for your architecture with this)
 - provide documentation, numerous examples, easy interface for hub and sensors
+
+### Supported and tested Hardware
+- embedded real life test
+   - setup: run test-example, use ds9490-master, arduino 1.8.3, Windows 10 and the board-library named in the brackets
+   - Arduino Uno ([Arduino AVR Boards](https://github.com/arduino/Arduino/tree/master/hardware/arduino/avr))
+   - Teensy 3.2 ([teensyduino](https://github.com/PaulStoffregen/cores))
+   - Wemos D1 Mini ESP32S ([esp32](https://github.com/espressif/arduino-esp32)) -> NOTE: internal PU is not strong enough to power bus
+   - Wemos Wifi & BT ESP32 ([esp32](https://github.com/espressif/arduino-esp32)) -> NOTE: internal PU is not strong enough to power bus
+   - Wemos D1 R2 ([esp8266](https://github.com/esp8266/Arduino))
+   - nodeMCU 1.0 ESP-12E ([esp8266](https://github.com/esp8266/Arduino))
+- Travis CI (automated Continuous Integration) for different platforms
+   - Arduino Uno ([Arduino AVR Boards](https://github.com/arduino/Arduino/tree/master/hardware/arduino/avr))
+   - Arduino 101 ([Intel Curie Boards](https://github.com/01org/corelibs-arduino101))
+   - Teensy 3.0, 3.1, 3.2, LC, 3.5, 3.6 ([teensyduino](https://github.com/PaulStoffregen/cores))
+   - generic ESP8266 ([esp8266](https://github.com/esp8266/Arduino))
+   - nodeMCU V2 ([esp8266](https://github.com/esp8266/Arduino))
+   - espduino ([esp8266](https://github.com/esp8266/Arduino))
+   - ESP32 dev module ([esp32](https://github.com/espressif/arduino-esp32))
+   - ATtiny 84, 88 ([attiny](https://github.com/damellis/attiny)??)
+   - Digispark tiny ([DigistumpArduino](https://github.com/digistump/DigistumpArduino))
+- failing platforms
+   - reason: current tick-counting implementation is not compatible with variable clock-speed
+      - Arduino Due ([Arduino SAMD Boards (32-bits ARM Cortex-M3)](https://github.com/arduino/ArduinoCore-sam)) 
+      - Arduino MKRZero ([Arduino SAMD Boards (32-bits ARM Cortex-M0+)](https://github.com/arduino/ArduinoCore-samd)) -> NOTE: internal PU is not strong enough to power bus
+   - reason: gcc 4.8.3 is limited to c++98
+      - Arduino Primo ([Arduino nRF52 Boards](https://github.com/arduino-org/arduino-core-nrf52)) 
+      - RedBear [nRF51](https://github.com/RedBearLab/nRF51822-Arduino)
 
 ### How does the Hub work
 - this layered description gives you a basic idea of how the functions inside the hub work together
@@ -127,6 +154,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### Plans for the future:
 - alarm / conditional search
+- switch to delay() for fast enough controllers (instead of tick-counting)
 - debug tool to determine timings of exotic masters
 - better interrupt-handling (save the state before disabling)
 - irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
