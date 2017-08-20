@@ -44,7 +44,8 @@ void setup()
 {
     pinMode(led_PIN, OUTPUT);
     // Setup OneWire
-    ds18B20a.setTemperature(10);
+    const int8_t temperature_degC = 10;
+    ds18B20a.setTemperature(temperature_degC);
     hub.attach(ds18B20a);
     hub.attach(ds18B20b);
     hub.attach(ds2401a);
@@ -59,9 +60,9 @@ void loop()
     // Blink triggers the state-change
     if (blinking())
     {
-        static uint8_t temperature = 20;
-        temperature += 1;
-        if (temperature > 40) temperature = 10;
-        ds18B20b.setTemperature(temperature);
+        static int8_t temperature_degC = 20;
+        temperature_degC += 1;
+        if (temperature_degC > 40) temperature_degC = 10;
+        ds18B20b.setTemperature(temperature_degC);
     }
 }
