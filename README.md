@@ -64,27 +64,28 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
    - setup: run test-example, use ds9490-master, arduino 1.8.3, Windows 10 and the board-library named in the brackets
    - Arduino Uno ([Arduino AVR Boards](https://github.com/arduino/Arduino/tree/master/hardware/arduino/avr))
    - Teensy 3.2 ([teensyduino](https://github.com/PaulStoffregen/cores))
-   - Wemos D1 Mini ESP32S ([esp32](https://github.com/espressif/arduino-esp32)) -> NOTE: internal PU is not strong enough to power bus
-   - Wemos Wifi & BT ESP32 ([esp32](https://github.com/espressif/arduino-esp32)) -> NOTE: internal PU is not strong enough to power bus
+   - Wemos D1 Mini ESP32S ([esp32](https://github.com/espressif/arduino-esp32))
+   - Wemos Wifi & BT ESP32 ([esp32](https://github.com/espressif/arduino-esp32))
    - Wemos D1 R2 ([esp8266](https://github.com/esp8266/Arduino))
    - nodeMCU 1.0 ESP-12E ([esp8266](https://github.com/esp8266/Arduino))
+   - ATtiny 84, 88 ([attiny](https://github.com/damellis/attiny))
 - Travis CI (automated Continuous Integration) for different platforms
    - Arduino Uno ([Arduino AVR Boards](https://github.com/arduino/Arduino/tree/master/hardware/arduino/avr))
-   - Arduino 101 ([Intel Curie Boards](https://github.com/01org/corelibs-arduino101))
    - Teensy 3.0, 3.1, 3.2, LC, 3.5, 3.6 ([teensyduino](https://github.com/PaulStoffregen/cores))
    - generic ESP8266 ([esp8266](https://github.com/esp8266/Arduino))
    - nodeMCU V2 ([esp8266](https://github.com/esp8266/Arduino))
    - espduino ([esp8266](https://github.com/esp8266/Arduino))
    - ESP32 dev module ([esp32](https://github.com/espressif/arduino-esp32))
-   - ATtiny 84, 88 ([attiny](https://github.com/damellis/attiny)??)
    - Digispark tiny ([DigistumpArduino](https://github.com/digistump/DigistumpArduino))
 - failing platforms
    - reason: current tick-counting implementation is not compatible with variable clock-speed
       - Arduino Due ([Arduino SAMD Boards (32-bits ARM Cortex-M3)](https://github.com/arduino/ArduinoCore-sam)) 
-      - Arduino MKRZero ([Arduino SAMD Boards (32-bits ARM Cortex-M0+)](https://github.com/arduino/ArduinoCore-samd)) -> NOTE: internal PU is not strong enough to power bus
-   - reason: gcc 4.8.3 is limited to c++98
+      - Arduino MKRZero ([Arduino SAMD Boards (32-bits ARM Cortex-M0+)](https://github.com/arduino/ArduinoCore-samd))
+   - reason: gcc 4.8.3 is artificially limited to c++98  
       - Arduino Primo ([Arduino nRF52 Boards](https://github.com/arduino-org/arduino-core-nrf52)) 
       - RedBear [nRF51](https://github.com/RedBearLab/nRF51822-Arduino)
+   - reason: value_ipl is unknown for this hardware
+      - Arduino 101 ([Intel Curie Boards](https://github.com/01org/corelibs-arduino101))
 
 ### How does the Hub work
 - this layered description gives you a basic idea of how the functions inside the hub work together

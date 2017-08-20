@@ -36,8 +36,8 @@ env:
   - PIO_BRD: "'-b espino32 -b esp32dev'"  # esp8266
 #  - PIO_BRD: "'-b rfduino'"               # nrf51 -> will probably fail due to old gcc 4.8.3 with artificial limit to c++98
 #  - PIO_BRD: "'-b lenny -b uno_pic32'"    # pic32mx -> error: pic32-g++ not found
-  - PIO_BRD: "'-b genuino101'"            # intel curie
-  - PIO_BRD: "'-b attiny88 -b attiny84'"  # attiny
+#  - PIO_BRD: "'-b genuino101'"            # intel curie -> value_ipl is unknown for this hardware
+#  - PIO_BRD: "'-b attiny88 -b attiny84'"  # attiny -> linker error for unknown virtual function
   - PIO_BRD: "'-b digispark-tiny'"        # attiny
 
 before_script:
