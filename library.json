@@ -21,5 +21,9 @@
 {
     "type": "git",
     "url": "https://github.com/orgua/OneWireHub"
-}
+},
+    "version": "2.2.0",
+    "examples": [
+        "examples/*/*.ino"
+    ]
 }
