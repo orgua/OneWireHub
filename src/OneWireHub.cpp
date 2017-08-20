@@ -812,7 +812,7 @@ void OneWireHub::waitLoops1ms(void)
 // after that it measures with a waitLoops()-FN to determine the instructions-per-loop-value for the used architecture
 timeOW_t OneWireHub::waitLoopsCalibrate(void)
 {
-    constexpr timeOW_t wait_loops{1000000 * microsecondsToClockCycles(1)}; // loops before cancelling a pin-change-wait, 1s
+    const     timeOW_t wait_loops{1000000 * microsecondsToClockCycles(1)}; // loops before cancelling a pin-change-wait, 1s, TODO: change back to constexpr if possible (ardu due / zero are blocking)
     constexpr uint32_t TIME_RESET_MIN_US = 430;
 
     timeOW_t time_for_reset = 0;
