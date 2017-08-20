@@ -1,4 +1,5 @@
-// directly taken from: https://github.com/PaulStoffregen/OneWire/blob/master/OneWire.h
+// taken with modifications from: https://github.com/PaulStoffregen/OneWire/blob/master/OneWire.h
+// Platform specific I/O definitions
 
 #ifndef ONEWIREHUB_PLATFORM_H
 #define ONEWIREHUB_PLATFORM_H
@@ -7,10 +8,16 @@
 #include <Arduino.h>
 #endif
 
-// NOTE: added io_reg_t, don't use IO_REG_TYPE and IO_REG_ASM anymore
-// Platform specific I/O definitions
+// determine gcc version, will produce number like 40803 for gcc 4.8.3
+#if defined(__GNUC__)
+#define ONEWIRE_GCC_VERSION ( (__GNUC__ * 10000) + (__GNUC_MINOR__ * 100) + __GNUC_PATCHLEVEL__)
+#else
+#define ONEWIRE_GCC_VERSION 0
+#endif
 
-#if defined(__AVR__)
+
+#if defined(__AVR__) /* arduino (all with atmega, atiny) */
+
 #define PIN_TO_BASEREG(pin)             (portInputRegister(digitalPinToPort(pin)))
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
 #define DIRECT_READ(base, mask)         (((*(base)) & (mask)) ? 1 : 0)
@@ -21,7 +28,7 @@
 using io_reg_t = uint8_t; // define special datatype for register-access
 constexpr uint8_t VALUE_IPL {13}; // instructions per loop, compare 0 takes 11, compare 1 takes 13 cycles
 
-#elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK66FX1M0__) || defined(__MK64FX512__)
+#elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK66FX1M0__) || defined(__MK64FX512__) /* teensy 3.2 to 3.6 */
 #define PIN_TO_BASEREG(pin)             (portOutputRegister(pin))
 #define PIN_TO_BITMASK(pin)             (1)
 #define DIRECT_READ(base, mask)         (*((base)+512))
@@ -32,7 +39,8 @@ constexpr uint8_t VALUE_IPL {13}; // instructions per loop, compare 0 takes 11, 
 using io_reg_t = uint8_t; // define special datatype for register-access
 constexpr uint8_t VALUE_IPL {8}; // instructions per loop
 
-#elif defined(__MKL26Z64__)
+#elif defined(__MKL26Z64__) /* teensy LC */
+
 #define PIN_TO_BASEREG(pin)             (portOutputRegister(pin))
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
 #define DIRECT_READ(base, mask)         ((*((base)+16) & (mask)) ? 1 : 0)
@@ -43,11 +51,8 @@ constexpr uint8_t VALUE_IPL {8}; // instructions per loop
 using io_reg_t = uint8_t; // define special datatype for register-access
 constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
-#elif defined(__SAM3X8E__)
-// Arduino 1.5.1 may have a bug in delayMicroseconds() on Arduino Due.
-// http://arduino.cc/forum/index.php/topic,141030.msg1076268.html#msg1076268
-// If you have trouble with OneWire on Arduino Due, please check the
-// status of delayMicroseconds() before reporting a bug in OneWire!
+#elif defined(__SAM3X8E__) || defined(__SAM3A8C__) || defined(__SAM3A4C__) /* arduino due */
+
 #define PIN_TO_BASEREG(pin)             (&(digitalPinToPort(pin)->PIO_PER))
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
 #define DIRECT_READ(base, mask)         (((*((base)+15)) & (mask)) ? 1 : 0)
@@ -62,9 +67,11 @@ constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far -
 #define pgm_read_byte(address) (*(const uint8_t *)(address))
 #endif
 using io_reg_t = uint32_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+constexpr uint8_t VALUE_IPL { 0 }; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+// TODO
 
 #elif defined(__PIC32MX__)
+
 #define PIN_TO_BASEREG(pin)             (portModeRegister(digitalPinToPort(pin)))
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
 #define DIRECT_READ(base, mask)         (((*(base+4)) & (mask)) ? 1 : 0)  //PORTX + 0x10
@@ -73,9 +80,10 @@ constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far -
 #define DIRECT_WRITE_LOW(base, mask)    ((*(base+8+1)) = (mask))          //LATXCLR  + 0x24
 #define DIRECT_WRITE_HIGH(base, mask)   ((*(base+8+2)) = (mask))          //LATXSET + 0x28
 using io_reg_t = uint32_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+constexpr uint8_t VALUE_IPL { 0 }; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
-#elif defined(ARDUINO_ARCH_ESP8266)
+#elif defined(ARDUINO_ARCH_ESP8266) /* nodeMCU, ESPduino, ... */
+
 #define PIN_TO_BASEREG(pin)             ((volatile uint32_t*) GPO)
 #define PIN_TO_BITMASK(pin)             (1 << pin)
 #define DIRECT_READ(base, mask)         ((GPI & (mask)) ? 1 : 0)    //GPIO_IN_ADDRESS
@@ -85,9 +93,24 @@ constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far -
 #define DIRECT_WRITE_HIGH(base, mask)   (GPOS = (mask))             //GPIO_OUT_W1TS_ADDRESS
 using io_reg_t = uint32_t; // define special datatype for register-access
 // The ESP8266 has two possible CPU frequencies: 160 MHz (26 IPL) and 80 MHz (22 IPL) -> something influences the IPL-Value
-constexpr uint8_t VALUE_IPL { (microsecondsToClockCycles(1) > 120) ? 26 : 22}; // instructions per loop, not verified yet
+constexpr uint8_t VALUE_IPL { (microsecondsToClockCycles(1) > 120) ? 26 : 22 }; // instructions per loop, not verified yet
 
-#elif defined(__SAMD21G18A__)
+#elif defined(ARDUINO_ARCH_ESP32) || defined(ESP32) /* ESP32 Family */
+
+#define PIN_TO_BASEREG(pin)             (0)
+#define PIN_TO_BITMASK(pin)             (pin)
+#define DIRECT_READ(base, pin)          digitalRead(pin)
+#define DIRECT_WRITE_LOW(base, pin)     digitalWrite(pin, LOW)
+#define DIRECT_WRITE_HIGH(base, pin)    digitalWrite(pin, HIGH)
+#define DIRECT_MODE_INPUT(base, pin)    pinMode(pin, INPUT)
+#define DIRECT_MODE_OUTPUT(base, pin)   pinMode(pin,OUTPUT)
+#define DELAY_MICROSECONDS(us)		    delayMicroseconds(us)
+using io_reg_t = uint32_t; // define special data type for register-access
+constexpr uint8_t VALUE_IPL { 0 }; // instructions per loop, not verified yet
+// TODO
+
+#elif defined(__SAMD21G18A__) /* arduino zero */
+
 #define PIN_TO_BASEREG(pin)             portModeRegister(digitalPinToPort(pin))
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
 #define DIRECT_READ(base, mask)         (((*((base)+8)) & (mask)) ? 1 : 0)
@@ -97,8 +120,10 @@ constexpr uint8_t VALUE_IPL { (microsecondsToClockCycles(1) > 120) ? 26 : 22}; /
 #define DIRECT_WRITE_HIGH(base, mask)   ((*((base)+6)) = (mask))
 using io_reg_t = uint32_t; // define special datatype for register-access
 constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+// TODO
 
-#elif defined(RBL_NRF51822)
+#elif defined(NRF52) /* arduino primo */
+
 #define PIN_TO_BASEREG(pin)             (0)
 #define PIN_TO_BITMASK(pin)             (pin)
 #define DIRECT_READ(base, pin)          nrf_gpio_pin_read(pin)
@@ -106,7 +131,35 @@ constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far -
 #define DIRECT_WRITE_HIGH(base, pin)    nrf_gpio_pin_set(pin)
 #define DIRECT_MODE_INPUT(base, pin)    nrf_gpio_cfg_input(pin, NRF_GPIO_PIN_NOPULL)
 #define DIRECT_MODE_OUTPUT(base, pin)   nrf_gpio_cfg_output(pin)
-using io_reg_t = uint32_t; // define special datatype for register-access
+using io_reg_t = uint32_t; // define special data type for register-access
+constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+
+#elif defined(NRF51) /* red bear blend, should be good for all nrf51x chips */
+
+#if defined(TARGET_NRF51822)
+#include <nRF51822_API.h>
+#endif
+
+#define PIN_TO_BASEREG(pin)             (0)
+#define PIN_TO_BITMASK(pin)             (pin)
+#define DIRECT_READ(base, pin)          nrf_gpio_pin_read(pin)
+#define DIRECT_WRITE_LOW(base, pin)     nrf_gpio_pin_clear(pin)
+#define DIRECT_WRITE_HIGH(base, pin)    nrf_gpio_pin_set(pin)
+#define DIRECT_MODE_INPUT(base, pin)    nrf_gpio_cfg_input(pin, NRF_GPIO_PIN_NOPULL)
+#define DIRECT_MODE_OUTPUT(base, pin)   nrf_gpio_cfg_output(pin)
+using io_reg_t = uint32_t; // define special data type for register-access
+constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+
+#elif defined(__RFduino__) /* rf51 chip with special implementation */
+
+#define PIN_TO_BASEREG(pin)             (0)
+#define PIN_TO_BITMASK(pin)             (pin)
+#define DIRECT_READ(base, pin)          digitalRead(pin)
+#define DIRECT_WRITE_LOW(base, pin)     digitalWrite(pin, LOW)
+#define DIRECT_WRITE_HIGH(base, pin)    digitalWrite(pin, HIGH)
+#define DIRECT_MODE_INPUT(base, pin)    pinMode(pin, INPUT)
+#define DIRECT_MODE_OUTPUT(base, pin)   pinMode(pin,OUTPUT)
+using io_reg_t = uint32_t; // define special data type for register-access
 constexpr uint8_t VALUE_IPL {0}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
 #elif defined(__arc__) /* Arduino101/Genuino101 specifics */
@@ -200,22 +253,37 @@ void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 #define DIRECT_WRITE_HIGH(base, pin)    digitalWrite(pin, HIGH)
 #define DIRECT_MODE_INPUT(base, pin)    pinMode(pin,INPUT)
 #define DIRECT_MODE_OUTPUT(base, pin)   pinMode(pin,OUTPUT)
-//#warning "OneWire. Fallback mode. Using API calls for pinMode,digitalRead and digitalWrite. Operation of this library is not guaranteed on this architecture."
 using io_reg_t = uint32_t; // define special datatype for register-access
 constexpr uint8_t VALUE_IPL {10}; // instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+
+#warning "OneWire. Fallback mode. Using API calls for pinMode,digitalRead and digitalWrite. Operation of this library is not guaranteed on this architecture."
+
+#endif
+
+
 
 /////////////////////////////////////////// EXTRA PART /////////////////////////////////////////
 // this part is loaded if no proper arduino-environment is found (good for external testing)
 // these used functions are mockups
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifndef ARDUINO
+#define ONEWIRE_FALLBACK_BASIC_FNs
+#define ONEWIRE_FALLBACK_ADDITIONAL_FNs // to load up Serial below
+#endif
+
+#ifdef ARDUINO_attiny
+#define ONEWIRE_FALLBACK_ADDITIONAL_FNs // to load up Serial below
+#endif
+
+#ifdef ONEWIRE_FALLBACK_BASIC_FNs
+
 #define INPUT 1
+#define INPUT_PULLUP 1
 #define OUTPUT 0
 #define HIGH 1
 #define LOW 0
 
-#define FALLBACK_BASIC_FNs
-#define FALLBACK_ADDITIONAL_FNs // to load up Serial below
 
 static bool mockup_pin_value[256];
 
@@ -253,15 +321,21 @@ void noInterrupts();
 
 void interrupts(void);
 
-#endif
+template<typename T1>
+T1 pgm_read_byte(const T1* address)
+{
+    return *address;
+}
 
-#if defined(ARDUINO_attiny)
-#define FALLBACK_ADDITIONAL_FNs // to load up Serial below
 #endif
 
 
 #ifdef FALLBACK_ADDITIONAL_FNs // Test to make it work on aTtiny85, 8MHz
 /// README: use pin2 or pin3 for Attiny, source: https://github.com/gioblu/PJON/wiki/ATtiny-interfacing
+
+#ifndef BIN
+#define BIN 1
+#endif
 
 #ifndef HEX
 #define HEX 1
@@ -323,6 +397,10 @@ uint32_t    millis(void);
 
 void        wdt_reset(void);
 void        wdt_enable(...);
+
+#ifndef PROGMEM
+#define PROGMEM
+#endif
 
 #endif
 
