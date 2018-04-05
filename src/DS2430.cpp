@@ -1,6 +1,6 @@
-#include "DS2431.h"
+#include "DS2430.h"
 
-DS2431::DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
+DS2430::DS2430(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
     static_assert(sizeof(scratchpad) < 256, "Implementation does not cover the whole address-space");
     static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
@@ -14,7 +14,7 @@ DS2431::DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     updatePageStatus();
 }
 
-void DS2431::duty(OneWireHub * const hub)
+void DS2430::duty(OneWireHub * const hub)
 {
     constexpr uint8_t ALTERNATING_10 { 0xAA };
     static uint16_t   reg_TA         { 0 }; // contains TA1, TA2
@@ -128,17 +128,17 @@ void DS2431::duty(OneWireHub * const hub)
     }
 }
 
-void DS2431::clearMemory(void)
+void DS2430::clearMemory(void)
 {
     memset(memory, static_cast<uint8_t>(0x00), sizeof(memory));
 }
 
-void DS2431::clearScratchpad(void)
+void DS2430::clearScratchpad(void)
 {
     memset(scratchpad, static_cast<uint8_t>(0x00), SCRATCHPAD_SIZE);
 }
 
-bool DS2431::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position)
+bool DS2430::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position)
 {
     for (uint8_t i = 0; i < length; ++i) {
         if ((position + i) >= sizeof(memory)) break;
@@ -151,7 +151,7 @@ bool DS2431::writeMemory(const uint8_t* const source, const uint8_t length, cons
     return true;
 }
 
-bool DS2431::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const
+bool DS2430::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const
 {
     if (position >= MEM_SIZE) return false;
     const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
@@ -159,7 +159,7 @@ bool DS2431::readMemory(uint8_t* const destination, const uint16_t length, const
     return (_length==length);
 }
 
-void DS2431::setPageProtection(const uint8_t position)
+void DS2430::setPageProtection(const uint8_t position)
 {
     if      (position < 1*PAGE_SIZE)    memory[0x80] = WP_MODE;
     else if (position < 2*PAGE_SIZE)    memory[0x81] = WP_MODE;
@@ -172,7 +172,7 @@ void DS2431::setPageProtection(const uint8_t position)
     updatePageStatus();
 }
 
-bool DS2431::getPageProtection(const uint8_t position) const
+bool DS2430::getPageProtection(const uint8_t position) const
 {
     // should be an accurate model of the control bytes
     if      (position < 1*PAGE_SIZE)
@@ -222,7 +222,7 @@ bool DS2431::getPageProtection(const uint8_t position) const
     return false;
 }
 
-void DS2431::setPageEpromMode(const uint8_t position)
+void DS2430::setPageEpromMode(const uint8_t position)
 {
     if      (position < 1*PAGE_SIZE)  memory[0x80] = EP_MODE;
     else if (position < 2*PAGE_SIZE)  memory[0x81] = EP_MODE;
@@ -231,7 +231,7 @@ void DS2431::setPageEpromMode(const uint8_t position)
     updatePageStatus();
 }
 
-bool DS2431::getPageEpromMode(const uint8_t position) const
+bool DS2430::getPageEpromMode(const uint8_t position) const
 {
     if      (position < 1*PAGE_SIZE)
     {
@@ -253,7 +253,7 @@ bool DS2431::getPageEpromMode(const uint8_t position) const
 }
 
 
-bool DS2431::updatePageStatus(void)
+bool DS2430::updatePageStatus(void)
 {
     page_eprom_mode = 0;
     page_protection = 0;

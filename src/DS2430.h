@@ -3,12 +3,12 @@
 // note: datasheet is fuzzy, but device is similar to ds2433
 // native bus-features: Overdrive capable
 
-#ifndef ONEWIRE_DS2431_H
-#define ONEWIRE_DS2431_H
+#ifndef ONEWIRE_DS2430_H
+#define ONEWIRE_DS2430_H
 
 #include "OneWireItem.h"
 
-class DS2431 : public OneWireItem
+class DS2430 : public OneWireItem
 {
 private:
 
@@ -41,7 +41,7 @@ public:
 
     static constexpr uint8_t family_code        { 0x2D };
 
-    DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
+    DS2430(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
     void    duty(OneWireHub * hub) final;
 
