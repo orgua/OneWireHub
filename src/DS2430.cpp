@@ -16,27 +16,22 @@ DS2430::DS2430(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 void DS2430::duty(OneWireHub * const hub)
 {
-    constexpr uint8_t ALTERNATING_10 { 0xAA };
-    static uint16_t   reg_TA         { 0 }; // contains TA1, TA2
+    static uint8_t    reg_TA         { 0 }; // contains TA1, TA2
     static uint8_t    reg_ES         { 0 }; // E/S register
-    uint16_t          crc            { 0 };
 
-    uint8_t  page_offset { 0 };
-    uint8_t  cmd, data;
-    if (hub->recv(&cmd,1,crc))  return;
-
+    uint8_t cmd, data;
+    if (hub->recv(&cmd,1)) return;
     switch (cmd)
     {
         case 0x0F:      // WRITE SCRATCHPAD COMMAND
 
-            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2,crc))  return;
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),1))  return;
             reg_ES = uint8_t(reg_TA) & SCRATCHPAD_MASK;
-            page_offset = reg_ES;
 
-            // receive up to 8 bytes of data
+            // receive up to 32 bytes of data
             for (; reg_ES < SCRATCHPAD_SIZE; ++reg_ES)
             {
-                if (hub->recv(&scratchpad[reg_ES], 1, crc))
+                if (hub->recv(&scratchpad[reg_ES], 1))
                 {
                     if (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH) reg_ES |= REG_ES_PF_MASK;
                     break;
@@ -45,56 +40,26 @@ void DS2430::duty(OneWireHub * const hub)
             reg_ES--;
             reg_ES &= SCRATCHPAD_MASK;
 
-            if (hub->getError() == Error::NO_ERROR)  // try to send crc if wanted
-            {
-                crc = ~crc; // normally crc16 is sent ~inverted
-                hub->send(reinterpret_cast<uint8_t *>(&crc), 2);
-            }
-
-            if (reg_TA < (4*PAGE_SIZE)) // check if page is protected or in eprom-mode
-            {
-                const uint8_t position = uint8_t(reg_TA) & ~SCRATCHPAD_MASK;
-                if (getPageProtection(reinterpret_cast<uint8_t *>(&reg_TA)[0]))       // protected: load memory-segment to scratchpad
-                {
-                    for (uint8_t i = 0; i < SCRATCHPAD_SIZE; ++i) scratchpad[i] = memory[position + i];
-                }
-                else if (getPageEpromMode(reinterpret_cast<uint8_t *>(&reg_TA)[0]))   // eprom: logical AND of memory and data
-                {
-                    for (uint8_t i = page_offset; i <= reg_ES; ++i) scratchpad[i] &= memory[position + i];
-                }
-            }
             break;
 
         case 0xAA:      // READ SCRATCHPAD COMMAND
-
-            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA),2,crc))  return;
-            if (hub->send(&reg_ES,1,crc)) return;
+            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA), 1)) return;
 
             {   // send Scratchpad content
                 const uint8_t start  = uint8_t(reg_TA) & SCRATCHPAD_MASK;
-                const uint8_t length = (reg_ES & SCRATCHPAD_MASK)+ uint8_t(1) - start; // difference to ds2433
-                if (hub->send(&scratchpad[start],length,crc))   return;
+                const uint8_t length = SCRATCHPAD_MASK - start;
+                if (hub->send(&scratchpad[start],length))   return;
             }
 
-            crc = ~crc;
-            if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
             break; // send 1s when read is complete, is passive, so do nothing
 
         case 0x55:      // COPY SCRATCHPAD COMMAND
-
             if (hub->recv(&data))                                  return;
-            if (data != reinterpret_cast<uint8_t *>(&reg_TA)[0])   break;
-            if (hub->recv(&data))                                  return;
-            if (data != reinterpret_cast<uint8_t *>(&reg_TA)[1])   break;
-            if (hub->recv(&data))                                  return;
-            if (data != reg_ES)                                    return; // Auth code must match
-
-            if (getPageProtection(uint8_t(reg_TA)))                break; // stop if page is protected (WriteMemory also checks this)
-            if ((reg_ES & REG_ES_PF_MASK) != 0)                    break; // stop if error occured earlier
+            if (data != 0xA5)                                      break;
 
             reg_ES |= REG_ES_AA_MASK; // compare was successful
 
-            reg_TA &= ~uint16_t(SCRATCHPAD_MASK);
+            reg_TA &= ~uint8_t(SCRATCHPAD_MASK);
 
             // Write Scratchpad to memory, writing takes about 10ms
             writeMemory(scratchpad, SCRATCHPAD_SIZE, reinterpret_cast<uint8_t *>(&reg_TA)[0]); // checks if copy protected
@@ -112,14 +77,15 @@ void DS2430::duty(OneWireHub * const hub)
 
             interrupts();
 
-            while (!hub->send(&ALTERNATING_10)); //  alternating 1 & 0 after copy is complete
             break;
 
         case 0xF0:      // READ MEMORY COMMAND
 
-            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2))  return;
+            if (hub->recv(&data))                                  return;
+            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),1))  return;
+
             if (reg_TA >= MEM_SIZE) return;
-            if (hub->send(&memory[reg_TA],MEM_SIZE - uint8_t(reg_TA),crc)) return;
+            if (hub->send(&memory[reg_TA],MEM_SIZE - uint8_t(reg_TA))) return;
             break; // send 1s when read is complete, is passive, so do nothing here
 
         default:
@@ -141,6 +107,7 @@ void DS2430::clearScratchpad(void)
 bool DS2430::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position)
 {
     for (uint8_t i = 0; i < length; ++i) {
+
         if ((position + i) >= sizeof(memory)) break;
         if (getPageProtection(position + i)) continue;
         memory[position + i] = source[i];

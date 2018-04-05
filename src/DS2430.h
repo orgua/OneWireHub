@@ -12,14 +12,14 @@ class DS2430 : public OneWireItem
 {
 private:
 
-    static constexpr uint8_t  MEM_SIZE          { 144 };
+    static constexpr uint8_t  MEM_SIZE          { 32 };
 
     static constexpr uint8_t  PAGE_SIZE         { 32 };
     static constexpr uint8_t  PAGE_COUNT        { MEM_SIZE / PAGE_SIZE };
     static constexpr uint8_t  PAGE_MASK         { 0b00011111 };
 
-    static constexpr uint8_t  SCRATCHPAD_SIZE   { 8 };
-    static constexpr uint8_t  SCRATCHPAD_MASK   { 0b00000111 };
+    static constexpr uint8_t  SCRATCHPAD_SIZE   { 32 };
+    static constexpr uint8_t  SCRATCHPAD_MASK   { 0b00011111 };
 
     static constexpr uint8_t  REG_ES_PF_MASK    { 0b00100000 }; // partial byte flag
     static constexpr uint8_t  REG_ES_ZERO_MASK  { 0b01011000 }; // reads always zero
@@ -39,7 +39,7 @@ private:
 
 public:
 
-    static constexpr uint8_t family_code        { 0x2D };
+    static constexpr uint8_t family_code        { 0x14 };
 
     DS2430(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
