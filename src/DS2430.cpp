@@ -11,7 +11,7 @@ DS2430::DS2430(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     page_protection = 0;
     page_eprom_mode = 0;
 
-    updatePageStatus();
+    // updatePageStatus();
 }
 
 void DS2430::duty(OneWireHub * const hub)
@@ -19,7 +19,7 @@ void DS2430::duty(OneWireHub * const hub)
     static uint8_t    reg_TA         { 0 }; // contains TA1, TA2
     static uint8_t    reg_ES         { 0 }; // E/S register
 
-    uint8_t cmd, data;
+    uint8_t  cmd, data;
     if (hub->recv(&cmd,1)) return;
     switch (cmd)
     {
@@ -43,6 +43,7 @@ void DS2430::duty(OneWireHub * const hub)
             break;
 
         case 0xAA:      // READ SCRATCHPAD COMMAND
+
             if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA), 1)) return;
 
             {   // send Scratchpad content
@@ -54,12 +55,15 @@ void DS2430::duty(OneWireHub * const hub)
             break; // send 1s when read is complete, is passive, so do nothing
 
         case 0x55:      // COPY SCRATCHPAD COMMAND
+
             if (hub->recv(&data))                                  return;
             if (data != 0xA5)                                      break;
+            // if ((reg_ES & REG_ES_PF_MASK) != 0)                    break; // stop if error occured earlier
 
             reg_ES |= REG_ES_AA_MASK; // compare was successful
 
             reg_TA &= ~uint8_t(SCRATCHPAD_MASK);
+
 
             // Write Scratchpad to memory, writing takes about 10ms
             writeMemory(scratchpad, SCRATCHPAD_SIZE, reinterpret_cast<uint8_t *>(&reg_TA)[0]); // checks if copy protected
@@ -80,8 +84,6 @@ void DS2430::duty(OneWireHub * const hub)
             break;
 
         case 0xF0:      // READ MEMORY COMMAND
-
-            if (hub->recv(&data))                                  return;
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),1))  return;
 
             if (reg_TA >= MEM_SIZE) return;
@@ -107,13 +109,12 @@ void DS2430::clearScratchpad(void)
 bool DS2430::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position)
 {
     for (uint8_t i = 0; i < length; ++i) {
-
         if ((position + i) >= sizeof(memory)) break;
-        if (getPageProtection(position + i)) continue;
+        // if (getPageProtection(position + i)) continue;
         memory[position + i] = source[i];
     }
 
-    if ((position+length) > 127) updatePageStatus();
+    // if ((position+length) > 127) updatePageStatus();
 
     return true;
 }
@@ -126,119 +127,25 @@ bool DS2430::readMemory(uint8_t* const destination, const uint16_t length, const
     return (_length==length);
 }
 
-void DS2430::setPageProtection(const uint8_t position)
-{
-    if      (position < 1*PAGE_SIZE)    memory[0x80] = WP_MODE;
-    else if (position < 2*PAGE_SIZE)    memory[0x81] = WP_MODE;
-    else if (position < 3*PAGE_SIZE)    memory[0x82] = WP_MODE;
-    else if (position < 4*PAGE_SIZE)    memory[0x83] = WP_MODE;
-    else if (position < 0x85)           memory[0x84] = WP_MODE;
-    else if (position == 0x85)          memory[0x85] = WP_MODE;
-    else if (position < 0x88)           memory[0x85] = EP_MODE;
+// bool DS2430::updatePageStatus(void)
+// {
+//     page_eprom_mode = 0;
+//     page_protection = 0;
 
-    updatePageStatus();
-}
+//     if (memory[0x80] == WP_MODE) page_protection |= 1;
+//     if (memory[0x81] == WP_MODE) page_protection |= 2;
+//     if (memory[0x82] == WP_MODE) page_protection |= 4;
+//     if (memory[0x83] == WP_MODE) page_protection |= 8;
 
-bool DS2430::getPageProtection(const uint8_t position) const
-{
-    // should be an accurate model of the control bytes
-    if      (position < 1*PAGE_SIZE)
-    {
-        if ((page_protection & 1) != 0) return true;
-    }
-    else if (position < 2*PAGE_SIZE)
-    {
-        if ((page_protection & 2) != 0) return true;
-    }
-    else if (position < 3*PAGE_SIZE)
-    {
-        if ((page_protection & 4) != 0) return true;
-    }
-    else if (position < 4*PAGE_SIZE)
-    {
-        if ((page_protection & 8) != 0) return true;
-    }
-    else if (position == 0x80)
-    {
-        if (((page_protection & (1 + 16)) != 0) || ((page_eprom_mode & 1)) != 0) return true;
-    }
-    else if (position == 0x81)
-    {
-        if (((page_protection & (2 + 16)) != 0) || ((page_eprom_mode & 2)) != 0) return true;
-    }
-    else if (position == 0x82)
-    {
-        if (((page_protection & (4 + 16)) != 0) || ((page_eprom_mode & 4)) != 0) return true;
-    }
-    else if (position == 0x83)
-    {
-        if (((page_protection & (8 + 16)) != 0) || ((page_eprom_mode & 8)) != 0) return true;
-    }
-    else if (position == 0x85)
-    {
-        if ((page_protection & (32+16)) != 0) return true;
-    }
-    else if ((position == 0x86) || (position == 0x87))
-    {
-        if ((page_protection & (64+16)) != 0) return true;
-    }
-    else if (position > 127) // filter the rest
-    {
-        if ((page_protection & 16) != 0) return true;
-    }
-    return false;
-}
+//     if (memory[0x84] == WP_MODE) page_protection |= 16;
+//     if (memory[0x84] == EP_MODE) page_protection |= 16;
 
-void DS2430::setPageEpromMode(const uint8_t position)
-{
-    if      (position < 1*PAGE_SIZE)  memory[0x80] = EP_MODE;
-    else if (position < 2*PAGE_SIZE)  memory[0x81] = EP_MODE;
-    else if (position < 3*PAGE_SIZE)  memory[0x82] = EP_MODE;
-    else if (position < 4*PAGE_SIZE)  memory[0x83] = EP_MODE;
-    updatePageStatus();
-}
+//     if (memory[0x85] == WP_MODE) page_protection |= 32; // only byte x85
+//     if (memory[0x85] == EP_MODE) page_protection |= 64+32; // also byte x86 x87
 
-bool DS2430::getPageEpromMode(const uint8_t position) const
-{
-    if      (position < 1*PAGE_SIZE)
-    {
-        if ((page_eprom_mode & 1) != 0) return true;
-    }
-    else if (position < 2*PAGE_SIZE)
-    {
-        if ((page_eprom_mode & 2) != 0) return true;
-    }
-    else if (position < 3*PAGE_SIZE)
-    {
-        if ((page_eprom_mode & 4) != 0) return true;
-    }
-    else if (position < 4*PAGE_SIZE)
-    {
-        if ((page_eprom_mode & 8) != 0) return true;
-    }
-    return false;
-}
-
-
-bool DS2430::updatePageStatus(void)
-{
-    page_eprom_mode = 0;
-    page_protection = 0;
-
-    if (memory[0x80] == WP_MODE) page_protection |= 1;
-    if (memory[0x81] == WP_MODE) page_protection |= 2;
-    if (memory[0x82] == WP_MODE) page_protection |= 4;
-    if (memory[0x83] == WP_MODE) page_protection |= 8;
-
-    if (memory[0x84] == WP_MODE) page_protection |= 16;
-    if (memory[0x84] == EP_MODE) page_protection |= 16;
-
-    if (memory[0x85] == WP_MODE) page_protection |= 32; // only byte x85
-    if (memory[0x85] == EP_MODE) page_protection |= 64+32; // also byte x86 x87
-
-    if (memory[0x80] == EP_MODE) page_eprom_mode |= 1;
-    if (memory[0x81] == EP_MODE) page_eprom_mode |= 2;
-    if (memory[0x82] == EP_MODE) page_eprom_mode |= 4;
-    if (memory[0x83] == EP_MODE) page_eprom_mode |= 8;
-    return true;
-}
+//     if (memory[0x80] == EP_MODE) page_eprom_mode |= 1;
+//     if (memory[0x81] == EP_MODE) page_eprom_mode |= 2;
+//     if (memory[0x82] == EP_MODE) page_eprom_mode |= 4;
+//     if (memory[0x83] == EP_MODE) page_eprom_mode |= 8;
+//     return true;
+// }
