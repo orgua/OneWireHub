@@ -22,19 +22,15 @@ private:
     static constexpr uint8_t  SCRATCHPAD_MASK   { 0b00011111 };
 
     static constexpr uint8_t  REG_ES_PF_MASK    { 0b00100000 }; // partial byte flag
-    static constexpr uint8_t  REG_ES_ZERO_MASK  { 0b01011000 }; // reads always zero
     static constexpr uint8_t  REG_ES_AA_MASK    { 0b10000000 }; // authorization accepted (data copied to target memory)
-
-    static constexpr uint8_t  WP_MODE           { 0x55 }; // write protect mode
-    static constexpr uint8_t  EP_MODE           { 0xAA }; // eprom mode
 
     uint8_t memory[MEM_SIZE];
 
     uint8_t scratchpad[SCRATCHPAD_SIZE];
-    uint8_t page_protection;
-    uint8_t page_eprom_mode;
 
-    bool    updatePageStatus(void);
+    uint8_t scratchpad_start_address;
+    uint8_t scratchpad_size;
+
     void    clearScratchpad(void);
 
 public:
@@ -49,12 +45,6 @@ public:
 
     bool    writeMemory(const uint8_t* source, uint8_t length, uint8_t position = 0);
     bool    readMemory(uint8_t* destination, uint16_t length, uint16_t position = 0) const;
-
-    void    setPageProtection(uint8_t position);
-    bool    getPageProtection(uint8_t position) const;
-
-    void    setPageEpromMode(uint8_t position);
-    bool    getPageEpromMode(uint8_t position) const;
 };
 
 #endif
