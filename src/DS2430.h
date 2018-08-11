@@ -14,15 +14,10 @@ private:
 
     static constexpr uint8_t  MEM_SIZE          { 32 };
 
-    static constexpr uint8_t  PAGE_SIZE         { 32 };
-    static constexpr uint8_t  PAGE_COUNT        { MEM_SIZE / PAGE_SIZE };
-    static constexpr uint8_t  PAGE_MASK         { 0b00011111 };
-
     static constexpr uint8_t  SCRATCHPAD_SIZE   { 32 };
     static constexpr uint8_t  SCRATCHPAD_MASK   { 0b00011111 };
 
     static constexpr uint8_t  REG_ES_PF_MASK    { 0b00100000 }; // partial byte flag
-    static constexpr uint8_t  REG_ES_AA_MASK    { 0b10000000 }; // authorization accepted (data copied to target memory)
 
     uint8_t memory[MEM_SIZE];
 
