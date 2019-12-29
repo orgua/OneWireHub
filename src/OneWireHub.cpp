@@ -420,6 +420,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 
             slave_selected = nullptr;
             searchIDTree();
+            slave_selected->duty(this);
             return false; // always trigger a re-init after searchIDTree
 
         case 0x69: // overdrive MATCH ROM
