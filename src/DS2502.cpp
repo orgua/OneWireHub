@@ -94,8 +94,8 @@ void DS2502::duty(OneWireHub * const hub)
                 if (hub->send(&crc))        break;
 
                 const uint8_t reg_RA = translateRedirection(reg_TA[0]);
-
-                if (getPageProtection(reg_TA[0]))
+                const uint8_t  page = static_cast<uint8_t>(reg_RA>>5);
+                if (getPageProtection(page))
                 {
                     const uint8_t mem_zero = 0x00; // send dummy data
                     if (hub->send(&mem_zero)) break;
