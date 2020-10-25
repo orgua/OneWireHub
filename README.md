@@ -2,7 +2,7 @@ OneWireHub
 ==========
 
 The OneWireHub is a sleek Arduino compatible (and many more platforms) library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously. 
-The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your home automation environment.
+The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easily to your home automation environment.
 
 [![Build Status](https://travis-ci.org/orgua/OneWireHub.svg?branch=master)](https://travis-ci.org/orgua/OneWireHub)
 
@@ -183,4 +183,4 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - original pieces seem to be adopted from [OneWireSlave](http://robocraft.ru/blog/arduino/302.html)
 - further development was done in [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire) 
 - first implementation of the [OneWireHub](https://github.com/Shagrat2/OneWireHub) by Shagrat2
-- the current code has just the concepts in common, but the codebase is a total rewrite
+- the current code has just the concepts in common, but the codebase is a complete rewrite
