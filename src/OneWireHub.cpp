@@ -352,8 +352,6 @@ void OneWireHub::searchIDTree(void)
     uint8_t active_slave    = idTree[trigger_pos].slave_selected;
     uint8_t trigger_bit     = idTree[trigger_pos].id_position;
 
-    noInterrupts();
-
     while (position_IDBit < 64)
     {
         // if junction is reached, act different
@@ -399,8 +397,6 @@ void OneWireHub::searchIDTree(void)
         position_IDBit++;
     }
 
-    interrupts();
-
     slave_selected = slave_list[active_slave];
 }
 
@@ -419,7 +415,9 @@ bool OneWireHub::recvAndProcessCmd(void)
         case 0xF0: // Search rom
 
             slave_selected = nullptr;
+            noInterrupts();
             searchIDTree();
+            interrupts();
             return false; // always trigger a re-init after searchIDTree
 
         case 0x69: // overdrive MATCH ROM
