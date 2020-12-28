@@ -30,7 +30,7 @@ void DS2438::duty(OneWireHub * const hub)
             for (uint8_t nByte = page<<3; nByte < (page+1)<<3; ++nByte)
             {
                 uint8_t data;
-                if (hub->recv(&data, 1)) return;
+                if (hub->recv(&data, 1)) break;
                 if ((nByte < 7) && (nByte > 0)) continue; // byte 1-6 are read only
                 memory[nByte] = data;
             }
