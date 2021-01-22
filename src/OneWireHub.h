@@ -8,9 +8,12 @@ constexpr timeOW_t timeOW_max = 4294967295; // will arduino-gcc ever offer some 
 
 constexpr timeOW_t operator "" _us(const unsigned long long int time_us) // user defined literal used in config
 {
-// ARCH 103 is xmega3: ATmega480x,ATmega320x etc. microsecondsToClockCycles in implemented as not constexpr
+/* ARCH 103 is xmega3: ATmega480x,ATmega320x etc. 
+ * microsecondsToClockCycles in megacorex implemented differently so expression can not
+ * be evaluated at compile time. This might change some time!
+ */
 #if __AVR_ARCH__ == 103 
-	return timeOW_t(time_us * ( F_CPU /1000000UL ) / VALUE_IPL);
+    return timeOW_t(time_us * ( F_CPU /1000000UL ) / VALUE_IPL);
 #else
     return timeOW_t(time_us * microsecondsToClockCycles(1) / VALUE_IPL); // note: microsecondsToClockCycles == speed in MHz....
     // TODO: overflow detection would be nice, but literals are allowed with return-only, not solvable ATM
@@ -21,9 +24,12 @@ constexpr timeOW_t operator "" _us(const unsigned long long int time_us) // user
 // same FN, but not as literal
 constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
 {
-// ARCH 103 is xmega3: ATmega480x,ATmega320x etc. microsecondsToClockCycles in implemented as not constexpr
+/* ARCH 103 is xmega3: ATmega480x,ATmega320x etc. 
+ * microsecondsToClockCycles in megacorex implemented differently so expression can not
+ * be evaluated at compile time. This might change some time!
+ */
 #if __AVR_ARCH__ == 103 
-	return (time_us * ( F_CPU /1000000UL ) / VALUE_IPL);
+    return (time_us * ( F_CPU /1000000UL ) / VALUE_IPL);
 #else
     return (time_us * microsecondsToClockCycles(1) / VALUE_IPL); // note: microsecondsToClockCycles == speed in MHz....
 #endif
