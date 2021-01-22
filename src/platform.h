@@ -15,7 +15,19 @@
 #define ONEWIRE_GCC_VERSION 0
 #endif
 
-#if defined(__AVR__) /* arduino (all with atmega, atiny) */
+#if defined(__AVR_XMEGA__)
+
+#define PIN_TO_BASEREG(pin)             (portModeRegister(digitalPinToPort(pin)))
+#define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
+#define DIRECT_READ(base, mask)         (((*((base)+8)) & (mask)) ? 1 : 0)
+#define DIRECT_MODE_INPUT(base, mask)   ((*((base))) &= ~(mask))
+#define DIRECT_MODE_OUTPUT(base, mask)  ((*((base))) |= (mask))
+#define DIRECT_WRITE_LOW(base, mask)    ((*((base)+4)) &= ~(mask))
+#define DIRECT_WRITE_HIGH(base, mask)   ((*((base)+4)) |= (mask))	
+using io_reg_t = uint8_t; // define special datatype for register-access
+constexpr uint8_t VALUE_IPL {13}; // instructions per loop, compare 0 takes 11, compare 1 takes 13 cycles
+
+#elif defined(__AVR__) /* arduino (all with atmega, atiny) */
 
 #define PIN_TO_BASEREG(pin)             (portInputRegister(digitalPinToPort(pin)))
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
