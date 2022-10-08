@@ -6,7 +6,8 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 
 [![Build Status](https://travis-ci.org/orgua/OneWireHub.svg?branch=master)](https://travis-ci.org/orgua/OneWireHub)
 
-### Implemented Slaves:
+### Implemented Slaves
+
 - **BAE0910 (0xFC) multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
 - **DS1822 (0x22) Digital Thermometer, 12bit** -> use DS18B20 with different family code
 - **DS18B20 (0x28) Digital Thermometer, 12bit** (also known as DS1820) 
@@ -19,10 +20,11 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2411 (0x01) Serial Number** -> use DS2401 with same family code
 - **DS2413 (0x3A) Dual channel addressable switch with input-sensing**
 - **DS2423 (0x1D) 4kbit RAM with Counter**
+- **DS2430A (0x14) 256bit EEPROM & 64bit OTP** (also known as DS1971)
 - **DS2431 (0x2D) 1kbit protected EEPROM** (also known as DS1972 or DS28E07, same FC)
 - DS2432 (0x33) 1kbit protected EEPROM (basically a ds2431 with extra sha-engine)
 - **DS2433 (0x23) 4Kbit EEPROM** (also known as DS1973)
-- **DS2434 (0x1B ???) BatteryManagement** used in some IBM Notebook-Batteries (similar to DS2436 (x1B), with one less cmd)
+- DS2434 (0x1B ???) BatteryManagement used in some IBM Notebook-Batteries (similar to DS2436 (x1B), with one less cmd)
 - **DS2438 (0x26) Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
 - **DS2450 (0x20) 4 channel A/D**
 - **DS2501 (0x11, 0x91) 512bit EEPROM** -> use DS2502 with different family code
@@ -35,7 +37,8 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 
 Note: **Bold printed devices are feature-complete and were mostly tested with a DS9490 (look into the regarding example-file for more information) and a loxone system (when supported).**
 
-### Features:
+### Features
+
 - supports up to 32 slaves simultaneously (8 is standard setting), adjust HUB_SLAVE_LIMIT in src/OneWireHub_config.h to safe RAM & program space
    - implementation-overhead for the hub is minimal and even saves resources for >1 emulated device
 - hot-plug: add and remove slaves as needed during operation
@@ -61,6 +64,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - provide documentation, numerous examples, easy interface for hub and sensors
 
 ### Supported and tested Hardware
+
 - embedded real life test
    - setup: run test-example, use ds9490-master, arduino 1.8.3, Windows 10 and the board-library named in the brackets
    - Arduino Uno ([Arduino AVR Boards](https://github.com/arduino/Arduino/tree/master/hardware/arduino/avr))
@@ -89,6 +93,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
       - Arduino 101 ([Intel Curie Boards](https://github.com/01org/corelibs-arduino101))
 
 ### How does the Hub work
+
 - this layered description gives you a basic idea of how the functions inside the hub work together
 - this will not tell you how the [onewire protocol](https://en.wikipedia.org/wiki/1-Wire) works - read a device datasheet or the link for that
 - Low Level - hardware access
@@ -108,6 +113,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - for further details try reading the header-files or check the examples
 
 ### HELP - What to do if things don't work as expected?
+
 - check if your arduino software up to date (>v1.8.0)
 - update this lib to the latest release (v2.2.2)
 - if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
@@ -125,7 +131,8 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - if you checked all these points feel free to open an issue at [Github](https://github.com/orgua/OneWireHub) and describe your troubleshooting process
    - please provide the following basic info: which µC and master do you use, software versions, what device do you try to emulate, what works, what doesn't
 
-### Recent development (latest at the top):
+### Recent development (latest at the top)
+
 - travis CI and unittests
 - more explicit coding, a lot of bugfixes with the help of unit tests (mainly esp8266, bea910, ds18b20)
 - interface of hub and slave-devices has changed, check header-file or examples for more info
@@ -156,7 +163,8 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - faster CRC16 (ds2450 and ds2408 and ds2423), takes 5-7µs/byte instead of 10µs
 - replace searchIDTree() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
 
-### Plans for the future:
+### Plans for the future
+
 - alarm / conditional search
 - switch to delay() for fast enough controllers (instead of tick-counting)
 - debug tool to determine timings of exotic masters
@@ -166,7 +174,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - [List of all Family-Codes](http://owfs.sourceforge.net/family.html)
 - [List of Maxim Sensors](https://www.maximintegrated.com/en/app-notes/index.mvp/id/3989) (at the bottom)
 
-### Connecting the HUB with the Network: 
+### Connecting the HUB with the Network
 
 ![Onewire-Schematic](http://wiki.lvl1.org/images/1/15/Onewire.gif)
 
@@ -180,7 +188,8 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 [read more](http://electronics.stackexchange.com/questions/193300/digital-ic-that-draws-power-from-data-pins)
 
-### Ancestors of this Lib:
+### Ancestors of this Lib
+
 - original pieces seem to be adopted from [OneWireSlave](http://robocraft.ru/blog/arduino/302.html)
 - further development was done in [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire) 
 - first implementation of the [OneWireHub](https://github.com/Shagrat2/OneWireHub) by Shagrat2

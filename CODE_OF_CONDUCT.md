@@ -133,3 +133,9 @@ https://www.contributor-covenant.org/translations.
 - secondary / periphery
 - MISO -> POCI (periphery out, controller in)
 - MOSI -> PICO (periphery in, controller out)
+
+## Example Onewire - naming scheme to use (WIP)
+
+- primary: controller, host
+- secondary: hub-device, periphery
+- microcontroller running the hub: device-emulator

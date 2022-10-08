@@ -7,65 +7,88 @@ DS2430::DS2430(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
     clearMemory();
     clearScratchpad();
+    status_register = 0xFFu;
 }
 
 void DS2430::duty(OneWireHub * const hub)
 {
-    static uint8_t    reg_TA         { 0 }; // contains TA1, TA2
-    static uint8_t    reg_ES         { 0 }; // E/S register
+    static uint8_t    reg_a         { 0u };
 
     uint8_t  cmd, data;
-    if (hub->recv(&cmd,1)) return;
+    if (hub->recv(&cmd,1u)) return;
     switch (cmd)
     {
         case 0x0F:      // WRITE SCRATCHPAD COMMAND
-
-            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),1))  return;
-            reg_ES = uint8_t(reg_TA) & SCRATCHPAD_MASK;
-            scratchpad_start_address = reg_ES;
-
-            // receive up to 32 bytes of data
-            for (; reg_ES < SCRATCHPAD_SIZE; ++reg_ES)
+            if (hub->recv(&reg_a,1u))  return;
+            reg_a &= SCRATCHPAD1_MASK;
+            while (!hub->recv(&scratchpad[reg_a], 1u))
             {
-                if (hub->recv(&scratchpad[reg_ES], 1))
-                {
-                    if (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH) reg_ES |= REG_ES_PF_MASK;
-                    break;
-                }
+                reg_a = (reg_a + 1u) & SCRATCHPAD1_MASK;
+                // wrap around if at x1F (writes in loop until reset issued)
             }
-            reg_ES--;
-            scratchpad_size = scratchpad_start_address;
-            reg_ES &= SCRATCHPAD_MASK;
-
             break;
 
         case 0xAA:      // READ SCRATCHPAD COMMAND
-
-            if (hub->send(reinterpret_cast<uint8_t *>(&reg_TA), 1)) return;
-
-            {   // send Scratchpad content
-                const uint8_t start  = uint8_t(reg_TA) & SCRATCHPAD_MASK;
-                const uint8_t length = SCRATCHPAD_MASK - start;
-                if (hub->send(&scratchpad[start],length))   return;
+            if (hub->recv(&reg_a,1u))  return;
+            reg_a &= SCRATCHPAD1_MASK;
+            while (!hub->send(&scratchpad[reg_a], 1u))
+            {
+                reg_a = (reg_a + 1u) & SCRATCHPAD1_MASK;
+                // wrap around if at x1F (reads in loop until reset issued)
             }
-
-            break; // send 1s when read is complete, is passive, so do nothing
+            break;
 
         case 0x55:      // COPY SCRATCHPAD COMMAND
-
-            if (hub->recv(&data))                                  return;
-            if (data != 0xA5)                                      break;
-
-            writeMemory(scratchpad, scratchpad_size, scratchpad_start_address);
-
+            if (hub->recv(&data))           return;
+            if (data != 0xA5u)                       break; // verification
+            writeMemory(scratchpad, SCRATCHPAD1_SIZE, 0u);
             break;
 
         case 0xF0:      // READ MEMORY COMMAND
-            if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),1))  return;
+            if (hub->recv(&reg_a,1u))  return;
+            reg_a &= SCRATCHPAD1_MASK;
+                while (!hub->send(&memory[reg_a], 1u))
+            {
+                reg_a = (reg_a + 1u) & SCRATCHPAD1_MASK;
+                // wrap around if at x1F (reads in loop until reset issued)
+            }
+            break;
 
-            if (reg_TA >= MEM_SIZE) return;
-            if (hub->send(&memory[reg_TA],MEM_SIZE - uint8_t(reg_TA))) return;
-            break; // send 1s when read is complete, is passive, so do nothing here
+        case 0x99:      // WRITE APPLICATION REGISTER
+            if (hub->recv(&reg_a,1u))  return;
+            reg_a = (reg_a & SCRATCHPAD2_MASK) + SCRATCHPAD2_ADDR;
+            if (!(status_register & 0b11)) return;
+            while (!hub->recv(&scratchpad[reg_a], 1u))
+            {
+                reg_a = ((reg_a + 1u) & SCRATCHPAD2_MASK) + SCRATCHPAD2_ADDR;
+                // wrap around if at x07 (writes in loop until reset issued)
+            }
+            break;
+
+        case 0x66:      // READ STATUS REGISTER
+            if (hub->recv(&reg_a))           return;
+            if (data != 0x00u)                       break; // verification
+            hub->send(&status_register, 1u);
+            break;
+
+        case 0xC3:      // READ APPLICATION REGISTER COMMAND
+            if (hub->recv(&reg_a,1u))  return;
+            reg_a = (reg_a & SCRATCHPAD2_MASK) + SCRATCHPAD2_ADDR;
+            // original IC distinguishes between MEM and scratchpad here, but content is the same
+            while (!hub->send(&scratchpad[reg_a], 1u))
+            {
+                reg_a = ((reg_a + 1u) & SCRATCHPAD2_MASK) + SCRATCHPAD2_ADDR;
+                // wrap around if at x07 (writes in loop until reset issued)
+            }
+            break;
+
+        case 0x5A:          // COPY & LOCK APPLICATION REGISTER
+            if (hub->recv(&data))           return;
+            if (data != 0xA5u)                       break; // verification
+            if (!(status_register & 0b11)) return;
+            writeMemory(&scratchpad[SCRATCHPAD2_ADDR], SCRATCHPAD2_SIZE, SCRATCHPAD2_ADDR);
+            status_register &= ~0b11u; // lock the OTP
+            break;
 
         default:
 
@@ -89,7 +112,6 @@ bool DS2430::writeMemory(const uint8_t* const source, const uint8_t length, cons
         if ((position + i) >= sizeof(memory)) break;
         memory[position + i] = source[position + i];
     }
-
     return true;
 }
 
@@ -100,3 +122,11 @@ bool DS2430::readMemory(uint8_t* const destination, const uint16_t length, const
     memcpy(destination,&memory[position],_length);
     return (_length==length);
 }
+
+bool DS2430::syncScratchpad()
+{
+    uint8_t length = (MEM_SIZE > SCRATCHPAD_SIZE) ? SCRATCHPAD_SIZE : MEM_SIZE;
+    memcpy(scratchpad,memory,length);
+    return true;
+}
+

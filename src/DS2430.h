@@ -1,5 +1,5 @@
-// 1Kb 1-Wire EEPROM
-// usercontribution, based on ds2431 (but without some features)
+// 256bit 1-Wire EEPROM & 64bit OTP
+// works
 
 #ifndef ONEWIRE_DS2430_H
 #define ONEWIRE_DS2430_H
@@ -10,19 +10,22 @@ class DS2430 : public OneWireItem
 {
 private:
 
-    static constexpr uint8_t  MEM_SIZE          { 32 };
+    static constexpr uint8_t  MEM_SIZE          { 32 + 8 };
 
-    static constexpr uint8_t  SCRATCHPAD_SIZE   { 32 };
-    static constexpr uint8_t  SCRATCHPAD_MASK   { 0b00011111 };
+    static constexpr uint8_t  SCRATCHPAD_SIZE   { 32 + 8 };
 
-    static constexpr uint8_t  REG_ES_PF_MASK    { 0b00100000 }; // partial byte flag
+    static constexpr uint8_t  SCRATCHPAD1_MASK   { 0b00011111 };
+    static constexpr uint8_t  SCRATCHPAD1_SIZE   { 32 };
+
+    static constexpr uint8_t  SCRATCHPAD2_ADDR   { 32 };
+    static constexpr uint8_t  SCRATCHPAD2_SIZE   { 8 };
+    static constexpr uint8_t  SCRATCHPAD2_MASK   { 0b00000111 };
 
     uint8_t memory[MEM_SIZE];
 
     uint8_t scratchpad[SCRATCHPAD_SIZE];
 
-    uint8_t scratchpad_start_address;
-    uint8_t scratchpad_size;
+    uint8_t status_register;
 
     void    clearScratchpad(void);
 
@@ -38,6 +41,10 @@ public:
 
     bool    writeMemory(const uint8_t* source, uint8_t length, uint8_t position = 0);
     bool    readMemory(uint8_t* destination, uint16_t length, uint16_t position = 0) const;
+
+    bool    syncScratchpad(void);
+    // this FN copies content of memory to scratchpad
+    // needed because programming interface only allows access to memory
 };
 
 #endif
