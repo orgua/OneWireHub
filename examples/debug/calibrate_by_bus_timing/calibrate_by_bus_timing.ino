@@ -11,7 +11,7 @@
  *
  *      --> test it with a normal sensor-sketch (like ds18b20_thermometer.ini)
  *
- *      --> if it works please make a pullrequest or open an issue to report your determined value
+ *      --> if it works please make a pull request or open an issue to report your determined value
  *          >>>> https://github.com/orgua/OneWireHub
  */
 
