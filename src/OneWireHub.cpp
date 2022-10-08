@@ -234,13 +234,13 @@ bool OneWireHub::poll(void)
         // this additional check prevents an infinite loop when calling this FN without sensors attached
         if (slave_count == 0)       return true;
 
-        //Once reset is done, go to next step
+        // Once reset is done, go to next step
         if (checkReset())           return false;
 
         // Reset is complete, tell the master we are present
         if (showPresence())         return false;
 
-        //Now that the master should know we are here, we will get a command from the master
+        // Now that the master should know we are here, we will get a command from the master
         if (recvAndProcessCmd())    return false;
 
         // on total success we want to start again, because the next reset could only be ~125 us away
