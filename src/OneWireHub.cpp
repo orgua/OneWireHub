@@ -418,6 +418,8 @@ bool OneWireHub::recvAndProcessCmd(void)
             noInterrupts();
             searchIDTree();
             interrupts();
+            // slave_selected->duty(this);
+            // TODO: some ICs like DS2430 allow going for duty() right after search
             return false; // always trigger a re-init after searchIDTree
 
         case 0x69: // overdrive MATCH ROM
