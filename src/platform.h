@@ -106,7 +106,22 @@ constexpr uint8_t VALUE_IPL { (microsecondsToClockCycles(1) > 120) ? 26 : 22 }; 
 using io_reg_t = uint32_t; // define special data type for register-access
 constexpr uint8_t VALUE_IPL { 39 }; // instructions per loop, for 40 and 80 MHz (see esp8266 difference)
 
-#elif defined(__SAMD21G18A__) /* arduino zero */
+#elif defined(ARDUINO_ARCH_SAMD) /* arduino family samd */
+// arduino-zero is defined(__SAMD21G18A__)
+
+// TODO: hack needed until alternative to IPL-approach is implemented
+#define TMP_HACK
+#ifdef TMP_HACK
+#undef clockCyclesPerMicrosecond
+#undef clockCyclesToMicroseconds
+#undef microsecondsToClockCycles
+// assuming SystemCoreClock is 48 MHz
+#define MY_SYSCLK (48000000L)
+//#define MY_SYSCLK (F_CPU)
+#define clockCyclesPerMicrosecond() ( MY_SYSCLK / 1000000L )
+#define clockCyclesToMicroseconds(a) ( ((a) * 1000L) / (MY_SYSCLK / 1000L) )
+#define microsecondsToClockCycles(a) ( (a) * (MY_SYSCLK / 1000000L) )
+#endif
 
 #define PIN_TO_BASEREG(pin)             portModeRegister(digitalPinToPort(pin))
 #define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
