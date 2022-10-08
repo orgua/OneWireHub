@@ -33,7 +33,7 @@ void DS2502::duty(OneWireHub * const hub)
     if (hub->recv(reg_TA,2))  return;
     crc = crc8(reg_TA,2,crc);
 
-    if (reg_TA[1] != 0) return; // upper byte of target adress should not contain any data
+    if (reg_TA[1] != 0) return; // upper byte of target address should not contain any data
 
     switch (cmd)
     {

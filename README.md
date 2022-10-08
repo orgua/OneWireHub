@@ -135,10 +135,10 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - full support for ds2423, ds2450 and ds2503/5/6
 - fix and enhance ds2431, ds2433, ds2502, ds2890, probably every slave got a rework / optimization
 - overdrive-support! must be enabled in config file - works with atmega328@16MHz
-- rework send() and recv(), much more efficient -> less time without interupts (no missing time with millis())! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
+- rework send() and recv(), much more efficient -> less time without interrupts (no missing time with millis())! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
 - rework Error-Handling-System (reduced a lot of overhead)
 - no return value for hub.searchIDTree() or item.duty() needed anymore
-- returns 1 if error occured in the following functions: recv(buf[]), send(), awaitTimeslot(), sendBit(), checkReset(), showPresence(), recvAndProzessCmd()
+- returns 1 if error occurred in the following functions: recv(buf[]), send(), awaitTimeslot(), sendBit(), checkReset(), showPresence(), recvAndProzessCmd()
 - support for ds2408 (thanks to vytautassurvila) and ds2450
 - offline calibration by watching the bus (examples/debug/calibrate_by_bus_timing)
    - branch for online calibration was abandoned because it took to much resources (DS18B20-Sketch compiled to 8434 // 482 bytes instead of 7026 // 426 bytes now) 

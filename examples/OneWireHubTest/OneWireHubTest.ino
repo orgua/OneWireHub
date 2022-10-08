@@ -18,7 +18,7 @@
 #include "BAE910.h"  //
 #include "DS18B20.h" // Digital Thermometer
 #include "DS2401.h"  // Serial Number
-#include "DS2405.h"  // Single adress switch
+#include "DS2405.h"  // Single address switch
 #include "DS2408.h"  // 8-Channel Addressable Switch
 #include "DS2413.h"  // Dual channel addressable switch
 #include "DS2423.h"  // 4kb 1-Wire RAM with Counter

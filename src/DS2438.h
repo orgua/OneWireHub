@@ -1,5 +1,5 @@
 // Smart Battery Monitor
-// works, but without real EPROM copy/recall functionallity, Timer,
+// works, but without real EPROM copy/recall functionality, Timer,
 // native bus-features: none
 
 #ifndef ONEWIRE_DS2438_H
@@ -25,7 +25,7 @@ constexpr uint8_t MemDS2438[64] =
 // 0x01 2byte - temperature
 // 0x03 2byte - voltage
 // 0x05 2byte - current
-// 0x07 1byte - theshold
+// 0x07 1byte - threshold
 
 // 0x08 4byte - ETM Elapsed timer Meter, 1s resolution, seconds till 12AM Jan1 1970
 // 0x0C 1byte - ICA

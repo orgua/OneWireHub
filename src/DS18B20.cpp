@@ -31,7 +31,7 @@ void DS18B20::duty(OneWireHub * const hub)
     {
         case 0x4E: // WRITE SCRATCHPAD
             // write 3 byte of data to scratchpad[2:4], ds18s20 only first 2 bytes (TH, TL)
-            hub->recv(&scratchpad[2], 3); // dont return here, so crc gets updated even if write not complete
+            hub->recv(&scratchpad[2], 3); // don't return here, so crc gets updated even if write not complete
             updateCRC();
             break;
 

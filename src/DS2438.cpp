@@ -49,11 +49,11 @@ void DS2438::duty(OneWireHub * const hub)
 
         case 0x44:      // Convert T
 
-            break; //hub->sendBit(1); // 1 is passive, so ommit it ...
+            break; //hub->sendBit(1); // 1 is passive, so omit it ...
 
         case 0xB4:      // Convert V
 
-            break; //hub->sendBit(1); // 1 is passive, so ommit it ...
+            break; //hub->sendBit(1); // 1 is passive, so omit it ...
 
         default:
 

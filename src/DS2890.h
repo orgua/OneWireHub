@@ -18,7 +18,7 @@ private:
     static constexpr uint8_t REG_MASK_WIPER_SET      { 0b00000010 }; // 0: non, 1: volatile
     static constexpr uint8_t REG_MASK_POTI_NUMB      { 0b00001100 }; // 0..4 potis
     static constexpr uint8_t REG_MASK_WIPER_POS      { 0b00110000 }; // 32, 64, 128, 256 positions
-    static constexpr uint8_t REG_MASK_POTI_RESI      { 0b11000000 }; // 5k, 10k, 50k, 100k Ohm Resistence
+    static constexpr uint8_t REG_MASK_POTI_RESI      { 0b11000000 }; // 5k, 10k, 50k, 100k Ohm Resistance
 
     static constexpr uint8_t RELEASE_CODE            { 0x96 };
 
