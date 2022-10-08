@@ -62,6 +62,7 @@ void DS2408::duty(OneWireHub * const hub)
 
             memory[REG_PIO_ACTIVITY] = 0x00;
             while(!hub->send(&DATA_xAA));
+            break;
 
         case 0xCC:      // write conditional search register
 
