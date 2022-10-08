@@ -67,6 +67,10 @@ private:
     uint8_t memory[MEM_SIZE];  // this mem is the "scratchpad" in the datasheet., no EEPROM implemented
     uint8_t crc[PAGE_COUNT+1]; // keep the matching crc for each memory-page, reading can be very timesensitive
 
+    // One of the following is placed in scratchpad depending on state of REG0_MASK_AD when voltage conversion is requested
+    uint8_t vadVoltage[2];  // unsigned 10 bit
+    uint8_t vddVoltage[2];  // unsigned 10 bit
+
     void calcCRC(uint8_t page);
 
 public:
@@ -86,7 +90,10 @@ public:
     void     setTemperature(int8_t temp_degC);
     int8_t   getTemperature(void) const;
 
-    void     setVoltage(uint16_t voltage_10mV); // unsigned 10 bit
+    // setVoltage should be considered deprecated in favour of setVDDVoltage (default) & setVADVoltage
+    void     setVoltage(uint16_t voltage_10mV);     // unsigned 10 bit
+    void     setVDDVoltage(uint16_t voltage_10mV);  // unsigned 10 bit
+    void     setVADVoltage(uint16_t voltage_10mV);  // unsigned 10 bit
     uint16_t getVoltage(void) const;
 
     void     setCurrent(int16_t value);  // signed 11 bit
