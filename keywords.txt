@@ -21,6 +21,7 @@ DS2423	KEYWORD1
 DS2431	KEYWORD1
 DS2432	KEYWORD1
 DS2433	KEYWORD1
+DS2434	KEYWORD1
 DS2438	KEYWORD1
 DS2450	KEYWORD1
 DS2501	KEYWORD1
@@ -96,6 +97,17 @@ getPageEpromMode	KEYWORD2
 clearMemory	KEYWORD2
 writeMemory	KEYWORD2
 readMemory	KEYWORD2
+
+## DS2434
+clearMemory	KEYWORD2
+writeMemory	KEYWORD2
+readMemory	KEYWORD2
+setTemperature	        KEYWORD2
+getTemperatureRequest	KEYWORD2
+lockNV1	                KEYWORD2
+unlockNV1	            KEYWORD2
+setBatteryCounter	    KEYWORD2
+setID	                KEYWORD2
 
 ## DS2438
 setTemperature	KEYWORD2

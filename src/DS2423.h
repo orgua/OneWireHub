@@ -24,7 +24,7 @@ private:
     static constexpr uint8_t  REG_ES_ZERO_MASK  { 0b01000000 }; // reads always zero
     static constexpr uint8_t  REG_ES_AA_MASK    { 0b10000000 }; // authorization accepted (data copied to target memory)
 
-    static constexpr uint16_t REG_TA_MASK       { 0x01FF }; // Adresses will be stripped of the highest 7 bytes
+    static constexpr uint16_t REG_TA_MASK       { 0x01FF }; // Addresses will be stripped of the highest 7 bytes
 
     uint8_t     memory[MEM_SIZE]; // 4kbit max storage
     uint8_t     scratchpad[PAGE_SIZE];

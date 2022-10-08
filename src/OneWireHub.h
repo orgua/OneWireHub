@@ -102,9 +102,9 @@ private:
     uint8_t getNrOfFirstBitSet(mask_t mask) const;
     uint8_t getNrOfFirstFreeIDTreeElement(void) const;
 
-    bool checkReset(void);      // returns true if error occured
-    bool showPresence(void);    // returns true if error occured
-    bool recvAndProcessCmd();   // returns true if error occured
+    bool checkReset(void);      // returns true if error occurred
+    bool showPresence(void);    // returns true if error occurred
+    bool recvAndProcessCmd();   // returns true if error occurred
 
     void wait(timeOW_t loops_wait) const;
     void wait(uint16_t timeout_us) const;
@@ -132,16 +132,16 @@ public:
 
     bool poll(void);
 
-    bool sendBit(bool value);                                                 // returns 1 if error occured
-    bool send(uint8_t dataByte);                                              // returns 1 if error occured
-    bool send(const uint8_t address[], uint8_t data_length = 1);              // returns 1 if error occured
-    bool send(const uint8_t address[], uint8_t data_length, uint16_t &crc16); // returns 1 if error occured
+    bool sendBit(bool value);                                                 // returns 1 if error occurred
+    bool send(uint8_t dataByte);                                              // returns 1 if error occurred
+    bool send(const uint8_t address[], uint8_t data_length = 1);              // returns 1 if error occurred
+    bool send(const uint8_t address[], uint8_t data_length, uint16_t &crc16); // returns 1 if error occurred
     // CRC takes ~7.4µs/byte (Atmega328P@16MHz) but is distributing the load between each bit-send to 0.9 µs/bit (see debug-crc-comparison.ino)
     // important: the final crc is expected to be inverted (crc=~crc) !!!
 
     bool    recvBit(void);
-    bool    recv(uint8_t address[], uint8_t data_length = 1);                 // returns 1 if error occured
-    bool    recv(uint8_t address[], uint8_t data_length, uint16_t &crc16);    // returns 1 if error occured
+    bool    recv(uint8_t address[], uint8_t data_length = 1);                 // returns 1 if error occurred
+    bool    recv(uint8_t address[], uint8_t data_length, uint16_t &crc16);    // returns 1 if error occurred
 
     timeOW_t waitLoopsCalibrate(void); // returns Instructions per loop
     void     waitLoops1ms(void);
@@ -150,7 +150,7 @@ public:
     // mostly for debug, partly for state-machine handling
     void  printError(void) const;
     Error getError(void) const; // returns Error
-    bool  hasError(void) const; // returns true if Error occured
+    bool  hasError(void) const; // returns true if Error occurred
     void  raiseSlaveError(uint8_t cmd = 0);
     Error clearError(void);
 
