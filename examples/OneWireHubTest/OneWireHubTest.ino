@@ -9,6 +9,7 @@
  *      9232 & 706 byte with arduino 1.6.10 and onewirehub 2.0.1 for UNO
  *      9272 & 708 byte with arduino 1.8.03 and onewirehub 2.0.1 for UNO
  *      9288 & 708 byte with arduino 1.8.03 and onewirehub 2.0.2 for UNO
+ *      9028 & 708 byte with arduino 2.0.00 and onewirehub 2.2.1 for UNO (gcc 7.3)
  */
 
 #include "OneWireHub.h"
