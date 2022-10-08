@@ -8,7 +8,7 @@ DS2408::DS2408(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 void DS2408::duty(OneWireHub * const hub)
 {
     constexpr uint8_t DATA_xAA { 0xAA };
-    uint8_t cmd, reg_TA, data; // command, targetAdress and databytes
+    uint8_t cmd, reg_TA, data; // command, targetAddress and databytes
     uint16_t crc { 0 };
 
     if (hub->recv(&cmd,1,crc)) return;
@@ -62,6 +62,7 @@ void DS2408::duty(OneWireHub * const hub)
 
             memory[REG_PIO_ACTIVITY] = 0x00;
             while(!hub->send(&DATA_xAA));
+            break;
 
         case 0xCC:      // write conditional search register
 

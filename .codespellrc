@@ -1,0 +1,10 @@
+[codespell]
+#skip = 
+
+builtin = clear,rare,informal,usage,code,en-GB_to_en-US
+
+ignore-words-list = master,masters,slave,slaves,usera,thre,OD
+
+# options without argument
+check-filenames =
+check-hidden =

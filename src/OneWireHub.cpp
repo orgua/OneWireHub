@@ -352,8 +352,6 @@ void OneWireHub::searchIDTree(void)
     uint8_t active_slave    = idTree[trigger_pos].slave_selected;
     uint8_t trigger_bit     = idTree[trigger_pos].id_position;
 
-    noInterrupts();
-
     while (position_IDBit < 64)
     {
         // if junction is reached, act different
@@ -399,8 +397,6 @@ void OneWireHub::searchIDTree(void)
         position_IDBit++;
     }
 
-    interrupts();
-
     slave_selected = slave_list[active_slave];
 }
 
@@ -419,7 +415,9 @@ bool OneWireHub::recvAndProcessCmd(void)
         case 0xF0: // Search rom
 
             slave_selected = nullptr;
+            noInterrupts();
             searchIDTree();
+            interrupts();
             // slave_selected->duty(this);
             // TODO: some ICs like DS2430 allow going for duty() right after search
             return false; // always trigger a re-init after searchIDTree
@@ -579,7 +577,7 @@ bool OneWireHub::sendBit(const bool value)
 }
 
 
-// should be the prefered function for writes, returns true if error occured
+// should be the preferred function for writes, returns true if error occurred
 bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
 {
     noInterrupts(); // will be enabled at the end of function
@@ -715,7 +713,7 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
 }
 
 
-// should be the prefered function for reads, returns true if error occured
+// should be the preferred function for reads, returns true if error occurred
 bool OneWireHub::recv(uint8_t address[], const uint8_t data_length, uint16_t &crc16)
 {
     noInterrupts(); // will be enabled at the end of function
@@ -814,7 +812,7 @@ void OneWireHub::waitLoops1ms(void)
 // after that it measures with a waitLoops()-FN to determine the instructions-per-loop-value for the used architecture
 timeOW_t OneWireHub::waitLoopsCalibrate(void)
 {
-    const     timeOW_t wait_loops{1000000 * microsecondsToClockCycles(1)}; // loops before cancelling a pin-change-wait, 1s, TODO: change back to constexpr if possible (ardu due / zero are blocking)
+    const     timeOW_t wait_loops{1000000 * microsecondsToClockCycles(1)}; // loops before canceling a pin-change-wait, 1s, TODO: change back to constexpr if possible (ardu due / zero are blocking)
     constexpr uint32_t TIME_RESET_MIN_US = 430;
 
     timeOW_t time_for_reset = 0;
@@ -886,7 +884,7 @@ void OneWireHub::waitLoopsDebug(void) const
         Serial.println(ONEWIRE_TIME_PRESENCE_TIMEOUT);
         Serial.print("presence low : \t");
         Serial.println(ONEWIRE_TIME_PRESENCE_MIN[od_mode]);
-        Serial.print("pres low max : \t");
+        Serial.print("presence low max : \t");
         Serial.println(ONEWIRE_TIME_PRESENCE_MAX[od_mode]);
         Serial.print("msg hi timeout : \t");
         Serial.println(ONEWIRE_TIME_MSG_HIGH_TIMEOUT);

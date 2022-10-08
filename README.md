@@ -22,6 +22,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2431 (0x2D) 1kbit protected EEPROM** (also known as DS1972 or DS28E07, same FC)
 - DS2432 (0x33) 1kbit protected EEPROM (basically a ds2431 with extra sha-engine)
 - **DS2433 (0x23) 4Kbit EEPROM** (also known as DS1973)
+- **DS2434 (0x1B ???) BatteryManagement** used in some IBM Notebook-Batteries (similar to DS2436 (x1B), with one less cmd)
 - **DS2438 (0x26) Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
 - **DS2450 (0x20) 4 channel A/D**
 - **DS2501 (0x11, 0x91) 512bit EEPROM** -> use DS2502 with different family code
@@ -108,7 +109,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### HELP - What to do if things don't work as expected?
 - check if your arduino software up to date (>v1.8.0)
-- update this lib to the latest release (v2.2.0)
+- update this lib to the latest release (v2.2.2)
 - if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
 - check if clock-speed of the µC is set correctly (if possible) - test with simple blink example, 1sec ON should really need 1sec. timing is critical
 - begin with a simple example like the ds18b20 (if possible). the ds18b20 doesn't support overdrive, so the master won't switch to higher data rates
@@ -134,10 +135,10 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - full support for ds2423, ds2450 and ds2503/5/6
 - fix and enhance ds2431, ds2433, ds2502, ds2890, probably every slave got a rework / optimization
 - overdrive-support! must be enabled in config file - works with atmega328@16MHz
-- rework send() and recv(), much more efficient -> less time without interupts (no missing time with millis())! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
+- rework send() and recv(), much more efficient -> less time without interrupts (no missing time with millis())! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
 - rework Error-Handling-System (reduced a lot of overhead)
 - no return value for hub.searchIDTree() or item.duty() needed anymore
-- returns 1 if error occured in the following functions: recv(buf[]), send(), awaitTimeslot(), sendBit(), checkReset(), showPresence(), recvAndProzessCmd()
+- returns 1 if error occurred in the following functions: recv(buf[]), send(), awaitTimeslot(), sendBit(), checkReset(), showPresence(), recvAndProzessCmd()
 - support for ds2408 (thanks to vytautassurvila) and ds2450
 - offline calibration by watching the bus (examples/debug/calibrate_by_bus_timing)
    - branch for online calibration was abandoned because it took to much resources (DS18B20-Sketch compiled to 8434 // 482 bytes instead of 7026 // 426 bytes now) 

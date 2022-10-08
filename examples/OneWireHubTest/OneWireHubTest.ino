@@ -9,6 +9,7 @@
  *      9232 & 706 byte with arduino 1.6.10 and onewirehub 2.0.1 for UNO
  *      9272 & 708 byte with arduino 1.8.03 and onewirehub 2.0.1 for UNO
  *      9288 & 708 byte with arduino 1.8.03 and onewirehub 2.0.2 for UNO
+ *      9028 & 708 byte with arduino 2.0.00 and onewirehub 2.2.1 for UNO (gcc 7.3)
  */
 
 #include "OneWireHub.h"
@@ -17,7 +18,7 @@
 #include "BAE910.h"  //
 #include "DS18B20.h" // Digital Thermometer
 #include "DS2401.h"  // Serial Number
-#include "DS2405.h"  // Single adress switch
+#include "DS2405.h"  // Single address switch
 #include "DS2408.h"  // 8-Channel Addressable Switch
 #include "DS2413.h"  // Dual channel addressable switch
 #include "DS2423.h"  // 4kb 1-Wire RAM with Counter

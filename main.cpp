@@ -14,7 +14,7 @@ using namespace std;
 #include "src/BAE910.h"
 #include "src/DS18B20.h" // Digital Thermometer
 #include "src/DS2401.h"  // Serial Number
-#include "src/DS2405.h"  // Single adress switch
+#include "src/DS2405.h"  // Single address switch
 #include "src/DS2408.h"  // 8-Channel Addressable Switch
 #include "src/DS2413.h"  // Dual channel addressable switch
 #include "src/DS2423.h"  // 4kb 1-Wire RAM with Counter

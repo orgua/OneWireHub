@@ -30,7 +30,7 @@ void DS2438::duty(OneWireHub * const hub)
             for (uint8_t nByte = page<<3; nByte < (page+1)<<3; ++nByte)
             {
                 uint8_t data;
-                if (hub->recv(&data, 1)) return;
+                if (hub->recv(&data, 1)) break;
                 if ((nByte < 7) && (nByte > 0)) continue; // byte 1-6 are read only
                 memory[nByte] = data;
             }
@@ -49,11 +49,20 @@ void DS2438::duty(OneWireHub * const hub)
 
         case 0x44:      // Convert T
 
-            break; //hub->sendBit(1); // 1 is passive, so ommit it ...
+            break; //hub->sendBit(1); // 1 is passive, so omit it ...
 
         case 0xB4:      // Convert V
+            // Copy VDD or VAD into page zero based on REG0_MASK_AD
+            if (memory[0] & REG0_MASK_AD) {
+                memory[3] = vddVoltage[0];
+                memory[4] = vddVoltage[1];
+            } else {
+                memory[3] = vadVoltage[0];
+                memory[4] = vadVoltage[1];
+            }
+            calcCRC(0);
 
-            break; //hub->sendBit(1); // 1 is passive, so ommit it ...
+            break; //hub->sendBit(1); // 1 is passive, so omit it ...
 
         default:
 
@@ -139,12 +148,31 @@ int8_t DS2438::getTemperature() const
     return memory[2];
 }
 
-
-void DS2438::setVoltage(const uint16_t voltage_10mV) // 10 bit
+void convertVoltage(uint8_t* const destination, const uint16_t voltage_10mV) // 10 bit
 {
-    memory[3] = uint8_t(voltage_10mV & 0xFF);
-    memory[4] = uint8_t((voltage_10mV >> 8) & static_cast<uint8_t>(0x03));
+    destination[0] = uint8_t(voltage_10mV & 0xFF);
+    destination[1] = uint8_t((voltage_10mV >> 8) & static_cast<uint8_t>(0x03));
+}
+
+// Deprecated method for backward compatibility - put voltage in scratchpad but also store in default (VDD).
+// This will be overwritten as a result of convert command (0xB4) with either VDD (stored here) or VAD.
+// If a system is designed such that the master knows to call 0xB4 it likely knows about REG0_MASK_AD too
+// so SetVDDVoltage SetVADVoltage should be used.
+void DS2438::setVoltage(const uint16_t voltage_10mV)
+{
+    setVDDVoltage(voltage_10mV);
+    memory[3] = vddVoltage[0];
+    memory[4] = vddVoltage[1];
     calcCRC(0);
+}
+
+void DS2438::setVDDVoltage(uint16_t voltage_10mV)
+{
+    convertVoltage(vddVoltage, voltage_10mV);
+}
+
+void DS2438::setVADVoltage(uint16_t voltage_10mV) {
+    convertVoltage(vadVoltage, voltage_10mV);
 }
 
 uint16_t DS2438::getVoltage(void) const

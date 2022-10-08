@@ -55,7 +55,7 @@ void DS2433::duty(OneWireHub * const hub)
             if (hub->recv(&data)) return;  // ES
             if (data != reg_ES) return;
 
-            if ((reg_ES & REG_ES_PF_MASK) != 0)                  break; // stop if error occured earlier
+            if ((reg_ES & REG_ES_PF_MASK) != 0)                  break; // stop if error occurred earlier
 
             reg_ES |= REG_ES_AA_MASK; // compare was successful
 

@@ -70,7 +70,7 @@ void DS2423::duty(OneWireHub * const hub)
             if (hub->recv(&data,1))                              break;
             if (data != reg_ES)                                  break;
 
-            if ((reg_ES & REG_ES_PF_MASK) != 0)                  break; // stop if error occured earlier
+            if ((reg_ES & REG_ES_PF_MASK) != 0)                  break; // stop if error occurred earlier
             reg_ES |= REG_ES_AA_MASK; // compare was successful
             // we have ~30µs to write the date
             {

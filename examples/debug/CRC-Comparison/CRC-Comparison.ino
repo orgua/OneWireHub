@@ -17,7 +17,7 @@
  *    Result:
  *
  *    - Var2 is faster for longer CRCing >=1byte-wise
- *       - takes from 5.1 to 7.0 µs/byte dependant from array-length
+ *       - takes from 5.1 to 7.0 µs/byte dependent from array-length
  *    - Var1 is slower, but can be fragmented in 8 equal parts
  *       - ~0.9 µs per Bit-Step for Var1C
  */

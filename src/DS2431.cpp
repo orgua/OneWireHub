@@ -90,7 +90,7 @@ void DS2431::duty(OneWireHub * const hub)
             if (data != reg_ES)                                    return; // Auth code must match
 
             if (getPageProtection(uint8_t(reg_TA)))                break; // stop if page is protected (WriteMemory also checks this)
-            if ((reg_ES & REG_ES_PF_MASK) != 0)                    break; // stop if error occured earlier
+            if ((reg_ES & REG_ES_PF_MASK) != 0)                    break; // stop if error occurred earlier
 
             reg_ES |= REG_ES_AA_MASK; // compare was successful
 
