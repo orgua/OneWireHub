@@ -45,9 +45,9 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - support for most onewire-features: MATCH ROM (0x55), SKIP ROM (0xCC), READ ROM (0x0F,0x33), RESUME COMMAND (0xA5)
    - **OVERDRIVE-Mode**: Master can issue OD SKIP ROM (0x13) or OD MATCH ROM (0x69) and slave stays in this mode till it sees a long reset -> OD-feature must be activated in config
    - ALARM SEARCH (0xEC) is NOT implemented yet!
-- cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=1.6.10 recommended)**
+- cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=2.0.0 recommended)**
    - use of constexpr instead of #define for better compiler-messages and cleaner code
-   - use static-assertions for plausibility checks
+   - use static-assertions for compile-time plausibility checks
    - user defined literals convert constants into needed format / unit
 - hardware-dependencies are combined in "platform.h", synced with [Onewire-Lib](https://github.com/PaulStoffregen/OneWire)
    - supported: arduino zero, teensy, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, esp32, raspberry (...)
