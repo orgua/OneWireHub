@@ -23,7 +23,7 @@ jobs:
           - ./examples/DS2408_switch/DS2408_switch.ino
           - ./examples/DS2413_switch/DS2413_switch.ino
           - ./examples/DS2423_RAM/DS2423_RAM.ino
-          - ./examples/DS2431_EEPROM/DS2430_EEPROM.ino
+          - ./examples/DS2430_EEPROM/DS2430_EEPROM.ino
           - ./examples/DS2431_EEPROM/DS2431_EEPROM.ino
           - ./examples/DS2433_EEPROM/DS2433_EEPROM.ino
           - ./examples/DS2434_IBM701c/DS2434_IBM701c.ino
@@ -56,12 +56,14 @@ jobs:
       matrix:
         board:
           - uno
-          - teensy20
+          #- teensy20
           - teensy30
           - teensy36
           - esp01
           - nodemcuv2
           - espduino
+          - espdino32
+          - esp32dev
         example:
           - ./examples/OneWireHubTest/OneWireHubTest.ino
 
@@ -87,7 +89,7 @@ jobs:
         board:
           - digispark-tiny
         example:
-          - ./examples/DS18B20_thermometer/DS18B20_thermometer.ino
+          - ./examples/DS2401_serial/DS2401_serial.ino
 
     steps:
       - name: Checkout 🛎️
