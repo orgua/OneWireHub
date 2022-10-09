@@ -14,13 +14,6 @@ jobs:
       matrix:
         board:
           - uno
-          - teensy20
-          - teensy30
-          - teensy36
-          - esp01
-          - nodemcuv2
-          - espduino
-          - digispark-tiny
         example:
           - ./examples/BAE910_device/BAE910_device.ino
           - ./examples/DS18B20_asInterface/DS18B20_asInterface.ino
@@ -43,18 +36,45 @@ jobs:
           - ./examples/OneWireHubTest/OneWireHubTest.ino
 
     steps:
-
       - name: Checkout 🛎️
         uses: actions/checkout@v3
-
       - name: Set up Python 🐍
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10
-
+          python-version: '3.x'
       - name: Install dependencies 🔧
         run: sudo apt install cmake build-essential
+      - name: Install platformio 🔧
+        run: pip install -U platformio
 
+      - name: compile "${{ matrix.example }} for "${{ matrix.board }}" 🧱
+        run: "platformio ci --lib='.' -b ${{ matrix.board }} ${{ matrix.example }}"
+
+  buildTargets:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        board:
+          - uno
+          - teensy20
+          - teensy30
+          - teensy36
+          - esp01
+          - nodemcuv2
+          - espduino
+          - digispark-tiny
+        example:
+          - ./examples/OneWireHubTest/OneWireHubTest.ino
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies 🔧
+        run: sudo apt install cmake build-essential
       - name: Install platformio 🔧
         run: pip install -U platformio
 
@@ -65,10 +85,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout 🛎️
         uses: actions/checkout@v3
-
       - name: Install dependencies 🔧
         run: sudo apt install cmake build-essential
 
