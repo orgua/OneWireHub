@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  buildExamples:
+  buildAllExamples:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -16,7 +16,7 @@ jobs:
           - uno
         example:
           - ./examples/BAE910_device/BAE910_device.ino
-          - ./examples/DS18B20_asInterface/DS18B20_asInterface.ino
+#          - ./examples/DS18B20_asInterface/DS18B20_asInterface.ino  # needs I2C
           - ./examples/DS18B20_thermometer/DS18B20_thermometer.ino
           - ./examples/DS2401_serial/DS2401_serial.ino
           - ./examples/DS2405_switch/DS2405_switch.ino
@@ -50,7 +50,7 @@ jobs:
       - name: compile "${{ matrix.example }} for "${{ matrix.board }}" 🧱
         run: "platformio ci --lib='.' -b ${{ matrix.board }} ${{ matrix.example }}"
 
-  buildTargetsBig:
+  build4TargetsBig:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -62,7 +62,7 @@ jobs:
           - esp01
           - nodemcuv2
           - espduino
-          - espdino32
+          - espino32
           - esp32dev
         example:
           - ./examples/OneWireHubTest/OneWireHubTest.ino
@@ -82,7 +82,7 @@ jobs:
       - name: compile "${{ matrix.example }} for "${{ matrix.board }}" 🧱
         run: "platformio ci --lib='.' -b ${{ matrix.board }} ${{ matrix.example }}"
 
-  buildTargetsSmall:
+  build4TargetsSmall:
     runs-on: ubuntu-latest
     strategy:
       matrix:
