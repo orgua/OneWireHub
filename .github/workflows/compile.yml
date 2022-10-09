@@ -26,7 +26,7 @@ jobs:
           - ./examples/DS2431_EEPROM/DS2430_EEPROM.ino
           - ./examples/DS2431_EEPROM/DS2431_EEPROM.ino
           - ./examples/DS2433_EEPROM/DS2433_EEPROM.ino
-          - ./examples/DS2433_EEPROM/DS2434_IBM701c.ino
+          - ./examples/DS2434_IBM701c/DS2434_IBM701c.ino
           - ./examples/DS2438_battMon/DS2438_battMon.ino
           - ./examples/DS2450_ADC/DS2450_ADC.ino
           - ./examples/DS2502_DELLCHG/DS2502_DELLCHG.ino
@@ -50,7 +50,7 @@ jobs:
       - name: compile "${{ matrix.example }} for "${{ matrix.board }}" 🧱
         run: "platformio ci --lib='.' -b ${{ matrix.board }} ${{ matrix.example }}"
 
-  buildTargets:
+  buildTargetsBig:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -62,9 +62,32 @@ jobs:
           - esp01
           - nodemcuv2
           - espduino
-          - digispark-tiny
         example:
           - ./examples/OneWireHubTest/OneWireHubTest.ino
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies 🔧
+        run: sudo apt install cmake build-essential
+      - name: Install platformio 🔧
+        run: pip install -U platformio
+
+      - name: compile "${{ matrix.example }} for "${{ matrix.board }}" 🧱
+        run: "platformio ci --lib='.' -b ${{ matrix.board }} ${{ matrix.example }}"
+
+  buildTargetsSmall:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        board:
+          - digispark-tiny
+        example:
+          - ./examples/DS18B20_thermometer/DS18B20_thermometer.ino
 
     steps:
       - name: Checkout 🛎️
