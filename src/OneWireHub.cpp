@@ -407,6 +407,7 @@ bool OneWireHub::recvAndProcessCmd(void)
     if(slave_count == 1){
 
         slave_selected = slave_list[getIndexOfNextSensorInList()];
+        // TODO: this might be expensive for weak uC and OW in Overdrive -> look into optimizations (i.e. preselect when only one device present?)
 
         if( slave_selected->MULTIDROP == false ){
             slave_selected->duty(this);
