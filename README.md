@@ -4,7 +4,7 @@ OneWireHub
 The OneWireHub is a sleek Arduino compatible (and many more platforms) library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously. 
 The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your home automation environment.
 
-[![Build Status](https://travis-ci.org/orgua/OneWireHub.svg?branch=master)](https://travis-ci.org/orgua/OneWireHub)
+[![CompileTests](https://github.com/orgua/OneWireHub/actions/workflows/compile.yml/badge.svg)](https://github.com/orgua/OneWireHub/actions/workflows/compile.yml)
 
 ### Implemented Slaves
 
@@ -24,7 +24,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2431 (0x2D) 1kbit protected EEPROM** (also known as DS1972 or DS28E07, same FC)
 - DS2432 (0x33) 1kbit protected EEPROM (basically a ds2431 with extra sha-engine)
 - **DS2433 (0x23) 4Kbit EEPROM** (also known as DS1973)
-- DS2434 (0x1B ???) BatteryManagement used in some IBM Notebook-Batteries (similar to DS2436 (x1B), with one less cmd)
+- DS2434 (0x1B ???) BatteryManagement used in some IBM Notebook-Batteries (similar to DS2436 (x1B), but without multidrop and one less cmd)
 - **DS2438 (0x26) Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
 - **DS2450 (0x20) 4 channel A/D**
 - **DS2501 (0x11, 0x91) 512bit EEPROM** -> use DS2502 with different family code
@@ -45,9 +45,9 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - support for most onewire-features: MATCH ROM (0x55), SKIP ROM (0xCC), READ ROM (0x0F,0x33), RESUME COMMAND (0xA5)
    - **OVERDRIVE-Mode**: Master can issue OD SKIP ROM (0x13) or OD MATCH ROM (0x69) and slave stays in this mode till it sees a long reset -> OD-feature must be activated in config
    - ALARM SEARCH (0xEC) is NOT implemented yet!
-- cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=1.6.10 recommended)**
+- cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=2.0.0 recommended)**
    - use of constexpr instead of #define for better compiler-messages and cleaner code
-   - use static-assertions for plausibility checks
+   - use static-assertions for compile-time plausibility checks
    - user defined literals convert constants into needed format / unit
 - hardware-dependencies are combined in "platform.h", synced with [Onewire-Lib](https://github.com/PaulStoffregen/OneWire)
    - supported: arduino zero, teensy, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, esp32, raspberry (...)
@@ -115,7 +115,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 ### HELP - What to do if things don't work as expected?
 
 - check if your arduino software up to date (>v1.8.0)
-- update this lib to the latest release (v2.2.2)
+- update this lib to the latest release (v2.2.3)
 - if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
 - check if clock-speed of the µC is set correctly (if possible) - test with simple blink example, 1sec ON should really need 1sec. timing is critical
 - begin with a simple example like the ds18b20 (if possible). the ds18b20 doesn't support overdrive, so the master won't switch to higher data rates

@@ -27,6 +27,16 @@ public:
     OneWireItem& operator=(const OneWireItem& owItem) = delete;  // disallow copy assignment
     OneWireItem& operator=(OneWireItem&& owItem) = delete;       // disallow move assignment
 
+    // DEFAULT BUS-FEATURES:
+    // Specify if the device can be used on a bus with other 1-wire devices
+    // If FALSE all commands will be passed through directly to the duty() call of the device
+    // NOTE: there can be only one device on the bus (beside the controller)
+    bool skip_multidrop            { false };
+    // skip reboot after a search-rom command -> feature normal, except ds2401 & ds18b20
+    bool fast_search_rom           { true };
+    // skip reboot after a read-rom command -> feature normal, except ds2401
+    bool fast_read_rom             { true };
+
     uint8_t ID[8];
 
     void sendID(OneWireHub * hub) const;

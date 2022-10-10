@@ -15,8 +15,10 @@ set(SOURCE_FILES
         src/DS2408.cpp
         src/DS2413.cpp
         src/DS2423.cpp
+        src/DS2430.cpp
         src/DS2431.cpp
         src/DS2433.cpp
+        src/DS2434.cpp
         src/DS2438.cpp
         src/DS2450.cpp
         src/DS2502.cpp
@@ -26,6 +28,6 @@ set(SOURCE_FILES
         src/OneWireHub_config.h
         src/OneWireItem.cpp
         src/platform.cpp
-        )
+        )  # TODO: this does not have to be manual
 
 add_executable(OneWireHub ${SOURCE_FILES})

@@ -1,0 +1,138 @@
+name: CompileTests
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  buildAllExamples:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        board:
+          - uno
+        example:
+          - ./examples/BAE910_device/BAE910_device.ino
+#          - ./examples/DS18B20_asInterface/DS18B20_asInterface.ino  # needs I2C
+          - ./examples/DS18B20_thermometer/DS18B20_thermometer.ino
+          - ./examples/DS2401_serial/DS2401_serial.ino
+          - ./examples/DS2405_switch/DS2405_switch.ino
+          - ./examples/DS2408_switch/DS2408_switch.ino
+          - ./examples/DS2413_switch/DS2413_switch.ino
+          - ./examples/DS2423_RAM/DS2423_RAM.ino
+          - ./examples/DS2430_EEPROM/DS2430_EEPROM.ino
+          - ./examples/DS2431_EEPROM/DS2431_EEPROM.ino
+          - ./examples/DS2433_EEPROM/DS2433_EEPROM.ino
+          - ./examples/DS2434_IBM701c/DS2434_IBM701c.ino
+          - ./examples/DS2438_battMon/DS2438_battMon.ino
+          - ./examples/DS2450_ADC/DS2450_ADC.ino
+          - ./examples/DS2502_DELLCHG/DS2502_DELLCHG.ino
+          - ./examples/DS2502_EEPROM/DS2502_EEPROM.ino
+          - ./examples/DS2506_EEPROM/DS2506_EEPROM.ino
+          - ./examples/DS2890_poti/DS2890_poti.ino
+          - ./examples/OneWireHubTest/OneWireHubTest.ino
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies 🔧
+        run: sudo apt install cmake build-essential
+      - name: Install platformio 🔧
+        run: pip install -U platformio
+
+      - name: compile "${{ matrix.example }} for "${{ matrix.board }}" 🧱
+        run: "platformio ci --lib='.' -b ${{ matrix.board }} ${{ matrix.example }}"
+
+  build4TargetsBig:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        board:
+          - uno
+          #- teensy20
+          - teensy30
+          - teensy36
+          - esp01
+          - nodemcuv2
+          - espduino
+          #- espino32 # not capable of c++11?
+          #- esp32dev # not capable of c++11?
+
+### Travis - LIST - TODO: find more and extend
+# due   # arduino due  -> current tick-counting implementation not compatible
+# zero  # arduino zero  -> current tick-counting implementation not compatible
+# teensy30 teensy31 teensy35 teensy36   # teensy 3
+# teensy20 teensy20pp                   # teensy 2  -> crc-lib has linker problem in platformIO but works in arduino-sw
+# esp01 nodemcuv2 espduino              # esp8266
+# espino32 esp32dev                     # esp8266
+# rfduino               # nrf51 -> will probably fail due to old gcc 4.8.3 with artificial limit to c++98
+# lenny uno_pic32       # pic32mx -> error: pic32-g++ not found
+# genuino101            # intel curie -> value_ipl is unknown for this hardware
+# attiny88 attiny84     # attiny -> linker error for unknown virtual function
+# digispark-tiny        # attiny
+
+        example:
+          - ./examples/OneWireHubTest/OneWireHubTest.ino
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies 🔧
+        run: sudo apt install cmake build-essential
+      - name: Install platformio 🔧
+        run: pip install -U platformio
+
+      - name: compile "${{ matrix.example }} for "${{ matrix.board }}" 🧱
+        run: "platformio ci --lib='.' -b ${{ matrix.board }} ${{ matrix.example }}"
+
+  build4TargetsSmall:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        board:
+          - digispark-tiny
+        example:
+          - ./examples/DS2401_serial/DS2401_serial.ino
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies 🔧
+        run: sudo apt install cmake build-essential
+      - name: Install platformio 🔧
+        run: pip install -U platformio
+
+      - name: compile "${{ matrix.example }} for "${{ matrix.board }}" 🧱
+        run: "platformio ci --lib='.' -b ${{ matrix.board }} ${{ matrix.example }}"
+
+  testsuite:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+      - name: Install dependencies 🔧
+        run: sudo apt install cmake build-essential
+
+      - name: Run primitive testsuite 🧱
+        run: |
+          mkdir build
+          cd ./build
+          cmake ..
+          make
+          ./OneWireHub

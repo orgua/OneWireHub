@@ -15,6 +15,9 @@ DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5
     updateCRC(); // update scratchpad[8]
 
     ds18s20_mode = (ID1 == 0x10); // different tempRegister
+
+    // disable bus-features:
+    fast_search_rom = false;
 }
 
 void DS18B20::updateCRC()
