@@ -20,6 +20,7 @@ using namespace std;
 #include "src/DS2423.h"  // 4kb 1-Wire RAM with Counter
 #include "src/DS2431.h"  // 1kb 1-Wire EEPROM
 #include "src/DS2433.h"  // 4Kb 1-Wire EEPROM
+#include "src/DS2434.h"  // 1-Wire EEPROM
 #include "src/DS2438.h"  // Smart Battery Monitor
 #include "src/DS2450.h"  // 4 channel A/D
 #include "src/DS2502.h"  // 1kb EEPROM
@@ -87,6 +88,7 @@ int main()
     auto hubA      = OneWireHub(OneWire_PIN);
     auto hubB      = OneWireHub(OneWire_PIN);
     auto hubC      = OneWireHub(OneWire_PIN);
+    auto hubD      = OneWireHub(OneWire_PIN);
 
     auto ds1822   = DS18B20(0x22, 0x0D, 0x01, 0x08, 0x02, 0x00, 0x00);
     auto ds18B20  = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);      // Work - Digital Thermometer
@@ -116,6 +118,8 @@ int main()
     auto ds2890C  = DS2890( 0x2C, 0x0D, 0x02, 0x08, 0x09, 0x00, 0x0C );
     auto bae910   = BAE910(BAE910::family_code, 0x00, 0x00, 0x10, 0xE9, 0xBA, 0x00);
 
+    auto ds2434     = DS2434(0x1B, 0x01, 0x02, 0x12, 0x34, 0x56, 0x78);
+
     cout << "- attach devices to hubs" << endl;
     
     // Setup OneWire
@@ -144,6 +148,8 @@ int main()
     hubC.attach(ds2890B);
     hubC.attach(ds2890C);
     hubC.attach(bae910);
+
+    hubD.attach(ds2434);
 
     cout << "- use every device-function at least once and do some unit-testing" << endl;
 
@@ -634,6 +640,23 @@ int main()
 
         test_eq(ds2890A.getRegCtrl(), 12_u8, "DS2890 control register preset");
         test_eq(ds2890A.getRegFeat(), 255_u8, "DS2890 feature register preset");
+    }
+
+    {
+        // DS2434
+        // add default-data
+        constexpr uint8_t mem1[24] = {0x14, 0x10, 0x90, 0xd0, 0x03, 0x32, 0x4b, 0x3c,
+                                      0xff, 0x04, 0x64, 0x04, 0x9e, 0x9a, 0x3a, 0xf0,
+                                      0x20, 0x20, 0x04, 0xee, 0x63, 0xB8, 0x3E, 0x63 };  // last 4 Byte seem to be Serial
+        ds2434.writeMemory(reinterpret_cast<const uint8_t *>(mem1),sizeof(mem1),0x00);
+
+        constexpr  uint8_t mem2[8] = {0x33, 0x2e, 0x33, 0x2e, 0x9e, 0x10, 0x3f, 0x50 };
+        ds2434.writeMemory(reinterpret_cast<const uint8_t *>(mem2),sizeof(mem2),0x20);
+
+        ds2434.lockNV1();
+        ds2434.setID(0xCABDu);
+        ds2434.setBatteryCounter(0x0123u);
+        ds2434.setTemperature(22);
     }
 
 

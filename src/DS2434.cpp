@@ -4,9 +4,6 @@ DS2434::DS2434(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 {
     clearMemory();
     clearScratchpad();
-    // TODO: ID-Order is just an assumption
-    scratchpad[80] = ID1;
-    scratchpad[81] = ID2;
 }
 
 void DS2434::duty(OneWireHub * const hub)
