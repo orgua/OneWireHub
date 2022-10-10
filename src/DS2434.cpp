@@ -2,6 +2,10 @@
 
 DS2434::DS2434(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
+    // The DS2434 is NOT compatible with multidrop.
+    // It can be the only one of the bus
+    MULTIDROP = false; 
+    
     clearMemory();
     clearScratchpad();
     // TODO: ID-Order is just an assumption
@@ -9,6 +13,7 @@ DS2434::DS2434(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     scratchpad[81] = ID2;
 }
 
+// As this device is not multidrop, it needs to handle ALL commands from the master
 void DS2434::duty(OneWireHub * const hub)
 {
     uint8_t start_byte, cmd, data;
