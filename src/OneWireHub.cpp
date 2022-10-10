@@ -402,6 +402,19 @@ void OneWireHub::searchIDTree(void)
 
 bool OneWireHub::recvAndProcessCmd(void)
 {
+
+    // If the only slave is not multidrop compatible, pass all data handling to the slave
+    if(slave_count == 1){
+
+        slave_selected = slave_list[getIndexOfNextSensorInList()];
+        // TODO: this might be expensive for weak uC and OW in Overdrive -> look into optimizations (i.e. preselect when only one device present?)
+
+        if( slave_selected->MULTIDROP == false ){
+            slave_selected->duty(this);
+            return (_error != Error::NO_ERROR);
+        }        
+    }
+
     uint8_t address[8], cmd;
     bool    flag = false;
 

@@ -27,6 +27,10 @@ public:
     OneWireItem& operator=(const OneWireItem& owItem) = delete;  // disallow copy assignment
     OneWireItem& operator=(OneWireItem&& owItem) = delete;       // disallow move assignment
 
+    // Specify if the device can be used on a bus with other 1-wire devices
+    // If FALSE all commands will be passed through directly to the duty() call of the device
+    bool MULTIDROP { true }; // TODO: should be lowercase, as it is no constant (yet)
+    
     uint8_t ID[8];
 
     void sendID(OneWireHub * hub) const;
