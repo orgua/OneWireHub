@@ -29,7 +29,7 @@ public:
 
     // Specify if the device can be used on a bus with other 1-wire devices
     // If FALSE all commands will be passed through directly to the duty() call of the device
-    bool MULTIDROP { true };
+    bool MULTIDROP { true }; // TODO: should be lowercase, as it is no constant (yet)
     
     uint8_t ID[8];
 
