@@ -7,6 +7,11 @@ BAE910::BAE910(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
     // clear memory
     memset(&memory.bytes[0], static_cast<uint8_t>(0x00), BAE910_MEMORY_SIZE);
+
+    // disable bus-features:
+    // TODO: test, as datasheet does not clear this up -> this settings keeps the previous behavior
+    fast_read_rom = false;
+    fast_search_rom = false;
 }
 
 

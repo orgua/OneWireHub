@@ -22,7 +22,7 @@ private:
 
 public:
 
-    static constexpr uint8_t family_code { 0x28 }; // is compatible to ds1822 (0x22) and ds18S20 (0x10)
+    static constexpr uint8_t family_code                { 0x28 }; // is compatible to ds1822 (0x22) and ds18S20 (0x10)
 
     DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 

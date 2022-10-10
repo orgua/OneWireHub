@@ -24,7 +24,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 - **DS2431 (0x2D) 1kbit protected EEPROM** (also known as DS1972 or DS28E07, same FC)
 - DS2432 (0x33) 1kbit protected EEPROM (basically a ds2431 with extra sha-engine)
 - **DS2433 (0x23) 4Kbit EEPROM** (also known as DS1973)
-- DS2434 (0x1B ???) BatteryManagement used in some IBM Notebook-Batteries (similar to DS2436 (x1B), with one less cmd)
+- DS2434 (0x1B ???) BatteryManagement used in some IBM Notebook-Batteries (similar to DS2436 (x1B), but without multidrop and one less cmd)
 - **DS2438 (0x26) Smart Battery Monitor, measures temperature, 2x voltage and current, 10bit**
 - **DS2450 (0x20) 4 channel A/D**
 - **DS2501 (0x11, 0x91) 512bit EEPROM** -> use DS2502 with different family code

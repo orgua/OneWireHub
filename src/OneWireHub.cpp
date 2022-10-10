@@ -404,12 +404,13 @@ bool OneWireHub::recvAndProcessCmd(void)
 {
 
     // If the only slave is not multidrop compatible, pass all data handling to the slave
-    if(slave_count == 1){
+    if(slave_count == 1u){
 
         slave_selected = slave_list[getIndexOfNextSensorInList()];
-        // TODO: this might be expensive for weak uC and OW in Overdrive -> look into optimizations (i.e. preselect when only one device present?)
+        // TODO: this might be expensive for weak uC and OW in Overdrive and only one device emulated
+        //  -> look into optimizations (i.e. preselect when only one device present?)
 
-        if( slave_selected->MULTIDROP == false ){
+        if( slave_selected->skip_multidrop ){
             slave_selected->duty(this);
             return (_error != Error::NO_ERROR);
         }        
@@ -431,8 +432,13 @@ bool OneWireHub::recvAndProcessCmd(void)
             noInterrupts();
             searchIDTree();
             interrupts();
-            // slave_selected->duty(this);
-            // TODO: some ICs like DS2430 allow going for duty() right after search
+
+            // most ICs allow going for duty() right after search
+            if ((_error == Error::NO_ERROR) && (slave_selected != nullptr) && slave_selected->fast_search_rom)
+            {
+                slave_selected->duty(this);
+            }
+
             return false; // always trigger a re-init after searchIDTree
 
         case 0x69: // overdrive MATCH ROM
@@ -520,6 +526,12 @@ bool OneWireHub::recvAndProcessCmd(void)
             if (slave_selected != nullptr)
             {
                 slave_selected->sendID(this);
+
+                // most ICs allow to go to duty() without reset
+                if ((_error == Error::NO_ERROR) && slave_selected->fast_read_rom)
+                {
+                    slave_selected->duty(this);
+                }
             }
             return false;
 
