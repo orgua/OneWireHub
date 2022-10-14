@@ -14,6 +14,7 @@ DS2434::DS2434(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 void DS2434::duty(OneWireHub * const hub)
 {
     uint8_t start_byte, cmd, data;
+    uint32_t time_now;
     if (hub->recv(&cmd))  return;
 
     switch (cmd)
@@ -44,11 +45,13 @@ void DS2434::duty(OneWireHub * const hub)
         if (memory[0x62] & 0b100u) return; // check LOCK-Status
         writeMemory(&scratchpad[PAGE1_ADDR], PAGE_SIZE, PAGE1_ADDR);
         // NOTE: OP occupies real NV for ~ 10 ms (NVB-Bit)
+        timer_nvwr = millis() + DURATION_NVWR_ms;
         break;
 
     case 0x25:      // copy scratchpad SP2 to NV2
         writeMemory(&scratchpad[PAGE2_ADDR], PAGE_SIZE, PAGE2_ADDR);
         // NOTE: OP occupies real NV for ~ 10 ms (NVB-Bit)
+        timer_nvwr = millis() + DURATION_NVWR_ms;
         break;
 
     case 0x28:      // copy scratchpad SP3 to SRAM
@@ -62,34 +65,46 @@ void DS2434::duty(OneWireHub * const hub)
     case 0x77:      // Recall Memory, NV2 to SP2
         readMemory(&scratchpad[PAGE2_ADDR], PAGE_SIZE, PAGE2_ADDR);
         // NOTE: OP occupies real NV for ~ 10 ms (NVB-Bit)
+        timer_nvwr = millis() + DURATION_NVWR_ms;
         break;
 
     case 0x7A:      // Recall Memory, SRAM to SP3
         readMemory(&scratchpad[PAGE3_ADDR], PAGE_SIZE, PAGE3_ADDR);
         // NOTE: OP occupies real NV for ~ 10 ms (NVB-Bit)
+        timer_nvwr = millis() + DURATION_NVWR_ms;
         break;
 
     case 0x43:      // lock NV1
         lockNV1();
         // NOTE: OP occupies real NV for ~ 10 ms (NVB-Bit)
+        timer_nvwr = millis() + DURATION_NVWR_ms;
         break;
     case 0x44:      // unlock NV1
         unlockNV1();
         // NOTE: OP occupies real NV for ~ 10 ms (NVB-Bit)
+        timer_nvwr = millis() + DURATION_NVWR_ms;
         break;
 
     case 0xD2:      // trigger temperature-reading
-        scratchpad[0x62] |= 0b1u;
+        request_temp = true;
+        timer_temp = millis() + DURATION_TEMP_ms;
         break;
 
     case 0xB2:      // read Page 4 and 5
         if (hub->recv(&start_byte))  return;
         if (start_byte < PAGE4_ADDR) return; // when out of limits
         if (start_byte >= PAGE6_ADDR) return;
+
+        // update status byte, TODO: done here because laptop waits -> check duration
+        time_now = millis();
+        if (time_now >= timer_nvwr)     scratchpad[0x62] &= ~0b10u; // erase busy-flag
+        else                            scratchpad[0x62] |= 0b10u; // set busy-flag
+        if (time_now >= timer_temp)     scratchpad[0x62] &= ~0b1u; // erase busy-flag
+        else                            scratchpad[0x62] |= 0b1u; // set busy-flag
+
         for (uint8_t nByte = start_byte; nByte < PAGE6_ADDR; ++nByte)
         {
-            if (hub->recv(&data, 1)) return;
-            scratchpad[nByte] = data;
+            if (hub->send(&scratchpad[nByte], 1)) return;
         }
         break;
 
@@ -100,12 +115,20 @@ void DS2434::duty(OneWireHub * const hub)
             scratchpad[82]++;
         }
         // NOTE: OP occupies real NV for ~ 10 ms (NVB-Bit)
+        timer_nvwr = millis() + DURATION_NVWR_ms;
         break;
 
     case 0xB8:      // reset Cycle
         scratchpad[82] = 0u;
         scratchpad[83] = 0u;
         // NOTE: OP occupies real NV for ~ 10 ms (NVB-Bit)
+        timer_nvwr = millis() + DURATION_NVWR_ms;
+        break;
+
+    case 0x8E:      // secret command just to avoid triggering an error
+        break;
+    case 0x84:      // second secret command
+        if (hub->recv(&data))  return;
         break;
 
     default:
@@ -153,12 +176,12 @@ void DS2434::setTemperature(const int8_t temp_degC)
     memory[60] = uvalue << 1u;
 
     // reset request
-    scratchpad[0x62] &= ~0b1u;
+    request_temp = false;
 }
 
 bool DS2434::getTemperatureRequest() const
 {
-    return (scratchpad[0x62] & 0b1u);
+    return (request_temp);
 }
 
 void DS2434::lockNV1()

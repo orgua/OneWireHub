@@ -51,6 +51,12 @@ private:
     static constexpr uint8_t  MEM_SIZE           { 3 * PAGE_SIZE };
     static constexpr uint8_t  SCRATCHPAD_SIZE    { PAGE_COUNT * PAGE_SIZE };
 
+    static constexpr uint32_t DURATION_TEMP_ms   { 230 };
+    static constexpr uint32_t DURATION_NVWR_ms   { 10 };
+    uint32_t timer_temp = 0u;
+    uint32_t timer_nvwr = 0u;
+    bool     request_temp = false;
+
     uint8_t  memory[MEM_SIZE];
     uint8_t  scratchpad[SCRATCHPAD_SIZE];
 

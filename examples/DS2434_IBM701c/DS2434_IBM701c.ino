@@ -35,7 +35,7 @@ void setup()
 
 void loop()
 {
-    static uint8_t temp = 20;
+    static uint8_t temp = 20u;
 
     // following function must be called periodically
     hub.poll();
@@ -44,6 +44,7 @@ void loop()
     if (ds2434.getTemperatureRequest())
     {
         ds2434.setTemperature(temp++);
+        if (temp > 25u) temp = 20u;
     }
 
 } 
