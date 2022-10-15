@@ -411,7 +411,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         if( slave_selected->MULTIDROP == false ){
             slave_selected->duty(this);
-            return (_error != Error::NO_ERROR);
+            return false;
         }        
     }
 
