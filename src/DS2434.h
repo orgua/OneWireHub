@@ -48,8 +48,14 @@ private:
     static constexpr uint8_t  PAGE_SIZE          { 32 };
     static constexpr uint8_t  PAGE_COUNT         { 5 };
 
-    static constexpr uint8_t  MEM_SIZE           { 3 * PAGE_SIZE };
-    static constexpr uint8_t  SCRATCHPAD_SIZE    { PAGE_COUNT * PAGE_SIZE };
+    static constexpr uint8_t  MEM_SIZE           { PAGE_COUNT * PAGE_SIZE };
+    static constexpr uint8_t  SCRATCHPAD_SIZE    { 3 * PAGE_SIZE };
+
+    static constexpr uint32_t DURATION_TEMP_ms   { 230 };
+    static constexpr uint32_t DURATION_NVWR_ms   { 10 };
+    uint32_t timer_temp = 0u;
+    uint32_t timer_nvwr = 0u;
+    bool     request_temp = false;
 
     uint8_t  memory[MEM_SIZE];
     uint8_t  scratchpad[SCRATCHPAD_SIZE];
@@ -58,7 +64,7 @@ private:
 
 public:
 
-    static constexpr uint8_t family_code        { 0x53 }; // TODO: 1B seems to be right
+    static constexpr uint8_t family_code        { 0x53 }; // TODO: 1B seems to be right (for ds2436)
 
     DS2434(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
