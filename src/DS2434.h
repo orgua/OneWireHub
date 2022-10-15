@@ -48,7 +48,7 @@ private:
     static constexpr uint8_t  PAGE_SIZE          { 32 };
     static constexpr uint8_t  PAGE_COUNT         { 5 };
 
-    static constexpr uint8_t  MEM_SIZE           { PAGE_COUNT * PAGE_SIZE };
+    static constexpr uint8_t  MEM_SIZE           { 132 };
     static constexpr uint8_t  SCRATCHPAD_SIZE    { 3 * PAGE_SIZE };
 
     static constexpr uint32_t DURATION_TEMP_ms   { 230 };
@@ -72,8 +72,8 @@ public:
 
     void    clearMemory(void);
 
-    bool    writeMemory(const uint8_t* source, uint16_t length, uint16_t position = 0);
-    bool    readMemory(uint8_t* destination, uint16_t length, uint16_t position = 0) const;
+    bool    writeMemory(const uint8_t* source, uint8_t length, uint8_t position = 0);
+    bool    readMemory(uint8_t* destination, uint8_t length, uint8_t position = 0) const;
 
     void     setTemperature(int8_t temp_degC); // can vary from -40 to 127 degC
     bool     getTemperatureRequest(void) const;

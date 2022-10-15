@@ -28,8 +28,7 @@ void setup()
     ds2434.writeMemory(reinterpret_cast<const uint8_t *>(mem2),sizeof(mem2),0x20);
 
     ds2434.lockNV1();
-    ds2434.setID(0xCABDu);
-    ds2434.setBatteryCounter(1234u);
+    ds2434.setBatteryCounter(0x0101u);
 }
 
 void loop()
