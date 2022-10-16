@@ -97,30 +97,30 @@ void DS2434::duty(OneWireHub * const hub)
 
         // update status byte, TODO: done here because laptop waits -> check duration
         time_now = millis();
-        if (time_now >= timer_nvwr)     scratchpad[0x62] &= ~0b10u; // erase busy-flag
-        else                            scratchpad[0x62] |= 0b10u; // set busy-flag
-        if (time_now >= timer_temp)     scratchpad[0x62] &= ~0b1u; // erase busy-flag
-        else                            scratchpad[0x62] |= 0b1u; // set busy-flag
+        if (time_now >= timer_nvwr)     memory[0x62] &= ~0b10u; // erase busy-flag
+        else                            memory[0x62] |= 0b10u; // set busy-flag
+        if (time_now >= timer_temp)     memory[0x62] &= ~0b1u; // erase busy-flag
+        else                            memory[0x62] |= 0b1u; // set busy-flag
 
         for (uint8_t nByte = start_byte; nByte < PAGE6_ADDR; ++nByte)
         {
-            if (hub->send(&scratchpad[nByte], 1)) return;
+            if (hub->send(&memory[nByte], 1)) return;
         }
         break;
 
     case 0xB5:      // increment Cycle
-        if (++scratchpad[83] == 0u)
+        if (++memory[0x83] == 0u)
         {
             // after overflow of LSB
-            scratchpad[82]++;
+            memory[0x82]++;
         }
         // NOTE: OP occupies real NV for ~ 10 ms (NVB-Bit)
         timer_nvwr = millis() + DURATION_NVWR_ms;
         break;
 
     case 0xB8:      // reset Cycle
-        scratchpad[82] = 0u;
-        scratchpad[83] = 0u;
+        memory[0x82] = 0u;
+        memory[0x83] = 0u;
         // NOTE: OP occupies real NV for ~ 10 ms (NVB-Bit)
         timer_nvwr = millis() + DURATION_NVWR_ms;
         break;
@@ -168,12 +168,12 @@ void DS2434::setTemperature(const int8_t temp_degC)
 
     if (value > 126) value = 126;
     if (value < -40) value = -40;
-    memory[61] = value;
+    memory[0x61] = value;
 
     if (value < 0) value = 0;
     uint8_t uvalue = static_cast<uint8_t>(value);
 
-    memory[60] = uvalue << 1u;
+    memory[0x60] = uvalue << 1u;
 
     // reset request
     request_temp = false;
@@ -186,20 +186,20 @@ bool DS2434::getTemperatureRequest() const
 
 void DS2434::lockNV1()
 {
-    scratchpad[0x62] |= 0b100u;
+    memory[0x62] |= 0b100u;
 }
 
 void DS2434::unlockNV1()
 {
-    scratchpad[0x62] &= ~0b100u;
+    memory[0x62] &= ~0b100u;
 }
 
 void DS2434::setBatteryCounter(uint16_t value)
 {
-    *((uint16_t *) &scratchpad[82]) = value;
+    *((uint16_t *) &memory[0x82]) = value;
 }
 
 void DS2434::setID(uint16_t value)
 {
-    *((uint16_t *) &scratchpad[80]) = value;
+    *((uint16_t *) &memory[0x80]) = value;
 }
