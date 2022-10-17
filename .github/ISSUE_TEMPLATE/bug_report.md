@@ -25,9 +25,9 @@ If applicable, add screenshots to help explain your problem.
 **Dev-Environment:**
 Give some information about your setup, like:
 - microcontroller used for the hub
-- onewire-host to talk to the hub 
+- onewire-host to talk to the hub
 - software and version used to compile
-- which device is emulated, what works, what doesn't 
+- which device is emulated, what works, what doesn't
 
 **Additional context**
 Add any other context about the problem here.

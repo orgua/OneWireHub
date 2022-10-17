@@ -65,7 +65,7 @@ private:
     static constexpr uint8_t REG0_MASK_ADB  { 0x40 }; // adc busy flag
 
     uint8_t memory[MEM_SIZE];  // this mem is the "scratchpad" in the datasheet., no EEPROM implemented
-    uint8_t crc[PAGE_COUNT+1]; // keep the matching crc for each memory-page, reading can be very timesensitive
+    uint8_t crc[PAGE_COUNT+1]; // keep the matching crc for each memory-page, reading can be very time-sensitive
 
     // One of the following is placed in scratchpad depending on state of REG0_MASK_AD when voltage conversion is requested
     uint8_t vadVoltage[2];  // unsigned 10 bit
@@ -90,7 +90,7 @@ public:
     void     setTemperature(int8_t temp_degC);
     int8_t   getTemperature(void) const;
 
-    // setVoltage should be considered deprecated in favour of setVDDVoltage (default) & setVADVoltage
+    // setVoltage should be considered deprecated in favor of setVDDVoltage (default) & setVADVoltage
     void     setVoltage(uint16_t voltage_10mV);     // unsigned 10 bit
     void     setVDDVoltage(uint16_t voltage_10mV);  // unsigned 10 bit
     void     setVADVoltage(uint16_t voltage_10mV);  // unsigned 10 bit

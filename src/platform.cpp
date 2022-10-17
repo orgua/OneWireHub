@@ -12,4 +12,3 @@ void noInterrupts() { };
 void interrupts() { };
 
 #endif // ONEWIREHUB_FALLBACK_BASIC_FNs
-

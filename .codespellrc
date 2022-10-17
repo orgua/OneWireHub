@@ -1,5 +1,5 @@
 [codespell]
-#skip = 
+#skip =
 
 builtin = clear,rare,informal,usage,code,en-GB_to_en-US
 

@@ -129,4 +129,3 @@ bool DS2430::syncScratchpad()
     memcpy(scratchpad,memory,length);
     return true;
 }
-

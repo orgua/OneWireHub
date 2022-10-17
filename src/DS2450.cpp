@@ -132,5 +132,3 @@ uint16_t DS2450::getPotentiometer(const uint8_t channel) const
     value |= memory[(2*channel)  ];
     return value;
 }
-
-

@@ -1,7 +1,7 @@
 OneWireHub
 ==========
 
-The OneWireHub is a sleek Arduino compatible (and many more platforms) library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously. 
+The OneWireHub is a sleek Arduino compatible (and many more platforms) library to emulate OneWire-Slaves with support for various devices. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously.
 The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your home automation environment.
 
 [![CompileTests](https://github.com/orgua/OneWireHub/actions/workflows/compile.yml/badge.svg)](https://github.com/orgua/OneWireHub/actions/workflows/compile.yml)
@@ -10,7 +10,7 @@ The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iL
 
 - **BAE0910 (0xFC) multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
 - **DS1822 (0x22) Digital Thermometer, 12bit** -> use DS18B20 with different family code
-- **DS18B20 (0x28) Digital Thermometer, 12bit** (also known as DS1820) 
+- **DS18B20 (0x28) Digital Thermometer, 12bit** (also known as DS1820)
 - **DS18S20 (0x10) Digital Thermometer, 9bit** (also known as DS1920, use DS18B20 with different family code)
 - **DS1990 (0x01) iButton** (DS2401 with same family code)
 - **DS1990A (0x81) iButton** (DS2401 with different family code)
@@ -57,9 +57,9 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - hub and slaves are unit tested and run for each supported architecture through travis CI
 - Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
 - GPIO-Debug output - shows status by issuing high-states (activate in src/OneWireHub_config.h, is a better alternative to serial debug)
-   - during presence detection (after reset), 
+   - during presence detection (after reset),
    - after receiving / sending a whole byte (not during SEARCH ROM)
-   - when duty()-subroutines of an attached slave get called 
+   - when duty()-subroutines of an attached slave get called
    - during hub-startup it issues a 1ms long high-state (you can check the instruction-per-loop-value for your architecture with this)
 - provide documentation, numerous examples, easy interface for hub and sensors
 
@@ -84,10 +84,10 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
    - Digispark tiny ([DigistumpArduino](https://github.com/digistump/DigistumpArduino))
 - failing platforms
    - reason: current tick-counting implementation is not compatible with variable clock-speed
-      - Arduino Due ([Arduino SAMD Boards (32-bits ARM Cortex-M3)](https://github.com/arduino/ArduinoCore-sam)) 
+      - Arduino Due ([Arduino SAMD Boards (32-bits ARM Cortex-M3)](https://github.com/arduino/ArduinoCore-sam))
       - Arduino MKRZero ([Arduino SAMD Boards (32-bits ARM Cortex-M0+)](https://github.com/arduino/ArduinoCore-samd))
-   - reason: gcc 4.8.3 is artificially limited to c++98  
-      - Arduino Primo ([Arduino nRF52 Boards](https://github.com/arduino-org/arduino-core-nrf52)) 
+   - reason: gcc 4.8.3 is artificially limited to c++98
+      - Arduino Primo ([Arduino nRF52 Boards](https://github.com/arduino-org/arduino-core-nrf52))
       - RedBear [nRF51](https://github.com/RedBearLab/nRF51822-Arduino)
    - reason: value_ipl is unknown for this hardware
       - Arduino 101 ([Intel Curie Boards](https://github.com/01org/corelibs-arduino101))
@@ -104,7 +104,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
    - send() and recv() can process data between device and master on byte-level (and do a CRC if needed)
    - recvAndProcessCmd() handles basic commands of the master like: search-rom, match-rom, skip-rom, read-rom
 - High Level - user interaction
-   - attach() adds an instance of a ow-device to the hub so the master can find it on the bus. there is a lot to do here. the device ID must be integrated into the tree-structure so that the hub knows how to react during a search-rom-command  
+   - attach() adds an instance of a ow-device to the hub so the master can find it on the bus. there is a lot to do here. the device ID must be integrated into the tree-structure so that the hub knows how to react during a search-rom-command
    - detach() takes the selected emulated device offline and restructures the search-tree
    - poll() lets the hub listen to the bus. If there is a reset within a given time-frame it will continue to handle the message (show presence and receive commands), otherwise it will exit and you can do other stuff. the user should call this function as often as possible to intercept every message and therefore stay visible on the bus
 - Slave Level:
@@ -125,8 +125,8 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - if communication works, but is unstable please check with logic analyzer
    - maybe your master is slow and just needs a higher ONEWIRE_TIME_MSG_HIGH_TIMEOUT-value (see OneWireHub_config.h line 37)
 - make sure that serial- and gpio-debugging is disabled (see src/OneWireHub_config.h), especially when using overdrive (be aware! it may produce heisenbugs, timing is critical)
-- on a slow arduino it can be helpful to disable the serial port completely to get reliable results -> at least comment out serial.begin() 
-- if you can provide a recording via logic-analyzer (logic 8 or similar) there should be chance we can help you 
+- on a slow arduino it can be helpful to disable the serial port completely to get reliable results -> at least comment out serial.begin()
+- if you can provide a recording via logic-analyzer (logic 8 or similar) there should be chance we can help you
    - additional gpio-debug output can be enabled in src/OneWireHub_config.h: set USE_GPIO_DEBUG to 1 (it helps tracking state changes of the hub)
 - if you checked all these points feel free to open an issue at [Github](https://github.com/orgua/OneWireHub) and describe your troubleshooting process
    - please provide the following basic info: which µC and master do you use, software versions, what device do you try to emulate, what works, what doesn't
@@ -148,13 +148,13 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - returns 1 if error occurred in the following functions: recv(buf[]), send(), awaitTimeslot(), sendBit(), checkReset(), showPresence(), recvAndProzessCmd()
 - support for ds2408 (thanks to vytautassurvila) and ds2450
 - offline calibration by watching the bus (examples/debug/calibrate_by_bus_timing)
-   - branch for online calibration was abandoned because it took to much resources (DS18B20-Sketch compiled to 8434 // 482 bytes instead of 7026 // 426 bytes now) 
+   - branch for online calibration was abandoned because it took to much resources (DS18B20-Sketch compiled to 8434 // 482 bytes instead of 7026 // 426 bytes now)
 - cleaned up timing-fn (no guessing, no micros(), no delayMicroseconds())
 - debug-pin shows state by issuing high-states - see explanation in "features"
 - teensy3.2 tested: cleaned warnings, fixed port access, cleaned examples
 - added or extended the ds2431, ds2431, ds2501, ds2502 (also tested)
 - added ds2431 (thanks to j-langlois) and BAE910 (thanks to Giermann), Dell Power Supply (thanks to Kondi)
-- prepare new timing-method which will replace the old one in the next couple of weeks (a 6µs millis() call at 8MHz is not suitable for OW) 
+- prepare new timing-method which will replace the old one in the next couple of weeks (a 6µs millis() call at 8MHz is not suitable for OW)
 - support for skipROM-cmd if only one slave is present (thanks to Giermann)
 - speed up atmel-crc-functions
 - rework of error system, switch to enum, slaves can raise errors now & and Serial interferes less with OW-timings
@@ -191,6 +191,6 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 ### Ancestors of this Lib
 
 - original pieces seem to be adopted from [OneWireSlave](http://robocraft.ru/blog/arduino/302.html)
-- further development was done in [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire) 
+- further development was done in [OneWireSlave](https://github.com/MarkusLange/OneWireSlave) from MarkusLange and [OneWire](https://github.com/PaulStoffregen/OneWire)
 - first implementation of the [OneWireHub](https://github.com/Shagrat2/OneWireHub) by Shagrat2
 - the current code has just the concepts in common, but the codebase is a total rewrite

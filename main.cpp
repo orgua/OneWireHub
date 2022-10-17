@@ -121,7 +121,7 @@ int main()
     auto ds2434     = DS2434(0x1B, 0x01, 0x02, 0x12, 0x34, 0x56, 0x78);
 
     cout << "- attach devices to hubs" << endl;
-    
+
     // Setup OneWire
     hubA.attach(ds1822);
     hubA.attach(ds18B20);
