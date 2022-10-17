@@ -27,6 +27,12 @@ using namespace std;
 #include "src/DS2506.h"  // 64kb EEPROM
 #include "src/DS2890.h"  // Single channel digital potentiometer
 
+uint32_t    millis(void)
+{
+    static uint32_t counter = 0;
+    return counter++;
+}
+
 constexpr uint8_t operator "" _u8(const unsigned long long int value)
 {
     return static_cast<uint8_t>(value);
