@@ -412,7 +412,7 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         if( slave_selected->skip_multidrop ){
             slave_selected->duty(this);
-            return (_error != Error::NO_ERROR);
+            return false; // TODO: Find the root-cause. This fixes the issue but may cause other problems.
         }        
     }
 
