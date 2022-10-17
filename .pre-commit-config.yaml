@@ -22,7 +22,7 @@ repos:
       - id: fix-byte-order-marker
 
   - repo: https://github.com/codespell-project/codespell
-    rev: "v2.2.1"
+    rev: "v2.2.2"
     hooks:
       - id: codespell
 
@@ -46,3 +46,4 @@ repos:
           - "-q"
           - "--max-ctu-depth=10"
           - "--suppress=unusedFunction"
+          - "--force"
