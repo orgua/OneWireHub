@@ -408,11 +408,13 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         slave_selected = slave_list[getIndexOfNextSensorInList()];
         // TODO: this might be expensive for weak uC and OW in Overdrive and only one device emulated
-        //  -> look into optimizations (i.e. preselect when only one device present?)
+        //  -> look into optimizations (i.e. preselect when only one device present?, move to switch-default section below)
 
         if( slave_selected->skip_multidrop ){
             slave_selected->duty(this);
-            return false; // TODO: Find the root-cause. This fixes the issue but may cause other problems.
+            return false;
+            // TODO: Find the root-cause. This fixes the issue but may cause other problems.
+            //  -> correct exit would be: return (_error != Error::NO_ERROR);
         }
     }
 
