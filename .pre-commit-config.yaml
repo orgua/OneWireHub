@@ -48,3 +48,5 @@ repos:
           - "--max-ctu-depth=10"
           - "--suppress=unusedFunction"
           - "--force"
+          - "-I./src"
+          - "--check-config"
