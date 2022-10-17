@@ -41,6 +41,7 @@ repos:
         args:
           - "--enable=all"
           - "--std=c++11"
+          - "--language=c++"
           - "--platform=unix32"
           - "--verbose"
           - "-q"

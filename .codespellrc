@@ -3,7 +3,8 @@
 
 builtin = clear,rare,informal,usage,code,en-GB_to_en-US
 
-ignore-words-list = master,masters,slave,slaves,usera,thre,OD
+ignore-words-list = od,master,masters,slave,slaves,usera,thre,
+# note: use lower-case!
 
 # options without argument
 check-filenames =
