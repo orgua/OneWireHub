@@ -3,7 +3,8 @@
 *
 *   Tested with
 *    - IBM 701c - due to special non-standard onewire-usage
- *   - arduino uno target: 4318 byte PROG, 392 byte RAM
+ *   - arduino uno target: 4318 byte PROG, 392 byte RAM (full Hub)
+ *   - uno on tiny-branch: 2812 // 298
 */
 
 #include "OneWireHub.h"
@@ -12,7 +13,7 @@
 constexpr uint8_t pin_onewire   { 2 };
 
 auto hub = OneWireHub(pin_onewire);
-auto ds2434 = DS2434(0x1B, 0x01, 0x02, 0x12, 0x34, 0x56, 0x78);
+auto ds2434 = DS2434();
 
 void setup()
 {
