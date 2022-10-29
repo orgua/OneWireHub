@@ -129,29 +129,14 @@ bool OneWireHub::showPresence(void)
 
 bool OneWireHub::recvAndProcessCmd(void)
 {
-
-    // If the only slave is not multidrop compatible, pass all data handling to the slave
     if(device != nullptr){
 
         device->duty(this);
         return false;
-        // TODO: integrate into code below
+        // this return statement is technically wrong, but it seems to help with fast consecutive requests
     }
-
-    uint8_t cmd;
-
-    recv(&cmd);
 
     if (_error == Error::RESET_IN_PROGRESS) return false; // stay in poll()-loop and trigger another datastream-detection
-    if (_error != Error::NO_ERROR)          return true;
-
-    switch (cmd)
-    {
-        default: // Unknown command
-            _error = Error::INCORRECT_ONEWIRE_CMD;
-    }
-
-    if (_error == Error::RESET_IN_PROGRESS) return false;
 
     return (_error != Error::NO_ERROR);
 }

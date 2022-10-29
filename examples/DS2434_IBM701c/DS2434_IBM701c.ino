@@ -4,7 +4,7 @@
 *   Tested with
 *    - IBM 701c - due to special non-standard onewire-usage
  *   - arduino uno target: 4318 byte PROG, 392 byte RAM (full Hub)
- *   - uno on tiny-branch: 2752 // 294
+ *   - uno on tiny-branch: 2738 // 294
 */
 
 #include "OneWireHub.h"
