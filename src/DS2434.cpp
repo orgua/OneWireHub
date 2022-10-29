@@ -128,7 +128,7 @@ void DS2434::duty(OneWireHub * const hub)
         break;
 
     default:
-        hub->raiseSlaveError(cmd);
+        hub->raiseSlaveError();
     }
 }
 

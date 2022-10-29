@@ -21,16 +21,6 @@ constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
 
 #include "OneWireHub_config.h" // outsource configfile
 
-#ifndef HUB_SLAVE_LIMIT
-#error "Slavelimit not defined (why?)"
-#elif (HUB_SLAVE_LIMIT > 1)
-#error "Slavelimit is set too high (>1)"
-#elif (HUB_SLAVE_LIMIT > 0)
-using mask_t = uint8_t;
-#else
-#error "Slavelimit is set to zero (why?)"
-#endif
-
 constexpr timeOW_t VALUE1k      { 1000 }; // commonly used constant
 constexpr timeOW_t TIMEOW_MAX   { 4294967295 };   // arduino does not support std-lib...
 
@@ -60,18 +50,12 @@ class OneWireHub
 {
 private:
 
-    static constexpr uint8_t ONEWIRESLAVE_LIMIT                 { HUB_SLAVE_LIMIT };
-    static constexpr uint8_t ONEWIRE_TREE_SIZE                  { ( 2 * ONEWIRESLAVE_LIMIT ) - 1 };
-
     Error   _error;
-    uint8_t _error_cmd;
 
     io_reg_t          pin_bitMask;
     volatile io_reg_t *pin_baseReg;
 
-    uint8_t      slave_count;
-    OneWireItem *slave_list[ONEWIRESLAVE_LIMIT];  // private slave-list (use attach/detach)
-    OneWireItem *slave_selected;
+    OneWireItem *device;
 
     bool checkReset(void);      // returns true if error occurred
     bool showPresence(void);    // returns true if error occurred
@@ -96,28 +80,21 @@ public:
     OneWireHub& operator=(OneWireHub&& hub) = delete;       // disallow move assignment
 
     uint8_t attach(OneWireItem &sensor);
-    bool    detach(const OneWireItem &sensor);
-    bool    detach(uint8_t slave_number);
-
-    uint8_t getIndexOfNextSensorInList(uint8_t index_start = 0) const;
+    void    detach(void);
 
     bool poll(void);
 
     bool sendBit(bool value);                                                 // returns 1 if error occurred
     bool send(uint8_t dataByte);                                              // returns 1 if error occurred
     bool send(const uint8_t address[], uint8_t data_length = 1);              // returns 1 if error occurred
-    bool send(const uint8_t address[], uint8_t data_length, uint16_t &crc16); // returns 1 if error occurred
-    // CRC takes ~7.4µs/byte (Atmega328P@16MHz) but is distributing the load between each bit-send to 0.9 µs/bit (see debug-crc-comparison.ino)
-    // important: the final crc is expected to be inverted (crc=~crc) !!!
 
     bool    recvBit(void);
     bool    recv(uint8_t address[], uint8_t data_length = 1);                 // returns 1 if error occurred
-    bool    recv(uint8_t address[], uint8_t data_length, uint16_t &crc16);    // returns 1 if error occurred
 
     // mostly for debug, partly for state-machine handling
     Error getError(void) const; // returns Error
     bool  hasError(void) const; // returns true if Error occurred
-    void  raiseSlaveError(uint8_t cmd = 0);
+    void  raiseSlaveError(void);
     Error clearError(void);
 
 };

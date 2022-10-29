@@ -1,9 +1,9 @@
 OneWireHub-TinyDs2434
 ==========
 
-Special smaller version for ICs like the ds2434 (currently only this one). 
+Special smaller version for ICs like the ds2434 (currently only this one).
 
-What changed? 
+What changed?
 
 - no support for multidrop
 - no support for basic onewire-commands (like search-rom, ...)

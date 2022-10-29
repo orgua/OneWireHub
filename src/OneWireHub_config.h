@@ -6,9 +6,6 @@
 // CONFIG ///////////////////////////////////////////
 /////////////////////////////////////////////////////
 
-// INFO: had to go with a define because some compilers use constexpr as simple const --> massive problems
-#define HUB_SLAVE_LIMIT     1 // set the limit of the hub HERE, max is 32 devices
-
 /// the following TIME-values are in microseconds and are taken mostly from the ds2408 datasheet
 //  arrays contain the normal timing value and the overdrive-value, the literal "_us" converts the value right away to a usable unit
 //  should be --> datasheet

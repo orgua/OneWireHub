@@ -3,17 +3,12 @@
 
 #include "platform.h"
 
+
 OneWireHub::OneWireHub(const uint8_t pin)
 {
     _error = Error::NO_ERROR;
 
-    slave_count = 0;
-    slave_selected = nullptr;
-
-    for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
-    {
-        slave_list[i] = nullptr;
-    }
+    device = nullptr;
 
     // prepare pin
     pin_bitMask = PIN_TO_BITMASK(pin);
@@ -29,70 +24,15 @@ OneWireHub::OneWireHub(const uint8_t pin)
 // attach a sensor to the hub
 uint8_t OneWireHub::attach(OneWireItem &sensor)
 {
-    if (slave_count >= ONEWIRESLAVE_LIMIT) return 255; // hub is full
+    if (device != nullptr) return 255u; // hub is full
 
-    // find position of next free storage-position
-    uint8_t position = 255;
-    for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
-    {
-        // check for already attached sensors
-        if (slave_list[i] == &sensor)
-        {
-            return i;
-        }
-        // store position of first empty space
-        if ((position>ONEWIRESLAVE_LIMIT) && (slave_list[i] == nullptr))
-        {
-            position = i;
-        }
-    }
-
-    if (position == 255)
-        return 255;
-
-    slave_list[position] = &sensor;
-    slave_count++;
-    return position;
+    device = &sensor;
+    return 1u;
 }
 
-bool    OneWireHub::detach(const OneWireItem &sensor)
+void    OneWireHub::detach(void)
 {
-    // find position of sensor
-    uint8_t position = 255;
-    for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
-    {
-        if (slave_list[i] == &sensor)
-        {
-            position = i;
-            break;
-        }
-    }
-
-    if (position != 255)    return detach(position);
-
-    return false;
-}
-
-bool    OneWireHub::detach(const uint8_t slave_number)
-{
-    if (slave_list[slave_number] == nullptr)    return false;
-    if (slave_count == 0)                       return false;
-    if (slave_number >= ONEWIRESLAVE_LIMIT)     return false;
-
-    slave_list[slave_number] = nullptr;
-    slave_count--;
-
-    return true;
-}
-
-// return next not empty element in slave-list
-uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start) const
-{
-    for (uint8_t i = index_start; i < ONEWIRE_TREE_SIZE; ++i)
-    {
-        if (slave_list[i] != nullptr)  return i;
-    }
-    return 0;
+    device = nullptr;
 }
 
 bool OneWireHub::poll(void)
@@ -102,7 +42,7 @@ bool OneWireHub::poll(void)
     while (true)
     {
         // this additional check prevents an infinite loop when calling this FN without sensors attached
-        if (slave_count == 0)       return true;
+        if (device == nullptr)      return true;
 
         // Once reset is done, go to next step
         if (checkReset())           return false;
@@ -191,11 +131,9 @@ bool OneWireHub::recvAndProcessCmd(void)
 {
 
     // If the only slave is not multidrop compatible, pass all data handling to the slave
-    if(slave_count == 1u){
+    if(device != nullptr){
 
-        slave_selected = slave_list[getIndexOfNextSensorInList()];
-
-        slave_selected->duty(this);
+        device->duty(this);
         return false;
         // TODO: integrate into code below
     }
@@ -210,9 +148,7 @@ bool OneWireHub::recvAndProcessCmd(void)
     switch (cmd)
     {
         default: // Unknown command
-
             _error = Error::INCORRECT_ONEWIRE_CMD;
-            _error_cmd = cmd;
     }
 
     if (_error == Error::RESET_IN_PROGRESS) return false;
@@ -289,36 +225,6 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
     return (bytes_sent != data_length);
 }
 
-bool OneWireHub::send(const uint8_t address[], const uint8_t data_length, uint16_t &crc16)
-{
-    noInterrupts(); // will be enabled at the end of function
-    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
-    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
-    uint8_t bytes_sent = 0;
-
-    for ( ; bytes_sent < data_length; ++bytes_sent)             // loop for sending bytes
-    {
-        uint8_t dataByte = address[bytes_sent];
-
-        for (uint8_t counter = 0; counter < 8; ++counter)       // loop for sending bits
-        {
-            if (sendBit(static_cast<bool>(0x01 & dataByte)))
-            {
-                if ((counter == 0) && (_error ==Error::AWAIT_TIMESLOT_TIMEOUT_HIGH)) _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
-                interrupts();
-                return true;
-            }
-
-            const uint8_t mix = ((uint8_t) crc16 ^ dataByte) & static_cast<uint8_t>(0x01);
-            crc16 >>= 1;
-            if (mix != 0)  crc16 ^= static_cast<uint16_t>(0xA001);
-            dataByte >>= 1;
-        }
-    }
-    interrupts();
-    return (bytes_sent != data_length);
-}
-
 bool OneWireHub::send(const uint8_t dataByte)
 {
     return send(&dataByte,1);
@@ -382,48 +288,6 @@ bool OneWireHub::recv(uint8_t address[], const uint8_t data_length)
     return (bytes_received != data_length);
 }
 
-
-// should be the preferred function for reads, returns true if error occurred
-bool OneWireHub::recv(uint8_t address[], const uint8_t data_length, uint16_t &crc16)
-{
-    noInterrupts(); // will be enabled at the end of function
-    DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
-    DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
-
-    uint8_t bytes_received = 0;
-    for ( ; bytes_received < data_length; ++bytes_received)
-    {
-        uint8_t value = 0;
-        uint8_t mix = 0;
-        for (uint8_t bitMask = 0x01; bitMask != 0; bitMask <<= 1)
-        {
-            if (recvBit())
-            {
-                value |= bitMask;
-                mix = 1;
-            }
-            else mix = 0;
-
-            if (_error != Error::NO_ERROR)
-            {
-                if ((bitMask == 0x01) && (_error ==Error::AWAIT_TIMESLOT_TIMEOUT_HIGH)) _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
-                interrupts();
-                return true;
-            }
-
-            mix ^= static_cast<uint8_t>(crc16) & static_cast<uint8_t>(0x01);
-            crc16 >>= 1;
-            if (mix != 0)  crc16 ^= static_cast<uint16_t>(0xA001);
-        }
-
-        address[bytes_received] = value;
-    }
-
-    interrupts();
-    return (bytes_received != data_length);
-}
-
-
 void OneWireHub::wait(const uint16_t timeout_us) const
 {
     timeOW_t loops = timeUsToLoops(timeout_us);
@@ -466,10 +330,9 @@ bool OneWireHub::hasError(void) const
     return (_error != Error::NO_ERROR);
 }
 
-void OneWireHub::raiseSlaveError(const uint8_t cmd)
+void OneWireHub::raiseSlaveError()
 {
     _error = Error::INCORRECT_SLAVE_USAGE;
-    _error_cmd = cmd;
 }
 
 Error OneWireHub::clearError(void) // and return it if needed
