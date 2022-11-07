@@ -1,13 +1,22 @@
-OneWireHub-TinyDs2434
-==========
+OneWireHub-DS2434-tiny
+======================
 
 Special smaller version for ICs like the ds2434 (currently only this one).
 
-What changed?
+### Advantages
 
-- no support for multidrop
-- no support for basic onewire-commands (like search-rom, ...)
-- no overdrive
+- much simpler program flow
+- less program storage, making it fit on smaller attiny
+  - test for 701c-Example on Arduino Uno
+  - 4318 byte firmware & 392 byte Ram for orginal Hub-Source
+  - 2738 byte firmware & 294 byte Ram for this tiny lib
+
+### What changed?
+
+- removed support for multidrop
+- removed support for basic onewire-commands (like search-rom, ...)
+- removed overdrive
+- removed debug-code
 
 ### Implemented Slaves
 
