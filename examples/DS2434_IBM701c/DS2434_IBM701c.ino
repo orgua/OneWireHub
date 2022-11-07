@@ -2,7 +2,8 @@
 *    Example-Code that emulates a DS2434 with Battery Management & EEPROM
 *
 *   Tested with
-*    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
+*    - IBM 701c - due to special non-standard onewire-usage
+ *   - arduino uno target: 4318 byte PROG, 392 byte RAM
 */
 
 #include "OneWireHub.h"
