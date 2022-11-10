@@ -1,22 +1,24 @@
-/*
-
-Example-Code that emulates a DS2434 with Battery Management & EEPROM
+/* Example-Code that emulates a DS2434 with Battery Management & EEPROM
 
 Tested with
 - IBM 701c - due to special non-standard onewire-usage
-- arduino uno target: 4318 byte PROG, 392 byte RAM (full Hub)
-- uno on tiny-branch: 2738 // 294
 
-Test with platformIO
+Compile-Sizes with platformIO
 pio ci --lib='.' -b digispark-tiny .\examples\DS2434_IBM701c\DS2434_IBM701c.ino
 
-OneWireHub
-RAM:   [========  ]  76.6% (used 392 bytes from 512 bytes)
-Flash: [=======   ]  66.4% (used 3994 bytes from 6012 bytes)
+    OneWireHub
+    RAM:   [========  ]  76.6% (used 392 bytes from 512 bytes)
+    Flash: [=======   ]  66.4% (used 3994 bytes from 6012 bytes)
 
-OneWireHub-Tiny
-RAM:   [======    ]  57.4% (used 294 bytes from 512 bytes)
-Flash: [====      ]  40.8% (used 2452 bytes from 6012 bytes)
+    OneWireHub-Tiny
+    RAM:   [======    ]  57.4% (used 294 bytes from 512 bytes)
+    Flash: [====      ]  40.8% (used 2452 bytes from 6012 bytes)
+
+Programming with Platform-IO:
+platformio.exe ci -b digispark-tiny .\examples\DS2434_IBM701c\DS2434_IBM701c.ino --build-dir ./build --keep-build-dir
+# creates a full pio-project
+cd build
+pio run --target upload
 
 */
 
