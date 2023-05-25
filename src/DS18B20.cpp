@@ -20,6 +20,25 @@ DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5
     fast_search_rom = false;
 }
 
+DS18B20::setScratchpad(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7)
+{
+    scratchpad[0] = 0xA0; // TLSB --> 10 degC as std
+    scratchpad[1] = 0x00; // TMSB
+    scratchpad[2] = 0x4B; // THRE --> Trigger register TH
+    scratchpad[3] = 0x46; // TLRE --> TLow
+    scratchpad[4] = 0x7F; // Conf
+    // = 0 R1 R0 1 1 1 1 1 --> R=0 9bit .... R=3 12bit
+    scratchpad[5] = 0xFF; // 0xFF
+    scratchpad[6] = 0x00; // Reset
+    scratchpad[7] = 0x10; // 0x10
+    updateCRC(); // update scratchpad[8]
+
+    ds18s20_mode = (ID1 == 0x10); // different tempRegister
+
+    // disable bus-features:
+    fast_search_rom = false;
+}
+
 void DS18B20::updateCRC()
 {
     scratchpad[8] = crc8(scratchpad, 8);
