@@ -17,6 +17,11 @@
   #define ONEWIREHUB_OVERDRIVE_ENABLE (0)
 #endif
 
+#ifndef ONEWIREHUB_HW_LEVEL_CODE
+    // create support for faster, but more hw-specific code for timekeeping, TODO: not working yet
+#define ONEWIREHUB_HW_LEVEL_CODE (false)
+#endif
+
 // Serial Debug: give debug messages when printError() is called (be aware! it may produce heisenbugs, timing is critical) SHOULD NOT be enabled with < 20 MHz uC
 constexpr bool    USE_SERIAL_DEBUG{false};
 // Gpio Debug: is a better alternative to serial debug (see readme.md for info) SHOULD NOT be enabled with < 20 MHz uC and Overdrive enabled
