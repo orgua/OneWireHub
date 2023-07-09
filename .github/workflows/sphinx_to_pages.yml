@@ -26,7 +26,11 @@ jobs:
         run: pip3 install sphinx sphinxawesome-theme sphinx-sitemap myst-parser
 
       - name: Build Documentation 🧱
-        uses: sphinx-notes/pages@v2
+        uses: sphinx-notes/pages@v3
+        with:
+          checkout: false
+          publish: false
+
       - name: Push changes 📌
         uses: ad-m/github-push-action@master
         with:
