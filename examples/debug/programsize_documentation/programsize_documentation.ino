@@ -20,14 +20,15 @@
  *    3440 // 128 bytes rework error-handling and send/recv-routines
  */
 
+#include "DS18B20.h" // Digital Thermometer, 12bit
 #include "OneWireHub.h"
-#include "DS18B20.h"  // Digital Thermometer, 12bit
 
-constexpr uint8_t pin_onewire   { 8 };
+constexpr uint8_t pin_onewire{8};
 
-auto hub    = OneWireHub(pin_onewire);
+auto hub = OneWireHub(pin_onewire);
 
-auto ds18b20 = DS18B20(DS18B20::family_code, 0x00, 0x02, 0x0B, 0x08, 0x01, 0x0D);    // Digital Thermometer
+auto ds18b20 =
+        DS18B20(DS18B20::family_code, 0x00, 0x02, 0x0B, 0x08, 0x01, 0x0D); // Digital Thermometer
 
 
 void setup()

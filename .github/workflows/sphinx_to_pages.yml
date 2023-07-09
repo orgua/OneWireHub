@@ -1,0 +1,37 @@
+name: Generate Docs
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v4
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+
+#      - name: Run Pre-Commit Tests 🧪
+#        uses: pre-commit/action@v3.0.0
+
+      - name: Install dependencies 🔧
+        run: pip3 install sphinx sphinxawesome-theme sphinx-sitemap myst-parser
+
+      - name: Build Documentation 🧱
+        uses: sphinx-notes/pages@v3
+        with:
+          checkout: false
+          publish: false
+          documentation_path: "./docs/source"
+
+      - name: Push changes 📌
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: pages
+          force: true

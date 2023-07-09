@@ -1,0 +1,30 @@
+# Features
+
+- supports up to 32 peripheral devices simultaneously -> 8 is default setting to safe RAM & program space
+    - just add custom `#define ONEWIREHUB_DEVICE_LIMIT (32)` in your source file
+    - TODO: add example
+    - implementation-overhead for the hub is minimal and even saves resources for >1 emulated device
+- hot-plug: add and remove devices as needed during operation
+    - TODO: add example
+- support for most onewire-features: `MATCH ROM` (0x55), `SKIP ROM` (0xCC), `READ ROM` (0x0F,0x33), `RESUME COMMAND` (0xA5)
+    - `ALARM SEARCH` (0xEC) is NOT implemented yet!
+- **OVERDRIVE-Mode**:
+    - OneWire-Host can issue `OD SKIP ROM` (0x13) or `OD MATCH ROM` (0x69) and peripheral device stays in this mode till it sees a long reset
+    - OD-feature must be activated manually by adding `#define ONEWIREHUB_OVERDRIVE_ENABLE (1)` in your source file
+- cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=2.0.0 recommended)**
+    - use of `constexpr` instead of `#define` for better compiler-messages and cleaner code
+    - use static-assertions for compile-time plausibility checks
+    - user defined literals convert constants into needed format / unit
+- hardware-dependencies are combined in [platform.h](https://github.com/orgua/OneWireHub/blob/main/src/platform.h), loosely synced with [Onewire-Lib](https://github.com/PaulStoffregen/OneWire)
+    - supported: arduino zero, teensy, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, esp32, raspberry (...)
+    - tested architectures: atmega328 @ 16 MHz / arduino Uno, teensy3.2
+    - for portability and tests the hub can be compiled on a PC with the supplied mock-up functions in `platform.h`
+    - at the moment the lib relies sole on loop-counting for timing, no direct access to interrupt or timers, **NOTE:** if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
+- hub and emulated devices are unit tested and run for each supported architecture through travis CI
+- Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
+- GPIO-Debug output - shows status by issuing high-states (activate in src/OneWireHub_config.h, is a better alternative to serial debug), TODO: simplify
+    - during presence detection (after reset),
+    - after receiving / sending a whole byte (not during `SEARCH ROM`)
+    - when `duty()`-subroutines of an attached device get called
+    - during hub-startup it issues a 1ms long high-state (you can check the instruction-per-loop-value for your architecture with this)
+- provide documentation, numerous examples, easy interface for hub and sensors

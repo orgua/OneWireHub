@@ -16,6 +16,12 @@ jobs:
           - uno
         example:
           - ./examples/BAE910_device/BAE910_device.ino
+#          - ./examples/debug/attiny85-4devices/attiny85-4devices.ino
+#          - ./examples/debug/calibrate_by_bus_timing/calibrate_by_bus_timing.ino
+#          - ./examples/debug/CRC-Comparison/CRC-Comparison.ino
+#          - ./examples/debug/irq-driven-playground/irq-driven-playground.ino
+#          - ./examples/debug/optimize_pinAccess/optimize_pinAccess.ino
+#          - ./examples/debug/programsize_documentation/programsize_documentation.ino
 #          - ./examples/DS18B20_asInterface/DS18B20_asInterface.ino  # needs I2C
           - ./examples/DS18B20_thermometer/DS18B20_thermometer.ino
           - ./examples/DS2401_serial/DS2401_serial.ino

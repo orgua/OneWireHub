@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pre-commit = "*"
+sphinx = "*"
+sphinxawesome-theme = "*"
+sphinx-sitemap = "*"
+myst-parser = "*"
+bump2version = "*"
+
+[dev-packages]
+
+[pipenv]
+allow_prereleases = false

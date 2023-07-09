@@ -2,18 +2,19 @@
  *    Example-Code that emulates a DS2405 - One Channel addressable switch
  *
  *    Tested with
- *    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
- *    - Note: feedback to master is unclear, ds9490 does not read after matchRom
+ *    - DS9490R-OneWire-Host, atmega328@16MHz and teensy3.2@96MHz as peripheral device
+ *    - Note: feedback to OneWire-Host is unclear, ds9490 does not read after matchRom
  */
 
+#include "DS2405.h" // Dual channel addressable switch
 #include "OneWireHub.h"
-#include "DS2405.h"  // Dual channel addressable switch
 
-constexpr uint8_t pin_led       { 13 };
-constexpr uint8_t pin_onewire   { 8 };
+constexpr uint8_t pin_led{13};
+constexpr uint8_t pin_onewire{8};
 
 auto hub    = OneWireHub(pin_onewire);
-auto ds2405 = DS2405( DS2405::family_code, 0x00, 0x00, 0x05, 0x24, 0xDA, 0x00 );    // Work - Dual channel addressable switch
+auto ds2405 = DS2405(DS2405::family_code, 0x00, 0x00, 0x05, 0x24, 0xDA,
+                     0x00); // Work - Dual channel addressable switch
 
 void setup()
 {
@@ -51,6 +52,4 @@ void loop()
 
         digitalWrite(pin_led, switch_state);
     }
-
-
 }

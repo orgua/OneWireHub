@@ -1,3 +1,4 @@
 *.xml
 *.iml
 cmake-build-debug/
+build/

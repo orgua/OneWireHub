@@ -1,7 +1,9 @@
 #include "DS18B20.h"
 
 
-DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
+DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6,
+                 uint8_t ID7)
+    : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
     scratchpad[0] = 0xA0; // TLSB --> 10 degC as std
     scratchpad[1] = 0x00; // TMSB
@@ -12,7 +14,7 @@ DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5
     scratchpad[5] = 0xFF; // 0xFF
     scratchpad[6] = 0x00; // Reset
     scratchpad[7] = 0x10; // 0x10
-    updateCRC(); // update scratchpad[8]
+    updateCRC();          // update scratchpad[8]
 
     ds18s20_mode = (ID1 == 0x10); // different tempRegister
 
@@ -20,21 +22,19 @@ DS18B20::DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5
     fast_search_rom = false;
 }
 
-void DS18B20::updateCRC()
-{
-    scratchpad[8] = crc8(scratchpad, 8);
-}
+void DS18B20::updateCRC() { scratchpad[8] = crc8(scratchpad, 8); }
 
-void DS18B20::duty(OneWireHub * const hub)
+void DS18B20::duty(OneWireHub *const hub)
 {
     uint8_t cmd;
-    if (hub->recv(&cmd,1)) return;
+    if (hub->recv(&cmd, 1)) return;
 
     switch (cmd)
     {
         case 0x4E: // WRITE SCRATCHPAD
             // write 3 byte of data to scratchpad[2:4], ds18s20 only first 2 bytes (TH, TL)
-            hub->recv(&scratchpad[2], 3); // don't return here, so crc gets updated even if write not complete
+            hub->recv(&scratchpad[2],
+                      3); // don't return here, so crc gets updated even if write not complete
             updateCRC();
             break;
 
@@ -47,7 +47,7 @@ void DS18B20::duty(OneWireHub * const hub)
             break; // send1 if parasite power is used, is passive
 
         case 0xB8: // RECALL E2 (3 byte EEPROM to Scratchpad[2:4])
-            break;// signal that OP is done, 1s is passive ...
+            break; // signal that OP is done, 1s is passive ...
 
         case 0xB4: // READ POWER SUPPLY
             //hub->sendBit(0); // 1: say i am external powered, 0: uses parasite power, 1 is passive, so omit it ...
@@ -57,8 +57,7 @@ void DS18B20::duty(OneWireHub * const hub)
             // we have 94 ... 750ms time here (9-12bit conversion)
             break; // send 1s, is passive ...
 
-        default:
-            hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 }
 
@@ -102,10 +101,7 @@ void DS18B20::setTemperatureRaw(const int16_t value_raw)
         {
             value &= 0x07FF; // upper 5 bits are signum
         }
-        else
-        {
-            value |= 0xF800;
-        }
+        else { value |= 0xF800; }
     }
 
     scratchpad[0] = reinterpret_cast<uint8_t *>(&value)[0];
@@ -116,18 +112,12 @@ void DS18B20::setTemperatureRaw(const int16_t value_raw)
     updateCRC();
 }
 
-int  DS18B20::getTemperature(void) const
+int DS18B20::getTemperature(void) const
 {
     int16_t value = getTemperatureRaw();
 
-    if (ds18s20_mode)
-    {
-        value /= 2;
-    }
-    else
-    {
-        value /= 16;
-    }
+    if (ds18s20_mode) { value /= 2; }
+    else { value /= 16; }
 
     return value;
 }

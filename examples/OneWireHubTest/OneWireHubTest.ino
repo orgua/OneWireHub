@@ -3,13 +3,14 @@
  *    --> attach sensors as needed
  *
  *    Tested with:
- *    - https://github.com/PaulStoffregen/OneWire on the other side as Master
+ *    - https://github.com/PaulStoffregen/OneWire on the other side as OneWire-Host
  *
  *    Compile size (program / ram)
  *      9232 & 706 byte with arduino 1.6.10 and onewirehub 2.0.1 for UNO
  *      9272 & 708 byte with arduino 1.8.03 and onewirehub 2.0.1 for UNO
  *      9288 & 708 byte with arduino 1.8.03 and onewirehub 2.0.2 for UNO
- *      9028 & 708 byte with arduino 2.0.00 and onewirehub 2.2.1 for UNO (gcc 7.3)
+ *      9028 & 708 byte with arduino 2.0.0  and onewirehub 2.2.1 for UNO (gcc 7.3)
+ *      9096 & 742 byte with arduino 2.1.1  and onewirehub 2.2.4 for UNO (gcc 7.3)
  */
 
 #include "OneWireHub.h"
@@ -29,37 +30,39 @@
 #include "DS2502.h"  //
 #include "DS2890.h"  // Single channel digital potentiometer
 
-constexpr uint8_t pin_led       { 13 };
-constexpr uint8_t pin_onewire   { 8 };
+constexpr uint8_t pin_led{13};
+constexpr uint8_t pin_onewire{8};
 
-auto hub      = OneWireHub(pin_onewire);
-auto ds1822   = DS18B20(0x22, 0x0D, 0x01, 0x08, 0x02, 0x00, 0x00);
-auto ds18B20  = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00);      // Work - Digital Thermometer
-auto ds18S20  = DS18B20(0x10, 0x0D, 0x01, 0x08, 0x0F, 0x02, 0x00);
-auto ds2401a  = DS2401( 0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0A );    // Work - Serial Number
-auto ds2401b  = DS2401( 0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0B );    // Work - Serial Number
-auto ds2405   = DS2405( 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - Single address switch
+auto hub     = OneWireHub(pin_onewire);
+auto ds1822  = DS18B20(0x22, 0x0D, 0x01, 0x08, 0x02, 0x00, 0x00);
+auto ds18B20 = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x00); // Work - Digital Thermometer
+auto ds18S20 = DS18B20(0x10, 0x0D, 0x01, 0x08, 0x0F, 0x02, 0x00);
+auto ds2401a = DS2401(0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0A); // Work - Serial Number
+auto ds2401b = DS2401(0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0B); // Work - Serial Number
+auto ds2405  = DS2405(0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00); //      - Single address switch
 // auto ds2408   = DS2408( 0x29, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 8-Channel Addressable Switch
-auto ds2413   = DS2413( 0x3A, 0x0D, 0x02, 0x04, 0x01, 0x03, 0x00 );    // Work - Dual channel addressable switch
+auto ds2413 =
+        DS2413(0x3A, 0x0D, 0x02, 0x04, 0x01, 0x03, 0x00); // Work - Dual channel addressable switch
 // auto ds2423   = DS2423( 0x1D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4kb 1-Wire RAM with Counter
 // auto ds2433   = DS2433( 0x23, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 );    //      - 4Kb 1-Wire EEPROM
-auto ds2438   = DS2438( 0x26, 0x0D, 0x02, 0x04, 0x03, 0x08, 0x00 );    //      - Smart Battery Monitor
-auto ds2450   = DS2450( 0x20, 0x0D, 0x0A, 0x02, 0x04, 0x05, 0x00 );    //      - 4 channel A/D
-auto ds2890A  = DS2890( 0x2C, 0x0D, 0x02, 0x08, 0x09, 0x00, 0x0A );    // Work - Single channel digital potentiometer
+auto ds2438  = DS2438(0x26, 0x0D, 0x02, 0x04, 0x03, 0x08, 0x00); //      - Smart Battery Monitor
+auto ds2450  = DS2450(0x20, 0x0D, 0x0A, 0x02, 0x04, 0x05, 0x00); //      - 4 channel A/D
+auto ds2890A = DS2890(0x2C, 0x0D, 0x02, 0x08, 0x09, 0x00,
+                      0x0A); // Work - Single channel digital potentiometer
 //auto ds2890B  = DS2890( 0x2C, 0x0D, 0x02, 0x08, 0x09, 0x00, 0x0B );
 //auto ds2890C  = DS2890( 0x2C, 0x0D, 0x02, 0x08, 0x09, 0x00, 0x0C );
 
 bool blinking()
 {
-    constexpr  uint32_t interval    = 500;          // interval at which to blink (milliseconds)
-    static uint32_t nextMillis  = millis();     // will store next time LED will updated
+    constexpr uint32_t interval   = 500;      // interval at which to blink (milliseconds)
+    static uint32_t    nextMillis = millis(); // will store next time LED will updated
 
     if (millis() > nextMillis)
     {
-        nextMillis += interval;             // save the next time you blinked the LED
-        static uint8_t ledState = LOW;      // ledState used to set the LED
-        if (ledState == LOW)    ledState = HIGH;
-        else                    ledState = LOW;
+        nextMillis += interval;        // save the next time you blinked the LED
+        static uint8_t ledState = LOW; // ledState used to set the LED
+        if (ledState == LOW) ledState = HIGH;
+        else ledState = LOW;
         digitalWrite(pin_led, ledState);
         return 1;
     }
@@ -112,10 +115,10 @@ void loop()
 
         // DS2450
         static uint16_t p1, p2, p3, p4;
-        p1 +=1;
-        p2 +=2;
-        p3 +=4;
-        p4 +=8;
-        ds2450.setPotentiometer(p1,p2,p3,p4);
+        p1 += 1;
+        p2 += 2;
+        p3 += 4;
+        p4 += 8;
+        ds2450.setPotentiometer(p1, p2, p3, p4);
     }
 }
