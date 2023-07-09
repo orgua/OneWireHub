@@ -1,5 +1,5 @@
-# HELP 
- 
+# HELP
+
 What to do if things don't work as expected?
 
 - check if your arduino software up to date ([>v1.8.0](https://www.arduino.cc/en/software))

@@ -19,7 +19,7 @@
 
 #ifndef ONEWIREHUB_HW_LEVEL_CODE
     // create support for faster, but more hw-specific code for timekeeping, TODO: not working yet
-#define ONEWIREHUB_HW_LEVEL_CODE (false)
+  #define ONEWIREHUB_HW_LEVEL_CODE (false)
 #endif
 
 // Serial Debug: give debug messages when printError() is called (be aware! it may produce heisenbugs, timing is critical) SHOULD NOT be enabled with < 20 MHz uC

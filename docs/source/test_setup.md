@@ -2,11 +2,11 @@
 
 ## Embedded real life Tests
 
-### Setup 
+### Setup
 
 - manual process of the developer
 - used software: arduino 1.8.3 or newer, Windows 10 and the board-library named in the brackets (below)
-- flash [test-example](https://github.com/orgua/OneWireHub/blob/main/examples/OneWireHubTest/OneWireHubTest.ino), 
+- flash [test-example](https://github.com/orgua/OneWireHub/blob/main/examples/OneWireHubTest/OneWireHubTest.ino),
 - use DS9490 as OneWire-Host
 
 ### Tested MCU-Boards
@@ -19,7 +19,7 @@
 - nodeMCU 1.0 ESP-12E ([esp8266](https://github.com/esp8266/Arduino))
 - ATtiny 84, 88 ([attiny](https://github.com/damellis/attiny))
 
-## Automated Continuous Integration 
+## Automated Continuous Integration
 
 [![CompileTests](https://github.com/orgua/OneWireHub/actions/workflows/compile.yml/badge.svg)](https://github.com/orgua/OneWireHub/actions/workflows/compile.yml)
 

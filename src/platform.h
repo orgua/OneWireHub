@@ -25,9 +25,8 @@
   #define DIRECT_WRITE_LOW(base, mask)   ((*((base) + 2)) &= ~(mask))
   #define DIRECT_WRITE_HIGH(base, mask)  ((*((base) + 2)) |= (mask))
 using io_reg_t = uint8_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL{
-        13};
-// ⤷ instructions per loop, compare 0 takes 11, compare 1 takes 13 cycles
+constexpr uint8_t VALUE_IPL{13};
+    // ⤷ instructions per loop, compare 0 takes 11, compare 1 takes 13 cycles
 
 #elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK66FX1M0__) ||                \
         defined(__MK64FX512__) /* teensy 3.2 to 3.6 */
@@ -38,9 +37,9 @@ constexpr uint8_t VALUE_IPL{
   #define DIRECT_MODE_OUTPUT(base, mask) (*((base) + 640) = 1)
   #define DIRECT_WRITE_LOW(base, mask)   (*((base) + 256) = 1)
   #define DIRECT_WRITE_HIGH(base, mask)  (*((base) + 128) = 1)
-using io_reg_t = uint8_t;       // define special datatype for register-access
+using io_reg_t = uint8_t; // define special datatype for register-access
 constexpr uint8_t VALUE_IPL{8};
-// ⤷ instructions per loop
+    // ⤷ instructions per loop
 
 #elif defined(__MKL26Z64__) /* teensy LC */
 
@@ -52,9 +51,8 @@ constexpr uint8_t VALUE_IPL{8};
   #define DIRECT_WRITE_LOW(base, mask)   (*((base) + 8) = (mask))
   #define DIRECT_WRITE_HIGH(base, mask)  (*((base) + 4) = (mask))
 using io_reg_t = uint8_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL{
-        0};
-// ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+constexpr uint8_t VALUE_IPL{0};
+    // ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
 #elif defined(__SAM3X8E__) || defined(__SAM3A8C__) || defined(__SAM3A4C__) /* arduino due */
 
@@ -72,9 +70,8 @@ constexpr uint8_t VALUE_IPL{
     #define pgm_read_byte(address) (*(const uint8_t *) (address))
   #endif
 using io_reg_t = uint32_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL{
-        22};
-// ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+constexpr uint8_t VALUE_IPL{22};
+    // ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
 #elif defined(__PIC32MX__)
 
@@ -86,9 +83,8 @@ constexpr uint8_t VALUE_IPL{
   #define DIRECT_WRITE_LOW(base, mask)   ((*(base + 8 + 1)) = (mask))       //LATXCLR  + 0x24
   #define DIRECT_WRITE_HIGH(base, mask)  ((*(base + 8 + 2)) = (mask))       //LATXSET + 0x28
 using io_reg_t = uint32_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL{
-        0};
-// ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+constexpr uint8_t VALUE_IPL{0};
+    // ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
 #elif defined(ARDUINO_ARCH_ESP8266) /* nodeMCU, ESPduino, ... */
 
@@ -101,9 +97,8 @@ constexpr uint8_t VALUE_IPL{
   #define DIRECT_WRITE_HIGH(base, mask)  (GPOS = (mask))          //GPIO_OUT_W1TS_ADDRESS
 using io_reg_t = uint32_t; // define special datatype for register-access
 // The ESP8266 has two possible CPU frequencies: 160 MHz (26 IPL) and 80 MHz (22 IPL) -> something influences the IPL-Value
-constexpr uint8_t VALUE_IPL{(microsecondsToClockCycles(1) > 120) ? 26
-                                                                 : 22};
-// ⤷ instructions per loop
+constexpr uint8_t VALUE_IPL{(microsecondsToClockCycles(1) > 120) ? 26 : 22};
+    // ⤷ instructions per loop
 
 #elif defined(ARDUINO_ARCH_ESP32) || defined(ESP32) /* ESP32 Family */
 
@@ -116,9 +111,8 @@ constexpr uint8_t VALUE_IPL{(microsecondsToClockCycles(1) > 120) ? 26
   #define DIRECT_MODE_OUTPUT(base, pin) pinMode(pin, OUTPUT)
   #define DELAY_MICROSECONDS(us)        delayMicroseconds(us)
 using io_reg_t = uint32_t; // define special data type for register-access
-constexpr uint8_t VALUE_IPL{
-        39};
-// ⤷ instructions per loop, for 40 and 80 MHz (see esp8266 difference)
+constexpr uint8_t VALUE_IPL{39};
+    // ⤷ instructions per loop, for 40 and 80 MHz (see esp8266 difference)
 
 #elif defined(ARDUINO_ARCH_SAMD) /* arduino family samd */
     // arduino-zero is defined(__SAMD21G18A__)
@@ -144,9 +138,9 @@ constexpr uint8_t VALUE_IPL{
   #define DIRECT_MODE_OUTPUT(base, mask) ((*((base) + 2)) = (mask))
   #define DIRECT_WRITE_LOW(base, mask)   ((*((base) + 5)) = (mask))
   #define DIRECT_WRITE_HIGH(base, mask)  ((*((base) + 6)) = (mask))
-using io_reg_t = uint32_t;       // define special datatype for register-access
+using io_reg_t = uint32_t; // define special datatype for register-access
 constexpr uint8_t VALUE_IPL{18};
-// ⤷ instructions per loop
+    // ⤷ instructions per loop
 
 #elif defined(NRF52) /* arduino primo */
 
@@ -158,9 +152,8 @@ constexpr uint8_t VALUE_IPL{18};
   #define DIRECT_MODE_INPUT(base, pin)  nrf_gpio_cfg_input(pin, NRF_GPIO_PIN_NOPULL)
   #define DIRECT_MODE_OUTPUT(base, pin) nrf_gpio_cfg_output(pin)
 using io_reg_t = uint32_t; // define special data type for register-access
-constexpr uint8_t VALUE_IPL{
-        0};
-// ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+constexpr uint8_t VALUE_IPL{0};
+    // ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
 #elif defined(NRF51) /* red bear blend, should be good for all nrf51x chips */
 
@@ -176,9 +169,8 @@ constexpr uint8_t VALUE_IPL{
   #define DIRECT_MODE_INPUT(base, pin)  nrf_gpio_cfg_input(pin, NRF_GPIO_PIN_NOPULL)
   #define DIRECT_MODE_OUTPUT(base, pin) nrf_gpio_cfg_output(pin)
 using io_reg_t = uint32_t; // define special data type for register-access
-constexpr uint8_t VALUE_IPL{
-        0};
-// ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+constexpr uint8_t VALUE_IPL{0};
+    // ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
 #elif defined(__RFduino__) /* rf51 chip with special implementation */
 
@@ -190,9 +182,8 @@ constexpr uint8_t VALUE_IPL{
   #define DIRECT_MODE_INPUT(base, pin)  pinMode(pin, INPUT)
   #define DIRECT_MODE_OUTPUT(base, pin) pinMode(pin, OUTPUT)
 using io_reg_t = uint32_t; // define special data type for register-access
-constexpr uint8_t VALUE_IPL{
-        0};
-// ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+constexpr uint8_t VALUE_IPL{0};
+    // ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
 #elif defined(__arc__) /* Arduino101/Genuino101 specifics */
 
@@ -212,8 +203,7 @@ constexpr uint8_t VALUE_IPL{
   #define PIN_TO_BASEREG(pin) ((volatile uint32_t *) g_APinDescription[pin].ulGPIOBase)
   #define PIN_TO_BITMASK(pin) pin
 using io_reg_t = uint32_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL{
-        0};
+constexpr uint8_t VALUE_IPL{0};
 // ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
 static inline __attribute__((always_inline)) io_reg_t directRead(volatile io_reg_t *base,
@@ -285,9 +275,8 @@ static inline __attribute__((always_inline)) void directWriteHigh(volatile io_re
   #define DIRECT_MODE_INPUT(base, pin)  pinMode(pin, INPUT)
   #define DIRECT_MODE_OUTPUT(base, pin) pinMode(pin, OUTPUT)
 using io_reg_t = uint32_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL{
-        10};
-// ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
+constexpr uint8_t VALUE_IPL{10};
+    // ⤷ instructions per loop, uncalibrated so far - see ./examples/debug/calibrate_by_bus_timing for an explanation
 
   #warning                                                                                         \
           "OneWire. Fallback mode. Using API calls for pinMode,digitalRead and digitalWrite. Operation of this library is not guaranteed on this architecture."
