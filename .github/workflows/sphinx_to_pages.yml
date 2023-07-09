@@ -23,6 +23,8 @@ jobs:
 #        uses: pre-commit/action@v3.0.0
 
       - name: Install dependencies 🔧
+        run: pip3 install pipenv
+      - name: Install dependencies 🔧
         run: pipenv shell
 
       - name: Build Documentation 🧱
