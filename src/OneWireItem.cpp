@@ -1,6 +1,7 @@
 #include "OneWireItem.h"
 
-OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7)
+OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5,
+                         uint8_t ID6, uint8_t ID7)
 {
     ID[0] = ID1;
     ID[1] = ID2;
@@ -12,9 +13,7 @@ OneWireItem::OneWireItem(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uin
     ID[7] = crc8(ID, 7);
 }
 
-void OneWireItem::sendID(OneWireHub * const hub) const {
-    hub->send(ID, 8);
-}
+void OneWireItem::sendID(OneWireHub *const hub) const { hub->send(ID, 8); }
 
 //The CRC code was excerpted and inspired by the Dallas Semiconductor
 //sample code bearing this copyright.
@@ -81,13 +80,9 @@ uint16_t OneWireItem::crc16(const uint8_t address[], const uint8_t length, const
     uint16_t crc = init; // init value
 
 #if defined(__AVR__)
-    for (uint8_t i = 0; i < length; ++i)
-    {
-        crc = _crc16_update(crc, address[i]);
-    }
+    for (uint8_t i = 0; i < length; ++i) { crc = _crc16_update(crc, address[i]); }
 #else
-    static const uint8_t oddParity[16] =
-            {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
+    static const uint8_t oddParity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
 
     for (uint8_t i = 0; i < length; ++i)
     {
@@ -97,8 +92,7 @@ uint16_t OneWireItem::crc16(const uint8_t address[], const uint8_t length, const
         cdata = (cdata ^ crc) & static_cast<uint16_t>(0xff);
         crc >>= 8;
 
-        if ((oddParity[cdata & 0x0F] ^ oddParity[cdata >> 4]) != 0)
-            crc ^= 0xC001;
+        if ((oddParity[cdata & 0x0F] ^ oddParity[cdata >> 4]) != 0) crc ^= 0xC001;
 
         cdata <<= 6;
         crc ^= cdata;
@@ -117,7 +111,7 @@ uint16_t OneWireItem::crc16(uint8_t value, uint16_t crc)
     static const uint8_t oddParity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
     value = (value ^ static_cast<uint8_t>(crc));
     crc >>= 8;
-    if ((oddParity[value & 0x0F] ^ oddParity[value >> 4]) != 0)   crc ^= 0xC001;
+    if ((oddParity[value & 0x0F] ^ oddParity[value >> 4]) != 0) crc ^= 0xC001;
     uint16_t cdata = (static_cast<uint16_t>(value) << 6);
     crc ^= cdata;
     crc ^= (static_cast<uint16_t>(cdata) << 1);

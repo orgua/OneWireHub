@@ -3,7 +3,7 @@
 
 builtin = clear,rare,informal,usage,code,en-GB_to_en-US
 
-ignore-words-list = od,master,masters,slave,slaves,usera,thre,
+ignore-words-list = od,usera,thre,usere
 # note: use lower-case!
 
 # options without argument

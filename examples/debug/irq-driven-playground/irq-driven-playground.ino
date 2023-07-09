@@ -32,19 +32,19 @@ static jmp_buf break_here;
  */
 
 
-const uint8_t led_PIN       = 13;
+const uint8_t led_PIN = 13;
 
 bool blinking()
 {
-    const  uint32_t interval    = 500;          // interval at which to blink (milliseconds)
-    static uint32_t nextMillis  = millis();     // will store next time LED will updated
+    const uint32_t  interval   = 500;      // interval at which to blink (milliseconds)
+    static uint32_t nextMillis = millis(); // will store next time LED will updated
 
     if (millis() > nextMillis)
     {
-        nextMillis += interval;             // save the next time you blinked the LED
-        static uint8_t ledState = LOW;      // ledState used to set the LED
-        if (ledState == LOW)    ledState = HIGH;
-        else                    ledState = LOW;
+        nextMillis += interval;        // save the next time you blinked the LED
+        static uint8_t ledState = LOW; // ledState used to set the LED
+        if (ledState == LOW) ledState = HIGH;
+        else ledState = LOW;
         digitalWrite(led_PIN, ledState);
         return 1;
     }
@@ -61,13 +61,13 @@ void irq_mockup()
     if (has_to_resume)
     {
         has_to_resume = 0;
-        longjmp(break_here,1);
+        longjmp(break_here, 1);
     }
 
     //// put the state-machine here
     // waitReset
     // showPresence
-/*
+    /*
     static bool flipFlop = true;
 
     if (flipFlop)
@@ -89,7 +89,7 @@ void irq_mockup()
 bool send(const uint8_t dataByte)
 {
     Serial.print(" Sending 0x");
-    Serial.print(dataByte,HEX);
+    Serial.print(dataByte, HEX);
     Serial.print(": ");
 
     for (uint8_t bitMask = 0x01; bitMask; bitMask <<= 1)
@@ -103,17 +103,13 @@ bool send(const uint8_t dataByte)
 }
 
 
-
 bool sendBit(const bool value)
 {
     Serial.print(value);
     Serial.print(" ");
     Serial.flush();
     // wait for next Timeslot
-    if (setjmp(break_here))
-    {
-        return true;
-    }
+    if (setjmp(break_here)) { return true; }
     else
     {
         has_to_resume = 1;

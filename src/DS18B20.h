@@ -13,7 +13,6 @@
 class DS18B20 : public OneWireItem
 {
 private:
-
     uint8_t scratchpad[9];
 
     void updateCRC(void);
@@ -21,12 +20,12 @@ private:
     bool ds18s20_mode;
 
 public:
+    static constexpr uint8_t family_code{0x28}; // is compatible to ds1822 (0x22) and ds18S20 (0x10)
 
-    static constexpr uint8_t family_code                { 0x28 }; // is compatible to ds1822 (0x22) and ds18S20 (0x10)
+    DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6,
+            uint8_t ID7);
 
-    DS18B20(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
-
-    void duty(OneWireHub * hub) final;
+    void duty(OneWireHub *hub) final;
 
     void setTemperature(float value_degC);  // -55 to +125 degC
     void setTemperature(int8_t value_degC); // -55 to +125 degC
@@ -34,7 +33,6 @@ public:
 
     void    setTemperatureRaw(int16_t value_raw);
     int16_t getTemperatureRaw() const;
-
 };
 
 #endif

@@ -5,14 +5,14 @@
 *    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
 */
 
-#include "OneWireHub.h"
 #include "DS2450.h"
+#include "OneWireHub.h"
 
-constexpr uint8_t pin_led       { 13 };
-constexpr uint8_t pin_onewire   { 8 };
+constexpr uint8_t pin_led{13};
+constexpr uint8_t pin_onewire{8};
 
 auto hub    = OneWireHub(pin_onewire);
-auto ds2450 = DS2450( DS2450::family_code, 0x00, 0x00, 0x50, 0x24, 0xDA, 0x00 );
+auto ds2450 = DS2450(DS2450::family_code, 0x00, 0x00, 0x50, 0x24, 0xDA, 0x00);
 
 bool blinking(void);
 
@@ -29,7 +29,7 @@ void setup()
     // Test-Cases: the following code is just to show basic functions, can be removed any time
     Serial.println("Test - set all Potentiometers to 42");
     Serial.println(ds2450.getPotentiometer(0));
-    ds2450.setPotentiometer(42,42,42,42); // set all channels at once
+    ds2450.setPotentiometer(42, 42, 42, 42); // set all channels at once
     Serial.println(ds2450.getPotentiometer(0));
     Serial.println(ds2450.getPotentiometer(1));
     Serial.println(ds2450.getPotentiometer(2));
@@ -37,7 +37,7 @@ void setup()
 
     Serial.println("Test - set Potentiometer 1 to 55000");
     Serial.println(ds2450.getPotentiometer(1));
-    ds2450.setPotentiometer(1,55000);
+    ds2450.setPotentiometer(1, 55000);
     Serial.println(ds2450.getPotentiometer(1));
 
     // ds2450.clearMemory(); // begin fresh after doing some work
@@ -62,15 +62,15 @@ void loop()
 
 bool blinking(void)
 {
-    const  uint32_t interval    = 2000;          // interval at which to blink (milliseconds)
-    static uint32_t nextMillis  = millis();     // will store next time LED will updated
+    const uint32_t  interval   = 2000;     // interval at which to blink (milliseconds)
+    static uint32_t nextMillis = millis(); // will store next time LED will updated
 
     if (millis() > nextMillis)
     {
-        nextMillis += interval;             // save the next time you blinked the LED
-        static uint8_t ledState = LOW;      // ledState used to set the LED
-        if (ledState == LOW)    ledState = HIGH;
-        else                    ledState = LOW;
+        nextMillis += interval;        // save the next time you blinked the LED
+        static uint8_t ledState = LOW; // ledState used to set the LED
+        if (ledState == LOW) ledState = HIGH;
+        else ledState = LOW;
         digitalWrite(pin_led, ledState);
         return 1;
     }

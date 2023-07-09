@@ -11,11 +11,11 @@
 
 constexpr bool enable_debug = 0;
 
-#include "OneWireHub.h"
 #include "DS18B20.h"
+#include "OneWireHub.h"
 
-#include <Wire.h>
 #include "i2c.h"
+#include <Wire.h>
 
 #include "i2c_TCS3772.h"
 TCS3772 tcs3772;
@@ -26,18 +26,23 @@ MPL3115A2 mpl3115;
 #include "i2c_SI7021.h"
 SI7021 si7021;
 
-constexpr uint8_t pin_led       { 8 };
-constexpr uint8_t pin_onewire   { 1 };
+constexpr uint8_t pin_led{8};
+constexpr uint8_t pin_onewire{1};
 
-auto hub    = OneWireHub(pin_onewire);
+auto hub = OneWireHub(pin_onewire);
 
-auto ds18b0 = DS18B20(0x28, 0x00, 0x55, 0x44, 0x33, 0x22, 0x11); // Light, RED, without unit, int16 from 0 to 2047
+auto ds18b0 = DS18B20(0x28, 0x00, 0x55, 0x44, 0x33, 0x22,
+                      0x11); // Light, RED, without unit, int16 from 0 to 2047
 auto ds18b1 = DS18B20(0x28, 0x01, 0x55, 0x44, 0x33, 0x22, 0x11); // Light, GREEN, same as above
 auto ds18b2 = DS18B20(0x28, 0x02, 0x55, 0x44, 0x33, 0x22, 0x11); // Light, BLUE, same as above
 auto ds18b3 = DS18B20(0x28, 0x03, 0x55, 0x44, 0x33, 0x22, 0x11); // Light, CLEAR, same as above
-auto ds18b4 = DS18B20(0x28, 0x04, 0x55, 0x44, 0x33, 0x22, 0x11); // Pressure, pascal - sealevel (101325), int16 from -2048 to +2047
-auto ds18b5 = DS18B20(0x28, 0x05, 0x55, 0x44, 0x33, 0x22, 0x11); // humidity, percent * 16, int16 from 0 to 1600 (translates to 0 to 100%)
-auto ds18b6 = DS18B20(0x28, 0x06, 0x55, 0x44, 0x33, 0x22, 0x11); // temp, °C*16, int16 from -2048 to +2047 (translates to -128 to 128°C)
+auto ds18b4 = DS18B20(0x28, 0x04, 0x55, 0x44, 0x33, 0x22,
+                      0x11); // Pressure, pascal - sealevel (101325), int16 from -2048 to +2047
+auto ds18b5 =
+        DS18B20(0x28, 0x05, 0x55, 0x44, 0x33, 0x22,
+                0x11); // humidity, percent * 16, int16 from 0 to 1600 (translates to 0 to 100%)
+auto ds18b6 = DS18B20(0x28, 0x06, 0x55, 0x44, 0x33, 0x22,
+                      0x11); // temp, °C*16, int16 from -2048 to +2047 (translates to -128 to 128°C)
 auto ds18b7 = DS18B20(0x28, 0x07, 0x55, 0x44, 0x33, 0x22, 0x11); // unused
 
 #include <avr/wdt.h>
@@ -47,7 +52,7 @@ bool blinking(void);
 void setup()
 {
     wdt_reset();
-    wdt_enable (WDTO_250MS);
+    wdt_enable(WDTO_250MS);
 
     if (enable_debug)
     {
@@ -121,9 +126,9 @@ void updateSensorTCS(void) // 8560 559
         Serial.println("");
     }
 
-    for (uint8_t i=0; i<4; ++i)
+    for (uint8_t i = 0; i < 4; ++i)
     {
-        value_crgb[i] = value_crgb[i]>>2;
+        value_crgb[i] = value_crgb[i] >> 2;
         if (value_crgb[i] > 2047) value_crgb[i] = 2047;
     }
 
@@ -190,21 +195,21 @@ void loop()
         if (process == 0) updateSensorTCS();
         if (process == 1) updateSensorMPL();
         if (process == 2) updateSensorSI7();
-        if (++process>2)  process = 0;
+        if (++process > 2) process = 0;
     }
 }
 
 bool blinking(void)
 {
-    constexpr  uint32_t interval    = 1000;          // interval at which to blink (milliseconds)
-    static uint32_t nextMillis  = millis();     // will store next time LED will updated
+    constexpr uint32_t interval   = 1000;     // interval at which to blink (milliseconds)
+    static uint32_t    nextMillis = millis(); // will store next time LED will updated
 
     if (millis() > nextMillis)
     {
-        nextMillis += interval;             // save the next time you blinked the LED
-        static uint8_t ledState = LOW;      // ledState used to set the LED
-        if (ledState == LOW)    ledState = HIGH;
-        else                    ledState = LOW;
+        nextMillis += interval;        // save the next time you blinked the LED
+        static uint8_t ledState = LOW; // ledState used to set the LED
+        if (ledState == LOW) ledState = HIGH;
+        else ledState = LOW;
         digitalWrite(pin_led, ledState);
         return 1;
     }

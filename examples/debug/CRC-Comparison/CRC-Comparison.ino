@@ -29,11 +29,11 @@ void setup()
     Serial.begin(115200);
     Serial.println("Test-Code for faster CRC-Calculations");
 
-    constexpr uint8_t li[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed "
-            "do eiusmod tempor incididunt ut labore et dolore magna "
-            "aliqua. Ut enim ad minim veniam, quis nostrud exercitation "
-            "ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis "
-            "aute irure dolor";
+    constexpr uint8_t li[]    = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed "
+                                "do eiusmod tempor incididunt ut labore et dolore magna "
+                                "aliqua. Ut enim ad minim veniam, quis nostrud exercitation "
+                                "ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis "
+                                "aute irure dolor";
     constexpr uint8_t li_size = sizeof(li);
 
     Serial.print("CRC-ing ");
@@ -47,8 +47,7 @@ void setup()
 
     v1A_crc16_reset();
     time_start = micros();
-    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos)
-        v1A_crc16_update(li[bytePos]);
+    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos) v1A_crc16_update(li[bytePos]);
     time_stop = micros();
 
     Serial.print("Var 1A took ");
@@ -59,10 +58,9 @@ void setup()
 
     /// Start Var 1B //////////////////////////////////////////////////
 
-    crc = 0;
+    crc        = 0;
     time_start = micros();
-    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos)
-        v1B_crc16_update(li[bytePos], crc);
+    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos) v1B_crc16_update(li[bytePos], crc);
     time_stop = micros();
 
     Serial.print("Var 1B took ");
@@ -73,7 +71,7 @@ void setup()
 
     /// Start Var 1C //////////////////////////////////////////////////
 
-    crc = 0;
+    crc        = 0;
     time_start = micros();
     for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos)
         crc = v1C_crc16_update(li[bytePos], crc);
@@ -87,10 +85,10 @@ void setup()
 
     /// Start Var 2A //////////////////////////////////////////////////
 
-    crc = 0;
+    crc        = 0;
     time_start = micros();
-    crc = v2A_crc16(li, li_size);
-    time_stop = micros();
+    crc        = v2A_crc16(li, li_size);
+    time_stop  = micros();
 
     Serial.print("Var 2A took ");
     Serial.print(time_stop - time_start);
@@ -100,10 +98,9 @@ void setup()
 
     /// Start Var 2B //////////////////////////////////////////////////
 
-    crc = 0;
+    crc        = 0;
     time_start = micros();
-    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos)
-        crc = v2B_crc16(crc,li[bytePos], 1);
+    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos) crc = v2B_crc16(crc, li[bytePos], 1);
     time_stop = micros();
 
     Serial.print("Var 2B took ");
@@ -114,10 +111,9 @@ void setup()
 
     /// Start Var 2C //////////////////////////////////////////////////
 
-    crc = 0;
+    crc        = 0;
     time_start = micros();
-    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos)
-        crc = v2C_crc16(crc, li[bytePos]);
+    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos) crc = v2C_crc16(crc, li[bytePos]);
     time_stop = micros();
 
     Serial.print("Var 2C took ");
@@ -128,10 +124,9 @@ void setup()
 
     /// Start Var 2D //////////////////////////////////////////////////
 
-    crc = 0;
+    crc        = 0;
     time_start = micros();
-    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos)
-        v2D_crc16(crc, li[bytePos]);
+    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos) v2D_crc16(crc, li[bytePos]);
     time_stop = micros();
 
     Serial.print("Var 2D took ");
@@ -142,10 +137,9 @@ void setup()
 
     /// Start Var 2E //////////////////////////////////////////////////
 
-    crc = 0;
+    crc        = 0;
     time_start = micros();
-    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos)
-        crc = v2E_crc16(crc, li[bytePos]);
+    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos) crc = v2E_crc16(crc, li[bytePos]);
     time_stop = micros();
 
     Serial.print("Var 2E took ");
@@ -157,10 +151,9 @@ void setup()
 
     /// Start Var 3A //////////////////////////////////////////////////
 
-    crc = 0;
+    crc        = 0;
     time_start = micros();
-    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos)
-        crc = v3A_crc16(crc, li[bytePos]);
+    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos) crc = v3A_crc16(crc, li[bytePos]);
     time_stop = micros();
 
     Serial.print("Var 3A took ");
@@ -171,10 +164,9 @@ void setup()
 
     /// Start Var 3B //////////////////////////////////////////////////
 
-    crc = 0;
+    crc        = 0;
     time_start = micros();
-    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos)
-        crc = _crc16_update(crc, li[bytePos]);
+    for (uint8_t bytePos = 0; bytePos < li_size; ++bytePos) crc = _crc16_update(crc, li[bytePos]);
     time_stop = micros();
 
     Serial.print("Var 3B took ");
@@ -182,23 +174,16 @@ void setup()
     Serial.print(" us, got ");
     Serial.println(crc, HEX);
     Serial.flush();
-
 }
 
-void loop()
-{
-
-}
+void loop() {}
 
 
 /// Variant 1A - old code
 
 static uint16_t crc16;
 
-void v1A_crc16_reset(void)
-{
-    crc16 = 0;
-}
+void v1A_crc16_reset(void) { crc16 = 0; }
 
 void v1A_crc16_update(uint8_t b)
 {
@@ -206,16 +191,12 @@ void v1A_crc16_update(uint8_t b)
     {
         const bool mix = (static_cast<uint8_t>(crc16) ^ b) & static_cast<uint8_t>(0x01);
         crc16 >>= 1;
-        if (mix)
-            crc16 ^= static_cast<uint16_t>(0xA001);
+        if (mix) crc16 ^= static_cast<uint16_t>(0xA001);
         b >>= 1;
     }
 }
 
-uint16_t v1A_crc16_get(void)
-{
-    return crc16;
-}
+uint16_t v1A_crc16_get(void) { return crc16; }
 
 
 /// Variant 1B - break up the loop for parallel sending and try pass by reference
@@ -229,7 +210,7 @@ bool v1B_crc16_update(uint8_t dataByte, uint16_t &crc16)
 
         uint8_t mix = ((uint8_t) crc16 ^ dataByte) & static_cast<uint8_t>(0x01);
         crc16 >>= 1;
-        if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
+        if (mix) crc16 ^= static_cast<uint16_t>(0xA001);
         dataByte >>= 1;
 
         //if (_error) return false;
@@ -248,7 +229,7 @@ uint16_t v1C_crc16_update(uint8_t dataByte, uint16_t crc16)
 
         uint8_t mix = ((uint8_t) crc16 ^ dataByte) & static_cast<uint8_t>(0x01);
         crc16 >>= 1;
-        if (mix)  crc16 ^= static_cast<uint16_t>(0xA001);
+        if (mix) crc16 ^= static_cast<uint16_t>(0xA001);
         dataByte >>= 1;
 
         //if (_error) return false;
@@ -260,8 +241,7 @@ uint16_t v1C_crc16_update(uint8_t dataByte, uint16_t crc16)
 
 uint16_t v2A_crc16(const uint8_t address[], const uint8_t len)
 {
-    static const uint8_t oddParity[16] =
-            {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
+    static const uint8_t oddParity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
 
     uint16_t crc = 0; // init value
 
@@ -270,11 +250,10 @@ uint16_t v2A_crc16(const uint8_t address[], const uint8_t len)
         // Even though we're just copying a byte from the input,
         // we'll be doing 16-bit computation with it.
         uint16_t cdata = address[i];
-        cdata = (cdata ^ crc) & static_cast<uint16_t>(0xff);
+        cdata          = (cdata ^ crc) & static_cast<uint16_t>(0xff);
         crc >>= 8;
 
-        if (oddParity[cdata & 0x0F] ^ oddParity[cdata >> 4])
-            crc ^= 0xC001;
+        if (oddParity[cdata & 0x0F] ^ oddParity[cdata >> 4]) crc ^= 0xC001;
 
         cdata <<= 6;
         crc ^= cdata;
@@ -290,19 +269,17 @@ uint16_t v2A_crc16(const uint8_t address[], const uint8_t len)
 
 uint16_t v2B_crc16(uint16_t crc, const uint8_t value, const uint8_t len)
 {
-    static const uint8_t oddParity[16] =
-            {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
+    static const uint8_t oddParity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
 
     for (uint8_t i = 0; i < len; ++i)
     {
         // Even though we're just copying a byte from the input,
         // we'll be doing 16-bit computation with it.
         uint16_t cdata = value;
-        cdata = (cdata ^ crc) & static_cast<uint16_t>(0xff);
+        cdata          = (cdata ^ crc) & static_cast<uint16_t>(0xff);
         crc >>= 8;
 
-        if (oddParity[cdata & 0x0F] ^ oddParity[cdata >> 4])
-            crc ^= 0xC001;
+        if (oddParity[cdata & 0x0F] ^ oddParity[cdata >> 4]) crc ^= 0xC001;
 
         cdata <<= 6;
         crc ^= cdata;
@@ -318,9 +295,9 @@ uint16_t v2B_crc16(uint16_t crc, const uint8_t value, const uint8_t len)
 uint16_t v2C_crc16(uint16_t crc, uint8_t value)
 {
     static const uint8_t oddParity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
-    value = (value ^ static_cast<uint8_t>(crc));
+    value                              = (value ^ static_cast<uint8_t>(crc));
     crc >>= 8;
-    if (oddParity[value & 0x0F] ^ oddParity[value >> 4])   crc ^= 0xC001;
+    if (oddParity[value & 0x0F] ^ oddParity[value >> 4]) crc ^= 0xC001;
     uint16_t cdata = (static_cast<uint16_t>(value) << 6);
     crc ^= cdata;
     crc ^= (static_cast<uint16_t>(cdata) << 1);
@@ -332,9 +309,9 @@ uint16_t v2C_crc16(uint16_t crc, uint8_t value)
 void v2D_crc16(uint16_t &crc, uint8_t value)
 {
     static const uint8_t oddParity[16] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
-    value = (value ^ static_cast<uint8_t>(crc));
+    value                              = (value ^ static_cast<uint8_t>(crc));
     crc >>= 8;
-    if (oddParity[value & 0x0F] ^ oddParity[value >> 4])   crc ^= 0xC001;
+    if (oddParity[value & 0x0F] ^ oddParity[value >> 4]) crc ^= 0xC001;
     uint16_t cdata = (static_cast<uint16_t>(value) << 6);
     crc ^= cdata;
     crc ^= (static_cast<uint16_t>(cdata) << 1);
@@ -349,7 +326,7 @@ uint16_t v2E_crc16(uint16_t crc, uint8_t value)
     //value = (value ^ static_cast<uint8_t>(crc));
     value ^= static_cast<uint8_t>(crc);
     crc >>= static_cast<uint8_t>(8);
-    if (oddParity[value & 0x0F] ^ oddParity[value >> 4])   crc ^= 0xC001;
+    if (oddParity[value & 0x0F] ^ oddParity[value >> 4]) crc ^= 0xC001;
     //if (oddParity[static_cast<uint8_t>(value & static_cast<uint8_t>(0x0F))] ^ oddParity[value >> 4])   crc ^= 0xC001; // --> no difference
     //if (oddParity[value & 0x0F] ^ oddParity[static_cast<uint8_t>(value >> static_cast<uint8_t>(4))])   crc ^= 0xC001; // --> no difference
     //if (static_cast<uint8_t>(oddParity[value & 0x0F] ^ oddParity[value >> 4]))   crc ^= 0xC001; // --> no difference
@@ -422,8 +399,8 @@ uint16_t v3A_crc16(uint16_t crc, uint8_t value)
     crc ^= value;
     for (uint8_t i = 0; i < 8; ++i)
     {
-        if (crc & 1)    crc = (crc >> 1) ^ 0xA001;
-        else            crc = (crc >> 1);
+        if (crc & 1) crc = (crc >> 1) ^ 0xA001;
+        else crc = (crc >> 1);
     }
 
     return crc;

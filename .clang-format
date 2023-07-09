@@ -3,13 +3,13 @@
 BasedOnStyle: LLVM
 AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
-AlignConsecutiveAssignments: AcrossEmptyLinesAndComments
+AlignConsecutiveAssignments: AcrossComments
 #  Enabled: true # TODO: pyClangFormat fails with this style
 #  AcrossEmptyLines: true
 #  AcrossComments: true
 #  AlignCompound: true
-AlignConsecutiveDeclarations: AcrossEmptyLinesAndComments
-AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+AlignConsecutiveDeclarations: AcrossComments
+AlignConsecutiveMacros: AcrossComments
 AlignTrailingComments: true
 AlignOperands: Align
 AllowAllArgumentsOnNextLine: false

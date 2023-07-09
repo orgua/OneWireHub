@@ -10,30 +10,30 @@
 #include "OneWireHub.h"
 
 // include all libs to find errors
-#include "DS2401.h"  // Serial Number
 #include "DS18B20.h" // Digital Thermometer
+#include "DS2401.h"  // Serial Number
 
-const uint8_t led_PIN       = 1;         // the number of the LED pin
-const uint8_t OneWire_PIN   = 2;
+const uint8_t led_PIN     = 1; // the number of the LED pin
+const uint8_t OneWire_PIN = 2;
 
-OneWireHub  hub      = OneWireHub(OneWire_PIN);
-DS18B20     ds18B20a = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x0A);     // Work - Digital Thermometer
-DS18B20     ds18B20b = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x0B);
-DS2401      ds2401a  = DS2401( 0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0A );    // Work - Serial Number
-DS2401      ds2401b  = DS2401( 0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0B );
+OneWireHub hub   = OneWireHub(OneWire_PIN);
+DS18B20 ds18B20a = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x0A); // Work - Digital Thermometer
+DS18B20 ds18B20b = DS18B20(0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02, 0x0B);
+DS2401  ds2401a  = DS2401(0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0A); // Work - Serial Number
+DS2401  ds2401b  = DS2401(0x01, 0x00, 0x0D, 0x24, 0x01, 0x00, 0x0B);
 
 
 bool blinking()
 {
-    const  uint32_t interval    = 5000;          // interval at which to blink (milliseconds)
-    static uint32_t nextMillis  = millis();     // will store next time LED will updated
+    const uint32_t  interval   = 5000;     // interval at which to blink (milliseconds)
+    static uint32_t nextMillis = millis(); // will store next time LED will updated
 
     if (millis() > nextMillis)
     {
-        nextMillis += interval;             // save the next time you blinked the LED
-        static uint8_t ledState = LOW;      // ledState used to set the LED
-        if (ledState == LOW)    ledState = HIGH;
-        else                    ledState = LOW;
+        nextMillis += interval;        // save the next time you blinked the LED
+        static uint8_t ledState = LOW; // ledState used to set the LED
+        if (ledState == LOW) ledState = HIGH;
+        else ledState = LOW;
         digitalWrite(led_PIN, ledState);
         return 1;
     }
