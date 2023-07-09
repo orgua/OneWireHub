@@ -3,9 +3,6 @@ on:
   push:
     branches:
     - main
-  pull_request:
-    branches:
-    - main
 
 jobs:
   build:
@@ -30,6 +27,7 @@ jobs:
         with:
           checkout: false
           publish: false
+          documentation_path: "./docs/source"
 
       - name: Push changes 📌
         uses: ad-m/github-push-action@master
