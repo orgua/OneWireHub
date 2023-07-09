@@ -9,6 +9,7 @@ sphinx = "*"
 sphinxawesome-theme = "*"
 sphinx-sitemap = "*"
 myst-parser = "*"
+bump2version = "*"
 
 [dev-packages]
 

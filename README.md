@@ -127,7 +127,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 ### HELP - What to do if things don't work as expected?
 
 - check if your arduino software up to date (>v1.8.0)
-- update this lib to the latest release (v3.0.0)
+- update this lib to the latest release (3.0.0)
 - if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
 - check if clock-speed of the µC is set correctly (if possible) - test with simple blink example, 1sec ON should really need 1sec. timing is critical
 - begin with a simple example like the ds18b20 (if possible). the ds18b20 doesn't support overdrive, so the OneWire-Host won't switch to higher data rates
@@ -144,6 +144,15 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
    - please provide the following basic info: which µC and OneWire-Host do you use, software versions, what device do you try to emulate, what works, what doesn't
 
 ### Recent development (latest at the top)
+
+v3.0.0
+
+- improve documentation
+- replace discriminatory language
+- reduce name-collision
+- improve config for hub (adjust device_limit & overdrive directly in main source-file)
+
+v2.0.0
 
 - travis CI and unittests
 - more explicit coding, a lot of bugfixes with the help of unit tests (mainly esp8266, bea910, ds18b20)
