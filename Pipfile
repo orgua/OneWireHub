@@ -13,5 +13,5 @@ bump2version = "*"
 
 [dev-packages]
 
-[requires]
-python_version = "3.11"
+[pipenv]
+allow_prereleases = false
