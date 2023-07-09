@@ -1,13 +1,19 @@
 OneWireHub
 ==========
 
-The OneWireHub is a sleek Arduino compatible (and many more platforms) library to emulate OneWire-Periphery with support for various devices & sensors. The motivation is to offer a shared code base for all OneWire-Slaves. With a small overhead one µC can emulate up to 32 ICs simultaneously.
+The OneWireHub is a sleek Arduino compatible (and many more platforms) library to emulate OneWire-Periphery with support for various devices & sensors. The motivation is to offer a shared code base for all OneWire-Periphery-Devices. With a small overhead one µC can emulate up to 32 ICs simultaneously.
 The main goal is to use modern sensors (mainly [I2C](https://github.com/orgua/iLib) or SPI interface) and transfer their measurements into one or more emulated ds2438 which have 4x16bit registers for values. This feature removes the limitations of modern house-automation-systems. Add humidity, light and other sensors easy to your home automation environment.
 
 [![CompileTests](https://github.com/orgua/OneWireHub/actions/workflows/compile.yml/badge.svg)](https://github.com/orgua/OneWireHub/actions/workflows/compile.yml)
 [![Documentation](https://github.com/orgua/OneWireHub/actions/workflows/sphinx_to_pages.yml/badge.svg)](https://orgua.github.io/OneWireHub/)
 
-### Implemented Slaves
+**Links**
+
+- [Main-Repository](https://github.com/orgua/OneWireHub)
+- [Documentation](https://orgua.github.io/OneWireHub/)
+
+
+### Implemented peripheral Devices
 
 - **BAE0910 (0xFC) multi purpose device (ADC, Clock, GPIO, PWM, EEPROM)**
 - **DS1822 (0x22) Digital Thermometer, 12bit** -> use DS18B20 with different family code
@@ -40,34 +46,34 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### Features
 
-- supports up to 32 slaves simultaneously (8 is standard setting), adjust HUB_SLAVE_LIMIT in src/OneWireHub_config.h to safe RAM & program space
+- supports up to 32 peripheral devices simultaneously (8 is standard setting), adjust `ONEWIREHUB_DEVICE_LIMIT` in `src/OneWireHub_config.h` to safe RAM & program space
    - implementation-overhead for the hub is minimal and even saves resources for >1 emulated device
-- hot-plug: add and remove slaves as needed during operation
-- support for most onewire-features: MATCH ROM (0x55), SKIP ROM (0xCC), READ ROM (0x0F,0x33), RESUME COMMAND (0xA5)
-   - **OVERDRIVE-Mode**: Master can issue OD SKIP ROM (0x13) or OD MATCH ROM (0x69) and slave stays in this mode till it sees a long reset -> OD-feature must be activated in config
-   - ALARM SEARCH (0xEC) is NOT implemented yet!
+- hot-plug: add and remove devices as needed during operation
+- support for most onewire-features: `MATCH ROM` (0x55), `SKIP ROM` (0xCC), `READ ROM` (0x0F,0x33), `RESUME COMMAND` (0xA5)
+   - **OVERDRIVE-Mode**: OneWire-Host can issue `OD SKIP ROM` (0x13) or `OD MATCH ROM` (0x69) and peripheral device stays in this mode till it sees a long reset -> OD-feature must be activated in config
+   - `ALARM SEARCH` (0xEC) is NOT implemented yet!
 - cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=2.0.0 recommended)**
    - use of constexpr instead of #define for better compiler-messages and cleaner code
    - use static-assertions for compile-time plausibility checks
    - user defined literals convert constants into needed format / unit
-- hardware-dependencies are combined in "platform.h", synced with [Onewire-Lib](https://github.com/PaulStoffregen/OneWire)
+- hardware-dependencies are combined in `platform.h`, synced with [Onewire-Lib](https://github.com/PaulStoffregen/OneWire)
    - supported: arduino zero, teensy, pic32, [ATtiny](https://github.com/damellis/attiny), esp8266, esp32, raspberry (...)
    - tested architectures: atmega328 @ 16 MHz / arduino Uno, teensy3.2
    - for portability and tests the hub can be compiled on a PC with the supplied mock-up functions in platform.h
    - at the moment the lib relies sole on loop-counting for timing, no direct access to interrupt or timers, **NOTE:** if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
-- hub and slaves are unit tested and run for each supported architecture through travis CI
+- hub and emulated devices are unit tested and run for each supported architecture through travis CI
 - Serial-Debug output can be enabled in src/OneWireHub_config.h: set USE_SERIAL_DEBUG to 1 (be aware! it may produce heisenbugs, timing is critical)
 - GPIO-Debug output - shows status by issuing high-states (activate in src/OneWireHub_config.h, is a better alternative to serial debug)
    - during presence detection (after reset),
-   - after receiving / sending a whole byte (not during SEARCH ROM)
-   - when duty()-subroutines of an attached slave get called
+   - after receiving / sending a whole byte (not during `SEARCH ROM`)
+   - when duty()-subroutines of an attached device get called
    - during hub-startup it issues a 1ms long high-state (you can check the instruction-per-loop-value for your architecture with this)
 - provide documentation, numerous examples, easy interface for hub and sensors
 
 ### Supported and tested Hardware
 
 - embedded real life test
-   - setup: run test-example, use ds9490-master, arduino 1.8.3, Windows 10 and the board-library named in the brackets
+   - setup: run test-example, use ds9490-OneWire-Host, arduino 1.8.3, Windows 10 and the board-library named in the brackets
    - Arduino Uno ([Arduino AVR Boards](https://github.com/arduino/Arduino/tree/master/hardware/arduino/avr))
    - Teensy 3.2 ([teensyduino](https://github.com/PaulStoffregen/cores))
    - Wemos D1 Mini ESP32S ([esp32](https://github.com/espressif/arduino-esp32))
@@ -100,17 +106,17 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - Low Level - hardware access
    - macros like DIRECT_READ() and DIRECT_WRITE() handle bus-access (platform.h)
    - checkReset() and showPresence() are used to react to a beginning OW-Message
-   - sendBit(), recvBit() manage the information inside each timeslot issued by the master
+   - sendBit(), recvBit() manage the information inside each timeslot issued by the OneWire-Host
 - Mid Level - onewire protocol logic
-   - send() and recv() can process data between device and master on byte-level (and do a CRC if needed)
-   - recvAndProcessCmd() handles basic commands of the master like: search-rom, match-rom, skip-rom, read-rom
+   - send() and recv() can process data between device and OneWire-Host on byte-level (and do a CRC if needed)
+   - recvAndProcessCmd() handles basic commands of the OneWire-Host like: search-rom, match-rom, skip-rom, read-rom
 - High Level - user interaction
-   - attach() adds an instance of a ow-device to the hub so the master can find it on the bus. there is a lot to do here. the device ID must be integrated into the tree-structure so that the hub knows how to react during a search-rom-command
+   - attach() adds an instance of a ow-device to the hub so the OneWire-Host can find it on the bus. there is a lot to do here. the device ID must be integrated into the tree-structure so that the hub knows how to react during a search-rom-command
    - detach() takes the selected emulated device offline and restructures the search-tree
    - poll() lets the hub listen to the bus. If there is a reset within a given time-frame it will continue to handle the message (show presence and receive commands), otherwise it will exit and you can do other stuff. the user should call this function as often as possible to intercept every message and therefore stay visible on the bus
-- Slave Level:
-   - slave.duty() gets automatically called when the master sends special commands (for example match-rom). now it is possible to handle device specific commands like "read memory" or "do temperature measurement". These commands deviate for each device.
-   - slave.setTemperature() and slave.writeMemory() for example are individual functions that handle core-functionality of the device and can be called by the user
+- Device Level:
+   - device.duty() gets automatically called when the OneWire-Host sends special commands (for example match-rom). now it is possible to handle device specific commands like "read memory" or "do temperature measurement". These commands deviate for each device.
+   - device.setTemperature() and device.writeMemory() for example are individual functions that handle core-functionality of the device and can be called by the user
 - for further details try reading the header-files or check the examples
 
 ### HELP - What to do if things don't work as expected?
@@ -119,29 +125,29 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - update this lib to the latest release (v3.0.0)
 - if you use an uncalibrated architecture the compilation-process will fail with an error, look at ./examples/debug/calibrate_by_bus_timing for an explanation
 - check if clock-speed of the µC is set correctly (if possible) - test with simple blink example, 1sec ON should really need 1sec. timing is critical
-- begin with a simple example like the ds18b20 (if possible). the ds18b20 doesn't support overdrive, so the master won't switch to higher data rates
-- check if your setup is right: you need at least external power for your µC and a data line with ground line to your onewire-master (see section below)
-- is there more than one master on the bus? It won't work!
-- has any other sensor (real or emulated) ever worked with this master? -> the simplest device would be a ds2401
+- begin with a simple example like the ds18b20 (if possible). the ds18b20 doesn't support overdrive, so the OneWire-Host won't switch to higher data rates
+- check if your setup is right: you need at least external power for your µC and a data line with ground line to your OneWire-Host (see section below)
+- is there more than one OneWire-Host on the bus? It won't work!
+- has any other sensor (real or emulated) ever worked with this OneWire-Host? -> the simplest device would be a ds2401
 - if communication works, but is unstable please check with logic analyzer
-   - maybe your master is slow and just needs a higher ONEWIRE_TIME_MSG_HIGH_TIMEOUT-value (see OneWireHub_config.h line 37)
+   - maybe your OneWire-Host is slow and just needs a higher ONEWIRE_TIME_MSG_HIGH_TIMEOUT-value (see OneWireHub_config.h line 37)
 - make sure that serial- and gpio-debugging is disabled (see src/OneWireHub_config.h), especially when using overdrive (be aware! it may produce heisenbugs, timing is critical)
 - on a slow arduino it can be helpful to disable the serial port completely to get reliable results -> at least comment out serial.begin()
 - if you can provide a recording via logic-analyzer (logic 8 or similar) there should be chance we can help you
    - additional gpio-debug output can be enabled in src/OneWireHub_config.h: set USE_GPIO_DEBUG to 1 (it helps tracking state changes of the hub)
 - if you checked all these points feel free to open an issue at [Github](https://github.com/orgua/OneWireHub) and describe your troubleshooting process
-   - please provide the following basic info: which µC and master do you use, software versions, what device do you try to emulate, what works, what doesn't
+   - please provide the following basic info: which µC and OneWire-Host do you use, software versions, what device do you try to emulate, what works, what doesn't
 
 ### Recent development (latest at the top)
 
 - travis CI and unittests
 - more explicit coding, a lot of bugfixes with the help of unit tests (mainly esp8266, bea910, ds18b20)
-- interface of hub and slave-devices has changed, check header-file or examples for more info
+- interface of hub and devices has changed, check header-file or examples for more info
 - rework / clean handling of timing-constants with user defined literals.
-- extend const-correctness to all onewire-slaves and unify naming of functions across similar devices
+- extend const-correctness to all onewire-devices and unify naming of functions across similar devices
 - include tests into each device-example and add a lot of get()/set() for internal device-states
 - full support for ds2423, ds2450 and ds2503/5/6
-- fix and enhance ds2431, ds2433, ds2502, ds2890, probably every slave got a rework / optimization
+- fix and enhance ds2431, ds2433, ds2502, ds2890, probably every device got a rework / optimization
 - overdrive-support! must be enabled in config file - works with atmega328@16MHz
 - rework send() and recv(), much more efficient -> less time without interrupts (no missing time with millis())! AND code is more compact (ds2433.cpp shrinks from 176 to 90 LOC)
 - rework Error-Handling-System (reduced a lot of overhead)
@@ -156,22 +162,22 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - added or extended the ds2431, ds2431, ds2501, ds2502 (also tested)
 - added ds2431 (thanks to j-langlois) and BAE910 (thanks to Giermann), Dell Power Supply (thanks to Kondi)
 - prepare new timing-method which will replace the old one in the next couple of weeks (a 6µs millis() call at 8MHz is not suitable for OW)
-- support for skipROM-cmd if only one slave is present (thanks to Giermann)
+- support for skipROM-cmd if only one device is present (thanks to Giermann)
 - speed up atmel-crc-functions
-- rework of error system, switch to enum, slaves can raise errors now & and Serial interferes less with OW-timings
-- raise the maximal slave limit from 8 to 32, code adapts via variable dataTypes
+- rework of error system, switch to enum, peripheral devices can raise errors now & and Serial interferes less with OW-timings
+- raise the maximal peripheral device limit from 8 to 32, code adapts via variable dataTypes
 - per-bit-CRC16 with sendAndCRC16() and sendAndCRC16() for load-balancing, 900ns/bit instead of 7µs/byte on Atmega328@16MHz
 - faster CRC16 (ds2450 and ds2408 and ds2423), takes 5-7µs/byte instead of 10µs
-- replace searchIDTree() algorithm, safes a lot of ram (debug-codeSize-4slaves.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
+- replace searchIDTree() algorithm, safes a lot of ram (debug-codeSize-4devices.ino needs 3986 & 155 byte instead of 3928 & 891 byte) and allows >4 devices
 
 ### Plans for the future
 
 - alarm / conditional search
 - switch to delay() for fast enough controllers (instead of tick-counting)
-- debug tool to determine timings of exotic masters
+- debug tool to determine timings of exotic OneWire-Hosts
 - better interrupt-handling (save the state before disabling)
 - irq-handled hub on supported ports, split lib into onewire() and onewireIRQ()
-- test each example with real onewire-masters, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
+- test each example with real OneWire-Hosts, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
 - [List of all Family-Codes](http://owfs.sourceforge.net/family.html)
 - [List of Maxim Sensors](https://www.maximintegrated.com/en/app-notes/index.mvp/id/3989) (at the bottom)
 

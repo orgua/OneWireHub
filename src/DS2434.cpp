@@ -12,7 +12,7 @@ DS2434::DS2434(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     clearScratchpad();
 }
 
-// As this device is not multidrop, it needs to handle ALL commands from the master
+// As this device is not multidrop, it needs to handle ALL commands from the OneWire-Host
 void DS2434::duty(OneWireHub *const hub)
 {
     uint8_t  start_byte, cmd, data;
@@ -133,7 +133,7 @@ void DS2434::duty(OneWireHub *const hub)
             if (hub->recv(&data)) return;
             break;
 
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 }
 

@@ -3,7 +3,7 @@
  *    --> attach sensors as needed
  *
  *    Tested with:
- *    - https://github.com/PaulStoffregen/OneWire on the other side as Master
+ *    - https://github.com/PaulStoffregen/OneWire on the other side as OneWire-Host
  *
  *    Compile size (program / ram)
  *      9232 & 706 byte with arduino 1.6.10 and onewirehub 2.0.1 for UNO

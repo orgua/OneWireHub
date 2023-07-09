@@ -2,8 +2,8 @@
 *    Example-Code that emulates a DS2431 1024 bits EEPROM
 *
 *   Tested with
-*    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
-*    - tested on buspirate and two different real 1-wire masters (DS9490 and a PIC18-Device)
+*    - DS9490R-OneWire-Host, atmega328@16MHz and teensy3.2@96MHz as peripheral device
+*    - tested on buspirate and two different real 1-wire hosts (DS9490 and a PIC18-Device)
 */
 
 #include "DS2431.h"

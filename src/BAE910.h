@@ -1,4 +1,4 @@
-// Multifunction 1-wire slave device @@@
+// Multifunction 1-wire peripheral device @@@
 // works, basic functionality
 // native bus-features: unknown
 

@@ -2,8 +2,8 @@
  *    Example-Code that emulates a DS2401 used as a binary button (like reed-contact - power on, power off)
  *
  *    Tested with
- *    - https://github.com/PaulStoffregen/OneWire on the other side as Master, atmega328@16MHz as Slave
- *    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
+ *    - https://github.com/PaulStoffregen/OneWire on the other side as OneWire-Host, atmega328@16MHz as peripheral device
+ *    - DS9490R-OneWire-Host, atmega328@16MHz and teensy3.2@96MHz as peripheral device
  */
 
 #include "DS2401.h" // Serial Number

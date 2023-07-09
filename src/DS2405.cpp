@@ -13,7 +13,7 @@ void DS2405::duty(OneWireHub *const hub)
     pin_state = !pin_state;
     noInterrupts();
     while (!hub->sendBit(pin_state))
-        ; // if master issues read slots it gets the state...
+        ; // if OneWire-Host issues read slots it gets the state...
     interrupts();
 
     // TODO: when alarm search is implemented (0xEC):

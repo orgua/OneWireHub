@@ -7,8 +7,9 @@
 /////////////////////////////////////////////////////
 
 // INFO: had to go with a define because some compilers use constexpr as simple const --> massive problems
-#define HUB_SLAVE_LIMIT  8 // set the limit of the hub HERE, max is 32 devices
-#define OVERDRIVE_ENABLE 0 // support overdrive for the slaves
+#define ONEWIREHUB_DEVICE_LIMIT                                                                    \
+  8                        // set the limit of the hub HERE, max is 32 devices, TODO: ifnotdef
+#define OVERDRIVE_ENABLE 0 // support overdrive for the peripheral devices, TODO: ONEWIREHUB_
 
 constexpr bool USE_SERIAL_DEBUG{
         false}; // give debug messages when printError() is called (be aware! it may produce heisenbugs, timing is critical) SHOULD NOT be enabled with < 20 MHz uC
@@ -29,13 +30,13 @@ static_assert(!(USE_GPIO_DEBUG && (microsecondsToClockCycles(1) < 20) && (OVERDR
 //  should be --> datasheet
 //  was       --> shagrat-legacy
 
-// Reset: every low-state of the master between MIN & MAX microseconds will be recognized as a Reset
-constexpr timeOW_t ONEWIRE_TIME_RESET_TIMEOUT = {
+// Reset: every low-state of the OneWire-Host between MIN & MAX microseconds will be recognized as a Reset
+constexpr timeOW_t ONEWIRE_TIME_RESET_TIMEOUT = { // TODO: rename HUB_
         5000_us}; // for not hanging to long in reset-detection, lower value is better for more responsive applications, but can miss resets
-constexpr timeOW_t ONEWIRE_TIME_RESET_MIN[2] = {430_us, 48_us}; // should be 480
-constexpr timeOW_t ONEWIRE_TIME_RESET_MAX[2] = {960_us, 80_us}; // from ds2413
+constexpr timeOW_t ONEWIRE_TIME_RESET_MIN[2]  = {430_us, 48_us}; // should be 480
+constexpr timeOW_t ONEWIRE_TIME_RESET_MAX[2]  = {960_us, 80_us}; // from ds2413
 
-// Presence: slave waits TIMEOUT and emits a low state after the reset with ~MIN length, if the bus stays low after that and exceeds MAX the hub will issue an error
+// Presence: peripheral device waits TIMEOUT and emits a low state after the reset with ~MIN length, if the bus stays low after that and exceeds MAX the hub will issue an error
 constexpr timeOW_t ONEWIRE_TIME_PRESENCE_TIMEOUT = {
         20_us}; // probe measures 25us, duration of high state between reset and presence
 constexpr timeOW_t ONEWIRE_TIME_PRESENCE_MIN[2] = {160_us, 8_us};  // was 125
@@ -47,11 +48,11 @@ constexpr timeOW_t ONEWIRE_TIME_MSG_HIGH_TIMEOUT = {
 constexpr timeOW_t ONEWIRE_TIME_SLOT_MAX[2] = {
         135_us, 30_us}; // should be 120, measured from falling edge to next falling edge
 
-// read and write from the viewpoint of the slave!!!!
+// read and write from the viewpoint of the peripheral device!!!!
 constexpr timeOW_t ONEWIRE_TIME_READ_MIN[2] = {
         20_us, 4_us}; // should be 15, was 30, says when it is safe to read a valid bit
 constexpr timeOW_t ONEWIRE_TIME_READ_MAX[2] = {
-        60_us, 10_us}; // low states (zeros) of a master should not exceed this time in a slot
+        60_us, 10_us}; // low states (zeros) of a OneWire-Host should not exceed this time in a slot
 constexpr timeOW_t ONEWIRE_TIME_WRITE_ZERO[2] = {30_us, 8_us}; // the hub holds a zero for this long
 
 // VALUES FOR STATIC ASSERTS

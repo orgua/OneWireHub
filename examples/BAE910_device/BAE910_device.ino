@@ -5,7 +5,7 @@
  *    Tested with:
  */
 
-#include "BAE910.h" // 3rd party OneWire slave device, family code 0xFC
+#include "BAE910.h" // 3rd party OneWire peripheral device, family code 0xFC
 #include "OneWireHub.h"
 
 constexpr uint8_t pin_led{13};

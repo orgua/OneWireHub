@@ -1,7 +1,7 @@
 /*
  *    Test-Code for calibration - this sketch determines the value for "instructions per loop" for your µC/CPU-architecture
  *
- *      setup: upload sketch to controller and hook it up to a OW-master, it will calibrate itself to the "seen" reset-pulses
+ *      setup: upload sketch to controller and hook it up to a OneWire-Host, it will calibrate itself to the "seen" reset-pulses
  *      NOTE: you will need a serial-port to make this work
  *
  *      --> read value per serial-com and write it to /src/platform.h to YOUR specific architecture

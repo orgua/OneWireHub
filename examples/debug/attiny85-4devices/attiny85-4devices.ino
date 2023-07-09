@@ -4,7 +4,7 @@
  *
  *    Tested with:
  *    - Attiny85-Board http://www.ebay.de/itm/221702922456
- *    - DS9490R-Master, atmega328@16MHz as Slave
+ *    - DS9490R-OneWire-Host, atmega328@16MHz as peripheral device
  */
 
 #include "OneWireHub.h"

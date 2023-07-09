@@ -93,7 +93,7 @@ void DS2430::duty(OneWireHub *const hub)
             status_register &= ~0b11u; // lock the OTP
             break;
 
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 }
 

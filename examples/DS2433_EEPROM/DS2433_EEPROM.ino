@@ -2,7 +2,7 @@
 *    Example-Code that emulates a DS2433 4096 bits EEPROM
 *
 *   Tested with
-*    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
+*    - DS9490R-OneWire-Host, atmega328@16MHz and teensy3.2@96MHz as peripheral device
 */
 
 #include "DS2433.h"

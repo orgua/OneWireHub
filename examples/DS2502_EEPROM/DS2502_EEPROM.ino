@@ -3,7 +3,7 @@
  *
  *    Tested with
  *    - dell notebook https://forum.pjrc.com/threads/33640-Teensy-2-OneWire-Slave
- *    - DS9490R-Master, atmega328@16MHz as Slave
+ *    - DS9490R-OneWire-Host, atmega328@16MHz as peripheral device
  */
 
 #include "DS2502.h"
@@ -39,7 +39,7 @@ void setup()
     ds2502.writeMemory(mem_dummy, sizeof(mem_dummy), 3 * 32);
     Serial.println(ds2502.getPageUsed(3));
 
-    Serial.println("Test Write Data to protected page 0 -> is possible, only affects master");
+    Serial.println("Test Write Data to protected page 0 -> is possible, only affects OneWire-Host");
     Serial.println(ds2502.getPageUsed(0));
     Serial.println(ds2502.getPageProtection(0));
     ds2502.setPageProtection(0);

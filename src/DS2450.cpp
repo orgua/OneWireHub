@@ -55,7 +55,7 @@ void DS2450::duty(OneWireHub *const hub)
         case 0x3C: // convert, starts adc
 
             // received reg_TA contains: input select mask (not important) and read out control byte
-            // in reality master can now set registers of potentiometers to 0x0000 or 0xFFFF to track changes
+            // in reality OneWire-Host can now set registers of potentiometers to 0x0000 or 0xFFFF to track changes
             crc = ~crc; // normally crc16 is sent ~inverted
             if (hub->send(reinterpret_cast<uint8_t *>(&crc), 2)) return;
             // takes max 5.3 ms for 16 bit ( 4 CH * 16 bit * 80 us + 160 us per request = 5.3 ms )
@@ -64,7 +64,7 @@ void DS2450::duty(OneWireHub *const hub)
             interrupts();
             break; // finished conversion: send 1, is passive ...
 
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 }
 
@@ -99,7 +99,7 @@ void DS2450::correctMemory(void)
         memory[(1 * PAGE_SIZE) + (adc * 2) + 1] &= 0b10111101; // bit 1&6 -> always zero
         // bit 2:3 -> enable alarm search low, high
         // bit 4:5 -> alarm flag for low, high
-        // bit 7 -> power on reset, must be written 0 by master
+        // bit 7 -> power on reset, must be written 0 by OneWire-Host
     }
 }
 

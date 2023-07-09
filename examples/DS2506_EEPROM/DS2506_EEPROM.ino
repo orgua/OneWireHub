@@ -54,7 +54,7 @@ void setup()
     ds2506.writeMemory(mem_dummy, sizeof(mem_dummy), 4 * 32);
     Serial.println(ds2506.getPageUsed(4)); // is used now
 
-    Serial.println("Test Write Data to protected page 0 -> is possible, only affects master");
+    Serial.println("Test Write Data to protected page 0 -> is possible, only affects OneWire-Host");
     Serial.println(ds2506.getPageUsed(0));                // is unused
     Serial.println(ds2506.getPageProtection(0));          // is unprotected
     ds2506.setPageProtection(0);                          // protect it

@@ -139,7 +139,7 @@ void DS2423::duty(OneWireHub *const hub)
             }
             break;
 
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 
     if (cmd == 0x5A) clearScratchpad();

@@ -69,7 +69,7 @@ void DS2438::duty(OneWireHub *const hub)
 
             break; //hub->sendBit(1); // 1 is passive, so omit it ...
 
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 }
 
@@ -155,7 +155,7 @@ void convertVoltage(uint8_t *const destination, const uint16_t voltage_10mV) // 
 
 // Deprecated method for backward compatibility - put voltage in scratchpad but also store in default (VDD).
 // This will be overwritten as a result of convert command (0xB4) with either VDD (stored here) or VAD.
-// If a system is designed such that the master knows to call 0xB4 it likely knows about REG0_MASK_AD too
+// If a system is designed such that the OneWire-Host knows to call 0xB4 it likely knows about REG0_MASK_AD too
 // so SetVDDVoltage SetVADVoltage should be used.
 void DS2438::setVoltage(const uint16_t voltage_10mV)
 {

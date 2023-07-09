@@ -50,7 +50,7 @@ waitLoops1ms	KEYWORD2
 waitLoopsDebug	KEYWORD2
 printError	KEYWORD2
 getError	KEYWORD2
-raiseSlaveError	KEYWORD2
+raiseDeviceError	KEYWORD2
 clearError	KEYWORD2
 
 ## OneWireItem

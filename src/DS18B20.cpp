@@ -57,7 +57,7 @@ void DS18B20::duty(OneWireHub *const hub)
             // we have 94 ... 750ms time here (9-12bit conversion)
             break; // send 1s, is passive ...
 
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 }
 

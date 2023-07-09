@@ -129,7 +129,7 @@ void DS2502::duty(OneWireHub *const hub)
             }
             break;
 
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 }
 

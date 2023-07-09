@@ -574,17 +574,17 @@ int main()
         for (size_t index = 0; index < sizeof(mem_read); ++index)
         {
             test_eq(mem_read[index], 0xFF,
-                    "DS2502 mem re-read page 1 - still clean, only affects master");
+                    "DS2502 mem re-read page 1 - still clean, only affects OneWire-Host");
         }
 
-        // Test Write Data to protected page 0 -> is possible, only affects master");
+        // Test Write Data to protected page 0 -> is possible, only affects OneWire-Host");
         test_eq(ds2502.getPageUsed(0), 0, "DS2502 get use-counter before accessing it");
         test_eq(ds2502.getPageProtection(0), false, "DS2502 get page-protection before protecting");
         ds2502.setPageProtection(0);
         test_eq(ds2502.getPageProtection(0), true, "DS2502 get page-protection after protecting");
         ds2502.writeMemory(mem_dummy, sizeof(mem_dummy), 16); // write in second half of page
         test_eq(ds2502.getPageUsed(0), 1,
-                "DS2502 get use-counter after write to protected page (only affects master)");
+                "DS2502 get use-counter after write to protected page (only affects OneWire-Host)");
     }
 
     {
@@ -656,10 +656,11 @@ int main()
         for (size_t index = 0; index < sizeof(mem_read); ++index)
         {
             test_eq(mem_read[index], 0xFF,
-                    "DS2506 mem re-read page 3 - redirected, but only for master, so unchanged");
+                    "DS2506 mem re-read page 3 - redirected, but only for OneWire-Host, so "
+                    "unchanged");
         }
 
-        // Test Write Data to protected page 0 -> is possible, only affects master");
+        // Test Write Data to protected page 0 -> is possible, only affects OneWire-Host");
         test_eq(ds2506.getPageUsed(0), 0, "DS2506 get use-counter before accessing it");
         test_eq(ds2506.getPageProtection(0), false, "DS2506 get page-protection before protecting");
         ds2506.setPageProtection(0);
@@ -667,7 +668,7 @@ int main()
 
         ds2506.writeMemory(mem_dummy, sizeof(mem_dummy), 16); // write in second half of page
         test_eq(ds2506.getPageUsed(0), 1,
-                "DS2506 get use-counter after write to protected page (only affects master)");
+                "DS2506 get use-counter after write to protected page (only affects OneWire-Host)");
 
         ds2506.readMemory(mem_read, sizeof(mem_read), 16_u8);
         for (size_t index = 0; index < sizeof(mem_read); ++index)

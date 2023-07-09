@@ -132,7 +132,7 @@ void DS2431::duty(OneWireHub *const hub)
             if (hub->send(&memory[reg_TA], MEM_SIZE - uint8_t(reg_TA), crc)) return;
             break; // send 1s when read is complete, is passive, so do nothing here
 
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 }
 

@@ -54,7 +54,7 @@ void BAE910::duty(OneWireHub *const hub)
 
             if ((ta1 + len > 0x80) || (ta2 > 0))
             {
-                hub->raiseSlaveError(cmd);
+                hub->raiseDeviceError(cmd);
                 return;
             }
             // reverse byte order
@@ -75,7 +75,7 @@ void BAE910::duty(OneWireHub *const hub)
 
             if ((len > BAE910_SCRATCHPAD_SIZE) || (ta1 + len > 0x80) || (ta2 > 0))
             {
-                hub->raiseSlaveError(cmd);
+                hub->raiseDeviceError(cmd);
                 return;
             }
 
@@ -83,7 +83,7 @@ void BAE910::duty(OneWireHub *const hub)
 
             crc = ~crc;
             if (hub->send(reinterpret_cast<uint8_t *>(&crc), 2)) return;
-            // verify answer from master, then copy memory
+            // verify answer from OneWire-Host, then copy memory
             if (hub->recv(&eCmd, 1)) return;
             if (eCmd == 0xBC)
             {
@@ -96,6 +96,6 @@ void BAE910::duty(OneWireHub *const hub)
 
             //        case 0x13: // EXTENDED COMMAND
             //        case 0x16: // ERASE EEPROM PAGE (not needed/implemented yet)
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 }

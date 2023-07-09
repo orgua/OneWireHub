@@ -79,9 +79,9 @@ start_over:
             if (hub->send(&register_poti[poti])) break;
             break;
 
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 
     if ((cmd == 0xC3) || (cmd == 0x99))
-        goto start_over; // only for this device -> when INCREMENT or DECREMENT the master can issue another cmd right away
+        goto start_over; // only for this device -> when INCREMENT or DECREMENT the OneWire-Host can issue another cmd right away
 }

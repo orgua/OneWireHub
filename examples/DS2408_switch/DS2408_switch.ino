@@ -2,9 +2,9 @@
  *    Example-Code that emulates a DS2408 - an 8CH GPIO Port Extender
  *
  *    Tested with:
- *    - https://github.com/PaulStoffregen/OneWire on the other side as Master
- *    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
- *    - BeagleBoneBlack running Linux 4.4.19. 1wire slave was accessed via original drivers:
+ *    - https://github.com/PaulStoffregen/OneWire on the other side as OneWire-Host
+ *    - DS9490R-OneWire-Host, atmega328@16MHz and teensy3.2@96MHz as peripheral device
+ *    - BeagleBoneBlack running Linux 4.4.19. 1wire device was accessed via original drivers:
  *
  *         #set all pins to 1 (xFF)
  *         echo -e '\xFF' |dd of=/sys/bus/w1/devices/29-010000000000/output bs=1 count=1
@@ -71,7 +71,7 @@ void loop()
     // Blink triggers the state-change
     if (blinking())
     {
-        // this could be used to report up to eight states to 1wire master
+        // this could be used to report up to eight states to 1wire-host
         //ds2408.setPinState(0, digitalRead(10));
         Serial.print("0x");
         Serial.println(ds2408.getPinState(), BIN);

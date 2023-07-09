@@ -6,7 +6,7 @@
  *    - temperature in degC
  *
  *    Tested with:
- *    - DS9490R-Master, atmega328@16MHz as Slave
+ *    - DS9490R-OneWire-Host, atmega328@16MHz as peripheral device
  */
 
 constexpr bool enable_debug = 0;

@@ -25,18 +25,18 @@ constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
 
 #include "OneWireHub_config.h" // outsource configfile
 
-#ifndef HUB_SLAVE_LIMIT
-  #error "Slavelimit not defined (why?)"
-#elif (HUB_SLAVE_LIMIT > 32)
-  #error "Slavelimit is set too high (32)"
-#elif (HUB_SLAVE_LIMIT > 16)
+#ifndef ONEWIREHUB_DEVICE_LIMIT
+  #error "DeviceLimit not defined (why?)"
+#elif (ONEWIREHUB_DEVICE_LIMIT > 32)
+  #error "DeviceLimit is set too high (32)"
+#elif (ONEWIREHUB_DEVICE_LIMIT > 16)
 using mask_t = uint32_t;
-#elif (HUB_SLAVE_LIMIT > 8)
+#elif (ONEWIREHUB_DEVICE_LIMIT > 8)
 using mask_t = uint16_t;
-#elif (HUB_SLAVE_LIMIT > 0)
+#elif (ONEWIREHUB_DEVICE_LIMIT > 0)
 using mask_t = uint8_t;
 #else
-  #error "Slavelimit is set to zero (why?)"
+  #error "DeviceLimit is set to zero (why?)"
 #endif
 
 constexpr timeOW_t VALUE1k{1000};          // commonly used constant
@@ -55,7 +55,7 @@ enum class Error : uint8_t
     AWAIT_TIMESLOT_TIMEOUT_HIGH = 8,
     PRESENCE_HIGH_ON_LINE       = 9,
     INCORRECT_ONEWIRE_CMD       = 10,
-    INCORRECT_SLAVE_USAGE       = 11,
+    INCORRECT_DEVICE_USAGE      = 11,
     TRIED_INCORRECT_WRITE       = 12,
     FIRST_TIMESLOT_TIMEOUT      = 13,
     FIRST_BIT_OF_BYTE_TIMEOUT   = 14,
@@ -68,8 +68,8 @@ class OneWireItem;
 class OneWireHub
 {
 private:
-    static constexpr uint8_t ONEWIRESLAVE_LIMIT{HUB_SLAVE_LIMIT};
-    static constexpr uint8_t ONEWIRE_TREE_SIZE{(2 * ONEWIRESLAVE_LIMIT) - 1};
+    static constexpr uint8_t _ONEWIREHUB_DEVICE_LIMIT{ONEWIREHUB_DEVICE_LIMIT};
+    static constexpr uint8_t ONEWIRE_TREE_SIZE{(2 * _ONEWIREHUB_DEVICE_LIMIT) - 1}; // TODO: add _
 
 #if OVERDRIVE_ENABLE
     bool od_mode;
@@ -88,20 +88,20 @@ private:
     volatile io_reg_t *debug_baseReg;
 #endif
 
-    uint8_t      slave_count;
-    OneWireItem *slave_list[ONEWIRESLAVE_LIMIT]; // private slave-list (use attach/detach)
-    OneWireItem *slave_selected;
+    uint8_t      device_count;
+    OneWireItem *device_list[_ONEWIREHUB_DEVICE_LIMIT]; // private device-list (use attach/detach)
+    OneWireItem *device_selected;
 
     struct IDTree
     {
-        uint8_t slave_selected; // for which slave is this jump-command relevant
-        uint8_t id_position;    // where does the algorithm has to look for a junction
-        uint8_t got_zero;       // if 0 switch to which tree branch
-        uint8_t got_one;        // if 1 switch to which tree branch
+        uint8_t device_selected; // for which device is this jump-command relevant
+        uint8_t id_position;     // where does the algorithm has to look for a junction
+        uint8_t got_zero;        // if 0 switch to which tree branch
+        uint8_t got_one;         // if 1 switch to which tree branch
     } idTree[ONEWIRE_TREE_SIZE];
 
     uint8_t buildIDTree(void);
-    uint8_t buildIDTree(uint8_t position_IDBit, mask_t slave_mask);
+    uint8_t buildIDTree(uint8_t position_IDBit, mask_t device_mask);
     void    searchIDTree(void);
 
     uint8_t getNrOfFirstBitSet(mask_t mask) const;
@@ -130,7 +130,7 @@ public:
 
     uint8_t attach(OneWireItem &sensor);
     bool    detach(const OneWireItem &sensor);
-    bool    detach(uint8_t slave_number);
+    bool    detach(uint8_t device_number);
 
     uint8_t getIndexOfNextSensorInList(uint8_t index_start = 0) const;
 
@@ -157,7 +157,7 @@ public:
     void  printError(void) const;
     Error getError(void) const; // returns Error
     bool  hasError(void) const; // returns true if Error occurred
-    void  raiseSlaveError(uint8_t cmd = 0);
+    void  raiseDeviceError(uint8_t cmd = 0);
     Error clearError(void);
 };
 

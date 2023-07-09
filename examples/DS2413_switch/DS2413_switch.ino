@@ -2,7 +2,7 @@
  *    Example-Code that emulates a DS2413 Dual channel addressable switch
  *
  *    Tested with
- *    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
+ *    - DS9490R-OneWire-Host, atmega328@16MHz and teensy3.2@96MHz as peripheral device
  */
 
 #include "DS2413.h" // Dual channel addressable switch

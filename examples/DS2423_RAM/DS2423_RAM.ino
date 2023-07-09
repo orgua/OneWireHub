@@ -4,7 +4,7 @@
 *   THIS DEVICE IS ONLY A MOCKUP FOR NOW - NO REAL FUNCTION
 *
 *   Tested with
-*   - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
+*   - DS9490R-OneWire-Host, atmega328@16MHz and teensy3.2@96MHz as peripheral device
 */
 
 #include "DS2423.h"

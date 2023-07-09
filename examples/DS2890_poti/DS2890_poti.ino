@@ -2,7 +2,7 @@
  *    Example-Code that emulates a DS2890 Single channel digital potentiometer (datasheet has it covered for up to 4 CH)
  *
  *    Tested with
- *    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
+ *    - DS9490R-OneWire-Host, atmega328@16MHz and teensy3.2@96MHz as peripheral device
  */
 
 #include "DS2890.h" // Single channel digital potentiometer

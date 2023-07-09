@@ -7,14 +7,14 @@ OneWireHub::OneWireHub(const uint8_t pin)
 {
     _error = Error::NO_ERROR;
 
-    slave_count    = 0;
-    slave_selected = nullptr;
+    device_count    = 0;
+    device_selected = nullptr;
 
 #if OVERDRIVE_ENABLE
     od_mode = false;
 #endif
 
-    for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i) { slave_list[i] = nullptr; }
+    for (uint8_t i = 0; i < _ONEWIREHUB_DEVICE_LIMIT; ++i) { device_list[i] = nullptr; }
 
     // prepare pin
     pin_bitMask = PIN_TO_BITMASK(pin);
@@ -44,7 +44,7 @@ OneWireHub::OneWireHub(const uint8_t pin)
 // attach a sensor to the hub
 uint8_t OneWireHub::attach(OneWireItem &sensor)
 {
-    if (slave_count >= ONEWIRESLAVE_LIMIT) return 255; // hub is full
+    if (device_count >= _ONEWIREHUB_DEVICE_LIMIT) return 255; // hub is full
 
     // demonstrate an 1ms-Low-State on the debug pin (only if bus stays high during this time)
     // done here because this FN is always called before hub is used
@@ -60,18 +60,18 @@ uint8_t OneWireHub::attach(OneWireItem &sensor)
 
     // find position of next free storage-position
     uint8_t position = 255;
-    for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
+    for (uint8_t i = 0; i < _ONEWIREHUB_DEVICE_LIMIT; ++i)
     {
         // check for already attached sensors
-        if (slave_list[i] == &sensor) { return i; }
+        if (device_list[i] == &sensor) { return i; }
         // store position of first empty space
-        if ((position > ONEWIRESLAVE_LIMIT) && (slave_list[i] == nullptr)) { position = i; }
+        if ((position > _ONEWIREHUB_DEVICE_LIMIT) && (device_list[i] == nullptr)) { position = i; }
     }
 
     if (position == 255) return 255;
 
-    slave_list[position] = &sensor;
-    slave_count++;
+    device_list[position] = &sensor;
+    device_count++;
     buildIDTree();
     return position;
 }
@@ -80,9 +80,9 @@ bool OneWireHub::detach(const OneWireItem &sensor)
 {
     // find position of sensor
     uint8_t position = 255;
-    for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
+    for (uint8_t i = 0; i < _ONEWIREHUB_DEVICE_LIMIT; ++i)
     {
-        if (slave_list[i] == &sensor)
+        if (device_list[i] == &sensor)
         {
             position = i;
             break;
@@ -94,26 +94,26 @@ bool OneWireHub::detach(const OneWireItem &sensor)
     return false;
 }
 
-bool OneWireHub::detach(const uint8_t slave_number)
+bool OneWireHub::detach(const uint8_t device_number)
 {
-    if (slave_list[slave_number] == nullptr) return false;
-    if (slave_count == 0) return false;
-    if (slave_number >= ONEWIRESLAVE_LIMIT) return false;
+    if (device_list[device_number] == nullptr) return false;
+    if (device_count == 0) return false;
+    if (device_number >= _ONEWIREHUB_DEVICE_LIMIT) return false;
 
-    slave_list[slave_number] = nullptr;
-    slave_count--;
+    device_list[device_number] = nullptr;
+    device_count--;
     buildIDTree();
 
     return true;
 }
 
 
-// just look through each bit of each ID and build a tree, so there are n=slaveCount decision-points
-// trade-off: more online calculation, but @4Slave 16byte storage instead of 3*256 byte
+// just look through each bit of each ID and build a tree, so there are n=DeviceCount decision-points
+// trade-off: more online calculation, but @4Devices 16byte storage instead of 3*256 byte
 uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask) const
 {
     mask_t _mask = mask;
-    for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
+    for (uint8_t i = 0; i < _ONEWIREHUB_DEVICE_LIMIT; ++i)
     {
         if ((_mask & 1) != 0) return i;
         _mask >>= 1;
@@ -121,12 +121,12 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask) const
     return 0;
 }
 
-// return next not empty element in slave-list
+// return next not empty element in device-list
 uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start) const
 {
     for (uint8_t i = index_start; i < ONEWIRE_TREE_SIZE; ++i)
     {
-        if (slave_list[i] != nullptr) return i;
+        if (device_list[i] != nullptr) return i;
     }
     return 0;
 }
@@ -144,28 +144,28 @@ uint8_t OneWireHub::getNrOfFirstFreeIDTreeElement(void) const
 // initial FN to build the ID-Tree
 uint8_t OneWireHub::buildIDTree(void)
 {
-    mask_t mask_slaves = 0;
-    mask_t bit_mask    = 0x01;
+    mask_t mask_devices = 0;
+    mask_t bit_mask     = 0x01;
 
     // build mask
-    for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
+    for (uint8_t i = 0; i < _ONEWIREHUB_DEVICE_LIMIT; ++i)
     {
-        if (slave_list[i] != nullptr) mask_slaves |= bit_mask;
+        if (device_list[i] != nullptr) mask_devices |= bit_mask;
         bit_mask <<= 1;
     }
 
     for (uint8_t i = 0; i < ONEWIRE_TREE_SIZE; ++i) { idTree[i].id_position = 255; }
 
     // begin with root-element
-    buildIDTree(0, mask_slaves); // goto branch
+    buildIDTree(0, mask_devices); // goto branch
 
     return 0;
 }
 
 // returns the branch that this iteration has worked on
-uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const mask_t mask_slaves)
+uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const mask_t mask_devices)
 {
-    if (mask_slaves == 0) return (255);
+    if (mask_devices == 0) return (255);
 
     while (position_IDBit < 64)
     {
@@ -175,13 +175,13 @@ uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const mask_t mask_slaves
         const uint8_t mask_bit{static_cast<uint8_t>(1 << (position_IDBit & 7))};
         mask_t        mask_id{1};
 
-        // searchIDTree through all active slaves
-        for (uint8_t id = 0; id < ONEWIRESLAVE_LIMIT; ++id)
+        // searchIDTree through all active emulated devices
+        for (uint8_t id = 0; id < _ONEWIREHUB_DEVICE_LIMIT; ++id)
         {
-            if ((mask_slaves & mask_id) != 0)
+            if ((mask_devices & mask_id) != 0)
             {
-                // if slave is in mask differentiate the bitValue
-                if ((slave_list[id]->ID[pos_byte] & mask_bit) != 0) mask_pos |= mask_id;
+                // if device is in mask differentiate the bitValue
+                if ((device_list[id]->ID[pos_byte] & mask_bit) != 0) mask_pos |= mask_id;
                 else mask_neg |= mask_id;
             }
             mask_id <<= 1;
@@ -192,8 +192,8 @@ uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const mask_t mask_slaves
             // there was found a junction
             const uint8_t active_element = getNrOfFirstFreeIDTreeElement();
 
-            idTree[active_element].id_position    = position_IDBit;
-            idTree[active_element].slave_selected = getNrOfFirstBitSet(mask_slaves);
+            idTree[active_element].id_position     = position_IDBit;
+            idTree[active_element].device_selected = getNrOfFirstBitSet(mask_devices);
             position_IDBit++;
             idTree[active_element].got_one  = buildIDTree(position_IDBit, mask_pos);
             idTree[active_element].got_zero = buildIDTree(position_IDBit, mask_neg);
@@ -206,10 +206,10 @@ uint8_t OneWireHub::buildIDTree(uint8_t position_IDBit, const mask_t mask_slaves
     // gone through the address, store this result
     uint8_t active_element = getNrOfFirstFreeIDTreeElement();
 
-    idTree[active_element].id_position    = 128;
-    idTree[active_element].slave_selected = getNrOfFirstBitSet(mask_slaves);
-    idTree[active_element].got_one        = 255;
-    idTree[active_element].got_zero       = 255;
+    idTree[active_element].id_position     = 128;
+    idTree[active_element].device_selected = getNrOfFirstBitSet(mask_devices);
+    idTree[active_element].got_one         = 255;
+    idTree[active_element].got_zero        = 255;
 
     return active_element;
 }
@@ -222,15 +222,15 @@ bool OneWireHub::poll(void)
     while (true)
     {
         // this additional check prevents an infinite loop when calling this FN without sensors attached
-        if (slave_count == 0) return true;
+        if (device_count == 0) return true;
 
         // Once reset is done, go to next step
         if (checkReset()) return false;
 
-        // Reset is complete, tell the master we are present
+        // Reset is complete, tell the OneWire-Host we are present
         if (showPresence()) return false;
 
-        // Now that the master should know we are here, we will get a command from the master
+        // Now that the OneWire-Host should know we are here, we will get a command from the Host
         if (recvAndProcessCmd()) return false;
 
         // on total success we want to start again, because the next reset could only be ~125 us away
@@ -288,7 +288,7 @@ bool OneWireHub::checkReset(
     if (!DIRECT_READ(pin_baseReg, pin_bitMask))
         return true; // just leave if pin is Low, don't bother to wait, TODO: really needed?
 
-    // wait for the bus to become low (master-controlled), since we are polling we don't know for how long it was zero
+    // wait for the bus to become low (host-controlled), since we are polling we don't know for how long it was zero
     if (waitLoopsWhilePinIs(ONEWIRE_TIME_RESET_TIMEOUT, true) == 0)
     {
         //_error = Error::WAIT_RESET_TIMEOUT;
@@ -297,7 +297,7 @@ bool OneWireHub::checkReset(
 
     const timeOW_t loops_remaining = waitLoopsWhilePinIs(ONEWIRE_TIME_RESET_MAX[0], false);
 
-    // wait for bus-release by master
+    // wait for bus-release by OneWire-Host
     if (loops_remaining == 0)
     {
         _error = Error::VERY_LONG_RESET;
@@ -311,7 +311,7 @@ bool OneWireHub::checkReset(
     };
 #endif
 
-    // If the master pulled low for to short this will trigger an error
+    // If the OneWire-Host pulled low for to short this will trigger an error
     //if (loops_remaining > (ONEWIRE_TIME_RESET_MAX[0] - ONEWIRE_TIME_RESET_MIN[od_mode])) _error = Error::VERY_SHORT_RESET; // could be activated again, like the error above, errorhandling is mature enough now
 
     return (loops_remaining > (ONEWIRE_TIME_RESET_MAX[0] - ONEWIRE_TIME_RESET_MIN[od_mode]));
@@ -325,7 +325,7 @@ bool OneWireHub::showPresence(void)
     static_assert(ONEWIRE_TIME_PRESENCE_MAX[1] > ONEWIRE_TIME_PRESENCE_MIN[1], "Timings are wrong");
 #endif
 
-    // Master will delay it's "Presence" check (bus-read)  after the reset
+    // OneWire-Host will delay it's "Presence" check (bus-read)  after the reset
     waitLoopsWhilePinIs(ONEWIRE_TIME_PRESENCE_TIMEOUT,
                         true); // no pinCheck demanded, but this additional check can cut waitTime
 
@@ -342,7 +342,7 @@ bool OneWireHub::showPresence(void)
 
     if (USE_GPIO_DEBUG) DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
 
-    // When the master or other slaves release the bus within a given time everything is fine
+    // When the OneWire-Host or other devices release the bus within a given time everything is fine
     if (waitLoopsWhilePinIs(
                 (ONEWIRE_TIME_PRESENCE_MAX[od_mode] - ONEWIRE_TIME_PRESENCE_MIN[od_mode]), false) ==
         0)
@@ -359,7 +359,7 @@ void OneWireHub::searchIDTree(void)
 {
     uint8_t position_IDBit = 0;
     uint8_t trigger_pos    = 0;
-    uint8_t active_slave   = idTree[trigger_pos].slave_selected;
+    uint8_t active_device  = idTree[trigger_pos].device_selected;
     uint8_t trigger_bit    = idTree[trigger_pos].id_position;
 
     while (position_IDBit < 64)
@@ -376,7 +376,7 @@ void OneWireHub::searchIDTree(void)
             // switch to next junction
             trigger_pos = bit_recv ? idTree[trigger_pos].got_one : idTree[trigger_pos].got_zero;
 
-            active_slave = idTree[trigger_pos].slave_selected;
+            active_device = idTree[trigger_pos].device_selected;
 
             trigger_bit = (trigger_pos == 255) ? uint8_t(255) : idTree[trigger_pos].id_position;
         }
@@ -386,7 +386,7 @@ void OneWireHub::searchIDTree(void)
             const uint8_t mask_bit = (static_cast<uint8_t>(1) << (position_IDBit & (7)));
             bool          bit_send;
 
-            if ((slave_list[active_slave]->ID[pos_byte] & mask_bit) != 0)
+            if ((device_list[active_device]->ID[pos_byte] & mask_bit) != 0)
             {
                 bit_send = true;
                 if (sendBit(true)) return;
@@ -407,25 +407,25 @@ void OneWireHub::searchIDTree(void)
         position_IDBit++;
     }
 
-    slave_selected = slave_list[active_slave];
+    device_selected = device_list[active_device];
 }
 
 bool OneWireHub::recvAndProcessCmd(void)
 {
 
-    // If the only slave is not multidrop compatible, pass all data handling to the slave
-    if (slave_count == 1u)
+    // If the only peripheral device is not multidrop compatible, pass all data handling to the device
+    if (device_count == 1u)
     {
 
-        slave_selected = slave_list[getIndexOfNextSensorInList()];
+        device_selected = device_list[getIndexOfNextSensorInList()];
         // TODO: this might be expensive for weak uC and OW in Overdrive and only one device emulated
         //  -> look into optimizations, i.e.:
         //  - preselect when only one device present?
         //  - move that at the end of switch in default (less impact for all other hosts)
 
-        if (slave_selected->skip_multidrop)
+        if (device_selected->skip_multidrop)
         {
-            slave_selected->duty(this);
+            device_selected->duty(this);
             return false;
             // TODO: Find the root-cause. This fixes the issue but may cause other problems.
             //  -> correct exit would be: return (_error != Error::NO_ERROR);
@@ -445,16 +445,16 @@ bool OneWireHub::recvAndProcessCmd(void)
     {
         case 0xF0: // Search rom
 
-            slave_selected = nullptr;
+            device_selected = nullptr;
             noInterrupts();
             searchIDTree();
             interrupts();
 
             // most ICs allow going for duty() right after search
-            if ((_error == Error::NO_ERROR) && (slave_selected != nullptr) &&
-                slave_selected->fast_search_rom)
+            if ((_error == Error::NO_ERROR) && (device_selected != nullptr) &&
+                device_selected->fast_search_rom)
             {
-                slave_selected->duty(this);
+                device_selected->duty(this);
             }
 
             return false; // always trigger a re-init after searchIDTree
@@ -468,18 +468,18 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         case 0x55: // MATCH ROM - Choose/Select ROM
 
-            slave_selected = nullptr;
+            device_selected = nullptr;
 
             if (recv(address, 8)) { break; }
 
-            for (uint8_t i = 0; i < ONEWIRESLAVE_LIMIT; ++i)
+            for (uint8_t i = 0; i < _ONEWIREHUB_DEVICE_LIMIT; ++i)
             {
-                if (slave_list[i] == nullptr) continue;
+                if (device_list[i] == nullptr) continue;
 
                 flag = true;
                 for (uint8_t j = 0; j < 8; ++j)
                 {
-                    if (slave_list[i]->ID[j] != address[j])
+                    if (device_list[i]->ID[j] != address[j])
                     {
                         flag = false;
                         break;
@@ -488,17 +488,17 @@ bool OneWireHub::recvAndProcessCmd(void)
 
                 if (flag)
                 {
-                    slave_selected = slave_list[i];
+                    device_selected = device_list[i];
                     break;
                 }
             }
 
             if (!flag) { return true; }
 
-            if (slave_selected != nullptr)
+            if (device_selected != nullptr)
             {
                 if (USE_GPIO_DEBUG) DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-                slave_selected->duty(this);
+                device_selected->duty(this);
             }
             break;
 
@@ -510,39 +510,39 @@ bool OneWireHub::recvAndProcessCmd(void)
 #endif
         case 0xCC: // SKIP ROM
 
-            // NOTE: If more than one slave is present on the bus,
+            // NOTE: If more than one peripheral device is present on the bus,
             // and a read command is issued following the Skip ROM command,
-            // data collision will occur on the bus as multiple slaves transmit simultaneously
-            if ((slave_selected == nullptr) && (slave_count == 1))
+            // data collision will occur on the bus as multiple peripheral devices transmit simultaneously
+            if ((device_selected == nullptr) && (device_count == 1))
             {
-                slave_selected = slave_list[getIndexOfNextSensorInList()];
+                device_selected = device_list[getIndexOfNextSensorInList()];
             }
-            if (slave_selected != nullptr)
+            if (device_selected != nullptr)
             {
                 if (USE_GPIO_DEBUG) DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-                slave_selected->duty(this);
+                device_selected->duty(this);
             }
             break;
 
         case 0x0F: // OLD READ ROM
 
-            // only usable when there is ONE slave on the bus --> continue to current readRom
+            // only usable when there is ONE peripheral device on the bus --> continue to current readRom
 
         case 0x33: // READ ROM
 
-            // only usable when there is ONE slave on the bus
-            if ((slave_selected == nullptr) && (slave_count == 1))
+            // only usable when there is ONE peripheral device on the bus
+            if ((device_selected == nullptr) && (device_count == 1))
             {
-                slave_selected = slave_list[getIndexOfNextSensorInList()];
+                device_selected = device_list[getIndexOfNextSensorInList()];
             }
-            if (slave_selected != nullptr)
+            if (device_selected != nullptr)
             {
-                slave_selected->sendID(this);
+                device_selected->sendID(this);
 
                 // most ICs allow to go to duty() without reset
-                if ((_error == Error::NO_ERROR) && slave_selected->fast_read_rom)
+                if ((_error == Error::NO_ERROR) && device_selected->fast_read_rom)
                 {
-                    slave_selected->duty(this);
+                    device_selected->duty(this);
                 }
             }
             return false;
@@ -550,14 +550,14 @@ bool OneWireHub::recvAndProcessCmd(void)
         case 0xEC: // ALARM SEARCH
 
             // TODO: Alarm searchIDTree command, respond if flag is set
-            // is like searchIDTree-rom, but only slaves with triggered alarm will appear
+            // is like searchIDTree-rom, but only peripheral devices with triggered alarm will appear
             break;
 
         case 0xA5: // RESUME COMMAND
 
-            if (slave_selected == nullptr) return true;
+            if (device_selected == nullptr) return true;
             if (USE_GPIO_DEBUG) DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
-            slave_selected->duty(this);
+            device_selected->duty(this);
             break;
 
         default: // Unknown command
@@ -961,8 +961,8 @@ void OneWireHub::printError(void) const
         else if (_error == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH) Serial.print("await timeout high");
         else if (_error == Error::PRESENCE_HIGH_ON_LINE) Serial.print("presence high on line");
         else if (_error == Error::INCORRECT_ONEWIRE_CMD) Serial.print("incorrect onewire command");
-        else if (_error == Error::INCORRECT_SLAVE_USAGE)
-            Serial.print("slave was used in incorrect way");
+        else if (_error == Error::INCORRECT_DEVICE_USAGE)
+            Serial.print("peripheral device was used in incorrect way");
         else if (_error == Error::TRIED_INCORRECT_WRITE)
             Serial.print("tried to write in read-slot");
         else if (_error == Error::FIRST_TIMESLOT_TIMEOUT)
@@ -970,7 +970,7 @@ void OneWireHub::printError(void) const
         else if (_error == Error::FIRST_BIT_OF_BYTE_TIMEOUT)
             Serial.print("first bit of byte timeout");
 
-        if ((_error == Error::INCORRECT_ONEWIRE_CMD) || (_error == Error::INCORRECT_SLAVE_USAGE))
+        if ((_error == Error::INCORRECT_ONEWIRE_CMD) || (_error == Error::INCORRECT_DEVICE_USAGE))
         {
             Serial.print(" [0x");
             Serial.print(_error_cmd, HEX);
@@ -984,9 +984,9 @@ Error OneWireHub::getError(void) const { return (_error); }
 
 bool OneWireHub::hasError(void) const { return (_error != Error::NO_ERROR); }
 
-void OneWireHub::raiseSlaveError(const uint8_t cmd)
+void OneWireHub::raiseDeviceError(const uint8_t cmd)
 {
-    _error     = Error::INCORRECT_SLAVE_USAGE;
+    _error     = Error::INCORRECT_DEVICE_USAGE;
     _error_cmd = cmd;
 }
 

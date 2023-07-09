@@ -3,7 +3,7 @@
  *
  *    Tested with
  *    - dell notebook https://forum.pjrc.com/threads/33640-Teensy-2-OneWire-Slave
- *    - DS9490R-Master, atmega328@16MHz as Slave
+ *    - DS9490R-OneWire-Host, atmega328@16MHz as peripheral device
  *    - Arduino ProMini clone
  *    - esp8266 (ESP-01 module, using GPIO2 with a 10k pull-up resistor)
  *    - Dell Inspiron 15R N5110 and Dell Inspiron 15R 5521 @130W
@@ -16,10 +16,10 @@
  *
  *    thanks to Nik / ploys for supplying traces of real data-traffic to figure out communication:
  *    - reset and presence detection normal
- *    - cmd from master: 0xCC -> skip rom, so there is only ONE device allowed on the bus
- *    - cmd from master: 0xF0 -> read memory
- *    - address request from master: 0x0008
- *    - master listens for data, gets CRC of seconds cmd and address first, then listens for 3 bytes, does not listen any further
+ *    - cmd from host: 0xCC -> skip rom, so there is only ONE device allowed on the bus
+ *    - cmd from host: 0xF0 -> read memory
+ *    - address request from host: 0x0008
+ *    - OneWire-Host listens for data, gets CRC of seconds cmd and address first, then listens for 3 bytes, does not listen any further
  *    !!! Note that some latest Dell models may ask for more information !!!
  */
 
@@ -42,7 +42,7 @@ constexpr const char *charger130W = "DELL00AC130195067CN0CDF577243865Q27F2233\x9
 auto hub    = OneWireHub(pin_onewire);
 auto dellCH = DS2502(
         0x28, 0x0D, 0x01, 0x08, 0x0B, 0x02,
-        0x0A); // address does not matter, laptop uses skipRom -> note that therefore only one slave device is allowed on the bus
+        0x0A); // address does not matter, laptop uses skipRom -> note that therefore only one peripheral device is allowed on the bus
 
 void setup()
 {

@@ -47,7 +47,7 @@ void DS2408::duty(OneWireHub *const hub)
                 memory[REG_PIO_LOGIC]  = data;
                 if (hub->send(&DATA_xAA)) return;
                 if (hub->send(memory, 4))
-                    return; // TODO: i think this is right, datasheet says: DS2408 samples the status of the PIO pins, as shown in Figure 9, and sends it to the master
+                    return; // TODO: i think this is right, datasheet says: DS2408 samples the status of the PIO pins, as shown in Figure 9, and sends it to the OneWire-Host
             }
 
         case 0xF5: // Channel-Access Read
@@ -82,7 +82,7 @@ void DS2408::duty(OneWireHub *const hub)
             // TODO: page 18 datasheet, no alarm search yet, control-register has influence
             break;
 
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 }
 

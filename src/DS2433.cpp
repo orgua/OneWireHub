@@ -105,7 +105,7 @@ void DS2433::duty(OneWireHub *const hub)
             }
             return; // datasheed says we should send all 1s, till reset (1s are passive... so nothing to do here)
 
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 }
 

@@ -2,8 +2,8 @@
  *    Example-Code that emulates a DS18B20
  *
  *    Tested with:
- *    - https://github.com/PaulStoffregen/OneWire --> DS18x20-Example, atmega328@16MHz as Slave
- *    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
+ *    - https://github.com/PaulStoffregen/OneWire --> DS18x20-Example, atmega328@16MHz as peripheral device
+ *    - DS9490R-OneWire-Host, atmega328@16MHz and teensy3.2@96MHz as peripheral device
  */
 
 #include "DS18B20.h" // Digital Thermometer, 12bit

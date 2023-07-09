@@ -132,7 +132,7 @@ void DS2506::duty(OneWireHub *const hub)
 
                 crc = ~crc; // normally crc16 is sent ~inverted
                 if (hub->send(reinterpret_cast<uint8_t *>(&crc), 2)) break;
-                // master issues now a 480us 12V-Programming Pulse -> advantage for us, enough time to handle addressMapping
+                // OneWire-Host issues now a 480us 12V-Programming Pulse -> advantage for us, enough time to handle addressMapping
 
                 reg_RA             = translateRedirection(reg_TA);
                 const uint8_t page = static_cast<uint8_t>(reg_RA >> 5);
@@ -156,7 +156,7 @@ void DS2506::duty(OneWireHub *const hub)
             while (reg_TA < sizeof_memory) // check for valid address
             {
                 if (hub->recv(&data)) break;
-                // master issues now a 480us 12V-Programming Pulse
+                // OneWire-Host issues now a 480us 12V-Programming Pulse
 
                 reg_RA             = translateRedirection(reg_TA);
                 const uint8_t page = static_cast<uint8_t>(reg_RA >> 5);
@@ -183,7 +183,7 @@ void DS2506::duty(OneWireHub *const hub)
 
                 crc = ~crc; // normally crc16 is sent ~inverted
                 if (hub->send(reinterpret_cast<uint8_t *>(&crc), 2)) break;
-                // master issues now a 480us 12V-Programming Pulse
+                // OneWire-Host issues now a 480us 12V-Programming Pulse
 
                 data = writeStatus(reg_TA, data);
                 if (hub->send(&data)) break;
@@ -196,7 +196,7 @@ void DS2506::duty(OneWireHub *const hub)
             while (reg_TA < STATUS_SIZE_DEV) // check for valid address
             {
                 if (hub->recv(&data, 1, crc)) break;
-                // master issues now a 480us 12V-Programming Pulse
+                // OneWire-Host issues now a 480us 12V-Programming Pulse
 
                 data = writeStatus(reg_TA, data);
                 if (hub->send(&data)) break;
@@ -204,7 +204,7 @@ void DS2506::duty(OneWireHub *const hub)
             }
             break;
 
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 }
 

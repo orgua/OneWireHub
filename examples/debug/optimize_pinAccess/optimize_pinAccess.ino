@@ -86,7 +86,7 @@ volatile io_reg_t *
 
 void pinConfigClean(const uint8_t pin)
 {
-    pinMode(pin, INPUT); // as a OW-slave we should mostly listen
+    pinMode(pin, INPUT); // as a OW-peripheral-device we should mostly listen
     // setup direct pin-access
     pin_bitMask = PIN_TO_BITMASK(pin);
     pin_baseReg = PIN_TO_BASEREG(pin);

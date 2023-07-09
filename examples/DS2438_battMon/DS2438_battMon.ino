@@ -3,7 +3,7 @@
  *
  *    Tested with:
  *    - https://github.com/PaulStoffregen/OneWire
- *    - DS9490R-Master, atmega328@16MHz and teensy3.2@96MHz as Slave
+ *    - DS9490R-OneWire-Host, atmega328@16MHz and teensy3.2@96MHz as peripheral device
  */
 
 #include "DS2438.h" // Smart Battery Monitor

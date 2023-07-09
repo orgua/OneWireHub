@@ -137,5 +137,5 @@ https://www.contributor-covenant.org/translations.
 ## Example Onewire - naming scheme to use (WIP)
 
 - primary: controller, host
-- secondary: hub-device, periphery
+- secondary: hub-device, periphery, peripheral device
 - microcontroller running the hub: device-emulator

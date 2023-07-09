@@ -41,6 +41,6 @@ void DS2413::duty(OneWireHub *const hub)
             if (hub->send(&data)) return;
             break;
 
-        default: hub->raiseSlaveError(cmd);
+        default: hub->raiseDeviceError(cmd);
     }
 }
