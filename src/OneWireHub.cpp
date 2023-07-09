@@ -10,7 +10,7 @@ OneWireHub::OneWireHub(const uint8_t pin)
     device_count    = 0;
     device_selected = nullptr;
 
-#if OVERDRIVE_ENABLE
+#if ONEWIREHUB_OVERDRIVE_ENABLE
     od_mode = false;
 #endif
 
@@ -35,7 +35,7 @@ OneWireHub::OneWireHub(const uint8_t pin)
     static_assert(VALUE_IPL, "Your architecture has not been calibrated yet, please run "
                              "examples/debug/calibrate_by_bus_timing and report instructions per "
                              "loop (IPL) to https://github.com/orgua/OneWireHub");
-    static_assert(ONEWIRE_TIME_VALUE_MIN > 2,
+    static_assert(ONEWIREHUB_TIME_VALUE_MIN > 2,
                   "YOUR ARCHITECTURE IS TOO SLOW, THIS MAY RESULT IN "
                   "TIMING-PROBLEMS"); // it could work though, never tested
 }
@@ -124,7 +124,7 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask) const
 // return next not empty element in device-list
 uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start) const
 {
-    for (uint8_t i = index_start; i < ONEWIRE_TREE_SIZE; ++i)
+    for (uint8_t i = index_start; i < _ONEWIREHUB_TREE_SIZE; ++i)
     {
         if (device_list[i] != nullptr) return i;
     }
@@ -134,7 +134,7 @@ uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start) const
 // gone through the address, store this result
 uint8_t OneWireHub::getNrOfFirstFreeIDTreeElement(void) const
 {
-    for (uint8_t i = 0; i < ONEWIRE_TREE_SIZE; ++i)
+    for (uint8_t i = 0; i < _ONEWIREHUB_TREE_SIZE; ++i)
     {
         if (idTree[i].id_position == 255) return i;
     }
@@ -154,7 +154,7 @@ uint8_t OneWireHub::buildIDTree(void)
         bit_mask <<= 1;
     }
 
-    for (uint8_t i = 0; i < ONEWIRE_TREE_SIZE; ++i) { idTree[i].id_position = 255; }
+    for (uint8_t i = 0; i < _ONEWIREHUB_TREE_SIZE; ++i) { idTree[i].id_position = 255; }
 
     // begin with root-element
     buildIDTree(0, mask_devices); // goto branch
@@ -242,19 +242,23 @@ bool OneWireHub::checkReset(
         void) // there is a specific high-time needed before a reset may occur -->  >120us
 {
     static_assert(
-            ONEWIRE_TIME_RESET_MIN[0] > (ONEWIRE_TIME_SLOT_MAX[0] + ONEWIRE_TIME_READ_MAX[0]),
-            "Timings are wrong"); // last number should read: max(ONEWIRE_TIME_WRITE_ZERO,ONEWIRE_TIME_READ_MAX)
-    static_assert(ONEWIRE_TIME_READ_MAX[0] > ONEWIRE_TIME_WRITE_ZERO[0],
-                  "switch ONEWIRE_TIME_WRITE_ZERO with ONEWIRE_TIME_READ_MAX in checkReset(), "
-                  "because it is bigger (worst case)");
-    static_assert(ONEWIRE_TIME_RESET_MAX[0] > ONEWIRE_TIME_RESET_MIN[0], "Timings are wrong");
-#if OVERDRIVE_ENABLE
-    static_assert(ONEWIRE_TIME_RESET_MIN[1] > (ONEWIRE_TIME_SLOT_MAX[1] + ONEWIRE_TIME_READ_MAX[1]),
+            ONEWIREHUB_TIME_RESET_MIN[0] >
+                    (ONEWIREHUB_TIME_SLOT_MAX[0] + ONEWIREHUB_TIME_READ_MAX[0]),
+            "Timings are wrong"); // last number should read: max(ONEWIREHUB_TIME_WRITE_ZERO,ONEWIREHUB_TIME_READ_MAX)
+    static_assert(
+            ONEWIREHUB_TIME_READ_MAX[0] > ONEWIREHUB_TIME_WRITE_ZERO[0],
+            "switch ONEWIREHUB_TIME_WRITE_ZERO with ONEWIREHUB_TIME_READ_MAX in checkReset(), "
+            "because it is bigger (worst case)");
+    static_assert(ONEWIREHUB_TIME_RESET_MAX[0] > ONEWIREHUB_TIME_RESET_MIN[0], "Timings are wrong");
+#if ONEWIREHUB_OVERDRIVE_ENABLE
+    static_assert(ONEWIREHUB_TIME_RESET_MIN[1] >
+                          (ONEWIREHUB_TIME_SLOT_MAX[1] + ONEWIREHUB_TIME_READ_MAX[1]),
                   "Timings are wrong");
-    static_assert(ONEWIRE_TIME_READ_MAX[1] > ONEWIRE_TIME_WRITE_ZERO[1],
-                  "switch ONEWIRE_TIME_WRITE_ZERO with ONEWIRE_TIME_READ_MAX in checkReset(), "
-                  "because it is bigger (worst case)");
-    static_assert(ONEWIRE_TIME_RESET_MAX[0] > ONEWIRE_TIME_RESET_MIN[1], "Timings are wrong");
+    static_assert(
+            ONEWIREHUB_TIME_READ_MAX[1] > ONEWIREHUB_TIME_WRITE_ZERO[1],
+            "switch ONEWIREHUB_TIME_WRITE_ZERO with ONEWIREHUB_TIME_READ_MAX in checkReset(), "
+            "because it is bigger (worst case)");
+    static_assert(ONEWIREHUB_TIME_RESET_MAX[0] > ONEWIREHUB_TIME_RESET_MIN[1], "Timings are wrong");
 #endif
 
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
@@ -263,22 +267,23 @@ bool OneWireHub::checkReset(
     if (_error == Error::RESET_IN_PROGRESS)
     {
         _error = Error::NO_ERROR;
-        if (waitLoopsWhilePinIs(ONEWIRE_TIME_RESET_MIN[od_mode] - ONEWIRE_TIME_SLOT_MAX[od_mode] -
-                                        ONEWIRE_TIME_READ_MAX[od_mode],
+        if (waitLoopsWhilePinIs(ONEWIREHUB_TIME_RESET_MIN[od_mode] -
+                                        ONEWIREHUB_TIME_SLOT_MAX[od_mode] -
+                                        ONEWIREHUB_TIME_READ_MAX[od_mode],
                                 false) ==
-            0) // last number should read: max(ONEWIRE_TIME_WRITE_ZERO,ONEWIRE_TIME_READ_MAX)
+            0) // last number should read: max(ONEWIREHUB_TIME_WRITE_ZERO,ONEWIREHUB_TIME_READ_MAX)
         {
-#if OVERDRIVE_ENABLE
+#if ONEWIREHUB_OVERDRIVE_ENABLE
             const timeOW_t loops_remaining = waitLoopsWhilePinIs(
-                    ONEWIRE_TIME_RESET_MAX[0],
+                    ONEWIREHUB_TIME_RESET_MAX[0],
                     false); // showPresence() wants to start at high, so wait for it
-            if (od_mode &&
-                ((ONEWIRE_TIME_RESET_MAX[0] - ONEWIRE_TIME_RESET_MIN[od_mode]) > loops_remaining))
+            if (od_mode && ((ONEWIREHUB_TIME_RESET_MAX[0] - ONEWIREHUB_TIME_RESET_MIN[od_mode]) >
+                            loops_remaining))
             {
                 od_mode = false; // normal reset detected, so leave OD-Mode
             };
 #else
-            waitLoopsWhilePinIs(ONEWIRE_TIME_RESET_MAX[0],
+            waitLoopsWhilePinIs(ONEWIREHUB_TIME_RESET_MAX[0],
                                 false); // showPresence() wants to start at high, so wait for it
 #endif
             return false;
@@ -289,13 +294,13 @@ bool OneWireHub::checkReset(
         return true; // just leave if pin is Low, don't bother to wait, TODO: really needed?
 
     // wait for the bus to become low (host-controlled), since we are polling we don't know for how long it was zero
-    if (waitLoopsWhilePinIs(ONEWIRE_TIME_RESET_TIMEOUT, true) == 0)
+    if (waitLoopsWhilePinIs(ONEWIREHUB_TIME_RESET_TIMEOUT, true) == 0)
     {
         //_error = Error::WAIT_RESET_TIMEOUT;
         return true;
     }
 
-    const timeOW_t loops_remaining = waitLoopsWhilePinIs(ONEWIRE_TIME_RESET_MAX[0], false);
+    const timeOW_t loops_remaining = waitLoopsWhilePinIs(ONEWIREHUB_TIME_RESET_MAX[0], false);
 
     // wait for bus-release by OneWire-Host
     if (loops_remaining == 0)
@@ -304,29 +309,32 @@ bool OneWireHub::checkReset(
         return true;
     }
 
-#if OVERDRIVE_ENABLE
-    if (od_mode && ((ONEWIRE_TIME_RESET_MAX[0] - ONEWIRE_TIME_RESET_MIN[0]) > loops_remaining))
+#if ONEWIREHUB_OVERDRIVE_ENABLE
+    if (od_mode &&
+        ((ONEWIREHUB_TIME_RESET_MAX[0] - ONEWIREHUB_TIME_RESET_MIN[0]) > loops_remaining))
     {
         od_mode = false; // normal reset detected, so leave OD-Mode
     };
 #endif
 
     // If the OneWire-Host pulled low for to short this will trigger an error
-    //if (loops_remaining > (ONEWIRE_TIME_RESET_MAX[0] - ONEWIRE_TIME_RESET_MIN[od_mode])) _error = Error::VERY_SHORT_RESET; // could be activated again, like the error above, errorhandling is mature enough now
+    //if (loops_remaining > (ONEWIREHUB_TIME_RESET_MAX[0] - ONEWIREHUB_TIME_RESET_MIN[od_mode])) _error = Error::VERY_SHORT_RESET; // could be activated again, like the error above, errorhandling is mature enough now
 
-    return (loops_remaining > (ONEWIRE_TIME_RESET_MAX[0] - ONEWIRE_TIME_RESET_MIN[od_mode]));
+    return (loops_remaining > (ONEWIREHUB_TIME_RESET_MAX[0] - ONEWIREHUB_TIME_RESET_MIN[od_mode]));
 }
 
 
 bool OneWireHub::showPresence(void)
 {
-    static_assert(ONEWIRE_TIME_PRESENCE_MAX[0] > ONEWIRE_TIME_PRESENCE_MIN[0], "Timings are wrong");
-#if OVERDRIVE_ENABLE
-    static_assert(ONEWIRE_TIME_PRESENCE_MAX[1] > ONEWIRE_TIME_PRESENCE_MIN[1], "Timings are wrong");
+    static_assert(ONEWIREHUB_TIME_PRESENCE_MAX[0] > ONEWIREHUB_TIME_PRESENCE_MIN[0],
+                  "Timings are wrong");
+#if ONEWIREHUB_OVERDRIVE_ENABLE
+    static_assert(ONEWIREHUB_TIME_PRESENCE_MAX[1] > ONEWIREHUB_TIME_PRESENCE_MIN[1],
+                  "Timings are wrong");
 #endif
 
     // OneWire-Host will delay it's "Presence" check (bus-read)  after the reset
-    waitLoopsWhilePinIs(ONEWIRE_TIME_PRESENCE_TIMEOUT,
+    waitLoopsWhilePinIs(ONEWIREHUB_TIME_PRESENCE_TIMEOUT,
                         true); // no pinCheck demanded, but this additional check can cut waitTime
 
     if (USE_GPIO_DEBUG) DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
@@ -335,7 +343,7 @@ bool OneWireHub::showPresence(void)
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask); // drive output low
 
-    wait(ONEWIRE_TIME_PRESENCE_MIN
+    wait(ONEWIREHUB_TIME_PRESENCE_MIN
                  [od_mode]); // stays till the end, because it drives the bus low itself
 
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask); // allow it to float
@@ -344,8 +352,8 @@ bool OneWireHub::showPresence(void)
 
     // When the OneWire-Host or other devices release the bus within a given time everything is fine
     if (waitLoopsWhilePinIs(
-                (ONEWIRE_TIME_PRESENCE_MAX[od_mode] - ONEWIRE_TIME_PRESENCE_MIN[od_mode]), false) ==
-        0)
+                (ONEWIREHUB_TIME_PRESENCE_MAX[od_mode] - ONEWIREHUB_TIME_PRESENCE_MIN[od_mode]),
+                false) == 0)
     {
         _error = Error::PRESENCE_LOW_ON_LINE;
         return true;
@@ -461,9 +469,9 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         case 0x69: // overdrive MATCH ROM
 
-#if OVERDRIVE_ENABLE
+#if ONEWIREHUB_OVERDRIVE_ENABLE
             od_mode = true;
-            waitLoopsWhilePinIs(ONEWIRE_TIME_READ_MAX[0], false);
+            waitLoopsWhilePinIs(ONEWIREHUB_TIME_READ_MAX[0], false);
 #endif
 
         case 0x55: // MATCH ROM - Choose/Select ROM
@@ -504,9 +512,9 @@ bool OneWireHub::recvAndProcessCmd(void)
 
         case 0x3C: // overdrive SKIP ROM
 
-#if OVERDRIVE_ENABLE
+#if ONEWIREHUB_OVERDRIVE_ENABLE
             od_mode = true;
-            waitLoopsWhilePinIs(ONEWIRE_TIME_READ_MAX[0], false);
+            waitLoopsWhilePinIs(ONEWIREHUB_TIME_READ_MAX[0], false);
 #endif
         case 0xCC: // SKIP ROM
 
@@ -579,7 +587,7 @@ bool OneWireHub::sendBit(const bool value)
     const bool writeZero = !value;
 
     // Wait for bus to rise HIGH, signaling end of last timeslot
-    timeOW_t retries = ONEWIRE_TIME_SLOT_MAX[od_mode];
+    timeOW_t retries = ONEWIREHUB_TIME_SLOT_MAX[od_mode];
     while ((DIRECT_READ(pin_baseReg, pin_bitMask) == 0) && (--retries != 0))
         ;
     if (retries == 0)
@@ -589,7 +597,7 @@ bool OneWireHub::sendBit(const bool value)
     }
 
     // Wait for bus to fall LOW, start of new timeslot
-    retries = ONEWIRE_TIME_MSG_HIGH_TIMEOUT;
+    retries = ONEWIREHUB_TIME_MSG_HIGH_TIMEOUT;
     while ((DIRECT_READ(pin_baseReg, pin_bitMask) != 0) && (--retries != 0))
         ;
     if (retries == 0)
@@ -602,9 +610,9 @@ bool OneWireHub::sendBit(const bool value)
     if (writeZero)
     {
         DIRECT_MODE_OUTPUT(pin_baseReg, pin_bitMask);
-        retries = ONEWIRE_TIME_WRITE_ZERO[od_mode];
+        retries = ONEWIREHUB_TIME_WRITE_ZERO[od_mode];
     }
-    else { retries = ONEWIRE_TIME_READ_MAX[od_mode]; }
+    else { retries = ONEWIREHUB_TIME_READ_MAX[od_mode]; }
 
     while ((DIRECT_READ(pin_baseReg, pin_bitMask) == 0) && (--retries != 0))
         ; // TODO: we should check for (!retries) because there could be a reset in progress...
@@ -688,7 +696,7 @@ bool OneWireHub::send(const uint8_t dataByte) { return send(&dataByte, 1); }
 bool OneWireHub::recvBit(void)
 {
     // Wait for bus to rise HIGH, signaling end of last timeslot
-    timeOW_t retries = ONEWIRE_TIME_SLOT_MAX[od_mode];
+    timeOW_t retries = ONEWIREHUB_TIME_SLOT_MAX[od_mode];
     while ((DIRECT_READ(pin_baseReg, pin_bitMask) == 0) && (--retries != 0))
         ;
     if (retries == 0)
@@ -698,7 +706,7 @@ bool OneWireHub::recvBit(void)
     }
 
     // Wait for bus to fall LOW, start of new timeslot
-    retries = ONEWIRE_TIME_MSG_HIGH_TIMEOUT;
+    retries = ONEWIREHUB_TIME_MSG_HIGH_TIMEOUT;
     while ((DIRECT_READ(pin_baseReg, pin_bitMask) != 0) && (--retries != 0))
         ;
     if (retries == 0)
@@ -708,7 +716,7 @@ bool OneWireHub::recvBit(void)
     }
 
     // wait a specific time to do a read (data is valid by then), // first difference to inner-loop of write()
-    retries = ONEWIRE_TIME_READ_MIN[od_mode];
+    retries = ONEWIREHUB_TIME_READ_MIN[od_mode];
     while ((DIRECT_READ(pin_baseReg, pin_bitMask) == 0) && (--retries != 0))
         ;
 
@@ -920,27 +928,27 @@ void OneWireHub::waitLoopsDebug(void) const
         Serial.print(VALUE_IPL * VALUE1k / microsecondsToClockCycles(1));
         Serial.println(" nanoseconds per loop");
         Serial.print("reset min : \t");
-        Serial.println(ONEWIRE_TIME_RESET_MIN[od_mode]);
+        Serial.println(ONEWIREHUB_TIME_RESET_MIN[od_mode]);
         Serial.print("reset max : \t");
-        Serial.println(ONEWIRE_TIME_RESET_MAX[od_mode]);
+        Serial.println(ONEWIREHUB_TIME_RESET_MAX[od_mode]);
         Serial.print("reset tout : \t");
-        Serial.println(ONEWIRE_TIME_RESET_TIMEOUT);
+        Serial.println(ONEWIREHUB_TIME_RESET_TIMEOUT);
         Serial.print("presence min : \t");
-        Serial.println(ONEWIRE_TIME_PRESENCE_TIMEOUT);
+        Serial.println(ONEWIREHUB_TIME_PRESENCE_TIMEOUT);
         Serial.print("presence low : \t");
-        Serial.println(ONEWIRE_TIME_PRESENCE_MIN[od_mode]);
+        Serial.println(ONEWIREHUB_TIME_PRESENCE_MIN[od_mode]);
         Serial.print("presence low max : \t");
-        Serial.println(ONEWIRE_TIME_PRESENCE_MAX[od_mode]);
+        Serial.println(ONEWIREHUB_TIME_PRESENCE_MAX[od_mode]);
         Serial.print("msg hi timeout : \t");
-        Serial.println(ONEWIRE_TIME_MSG_HIGH_TIMEOUT);
+        Serial.println(ONEWIREHUB_TIME_MSG_HIGH_TIMEOUT);
         Serial.print("slot max : \t");
-        Serial.println(ONEWIRE_TIME_SLOT_MAX[od_mode]);
+        Serial.println(ONEWIREHUB_TIME_SLOT_MAX[od_mode]);
         Serial.print("read1low : \t");
-        Serial.println(ONEWIRE_TIME_READ_MAX[od_mode]);
+        Serial.println(ONEWIREHUB_TIME_READ_MAX[od_mode]);
         Serial.print("read std : \t");
-        Serial.println(ONEWIRE_TIME_READ_MIN[od_mode]);
+        Serial.println(ONEWIREHUB_TIME_READ_MIN[od_mode]);
         Serial.print("write zero : \t");
-        Serial.println(ONEWIRE_TIME_WRITE_ZERO[od_mode]);
+        Serial.println(ONEWIREHUB_TIME_WRITE_ZERO[od_mode]);
         Serial.flush();
     }
 }

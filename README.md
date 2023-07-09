@@ -46,12 +46,17 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 
 ### Features
 
-- supports up to 32 peripheral devices simultaneously (8 is standard setting), adjust `ONEWIREHUB_DEVICE_LIMIT` in `src/OneWireHub_config.h` to safe RAM & program space
+- supports up to 32 peripheral devices simultaneously -> 8 is default setting to safe RAM & program space
+   - just add custom `#define ONEWIREHUB_DEVICE_LIMIT (32)` in your source file
+   - TODO: add example
    - implementation-overhead for the hub is minimal and even saves resources for >1 emulated device
 - hot-plug: add and remove devices as needed during operation
+  - TODO: add example
 - support for most onewire-features: `MATCH ROM` (0x55), `SKIP ROM` (0xCC), `READ ROM` (0x0F,0x33), `RESUME COMMAND` (0xA5)
-   - **OVERDRIVE-Mode**: OneWire-Host can issue `OD SKIP ROM` (0x13) or `OD MATCH ROM` (0x69) and peripheral device stays in this mode till it sees a long reset -> OD-feature must be activated in config
    - `ALARM SEARCH` (0xEC) is NOT implemented yet!
+- **OVERDRIVE-Mode**: 
+  - OneWire-Host can issue `OD SKIP ROM` (0x13) or `OD MATCH ROM` (0x69) and peripheral device stays in this mode till it sees a long reset
+  - OD-feature must be activated manually by adding `#define ONEWIREHUB_OVERDRIVE_ENABLE (1)` in your source file
 - cleaner, faster code with c++11 features **(requires arduino sw 1.6.x or higher, >=2.0.0 recommended)**
    - use of constexpr instead of #define for better compiler-messages and cleaner code
    - use static-assertions for compile-time plausibility checks
@@ -130,7 +135,7 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - is there more than one OneWire-Host on the bus? It won't work!
 - has any other sensor (real or emulated) ever worked with this OneWire-Host? -> the simplest device would be a ds2401
 - if communication works, but is unstable please check with logic analyzer
-   - maybe your OneWire-Host is slow and just needs a higher ONEWIRE_TIME_MSG_HIGH_TIMEOUT-value (see OneWireHub_config.h line 37)
+   - maybe your OneWire-Host is slow and just needs a higher ONEWIREHUB_TIME_MSG_HIGH_TIMEOUT-value (see OneWireHub_config.h line 37)
 - make sure that serial- and gpio-debugging is disabled (see src/OneWireHub_config.h), especially when using overdrive (be aware! it may produce heisenbugs, timing is critical)
 - on a slow arduino it can be helpful to disable the serial port completely to get reliable results -> at least comment out serial.begin()
 - if you can provide a recording via logic-analyzer (logic 8 or similar) there should be chance we can help you
@@ -180,6 +185,11 @@ Note: **Bold printed devices are feature-complete and were mostly tested with a 
 - test each example with real OneWire-Hosts, for now it's tested with the onewire-lib and a loxone-system (ds18b20 passed)
 - [List of all Family-Codes](http://owfs.sourceforge.net/family.html)
 - [List of Maxim Sensors](https://www.maximintegrated.com/en/app-notes/index.mvp/id/3989) (at the bottom)
+- add examples for 
+  - more devices
+  - overdrive mode
+  - hw dependent code
+
 
 ### Connecting the HUB with the Network
 

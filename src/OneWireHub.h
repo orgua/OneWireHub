@@ -26,9 +26,9 @@ constexpr timeOW_t timeUsToLoops(const uint16_t time_us)
 #include "OneWireHub_config.h" // outsource configfile
 
 #ifndef ONEWIREHUB_DEVICE_LIMIT
-  #error "DeviceLimit not defined (why?)"
+  #error "ONEWIREHUB_DEVICE_LIMIT not defined (why?)"
 #elif (ONEWIREHUB_DEVICE_LIMIT > 32)
-  #error "DeviceLimit is set too high (32)"
+  #error "ONEWIREHUB_DEVICE_LIMIT is set too high (>32)"
 #elif (ONEWIREHUB_DEVICE_LIMIT > 16)
 using mask_t = uint32_t;
 #elif (ONEWIREHUB_DEVICE_LIMIT > 8)
@@ -37,6 +37,12 @@ using mask_t = uint16_t;
 using mask_t = uint8_t;
 #else
   #error "DeviceLimit is set to zero (why?)"
+#endif
+
+#ifndef ONEWIREHUB_OVERDRIVE_ENABLE
+  #error "ONEWIREHUB_OVERDRIVE_ENABLE not defined (why?)"
+#elif !((ONEWIREHUB_OVERDRIVE_ENABLE >= 0) && (ONEWIREHUB_OVERDRIVE_ENABLE <= 1))
+  #error "ONEWIREHUB_OVERDRIVE_ENABLE must be 0 or 1"
 #endif
 
 constexpr timeOW_t VALUE1k{1000};          // commonly used constant
@@ -69,9 +75,9 @@ class OneWireHub
 {
 private:
     static constexpr uint8_t _ONEWIREHUB_DEVICE_LIMIT{ONEWIREHUB_DEVICE_LIMIT};
-    static constexpr uint8_t ONEWIRE_TREE_SIZE{(2 * _ONEWIREHUB_DEVICE_LIMIT) - 1}; // TODO: add _
+    static constexpr uint8_t _ONEWIREHUB_TREE_SIZE{(2 * _ONEWIREHUB_DEVICE_LIMIT) - 1};
 
-#if OVERDRIVE_ENABLE
+#if ONEWIREHUB_OVERDRIVE_ENABLE
     bool od_mode;
 #else
     static constexpr bool od_mode{false};
@@ -98,7 +104,7 @@ private:
         uint8_t id_position;     // where does the algorithm has to look for a junction
         uint8_t got_zero;        // if 0 switch to which tree branch
         uint8_t got_one;         // if 1 switch to which tree branch
-    } idTree[ONEWIRE_TREE_SIZE];
+    } idTree[_ONEWIREHUB_TREE_SIZE];
 
     uint8_t buildIDTree(void);
     uint8_t buildIDTree(uint8_t position_IDBit, mask_t device_mask);
