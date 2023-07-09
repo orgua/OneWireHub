@@ -1,8 +1,8 @@
 // 256bit 1-Wire EEPROM & 64bit OTP
 // works
 
-#ifndef ONEWIRE_DS2430_H
-#define ONEWIRE_DS2430_H
+#ifndef ONEWIREHUB_DS2430_H
+#define ONEWIREHUB_DS2430_H
 
 #include "OneWireItem.h"
 

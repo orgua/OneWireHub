@@ -2,8 +2,8 @@
 // works, but no alarm search and higher logic / output / control register-action
 // native bus-features: Overdrive capable, alarm search
 
-#ifndef ONEWIRE_DS2408_H
-#define ONEWIRE_DS2408_H
+#ifndef ONEWIREHUB_DS2408_H
+#define ONEWIREHUB_DS2408_H
 
 #include "OneWireItem.h"
 

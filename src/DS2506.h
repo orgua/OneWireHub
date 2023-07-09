@@ -3,8 +3,8 @@
 // note: not available memory will be redirected or faked
 // native bus-features: Overdrive capable
 
-#ifndef ONEWIRE_DS2506_H
-#define ONEWIRE_DS2506_H
+#ifndef ONEWIREHUB_DS2506_H
+#define ONEWIREHUB_DS2506_H
 
 #include "OneWireItem.h"
 

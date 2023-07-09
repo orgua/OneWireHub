@@ -2,8 +2,8 @@
 // works
 // native bus-features: Overdrive capable
 
-#ifndef ONEWIRE_DS2423_H
-#define ONEWIRE_DS2423_H
+#ifndef ONEWIREHUB_DS2423_H
+#define ONEWIREHUB_DS2423_H
 
 #include "OneWireItem.h"
 

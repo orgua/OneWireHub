@@ -203,7 +203,7 @@ uint16_t v1A_crc16_get(void) { return crc16; }
 
 bool v1B_crc16_update(uint8_t dataByte, uint16_t &crc16)
 {
-    //_error = ONEWIRE_NO_ERROR;
+    //_error = ONEWIREHUB_NO_ERROR;
     for (uint8_t counter = 0; counter < 8; ++counter)
     {
         //sendBit((bitMask & dataByte) ? 1 : 0);
@@ -222,7 +222,7 @@ bool v1B_crc16_update(uint8_t dataByte, uint16_t &crc16)
 
 uint16_t v1C_crc16_update(uint8_t dataByte, uint16_t crc16)
 {
-    //_error = ONEWIRE_NO_ERROR;
+    //_error = ONEWIREHUB_NO_ERROR;
     for (uint8_t counter = 0; counter < 8; ++counter)
     {
         //sendBit((bitMask & dataByte) ? 1 : 0);

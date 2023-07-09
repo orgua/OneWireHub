@@ -2,8 +2,8 @@
 // works, but without alarm features and other controllable functions beside ADC-Reading
 // native bus-features: Overdrive capable, alarm search
 
-#ifndef ONEWIRE_DS2450_H
-#define ONEWIRE_DS2450_H
+#ifndef ONEWIREHUB_DS2450_H
+#define ONEWIREHUB_DS2450_H
 
 #include "OneWireItem.h"
 

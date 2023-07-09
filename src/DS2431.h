@@ -3,8 +3,8 @@
 // note: datasheet is fuzzy, but device is similar to ds2433
 // native bus-features: Overdrive capable
 
-#ifndef ONEWIRE_DS2431_H
-#define ONEWIRE_DS2431_H
+#ifndef ONEWIREHUB_DS2431_H
+#define ONEWIREHUB_DS2431_H
 
 #include "OneWireItem.h"
 

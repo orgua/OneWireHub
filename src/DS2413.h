@@ -2,8 +2,8 @@
 // Works, OneWire-Host can latch the pin and pull it thereby down
 // native bus-features: Overdrive capable
 
-#ifndef ONEWIRE_DS2413_H
-#define ONEWIRE_DS2413_H
+#ifndef ONEWIREHUB_DS2413_H
+#define ONEWIREHUB_DS2413_H
 
 #include "OneWireItem.h"
 

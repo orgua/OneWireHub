@@ -5,8 +5,8 @@
 // DS1822:  9-12bit, -55 - +125 degC
 // native bus-features: alarm search
 
-#ifndef ONEWIRE_DS18B20_H
-#define ONEWIRE_DS18B20_H
+#ifndef ONEWIREHUB_DS18B20_H
+#define ONEWIREHUB_DS18B20_H
 
 #include "OneWireItem.h"
 

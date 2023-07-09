@@ -2,8 +2,8 @@
 // works, basic functionality
 // native bus-features: unknown
 
-#ifndef ONEWIRE_BAE910_H
-#define ONEWIRE_BAE910_H
+#ifndef ONEWIREHUB_BAE910_H
+#define ONEWIREHUB_BAE910_H
 
 #include "OneWireItem.h"
 

@@ -1,5 +1,5 @@
-#ifndef ONEWIRE_HUB_H
-#define ONEWIRE_HUB_H
+#ifndef ONEWIREHUB_HUB_H
+#define ONEWIREHUB_HUB_H
 
 #include "platform.h" // code for compatibility
 

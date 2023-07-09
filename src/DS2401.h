@@ -2,8 +2,8 @@
 // Works
 // native bus-features: none
 
-#ifndef ONEWIRE_DS2401_H
-#define ONEWIRE_DS2401_H
+#ifndef ONEWIREHUB_DS2401_H
+#define ONEWIREHUB_DS2401_H
 
 #include "OneWireItem.h"
 

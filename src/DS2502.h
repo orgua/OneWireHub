@@ -2,8 +2,8 @@
 // works, writing could not be tested (DS9490 does not support hi-voltage mode and complains)
 // native bus-features: none
 
-#ifndef ONEWIRE_DS2502_H
-#define ONEWIRE_DS2502_H
+#ifndef ONEWIREHUB_DS2502_H
+#define ONEWIREHUB_DS2502_H
 
 #include "OneWireItem.h"
 

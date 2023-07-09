@@ -3,8 +3,8 @@
 // this IC is not using standard protocol - it sends data after searchRom and alarmSearch
 // native bus-features: alarm search
 
-#ifndef ONEWIRE_DS2405_H
-#define ONEWIRE_DS2405_H
+#ifndef ONEWIREHUB_DS2405_H
+#define ONEWIREHUB_DS2405_H
 
 #include "OneWireItem.h"
 

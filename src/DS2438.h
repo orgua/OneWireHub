@@ -2,8 +2,8 @@
 // works, but without real EPROM copy/recall functionality, Timer,
 // native bus-features: none
 
-#ifndef ONEWIRE_DS2438_H
-#define ONEWIRE_DS2438_H
+#ifndef ONEWIREHUB_DS2438_H
+#define ONEWIREHUB_DS2438_H
 
 #include "OneWireItem.h"
 
