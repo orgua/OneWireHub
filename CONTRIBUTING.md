@@ -86,28 +86,4 @@ Once your PR is merged, your contributions will be publicly visible on the [GitH
 
 Now that you are part of the GitHub docs community, see how else you can [contribute to the docs](/contributing/types-of-contributions.md).
 
-### Releasing a new Version
 
-The needed tools get installed automatically with the provided dev-environment (python and pipenv required), example call for ubuntu
-
-```Shell
-pipenv shell
-# & at first usage
-pipenv install
-sudo apt install cppcheck
-```
-
-Make sure Pre-Commit-Tests run through without new problems
-
-```Shell
-
-pre-commit run -a
-`````
-
-Increment Version and decide if changes justify major, minor or patch-release
-
-```Shell
-bump2version --tag patch
-```
-
-Prepare a Release on Github with Changelog.
