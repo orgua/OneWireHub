@@ -38,6 +38,9 @@ constexpr const char *charger65W  = "DELL00AC065195033CN05U0927161552F31B8A03\xB
 constexpr const char *charger90W  = "DELL00AC090195046CN0C80234866161R23H8A03\x4D\x7C";
 // I made this up, works with Dell Inspiron 15R N5110 and Dell Inspiron 15R 5521
 constexpr const char *charger130W = "DELL00AC130195067CN0CDF577243865Q27F2233\x9D\x72";
+// 240W tested on Dell 9380 via Dell TB16 dock
+constexpr const char* charger240W = "DELL00AC240195123CN0FWCRC4866165H3M9PA05\x9F\xA3";
+
 
 auto hub    = OneWireHub(pin_onewire);
 auto dellCH = DS2502(
