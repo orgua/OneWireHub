@@ -15,18 +15,31 @@
   #define ONEWIREHUB_GCC_VERSION 0
 #endif
 
-#if defined(__AVR__) /* arduino (all with atmega, atiny) */
-
-  #define PIN_TO_BASEREG(pin)            (portInputRegister(digitalPinToPort(pin)))
-  #define PIN_TO_BITMASK(pin)            (digitalPinToBitMask(pin))
-  #define DIRECT_READ(base, mask)        (((*(base)) & (mask)) ? 1 : 0)
-  #define DIRECT_MODE_INPUT(base, mask)  ((*((base) + 1)) &= ~(mask))
-  #define DIRECT_MODE_OUTPUT(base, mask) ((*((base) + 1)) |= (mask))
-  #define DIRECT_WRITE_LOW(base, mask)   ((*((base) + 2)) &= ~(mask))
-  #define DIRECT_WRITE_HIGH(base, mask)  ((*((base) + 2)) |= (mask))
-using io_reg_t = uint8_t; // define special datatype for register-access
-constexpr uint8_t VALUE_IPL{13};
-    // ⤷ instructions per loop, compare 0 takes 11, compare 1 takes 13 cycles
+#if defined (__AVR__)
+  #define PIN_TO_BITMASK(pin) (digitalPinToBitMask(pin))
+  #define IO_REG_TYPE         uint8_t
+  #define IO_REG_BASE_ATTR    asm("r30")
+  #define IO_REG_MASK_ATTR
+  using io_reg_t = uint8_t; // define special datatype for register-access
+  constexpr uint8_t VALUE_IPL{13}; // instructions per loop, compare 0 takes 11, compare 1 takes 13 cycles
+  // Modern AVRs like attiny 0,1,2 series
+  #if ((__AVR_ARCH__ == 102) || (__AVR_ARCH__ == 103) || (__AVR_ARCH__ == 104))
+    #define PIN_TO_BASEREG(pin)            ((volatile uint8_t *) ((digitalPinToPort(pin)) << 2))
+    #define DIRECT_READ(base, mask)        ((*((base) + 2) & (mask)) ? 1 : 0)
+    #define DIRECT_MODE_INPUT(base, mask)  ((*(base)) &= ~(mask))
+    #define DIRECT_MODE_OUTPUT(base, mask) ((*(base)) |= (mask))
+    #define DIRECT_WRITE_LOW(base, mask)   ((*((base) + 1)) &= ~(mask))
+    #define DIRECT_WRITE_HIGH(base, mask)  ((*((base) + 1)) |= (mask))
+  // older AVRs like atmega328p
+  #else
+    #define PIN_TO_BASEREG(pin)            (portInputRegister(digitalPinToPort(pin)))
+    #define DIRECT_READ(base, mask)        (((*(base)) & (mask)) ? 1 : 0)
+    #define DIRECT_MODE_INPUT(base, mask)  ((*((base) + 1)) &= ~(mask))
+    #define DIRECT_MODE_OUTPUT(base, mask) ((*((base) + 1)) |= (mask))
+    #define DIRECT_WRITE_LOW(base, mask)   ((*((base) + 2)) &= ~(mask))
+    #define DIRECT_WRITE_HIGH(base, mask)  ((*((base) + 2)) |= (mask))
+    constexpr uint8_t VALUE_IPL{13};
+  #endif
 
 #elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK66FX1M0__) ||                \
         defined(__MK64FX512__) /* teensy 3.2 to 3.6 */
