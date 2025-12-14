@@ -48,7 +48,7 @@ private:
             8}; // how much of the real 8 pages should be emulated, use at least 1, max 8
     static constexpr uint8_t PAGE_SIZE{8}; //
 
-    static constexpr uint8_t MEM_SIZE{PAGE_COUNT * PAGE_SIZE};
+    static constexpr uint8_t MEMORY_SIZE{PAGE_COUNT * PAGE_SIZE};
 
     // Register Addresses
     static constexpr uint8_t REG0_MASK_IAD{0x01}; // enable automatic current measurements
@@ -60,7 +60,7 @@ private:
     static constexpr uint8_t REG0_MASK_ADB{0x40}; // adc busy flag
 
     uint8_t memory
-            [MEM_SIZE]; // this mem is the "scratchpad" in the datasheet., no EEPROM implemented
+            [MEMORY_SIZE]; // this mem is the "scratchpad" in the datasheet., no EEPROM implemented
     uint8_t crc
             [PAGE_COUNT +
              1]; // keep the matching crc for each memory-page, reading can be very time-sensitive

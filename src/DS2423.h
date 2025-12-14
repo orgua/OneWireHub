@@ -10,10 +10,10 @@
 class DS2423 : public OneWireItem
 {
 private:
-    static constexpr uint16_t MEM_SIZE{512};
+    static constexpr uint16_t MEMORY_SIZE{512};
 
     static constexpr uint8_t  PAGE_SIZE{32};
-    static constexpr uint16_t PAGE_COUNT{MEM_SIZE / PAGE_SIZE};
+    static constexpr uint16_t PAGE_COUNT{MEMORY_SIZE / PAGE_SIZE};
     static constexpr uint8_t  PAGE_MASK{0b00011111};
 
     static constexpr uint8_t COUNTER_COUNT{4};
@@ -28,7 +28,7 @@ private:
     static constexpr uint16_t REG_TA_MASK{
             0x01FF}; // Addresses will be stripped of the highest 7 bytes
 
-    uint8_t  memory[MEM_SIZE]; // 4kbit max storage
+    uint8_t  memory[MEMORY_SIZE]; // 4kbit max storage
     uint8_t  scratchpad[PAGE_SIZE];
     uint32_t memcounter[COUNTER_COUNT];
 

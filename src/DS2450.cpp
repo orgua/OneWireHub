@@ -20,7 +20,7 @@ void DS2450::duty(OneWireHub *const hub)
     {
         case 0xAA: // READ MEMORY
 
-            while (reg_TA < MEM_SIZE)
+            while (reg_TA < MEMORY_SIZE)
             {
                 const uint8_t length = PAGE_SIZE - (uint8_t(reg_TA) & PAGE_MASK);
                 if (hub->send(&memory[reg_TA], length, crc)) return;
@@ -36,7 +36,7 @@ void DS2450::duty(OneWireHub *const hub)
 
         case 0x55: // write memory (only page 1&2 allowed)
 
-            while (reg_TA < MEM_SIZE)
+            while (reg_TA < MEMORY_SIZE)
             {
                 uint8_t data;
                 if (hub->recv(&data, 1, crc)) break;
@@ -71,7 +71,7 @@ void DS2450::duty(OneWireHub *const hub)
 void DS2450::clearMemory(void)
 {
     constexpr uint8_t value_x00 = 0;
-    memset(memory, value_x00, MEM_SIZE);
+    memset(memory, value_x00, MEMORY_SIZE);
 
     // set power on defaults
     for (uint8_t adc = 0; adc < POTI_COUNT; ++adc)

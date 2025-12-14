@@ -128,8 +128,8 @@ void DS2431::duty(OneWireHub *const hub)
         case 0xF0: // READ MEMORY COMMAND
 
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA), 2)) return;
-            if (reg_TA >= MEM_SIZE) return;
-            if (hub->send(&memory[reg_TA], MEM_SIZE - uint8_t(reg_TA), crc)) return;
+            if (reg_TA >= MEMORY_SIZE) return;
+            if (hub->send(&memory[reg_TA], MEMORY_SIZE - uint8_t(reg_TA), crc)) return;
             break; // send 1s when read is complete, is passive, so do nothing here
 
         default: hub->raiseDeviceError(cmd);
@@ -160,8 +160,8 @@ bool DS2431::writeMemory(const uint8_t *const source, const uint8_t length, cons
 bool DS2431::readMemory(uint8_t *const destination, const uint16_t length,
                         const uint16_t position) const
 {
-    if (position >= MEM_SIZE) return false;
-    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    if (position >= MEMORY_SIZE) return false;
+    const uint16_t _length = (position + length >= MEMORY_SIZE) ? (MEMORY_SIZE - position) : length;
     memcpy(destination, &memory[position], _length);
     return (_length == length);
 }

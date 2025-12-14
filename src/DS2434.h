@@ -48,7 +48,7 @@ private:
     static constexpr uint8_t PAGE_SIZE{32};
     static constexpr uint8_t PAGE_COUNT{5};
 
-    static constexpr uint8_t MEM_SIZE{4 * PAGE_SIZE +
+    static constexpr uint8_t MEMORY_SIZE{4 * PAGE_SIZE +
                                       4}; // Limit the memory size to the working space
     static constexpr uint8_t SCRATCHPAD_SIZE{3 * PAGE_SIZE}; // Scratchpad is used for first 3 pages
 
@@ -58,7 +58,7 @@ private:
     uint32_t                  timer_nvwr   = 0u;
     bool                      request_temp = false;
 
-    uint8_t memory[MEM_SIZE];
+    uint8_t memory[MEMORY_SIZE];
     uint8_t scratchpad[SCRATCHPAD_SIZE];
 
     void clearScratchpad(void);

@@ -11,10 +11,10 @@
 class DS2431 : public OneWireItem
 {
 private:
-    static constexpr uint8_t MEM_SIZE{144};
+    static constexpr uint8_t MEMORY_SIZE{144};
 
     static constexpr uint8_t PAGE_SIZE{32};
-    static constexpr uint8_t PAGE_COUNT{MEM_SIZE / PAGE_SIZE};
+    static constexpr uint8_t PAGE_COUNT{MEMORY_SIZE / PAGE_SIZE};
     static constexpr uint8_t PAGE_MASK{0b00011111};
 
     static constexpr uint8_t SCRATCHPAD_SIZE{8};
@@ -28,7 +28,7 @@ private:
     static constexpr uint8_t WP_MODE{0x55}; // write protect mode
     static constexpr uint8_t EP_MODE{0xAA}; // eprom mode
 
-    uint8_t memory[MEM_SIZE];
+    uint8_t memory[MEMORY_SIZE];
 
     uint8_t scratchpad[SCRATCHPAD_SIZE];
     uint8_t page_protection;

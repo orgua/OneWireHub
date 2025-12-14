@@ -14,8 +14,8 @@ private:
     static constexpr uint8_t PAGE_SIZE{32}; // bytes
     static constexpr uint8_t PAGE_MASK{PAGE_SIZE - 1};
 
-    static constexpr uint8_t  MEM_SIZE{PAGE_COUNT * PAGE_SIZE}; // bytes
-    static constexpr uint16_t MEM_MASK{MEM_SIZE - 1};
+    static constexpr uint8_t  MEMORY_SIZE{PAGE_COUNT * PAGE_SIZE}; // bytes
+    static constexpr uint16_t MEM_MASK{MEMORY_SIZE - 1};
 
     static constexpr uint8_t STATUS_SIZE{8};
 
@@ -25,7 +25,7 @@ private:
     static constexpr uint8_t STATUS_UNDEF_B1{0x05}; // 2 byte -> reserved / undefined
     static constexpr uint8_t STATUS_FACTORYP{0x07}; // 2 byte -> factoryprogrammed 0x00
 
-    uint8_t memory[MEM_SIZE];    // 4 pages of 32 bytes
+    uint8_t memory[MEMORY_SIZE];    // 4 pages of 32 bytes
     uint8_t status[STATUS_SIZE]; // eprom status bytes:
     uint8_t sizeof_memory;       // device specific "real" size
 

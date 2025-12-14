@@ -15,9 +15,9 @@ private:
     static constexpr uint8_t PAGE_SIZE{2 * POTI_COUNT};
     static constexpr uint8_t PAGE_MASK{0b00000111};
 
-    static constexpr uint8_t MEM_SIZE{PAGE_COUNT * PAGE_SIZE};
+    static constexpr uint8_t MEMORY_SIZE{PAGE_COUNT * PAGE_SIZE};
 
-    uint8_t memory[MEM_SIZE];
+    uint8_t memory[MEMORY_SIZE];
     // Page1 : conversion results:  16 bit for Channel A, B, C & D, power on default: 0x00
     // Page2 : control / status:    16 bit per channel
     // Page3 : alarm settings:      16 bit per channel

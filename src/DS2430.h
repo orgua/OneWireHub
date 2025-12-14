@@ -9,7 +9,7 @@
 class DS2430 : public OneWireItem
 {
 private:
-    static constexpr uint8_t MEM_SIZE{32 + 8};
+    static constexpr uint8_t MEMORY_SIZE{32 + 8};
 
     static constexpr uint8_t SCRATCHPAD_SIZE{32 + 8};
 
@@ -20,7 +20,7 @@ private:
     static constexpr uint8_t SCRATCHPAD2_SIZE{8};
     static constexpr uint8_t SCRATCHPAD2_MASK{0b00000111};
 
-    uint8_t memory[MEM_SIZE];
+    uint8_t memory[MEMORY_SIZE];
 
     uint8_t scratchpad[SCRATCHPAD_SIZE];
 

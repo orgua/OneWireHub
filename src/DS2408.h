@@ -10,7 +10,7 @@
 class DS2408 : public OneWireItem
 {
 private:
-    static constexpr uint8_t MEM_SIZE{8};
+    static constexpr uint8_t MEMORY_SIZE{8};
 
     // Register Indexes
     static constexpr uint8_t REG_OFFSET{0x88};
@@ -25,7 +25,7 @@ private:
     static constexpr uint8_t REG_RD_ABOVE_ALWAYS_FF_8E{6}; // 0x8E - these bytes give always 0xFF
     static constexpr uint8_t REG_RD_ABOVE_ALWAYS_FF_8F{7}; // 0x8F - these bytes give always 0xFF
 
-    uint8_t memory[MEM_SIZE];
+    uint8_t memory[MEMORY_SIZE];
 
 public:
     static constexpr uint8_t family_code{0x29};

@@ -15,15 +15,15 @@ class DS2506 : public OneWireItem
 private:
     // Problem: atmega has 2kb RAM, this IC offers 8kb
     // Solution: out-of-bound-memory will be constant 0xFF, same for the depending status-registers
-    static constexpr uint16_t MEM_SIZE_PROPOSE{
+    static constexpr uint16_t MEMORY_SIZE_PROPOSE{
             256}; // TUNE HERE! Give this device as much RAM as your CPU can spare
 
     static constexpr uint8_t  PAGE_SIZE{32};
-    static constexpr uint16_t PAGE_COUNT{MEM_SIZE_PROPOSE / PAGE_SIZE}; // ATM: 8
+    static constexpr uint16_t PAGE_COUNT{MEMORY_SIZE_PROPOSE / PAGE_SIZE}; // ATM: 8
     static constexpr uint8_t  PAGE_MASK{0b00011111};
 
-    static constexpr uint16_t MEM_SIZE{PAGE_COUNT * PAGE_SIZE};
-    static constexpr uint16_t MEM_MASK{MEM_SIZE - 1};
+    static constexpr uint16_t MEMORY_SIZE{PAGE_COUNT * PAGE_SIZE};
+    static constexpr uint16_t MEM_MASK{MEMORY_SIZE - 1};
 
     static constexpr uint8_t  STATUS_SEGMENT{PAGE_COUNT / 8}; // ATM: 1
     static constexpr uint16_t STATUS_SIZE{PAGE_COUNT + (3 * STATUS_SEGMENT)};
@@ -38,11 +38,11 @@ private:
             0x100}; // 256 bytes -> Redirection to page, 0xFF if valid, ones complement (xFD is page 2)
     static constexpr uint16_t STATUS_UNDEF_B2_BEG{0x200};
 
-    static_assert(MEM_SIZE > 255, "REAL MEM SIZE IS TOO SMALL");
+    static_assert(MEMORY_SIZE > 255, "REAL MEM SIZE IS TOO SMALL");
     static_assert(STATUS_SEGMENT > 0, "REAL MEM SIZE IS TOO SMALL");
-    static_assert(MEM_SIZE <= 8192, "REAL MEM SIZE IS TOO BIG, MAX IS 8291 bytes");
+    static_assert(MEMORY_SIZE <= 8192, "REAL MEM SIZE IS TOO BIG, MAX IS 8291 bytes");
 
-    uint8_t memory[MEM_SIZE];    // at least 4 pages of 32 bytes
+    uint8_t memory[MEMORY_SIZE];    // at least 4 pages of 32 bytes
     uint8_t status[STATUS_SIZE]; // eprom status bytes
 
     uint16_t sizeof_memory;              // device specific "real" size
