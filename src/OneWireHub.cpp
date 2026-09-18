@@ -124,7 +124,7 @@ uint8_t OneWireHub::getNrOfFirstBitSet(const mask_t mask) const
 // return next not empty element in device-list
 uint8_t OneWireHub::getIndexOfNextSensorInList(const uint8_t index_start) const
 {
-    for (uint8_t i = index_start; i < _ONEWIREHUB_TREE_SIZE; ++i)
+    for (uint8_t i = index_start; i < _ONEWIREHUB_DEVICE_LIMIT; ++i)
     {
         if (device_list[i] != nullptr) return i;
     }
